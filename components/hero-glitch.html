@@ -1,0 +1,395 @@
+<!-- COMPONENT: Hero Glitch | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hero: Controlled Chaos Glitch</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ============================================================
+       CUSTOMIZE
+    ============================================================ */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+
+      /* Glitch intensity: tweak these */
+      --glitch-red:   rgba(255,50,50,0.8);
+      --glitch-blue:  rgba(50,100,255,0.8);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1.5rem;
+      padding: 2rem;
+      text-align: center;
+      cursor: crosshair;
+    }
+
+    /* ── Scanlines overlay (always visible, subtle) ── */
+    .scanlines {
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent          0px,
+        transparent          2px,
+        rgba(0,0,0,0.05)     2px,
+        rgba(0,0,0,0.05)     4px
+      );
+      pointer-events: none;
+      z-index: 50;
+    }
+
+    /* ── Headline with RGB channel split ── */
+    .headline-wrap {
+      position: relative;
+      display: inline-block;
+    }
+
+    .headline {
+      font-family: var(--font-heading);
+      font-size: clamp(2.8rem, 7vw, 6.5rem);
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      line-height: 1.05;
+      position: relative;
+      z-index: 5;
+      /* The real text */
+      color: var(--text);
+      transition: opacity 0.1s;
+    }
+
+    /* Red channel ghost */
+    .headline::before {
+      content: attr(data-text);
+      position: absolute;
+      inset: 0;
+      color: var(--glitch-red);
+      left: 0;
+      top: 0;
+      clip-path: none;
+      transform: translateX(0);
+      opacity: 0;
+      z-index: 4;
+      pointer-events: none;
+      mix-blend-mode: screen;
+    }
+
+    /* Blue channel ghost */
+    .headline::after {
+      content: attr(data-text);
+      position: absolute;
+      inset: 0;
+      color: var(--glitch-blue);
+      left: 0;
+      top: 0;
+      transform: translateX(0);
+      opacity: 0;
+      z-index: 4;
+      pointer-events: none;
+      mix-blend-mode: screen;
+    }
+
+    /* Glitch active state — triggered by JS class toggle */
+    .headline.rgb-split::before {
+      opacity: 0.7;
+      transform: translateX(-4px);
+    }
+
+    .headline.rgb-split::after {
+      opacity: 0.7;
+      transform: translateX(4px);
+    }
+
+    /* Block glitch: random clip-path on the headline copy */
+    .headline.block-glitch::before {
+      clip-path: polygon(0 20%, 100% 20%, 100% 45%, 0 45%);
+      transform: translateX(-6px);
+    }
+
+    /* ── Eyebrow ── */
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-border);
+      color: var(--accent);
+      padding: 0.35rem 0.9rem;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      position: relative;
+      z-index: 5;
+      transition: opacity 0.05s;
+    }
+
+    /* Flicker animation for eyebrow */
+    @keyframes eyebrowFlicker {
+      0%,100%{ opacity:1; }
+      50%     { opacity:0.4; }
+    }
+
+    /* ── Subline ── */
+    .subline {
+      font-size: clamp(1rem, 2vw, 1.2rem);
+      color: var(--text-secondary);
+      max-width: 520px;
+      line-height: 1.65;
+      position: relative;
+      z-index: 5;
+    }
+
+    /* ── CTA ── */
+    .cta-btn {
+      padding: 0.95rem 2.4rem;
+      background: var(--accent);
+      color: #0D1117;
+      border: none;
+      border-radius: 999px;
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      letter-spacing: 0.02em;
+      position: relative;
+      z-index: 5;
+      transition: box-shadow 0.25s, transform 0.2s;
+    }
+
+    .cta-btn:hover {
+      box-shadow: 0 0 36px rgba(16,185,129,0.5);
+      transform: scale(1.05);
+    }
+
+    /* ── Hover-clean state ── */
+    /* When hero is hovered, glitch pauses and design cleans up */
+    .hero.clean .headline::before,
+    .hero.clean .headline::after {
+      opacity: 0 !important;
+      transform: translateX(0) !important;
+    }
+
+    .hero.clean .headline { color: var(--text); }
+    .hero.clean .eyebrow { animation: none; opacity: 1; }
+
+    /* Glitch noise: random rect flashes via JS-injected clip-path spans */
+    .glitch-shard {
+      position: absolute;
+      pointer-events: none;
+      z-index: 3;
+      background: var(--text);
+      mix-blend-mode: difference;
+      opacity: 0;
+    }
+
+    /* Status indicator (top-left "signal" meter) */
+    .signal {
+      position: fixed;
+      top: 1.5rem;
+      left: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-family: var(--font-body);
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      letter-spacing: 0.06em;
+      z-index: 100;
+    }
+
+    .signal-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%,100%{ opacity:1; }
+      50%     { opacity:0.3; }
+    }
+
+    /* Hover hint */
+    .hover-hint {
+      position: fixed;
+      bottom: 1.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      letter-spacing: 0.06em;
+      z-index: 100;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="scanlines"></div>
+  <div class="signal"><div class="signal-dot"></div> SIGNAL DEGRADED</div>
+  <div class="hover-hint">Hover to stabilize</div>
+
+  <div class="hero" id="hero">
+    <!-- Eyebrow -->
+    <div class="eyebrow" id="eyebrow">Transmission Incoming</div>
+
+    <!-- Headline with data-text for CSS pseudo-element copies -->
+    <div class="headline-wrap">
+      <h1 class="headline" id="headline" data-text="Signal Found.">
+        <!-- JS will fill individual character spans here -->
+      </h1>
+    </div>
+
+    <!-- Subline -->
+    <p class="subline" id="subline">
+      Your leads are out there — scattered, waiting, going cold. We cut through the noise and connect you to the ones who are ready right now.
+    </p>
+
+    <!-- CTA -->
+    <button class="cta-btn">Lock On Target →</button>
+  </div>
+
+  <script>
+    const hero     = document.getElementById('hero');
+    const headline = document.getElementById('headline');
+    const eyebrow  = document.getElementById('eyebrow');
+
+    // Full headline text
+    const HEADLINE_TEXT = "Signal Found.";
+    // Character pool for swaps
+    const CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*<>?/\\|[]{}";
+
+    // Build headline from individual char spans (for random swapping)
+    headline.setAttribute('data-text', HEADLINE_TEXT);
+    headline.innerHTML = '';
+    const charSpans = [];
+
+    HEADLINE_TEXT.split('').forEach(ch => {
+      const span = document.createElement('span');
+      span.textContent = ch;
+      span.dataset.real = ch;
+      headline.appendChild(span);
+      charSpans.push(span);
+    });
+
+    let glitchEnabled = true;
+    let glitchIntervals = [];
+
+    // ── Hover: pause glitch ──────────────────────────────────────
+    hero.addEventListener('mouseenter', () => {
+      glitchEnabled = false;
+      hero.classList.add('clean');
+      headline.classList.remove('rgb-split', 'block-glitch');
+      // Restore all swapped chars
+      charSpans.forEach(s => { s.textContent = s.dataset.real; });
+    });
+
+    hero.addEventListener('mouseleave', () => {
+      glitchEnabled = true;
+      hero.classList.remove('clean');
+    });
+
+    // ── Glitch effects ───────────────────────────────────────────
+
+    // 1. RGB split: randomly toggle class on/off
+    function doRGBSplit() {
+      if (!glitchEnabled) return;
+      headline.classList.add('rgb-split');
+      setTimeout(() => headline.classList.remove('rgb-split'), 80 + Math.random() * 120);
+    }
+
+    // 2. Block glitch (aggressive clip-path)
+    function doBlockGlitch() {
+      if (!glitchEnabled) return;
+      headline.classList.add('block-glitch');
+      setTimeout(() => headline.classList.remove('block-glitch'), 60 + Math.random() * 80);
+    }
+
+    // 3. Character swap: 2-3 random chars blink to random chars for 50ms
+    function doCharSwap() {
+      if (!glitchEnabled) return;
+      const count = 2 + Math.floor(Math.random() * 2);
+      const indices = [];
+      while (indices.length < count) {
+        const idx = Math.floor(Math.random() * charSpans.length);
+        if (!indices.includes(idx)) indices.push(idx);
+      }
+      indices.forEach(idx => {
+        const span = charSpans[idx];
+        const orig = span.dataset.real;
+        span.textContent = CHARS[Math.floor(Math.random() * CHARS.length)];
+        span.style.color = 'var(--accent)';
+        setTimeout(() => {
+          span.textContent = orig;
+          span.style.color = '';
+        }, 50 + Math.random() * 60);
+      });
+    }
+
+    // 4. Screen flicker: whole hero dims briefly
+    function doFlicker() {
+      if (!glitchEnabled) return;
+      hero.style.opacity = '0.92';
+      setTimeout(() => { hero.style.opacity = ''; }, 40);
+    }
+
+    // 5. Eyebrow flicker
+    function doEyebrowFlicker() {
+      if (!glitchEnabled) return;
+      eyebrow.style.animation = 'eyebrowFlicker 0.15s step-end 2';
+      setTimeout(() => { eyebrow.style.animation = ''; }, 400);
+    }
+
+    // ── Random scheduling ─────────────────────────────────────────
+    // Each effect fires randomly in its own interval
+    function schedule(fn, minMs, maxMs) {
+      const fire = () => {
+        fn();
+        setTimeout(fire, minMs + Math.random() * (maxMs - minMs));
+      };
+      setTimeout(fire, minMs + Math.random() * (maxMs - minMs));
+    }
+
+    schedule(doRGBSplit,       400,  1200);
+    schedule(doBlockGlitch,    800,  2500);
+    schedule(doCharSwap,       300,  900);
+    schedule(doFlicker,        1200, 3000);
+    schedule(doEyebrowFlicker, 2000, 5000);
+  </script>
+</body>
+</html>

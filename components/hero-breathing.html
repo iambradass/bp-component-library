@@ -1,0 +1,328 @@
+<!-- COMPONENT: Hero Breathing | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hero: The Living Hero</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ============================================================
+       CUSTOMIZE
+    ============================================================ */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* ── BACKGROUND BREATHING ──────────────────────────────────────
+       The background radial gradient gently expands and contracts.
+       scale(1.04) at peak — subtle but perceptible. */
+    @keyframes bgBreathe {
+      0%, 100% { transform: scale(1.0); }
+      50%       { transform: scale(1.04); }
+    }
+
+    .bg-blob {
+      position: fixed;
+      inset: -10%;
+      background: radial-gradient(ellipse 60% 55% at 50% 50%, rgba(16,185,129,0.08) 0%, transparent 65%);
+      animation: bgBreathe 4s ease-in-out infinite;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    /* Second blob — slightly offset timing for depth */
+    .bg-blob-2 {
+      position: fixed;
+      inset: -15%;
+      background: radial-gradient(ellipse 40% 40% at 60% 45%, rgba(16,185,129,0.04) 0%, transparent 70%);
+      animation: bgBreathe 5.8s ease-in-out infinite reverse;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    /* ── CURSOR GLOW ──────────────────────────────────────────────
+       Follows cursor, also pulses in size. */
+    @keyframes glowPulse {
+      0%, 100% { width: 500px; height: 500px; opacity: 0.6; }
+      50%       { width: 650px; height: 650px; opacity: 1;   }
+    }
+
+    .cursor-glow {
+      position: fixed;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(16,185,129,0.07) 0%, transparent 70%);
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 2;
+      animation: glowPulse 3.2s ease-in-out infinite;
+      transition: left 0.08s, top 0.08s; /* fast follow */
+      opacity: 0;
+    }
+
+    .cursor-glow.active { opacity: 1; }
+
+    /* ── HERO LAYOUT ── */
+    .hero {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1.4rem;
+      padding: 2rem;
+      text-align: center;
+      z-index: 5;
+    }
+
+    /* ── EYEBROW — opacity pulses 0.7 → 1.0 ── */
+    @keyframes eyebrowBreathe {
+      0%, 100% { opacity: 0.7; }
+      50%       { opacity: 1.0; }
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-border);
+      color: var(--accent);
+      padding: 0.35rem 0.9rem;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      animation: eyebrowBreathe 2s ease-in-out infinite;
+    }
+
+    /* ── HEADLINE — letter-spacing expands/contracts ── */
+    @keyframes headlineBreathe {
+      0%, 100% { letter-spacing: -0.01em; }
+      50%       { letter-spacing:  0.02em; }
+    }
+
+    .headline {
+      font-family: var(--font-heading);
+      font-size: clamp(2.5rem, 6.5vw, 6rem);
+      font-weight: 700;
+      line-height: 1.05;
+      animation: headlineBreathe 4s ease-in-out infinite;
+      /* Slight offset from bg breathing */
+      animation-delay: 0.8s;
+    }
+
+    .headline em { font-style: normal; color: var(--accent); }
+
+    /* ── SUBLINE ── */
+    .subline {
+      font-size: clamp(1rem, 2vw, 1.15rem);
+      color: var(--text-secondary);
+      max-width: 480px;
+      line-height: 1.65;
+    }
+
+    /* ── CTA BUTTON — box-shadow glow pulses, subtle scale ── */
+    @keyframes ctaBreathe {
+      0%, 100% {
+        box-shadow: 0 0 0px rgba(16,185,129,0);
+        transform: scale(1.0);
+      }
+      50% {
+        box-shadow: 0 0 40px rgba(16,185,129,0.45), 0 0 80px rgba(16,185,129,0.15);
+        transform: scale(1.02);
+      }
+    }
+
+    .cta-btn {
+      margin-top: 0.3rem;
+      padding: 0.95rem 2.4rem;
+      background: var(--accent);
+      color: #0D1117;
+      border: none;
+      border-radius: 999px;
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      letter-spacing: 0.02em;
+      animation: ctaBreathe 3s ease-in-out infinite;
+      transition: filter 0.2s;
+    }
+
+    .cta-btn:hover {
+      filter: brightness(1.1);
+      animation-play-state: paused; /* Pause breath on hover */
+    }
+
+    /* ── FLOATING DECORATIVE ELEMENTS ──────────────────────────────
+       Each floats at its own rhythm, slightly different periods
+       so they drift in and out of phase over time. */
+
+    @keyframes floatA {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      50%       { transform: translate(6px, -12px) rotate(3deg); }
+    }
+
+    @keyframes floatB {
+      0%, 100% { transform: translate(0, -5px) rotate(-2deg); }
+      50%       { transform: translate(-8px, 5px) rotate(2deg); }
+    }
+
+    @keyframes floatC {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      50%       { transform: translate(10px, 8px) rotate(-4deg); }
+    }
+
+    .float-el {
+      position: fixed;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      z-index: 3;
+    }
+
+    /* Top-left floating card */
+    .float-a {
+      top: 15%;
+      left: 5%;
+      padding: 1rem 1.2rem;
+      animation: floatA 4.2s ease-in-out infinite;
+    }
+
+    /* Bottom-right floating card */
+    .float-b {
+      bottom: 18%;
+      right: 5%;
+      padding: 1rem 1.2rem;
+      animation: floatB 5.1s ease-in-out infinite;
+    }
+
+    /* Top-right dot cluster */
+    .float-c {
+      top: 25%;
+      right: 8%;
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      background: var(--accent-dim);
+      border-color: var(--accent-border);
+      animation: floatC 3.7s ease-in-out infinite;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .fc-label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 0.3rem;
+    }
+
+    .fc-value {
+      font-family: var(--font-heading);
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .fc-icon {
+      font-size: 1.5rem;
+    }
+
+    /* Also breathe the float card borders */
+    @keyframes borderBreathe {
+      0%, 100% { border-color: rgba(148,163,184,0.1); }
+      50%       { border-color: rgba(16,185,129,0.25); }
+    }
+
+    .float-a { animation: floatA 4.2s ease-in-out infinite, borderBreathe 4.2s ease-in-out infinite; }
+    .float-b { animation: floatB 5.1s ease-in-out infinite, borderBreathe 5.1s ease-in-out infinite; }
+
+    /* Hide floats on small screens */
+    @media (max-width: 900px) {
+      .float-el { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Breathing background blobs -->
+  <div class="bg-blob"></div>
+  <div class="bg-blob-2"></div>
+
+  <!-- Cursor glow -->
+  <div class="cursor-glow" id="cursorGlow"></div>
+
+  <!-- Floating decorative elements -->
+  <div class="float-el float-a">
+    <div class="fc-label">Deals Closed</div>
+    <div class="fc-value">2,841</div>
+  </div>
+
+  <div class="float-el float-b">
+    <div class="fc-label">Avg. Response</div>
+    <div class="fc-value">4 min</div>
+  </div>
+
+  <div class="float-el float-c">
+    <span class="fc-icon">⚡</span>
+  </div>
+
+  <!-- Hero content -->
+  <div class="hero">
+    <div class="eyebrow">Always Alive</div>
+    <h1 class="headline">
+      Your Pipeline,<br><em>Breathing</em>
+    </h1>
+    <p class="subline">
+      A platform that never sleeps. Every lead tracked, every follow-up timed, every deal moving — even when you're not watching.
+    </p>
+    <button class="cta-btn" onclick="alert('Join!')">Feel the Pulse →</button>
+  </div>
+
+  <script>
+    // ── Cursor glow follows the mouse ──────────────────────────────
+    const glow = document.getElementById('cursorGlow');
+
+    document.addEventListener('mousemove', e => {
+      glow.style.left = e.clientX + 'px';
+      glow.style.top  = e.clientY + 'px';
+      glow.classList.add('active');
+    });
+
+    document.addEventListener('mouseleave', () => {
+      glow.classList.remove('active');
+    });
+  </script>
+</body>
+</html>

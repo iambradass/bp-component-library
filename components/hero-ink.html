@@ -1,0 +1,327 @@
+<!-- COMPONENT: Hero Ink Drop | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hero: Ink Drop Reveal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ============================================================
+       CUSTOMIZE
+    ============================================================ */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #fff; /* Page starts WHITE — ink covers it */
+      color: var(--text);
+      font-family: var(--font-body);
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* ── Hero content ── rendered behind the ink canvas ── */
+    .hero {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1.4rem;
+      padding: 2rem;
+      text-align: center;
+      z-index: 1;
+      /* Atmospheric glow */
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 70% 60% at 50% 55%, rgba(16,185,129,0.07) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* Eyebrow */
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-border);
+      color: var(--accent);
+      padding: 0.35rem 0.9rem;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      z-index: 2;
+      position: relative;
+    }
+
+    /* Headline */
+    .headline {
+      font-family: var(--font-heading);
+      font-size: clamp(2.8rem, 7vw, 6.5rem);
+      font-weight: 700;
+      line-height: 1.05;
+      z-index: 2;
+      position: relative;
+    }
+
+    .headline em {
+      font-style: normal;
+      color: var(--accent);
+    }
+
+    /* Subline */
+    .subline {
+      font-size: clamp(1rem, 2vw, 1.2rem);
+      color: var(--text-secondary);
+      max-width: 500px;
+      line-height: 1.65;
+      z-index: 2;
+      position: relative;
+    }
+
+    /* CTA */
+    .cta-btn {
+      margin-top: 0.3rem;
+      padding: 0.95rem 2.4rem;
+      background: var(--accent);
+      color: #0D1117;
+      border: none;
+      border-radius: 999px;
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      letter-spacing: 0.02em;
+      z-index: 2;
+      position: relative;
+      transition: box-shadow 0.25s, transform 0.2s;
+    }
+
+    .cta-btn:hover {
+      box-shadow: 0 0 32px rgba(16,185,129,0.45);
+      transform: scale(1.05);
+    }
+
+    /* ── INK CANVAS ── sits above the hero, uses mix-blend-mode to mask ── */
+    /* Strategy: canvas holds dark circles on white background.
+       The canvas is positioned ABOVE everything. Where the canvas
+       is white (uncovered), the white body shows. Where ink circles
+       paint dark, the hero beneath becomes visible via destination-out.
+
+       Simpler approach: white overlay that we cut holes in using
+       expanding circle CSS animations. */
+
+    /* White overlay — starts fully covering the screen */
+    #ink-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: #fff;
+      /* Individual ink drop holes will be clip-pathed via JS */
+      transition: opacity 0.4s ease;
+      pointer-events: none;
+    }
+
+    /* Each ink drop is an absolutely-positioned circle on a canvas */
+    #ink-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 99;
+      pointer-events: none;
+    }
+
+    /* Replay button */
+    .replay-btn {
+      position: fixed;
+      top: 1.5rem;
+      right: 1.5rem;
+      z-index: 200;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-family: var(--font-body);
+      font-size: 0.8rem;
+      cursor: pointer;
+      display: none;
+      transition: color 0.2s;
+    }
+
+    .replay-btn:hover { color: var(--text); }
+  </style>
+</head>
+<body>
+
+  <!-- Hero content (dark, always rendered, revealed as ink covers white) -->
+  <div class="hero">
+    <div class="eyebrow">Fresh Ink</div>
+    <h1 class="headline">
+      Your Next Deal<br>Starts <em>Right Now</em>
+    </h1>
+    <p class="subline">
+      Stop waiting for leads to come to you. We ink your pipeline with motivated buyers and sellers before your competitors even see them.
+    </p>
+    <button class="cta-btn" onclick="alert('Start!')">Start Closing →</button>
+  </div>
+
+  <!-- The canvas we paint ink circles onto -->
+  <canvas id="ink-canvas"></canvas>
+
+  <!-- White overlay — has ink circles cut out of it via compositing -->
+  <div id="ink-overlay"></div>
+
+  <button class="replay-btn" id="replayBtn" onclick="startInk()">↺ Replay</button>
+
+  <script>
+    const canvas  = document.getElementById('ink-canvas');
+    const ctx     = canvas.getContext('2d');
+    const overlay = document.getElementById('ink-overlay');
+    const replayBtn = document.getElementById('replayBtn');
+
+    function resizeCanvas() {
+      canvas.width  = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    // ── Ink drop system ───────────────────────────────────────────
+    // We use the canvas with destination-out compositing on the white overlay.
+    // The canvas DRAWS circles. The white overlay is BEHIND the canvas but
+    // in front of the hero. We use a simpler direct approach:
+    // Canvas fills with white initially, then circles grow using destination-out
+    // which punches transparent holes, revealing the hero underneath.
+
+    let drops = [];
+    let animFrame;
+
+    function createDrop(x, y, delay) {
+      return {
+        x,
+        y,
+        radius: 0,
+        maxRadius: Math.hypot(
+          Math.max(x, canvas.width - x),
+          Math.max(y, canvas.height - y)
+        ) * 1.15, // enough to cover from this point to farthest corner
+        speed: 6 + Math.random() * 8,
+        delay,
+        started: false
+      };
+    }
+
+    function startInk() {
+      // Cancel any running animation
+      cancelAnimationFrame(animFrame);
+
+      // Reset canvas to opaque white
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Show overlay (which hides hero)
+      overlay.style.opacity = '0'; // overlay removed — canvas IS the cover now
+      overlay.style.display = 'none';
+      replayBtn.style.display = 'none';
+
+      // Generate 10 random ink drop sources
+      drops = [];
+      const DROP_COUNT = 10;
+      for (let i = 0; i < DROP_COUNT; i++) {
+        const x = Math.random() * canvas.width;
+        const y = Math.random() * canvas.height;
+        const delay = i * 180 + Math.random() * 100; // ms stagger
+        drops.push(createDrop(x, y, delay));
+      }
+
+      const startTime = performance.now();
+      let done = false;
+
+      function tick(now) {
+        const elapsed = now - startTime;
+
+        // Clear and redraw everything each frame using destination-out
+        // to punch holes in the white fill.
+
+        // First, fill white
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Then punch transparent holes for each drop that has started
+        ctx.globalCompositeOperation = 'destination-out';
+
+        drops.forEach(drop => {
+          if (elapsed < drop.delay) return;
+          if (!drop.started) drop.started = true;
+
+          // Grow radius
+          drop.radius = Math.min(
+            drop.radius + drop.speed,
+            drop.maxRadius
+          );
+
+          // Draw the ink circle (destination-out = erase the white, revealing hero)
+          ctx.beginPath();
+          ctx.arc(drop.x, drop.y, drop.radius, 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        // Check if all drops have fully expanded
+        const allDone = drops.every(d => d.radius >= d.maxRadius);
+
+        if (allDone && !done) {
+          done = true;
+          // Fade the canvas out completely — hero is now fully visible
+          setTimeout(() => {
+            canvas.style.transition = 'opacity 0.5s ease';
+            canvas.style.opacity = '0';
+            setTimeout(() => {
+              canvas.style.opacity = '';
+              canvas.style.transition = '';
+              replayBtn.style.display = 'block';
+            }, 600);
+          }, 200);
+          return;
+        }
+
+        animFrame = requestAnimationFrame(tick);
+      }
+
+      canvas.style.opacity = '1';
+      animFrame = requestAnimationFrame(tick);
+    }
+
+    // ── Start on load ─────────────────────────────────────────────
+    overlay.style.display = 'none'; // using canvas approach only
+    startInk();
+  </script>
+</body>
+</html>

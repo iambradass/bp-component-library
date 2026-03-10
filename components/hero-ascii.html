@@ -1,0 +1,295 @@
+<!-- COMPONENT: Hero ASCII Reveal | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hero: ASCII Reveal Matrix</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ============================================================
+       CUSTOMIZE
+    ============================================================ */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* ── Matrix background canvas ── */
+    #matrix-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    /* ── Hero content ── */
+    .hero {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1.4rem;
+      padding: 2rem;
+      text-align: center;
+      z-index: 5;
+    }
+
+    /* ── Headline: each character is its own span ── */
+    .headline {
+      font-family: var(--font-mono);
+      font-size: clamp(2.5rem, 6.5vw, 6rem);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      line-height: 1.05;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0;
+    }
+
+    /* Each char span */
+    .char {
+      display: inline-block;
+      position: relative;
+      transition: color 0.05s;
+      color: rgba(248,250,252,0.15); /* Starts dim/random */
+    }
+
+    .char.locked {
+      color: var(--text);
+    }
+
+    .char.scanning {
+      color: var(--accent);
+      text-shadow: 0 0 12px var(--accent), 0 0 24px rgba(16,185,129,0.4);
+    }
+
+    /* Space between words */
+    .char-space {
+      display: inline-block;
+      width: 0.4em;
+    }
+
+    /* ── Subline — fades in after reveal ── */
+    .subline {
+      font-size: clamp(1rem, 2vw, 1.15rem);
+      color: var(--text-secondary);
+      max-width: 500px;
+      line-height: 1.65;
+      opacity: 0;
+      transition: opacity 0.6s ease;
+    }
+
+    .subline.visible { opacity: 1; }
+
+    /* ── CTA ── */
+    .cta-btn {
+      padding: 0.9rem 2.2rem;
+      background: var(--accent);
+      color: #0D1117;
+      border: none;
+      border-radius: 999px;
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      letter-spacing: 0.02em;
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.5s ease 0.2s, transform 0.5s cubic-bezier(0.34,1.3,0.64,1) 0.2s, box-shadow 0.2s;
+    }
+
+    .cta-btn.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .cta-btn:hover {
+      box-shadow: 0 0 32px rgba(16,185,129,0.45);
+      transform: scale(1.05);
+    }
+
+    /* Scan line on the headline block */
+    .scan-line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      opacity: 0;
+      pointer-events: none;
+      transition: none;
+    }
+
+    .headline { position: relative; }
+  </style>
+</head>
+<body>
+
+  <!-- Matrix background -->
+  <canvas id="matrix-canvas"></canvas>
+
+  <div class="hero">
+    <!-- Headline — JS builds character spans -->
+    <h1 class="headline" id="headline">
+      <div class="scan-line" id="scanLine"></div>
+    </h1>
+
+    <p class="subline" id="subline">
+      From raw data to decisive action. We decode the signals that matter and turn them into your next closed deal.
+    </p>
+
+    <button class="cta-btn" id="ctaBtn" onclick="alert('Engage!')">
+      Engage System →
+    </button>
+  </div>
+
+  <script>
+    // ── CONFIG ────────────────────────────────────────────────────
+    const HEADLINE_TEXT   = "Data Decoded.";
+    // Characters used during the scramble phase
+    const MATRIX_CHARS    = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%^&*<>[]{}|/\\";
+    // Total reveal duration (ms)
+    const REVEAL_DURATION = 2500;
+    // How long each char scrambles before locking (ms)
+    const SCRAMBLE_RATE   = 40; // ms between each random frame
+    // Delay before starting reveal
+    const REVEAL_DELAY    = 600;
+
+    // ── MATRIX BACKGROUND ────────────────────────────────────────
+    const canvas = document.getElementById('matrix-canvas');
+    const ctx    = canvas.getContext('2d');
+
+    function resizeCanvas() {
+      canvas.width  = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    const FONT_SIZE = 14;
+    let columns = Math.floor(canvas.width / FONT_SIZE);
+    let drops = Array.from({ length: columns }, () => Math.random() * -50);
+
+    function drawMatrix() {
+      // Semi-transparent fill creates the "trail" effect
+      ctx.fillStyle = 'rgba(13,17,23,0.05)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = 'rgba(16,185,129,0.04)';
+      ctx.font = `${FONT_SIZE}px ui-monospace`;
+
+      drops.forEach((y, i) => {
+        const char = MATRIX_CHARS[Math.floor(Math.random() * MATRIX_CHARS.length)];
+        const x = i * FONT_SIZE;
+        ctx.fillText(char, x, y * FONT_SIZE);
+
+        // Reset drop to top when it hits bottom (random reset)
+        if (y * FONT_SIZE > canvas.height && Math.random() > 0.975) {
+          drops[i] = 0;
+        }
+        drops[i] += (0.5 + Math.random() * 2.5);
+      });
+
+      requestAnimationFrame(drawMatrix);
+    }
+
+    drawMatrix();
+
+    // ── BUILD HEADLINE SPANS ──────────────────────────────────────
+    const headlineEl = document.getElementById('headline');
+    const scanLine   = document.getElementById('scanLine');
+    const charEls    = [];
+
+    HEADLINE_TEXT.split('').forEach(ch => {
+      if (ch === ' ') {
+        const space = document.createElement('span');
+        space.className = 'char-space';
+        headlineEl.appendChild(space);
+        charEls.push(null); // placeholder for spaces
+        return;
+      }
+      const span = document.createElement('span');
+      span.className = 'char';
+      span.dataset.real = ch;
+      span.textContent = MATRIX_CHARS[Math.floor(Math.random() * MATRIX_CHARS.length)];
+      headlineEl.appendChild(span);
+      charEls.push(span);
+    });
+
+    // ── SCRAMBLE + LOCK ANIMATION ────────────────────────────────
+    // Each non-space character scrambles then locks in left to right.
+
+    const realChars = charEls.filter(Boolean); // no nulls
+    const totalChars = realChars.length;
+    let lockedCount = 0;
+
+    // Ongoing scramble for all not-yet-locked chars
+    const scrambleInterval = setInterval(() => {
+      charEls.forEach(span => {
+        if (!span || span.classList.contains('locked')) return;
+        span.textContent = MATRIX_CHARS[Math.floor(Math.random() * MATRIX_CHARS.length)];
+      });
+    }, SCRAMBLE_RATE);
+
+    // Lock chars one by one across the reveal duration
+    setTimeout(() => {
+      const timePerChar = REVEAL_DURATION / totalChars;
+
+      realChars.forEach((span, i) => {
+        const lockTime = i * timePerChar;
+
+        // "Scanning" flash right before lock
+        setTimeout(() => {
+          span.classList.add('scanning');
+        }, lockTime);
+
+        // Lock the character in
+        setTimeout(() => {
+          span.textContent = span.dataset.real;
+          span.classList.remove('scanning');
+          span.classList.add('locked');
+          lockedCount++;
+
+          // When all chars locked: show subline + CTA
+          if (lockedCount === totalChars) {
+            clearInterval(scrambleInterval);
+            setTimeout(() => {
+              document.getElementById('subline').classList.add('visible');
+              document.getElementById('ctaBtn').classList.add('visible');
+            }, 300);
+          }
+        }, lockTime + 120); // 120ms scan flash duration
+      });
+    }, REVEAL_DELAY);
+  </script>
+</body>
+</html>

@@ -1,0 +1,372 @@
+<!-- COMPONENT: Hero Shatter | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hero: Text Shatters and Reassembles</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ============================================================
+       CUSTOMIZE
+    ============================================================ */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* Hero layout */
+    .hero {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1.5rem;
+      padding: 2rem;
+      overflow: hidden;
+    }
+
+    /* Subtle background glow */
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 60% 50% at 50% 45%, rgba(16,185,129,0.05) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* ── The headline canvas ──
+       We render the text here, then JS reads pixels to create shards */
+    #text-canvas {
+      display: none; /* Hidden — only used for pixel data */
+    }
+
+    /* ── Shard container ── */
+    .shard-stage {
+      position: relative;
+      /* JS sets width/height to match rendered headline size */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Each shard: absolutely positioned div with clip-path polygon */
+    .shard {
+      position: absolute;
+      color: var(--text);
+      font-family: var(--font-heading);
+      font-weight: 700;
+      white-space: nowrap;
+      will-change: transform, opacity;
+      /* JS sets font-size, clip-path, transform */
+    }
+
+    /* Subline */
+    .subline {
+      font-size: clamp(1rem, 2vw, 1.15rem);
+      color: var(--text-secondary);
+      text-align: center;
+      max-width: 500px;
+      line-height: 1.65;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+      z-index: 5;
+    }
+
+    .subline.visible { opacity: 1; }
+
+    /* CTA */
+    .cta-btn {
+      padding: 0.9rem 2.2rem;
+      background: var(--accent);
+      color: #0D1117;
+      border: none;
+      border-radius: 999px;
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      letter-spacing: 0.02em;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.5s ease 0.15s, transform 0.5s cubic-bezier(0.34,1.3,0.64,1) 0.15s, box-shadow 0.2s;
+      z-index: 5;
+    }
+
+    .cta-btn.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .cta-btn:hover {
+      box-shadow: 0 0 32px rgba(16,185,129,0.45);
+      transform: scale(1.05);
+    }
+
+    /* Eyebrow */
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-border);
+      color: var(--accent);
+      padding: 0.35rem 0.9rem;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      z-index: 5;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    .eyebrow.visible { opacity: 1; }
+
+    /* Hint */
+    .hint {
+      position: fixed;
+      bottom: 1.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      letter-spacing: 0.06em;
+      pointer-events: none;
+      z-index: 10;
+      opacity: 0;
+      transition: opacity 0.5s;
+    }
+
+    .hint.visible { opacity: 1; }
+  </style>
+</head>
+<body>
+  <!-- Hidden canvas for text measurement -->
+  <canvas id="text-canvas"></canvas>
+
+  <div class="hero" id="hero">
+    <div class="eyebrow" id="eyebrow">Impact Incoming</div>
+
+    <!-- Shards will be injected here by JS -->
+    <div class="shard-stage" id="shardStage"></div>
+
+    <p class="subline" id="subline">
+      We don't just generate leads. We shatter the barrier between contact and closing — and rebuild it as a pipeline.
+    </p>
+
+    <button class="cta-btn" id="ctaBtn" onclick="triggerShatter()">
+      Break It Again →
+    </button>
+  </div>
+
+  <div class="hint" id="hint">Hover the button to shatter</div>
+
+  <script>
+    // ── CONFIG ────────────────────────────────────────────────────
+    const HEADLINE   = "Walls Broken.";
+    // Number of polygon shards to split the headline into
+    const SHARD_COUNT = 16;
+    // Font size used for shards (must match what we'd render)
+    const FONT_SIZE   = Math.min(Math.max(window.innerWidth * 0.08, 48), 120);
+
+    const stage  = document.getElementById('shardStage');
+    const eyebrow = document.getElementById('eyebrow');
+    const subline = document.getElementById('subline');
+    const ctaBtn  = document.getElementById('ctaBtn');
+    const hint    = document.getElementById('hint');
+
+    // ── Approximate headline dimensions ──────────────────────────
+    // We use a temp canvas to measure the text
+    const measureCanvas = document.getElementById('text-canvas');
+    const mCtx = measureCanvas.getContext('2d');
+    mCtx.font = `700 ${FONT_SIZE}px 'Space Grotesk', sans-serif`;
+    const textWidth  = mCtx.measureText(HEADLINE).width;
+    const textHeight = FONT_SIZE * 1.2;
+
+    stage.style.width  = textWidth + 'px';
+    stage.style.height = textHeight + 'px';
+
+    // ── Generate shard polygon definitions ───────────────────────
+    // We divide the headline bounding box into random Voronoi-ish polygons.
+    // Strategy: generate N random seed points, then for each screen-space cell
+    // approximate the Voronoi polygon as a rectangle with a random angle twist.
+    // This creates an irregular but coherent shard layout.
+
+    function rand(min, max) { return min + Math.random() * (max - min); }
+
+    const shards = [];
+
+    for (let i = 0; i < SHARD_COUNT; i++) {
+      // Each shard covers a vertical stripe of the text + random height slice
+      const stripW = textWidth / SHARD_COUNT;
+      const x1 = i * stripW;
+      const x2 = x1 + stripW;
+
+      // Random vertical split within the shard
+      const splitY = rand(0.2, 0.8) * textHeight;
+
+      // Top shard of the strip
+      shards.push({
+        points: [
+          [x1, 0], [x2, 0], [x2, splitY], [x1, splitY]
+        ],
+        cx: (x1 + x2) / 2,
+        cy: splitY / 2
+      });
+
+      // Bottom shard of the strip
+      shards.push({
+        points: [
+          [x1, splitY], [x2, splitY], [x2, textHeight], [x1, textHeight]
+        ],
+        cx: (x1 + x2) / 2,
+        cy: splitY + (textHeight - splitY) / 2
+      });
+    }
+
+    // ── Build shard DOM elements ──────────────────────────────────
+    const shardEls = [];
+
+    shards.forEach((shard, idx) => {
+      const el = document.createElement('div');
+      el.className = 'shard';
+
+      // The shard shows the headline text — we use clip-path to reveal only its region
+      el.textContent = HEADLINE;
+      el.style.fontSize  = FONT_SIZE + 'px';
+      el.style.lineHeight = '1';
+
+      // Position: top-left of text block (shards are clipped to their polygon)
+      el.style.left = '0';
+      el.style.top  = '0';
+      el.style.width  = textWidth + 'px';
+
+      // Convert polygon points to clip-path percentage values
+      const clipPoints = shard.points
+        .map(([px, py]) => `${(px / textWidth * 100).toFixed(1)}% ${(py / textHeight * 100).toFixed(1)}%`)
+        .join(', ');
+      el.style.clipPath = `polygon(${clipPoints})`;
+
+      stage.appendChild(el);
+      shardEls.push({ el, shard });
+    });
+
+    // ── Animation state ───────────────────────────────────────────
+    let isAnimating = false;
+
+    // ── Assemble: shards fly from scattered positions to correct spots ──
+    function assemble(onDone) {
+      shardEls.forEach(({ el, shard }, idx) => {
+        // Random starting offscreen position
+        const angle    = Math.random() * Math.PI * 2;
+        const distance = 400 + Math.random() * 600;
+        const startX   = Math.cos(angle) * distance;
+        const startY   = Math.sin(angle) * distance;
+        const startRot = (Math.random() - 0.5) * 360;
+
+        // Snap to start position instantly (no transition)
+        el.style.transition = 'none';
+        el.style.transform  = `translate(${startX}px, ${startY}px) rotate(${startRot}deg)`;
+        el.style.opacity    = '0';
+
+        // Stagger the assemble by index
+        const delay = idx * 25 + Math.random() * 80;
+
+        setTimeout(() => {
+          el.style.transition = `transform ${500 + Math.random() * 200}ms cubic-bezier(0.34,1.4,0.64,1) ${delay * 0.5}ms, opacity 200ms ease ${delay * 0.5}ms`;
+          el.style.transform  = 'translate(0, 0) rotate(0deg)';
+          el.style.opacity    = '1';
+        }, 20); // tiny delay so browser registers start state
+      });
+
+      const totalTime = shardEls.length * 25 + 700;
+      setTimeout(() => { if (onDone) onDone(); }, totalTime);
+    }
+
+    // ── Shatter: shards fly outward ───────────────────────────────
+    function shatter(onDone) {
+      shardEls.forEach(({ el, shard }, idx) => {
+        const cx = shard.cx / textWidth * 2 - 1;  // normalized -1..1
+        const cy = shard.cy / textHeight * 2 - 1;
+
+        const vx = cx * (500 + Math.random() * 400);
+        const vy = cy * (400 + Math.random() * 300) - 200; // upward bias
+        const rot = (Math.random() - 0.5) * 540;
+
+        const delay = idx * 10;
+
+        el.style.transition = `transform ${400 + Math.random() * 200}ms cubic-bezier(0.4,0,1,1) ${delay}ms, opacity 300ms ease ${delay + 200}ms`;
+        el.style.transform  = `translate(${vx}px, ${vy}px) rotate(${rot}deg)`;
+        el.style.opacity    = '0';
+      });
+
+      const totalTime = shardEls.length * 10 + 600;
+      setTimeout(() => { if (onDone) onDone(); }, totalTime);
+    }
+
+    // ── Trigger: shatter then reassemble ─────────────────────────
+    function triggerShatter() {
+      if (isAnimating) return;
+      isAnimating = true;
+
+      // Hide subline during animation
+      subline.classList.remove('visible');
+
+      shatter(() => {
+        setTimeout(() => {
+          assemble(() => {
+            isAnimating = false;
+            subline.classList.add('visible');
+          });
+        }, 100);
+      });
+    }
+
+    // ── Initial sequence ──────────────────────────────────────────
+    setTimeout(() => {
+      eyebrow.classList.add('visible');
+
+      setTimeout(() => {
+        assemble(() => {
+          subline.classList.add('visible');
+          ctaBtn.classList.add('visible');
+          hint.classList.add('visible');
+        });
+      }, 200);
+    }, 300);
+
+    // CTA hover also triggers shatter (in addition to click)
+    ctaBtn.addEventListener('mouseenter', () => {
+      if (!isAnimating) triggerShatter();
+    });
+  </script>
+</body>
+</html>

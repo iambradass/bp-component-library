@@ -1,0 +1,360 @@
+<!-- COMPONENT: Hero Gravity Drop | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hero: Gravity + Bounce Entry</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ============================================================
+       CUSTOMIZE
+    ============================================================ */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* Full viewport hero */
+    .hero {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.8rem;
+      overflow: hidden;
+      padding: 2rem;
+    }
+
+    /* Subtle radial gradient for depth */
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 80% 60% at 50% 50%, rgba(16,185,129,0.04) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* ─── Bounce keyframes ─── */
+    /* cubic-bezier(0.34, 1.56, 0.64, 1) = spring overshoot */
+    @keyframes dropBounce {
+      0%   { transform: translateY(-120vh); opacity: 0; }
+      60%  { opacity: 1; }
+      100% { transform: translateY(0);      opacity: 1; }
+    }
+
+    /* Heavier bounce for CTA — more overshoot */
+    @keyframes dropBounceHeavy {
+      0%   { transform: translateY(-120vh) scale(0.9); opacity: 0; }
+      65%  { transform: translateY(12px) scale(1.04);  opacity: 1; }
+      80%  { transform: translateY(-5px) scale(0.99); }
+      90%  { transform: translateY(3px) scale(1.01); }
+      100% { transform: translateY(0) scale(1);       opacity: 1; }
+    }
+
+    /* Gentle bob after landing — for decorative cards */
+    @keyframes bob {
+      0%, 100% { transform: translateY(0); }
+      50%       { transform: translateY(-10px); }
+    }
+
+    @keyframes bobAlt {
+      0%, 100% { transform: translateY(-6px) rotate(2deg); }
+      50%       { transform: translateY(4px) rotate(-1deg); }
+    }
+
+    /* Every drop element starts hidden, animation fills both ways */
+    .drop {
+      opacity: 0;
+      animation-fill-mode: forwards;
+      animation-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+      animation-name: dropBounce;
+      animation-duration: 0.9s;
+    }
+
+    /* Eyebrow badge */
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-border);
+      color: var(--accent);
+      padding: 0.35rem 0.9rem;
+      border-radius: 999px;
+      font-family: var(--font-body);
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      animation-delay: 0ms;
+      z-index: 5;
+    }
+
+    .eyebrow-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.5; transform: scale(0.7); }
+    }
+
+    /* Headline */
+    .headline {
+      font-family: var(--font-heading);
+      font-size: clamp(2.4rem, 6vw, 5.5rem);
+      font-weight: 700;
+      line-height: 1.05;
+      text-align: center;
+      z-index: 5;
+    }
+
+    .headline-line1 { animation-delay: 200ms; }
+    .headline-line2 { animation-delay: 320ms; color: var(--accent); }
+
+    /* Subline */
+    .subline {
+      font-size: clamp(1rem, 2vw, 1.25rem);
+      color: var(--text-secondary);
+      text-align: center;
+      max-width: 500px;
+      animation-delay: 480ms;
+      z-index: 5;
+      line-height: 1.6;
+    }
+
+    /* CTA */
+    .cta-group {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      animation-name: dropBounceHeavy;
+      animation-duration: 1s;
+      animation-delay: 640ms;
+      opacity: 0;
+      animation-fill-mode: forwards;
+      z-index: 5;
+      margin-top: 0.5rem;
+    }
+
+    .btn-primary {
+      padding: 0.9rem 2.2rem;
+      background: var(--accent);
+      color: #0D1117;
+      border: none;
+      border-radius: 999px;
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      letter-spacing: 0.02em;
+      transition: box-shadow 0.2s, transform 0.2s;
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 0 28px rgba(16,185,129,0.45);
+      transform: scale(1.04);
+    }
+
+    .btn-ghost {
+      padding: 0.9rem 2rem;
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+
+    .btn-ghost:hover { border-color: var(--accent-border); transform: scale(1.03); }
+
+    /* Decorative floating cards — left and right */
+    .float-card {
+      position: absolute;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.2rem;
+      width: 200px;
+      animation-delay: 800ms;
+      z-index: 4;
+      /* Bob animation applied after landing via JS */
+    }
+
+    .float-card-left {
+      left: clamp(1rem, 6vw, 8%);
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    .float-card-right {
+      right: clamp(1rem, 6vw, 8%);
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    .fc-label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.4rem;
+    }
+
+    .fc-value {
+      font-family: var(--font-heading);
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .fc-sub {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 0.2rem;
+    }
+
+    /* Bob applied post-land */
+    .float-card.landed-left {
+      transform: translateY(-50%); /* reset from drop transform */
+      animation: bobAlt 5.1s ease-in-out infinite;
+    }
+
+    .float-card.landed-right {
+      transform: translateY(-50%);
+      animation: bob 4.4s ease-in-out infinite;
+    }
+
+    /* Hide floats on small screens */
+    @media (max-width: 900px) {
+      .float-card { display: none; }
+    }
+
+    @media (max-width: 600px) {
+      .headline { font-size: clamp(2rem, 10vw, 3rem); }
+    }
+  </style>
+</head>
+<body>
+  <div class="hero" id="hero">
+
+    <!-- Eyebrow badge -->
+    <div class="eyebrow drop">
+      <span class="eyebrow-dot"></span>
+      Now Live — See the Platform
+    </div>
+
+    <!-- Headline lines drop independently -->
+    <div class="headline drop headline-line1">Close More Deals,</div>
+    <div class="headline drop headline-line2">Faster Than Ever</div>
+
+    <!-- Subline -->
+    <p class="subline drop">
+      The all-in-one platform built for real estate professionals who refuse to leave leads on the table.
+    </p>
+
+    <!-- CTA group -->
+    <div class="cta-group" id="ctaGroup">
+      <button class="btn-primary">Start Free Trial</button>
+      <button class="btn-ghost">Watch Demo →</button>
+    </div>
+
+    <!-- Decorative floating cards -->
+    <div class="float-card float-card-left drop" id="floatLeft">
+      <div class="fc-label">Avg. Close Rate</div>
+      <div class="fc-value">+38%</div>
+      <div class="fc-sub">vs. industry avg</div>
+    </div>
+
+    <div class="float-card float-card-right drop" id="floatRight">
+      <div class="fc-label">Time to First Deal</div>
+      <div class="fc-value">6 Days</div>
+      <div class="fc-sub">median onboard time</div>
+    </div>
+  </div>
+
+  <script>
+    // After the float cards' drop animations finish, switch to the gentle bob.
+    // The drop animation runs for 0.9s with an 800ms delay = 1700ms total.
+    const floatLeft  = document.getElementById('floatLeft');
+    const floatRight = document.getElementById('floatRight');
+
+    setTimeout(() => {
+      floatLeft.style.animation  = 'none';
+      floatRight.style.animation = 'none';
+      // Force reflow so class change restarts animation
+      void floatLeft.offsetWidth;
+      void floatRight.offsetWidth;
+      floatLeft.classList.add('landed-left');
+      floatRight.classList.add('landed-right');
+    }, 1800);
+
+    // ── Cursor repel for float cards ──────────────────────────────
+    // Floating cards drift slightly away from the cursor (soft repel)
+    const cards = [floatLeft, floatRight];
+    const REPEL_DIST = 200; // px radius of influence
+    const REPEL_STR  = 20;  // max pixel displacement
+
+    document.addEventListener('mousemove', e => {
+      cards.forEach(card => {
+        const rect = card.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        const dx = cx - e.clientX;
+        const dy = cy - e.clientY;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist < REPEL_DIST) {
+          const force = (1 - dist / REPEL_DIST) * REPEL_STR;
+          const nx = dx / dist; // normalized direction
+          const ny = dy / dist;
+          // Override animation with a translate nudge via inline style
+          // We keep the base translateY(-50%) and add the repel
+          card.style.transform = `translateY(calc(-50% + ${ny * force}px)) translateX(${nx * force}px)`;
+        } else {
+          card.style.transform = '';
+        }
+      });
+    });
+
+    document.addEventListener('mouseleave', () => {
+      cards.forEach(c => c.style.transform = '');
+    });
+  </script>
+</body>
+</html>

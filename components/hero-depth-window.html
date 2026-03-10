@@ -1,0 +1,367 @@
+<!-- COMPONENT: Hero Depth Window | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hero: Through-the-Glass Depth Illusion</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ============================================================
+       CUSTOMIZE
+    ============================================================ */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* ── Scene container ── */
+    .scene {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    /* ── Each parallax layer ── */
+    /* All layers use will-change:transform and share the same origin.
+       JS applies translate(dx * factor, dy * factor) per layer.
+       Factor 0 = static, 1 = full cursor displacement */
+    .layer {
+      position: absolute;
+      inset: -8%; /* Oversized so parallax movement doesn't show edges */
+      will-change: transform;
+      /* Smooth lerp applied in JS */
+    }
+
+    /* Layer 1: Deepest — star field */
+    .layer-stars {
+      z-index: 1;
+    }
+
+    .star {
+      position: absolute;
+      background: rgba(248,250,252,0.4);
+      border-radius: 50%;
+    }
+
+    /* Layer 2: Geometric shapes — far */
+    .layer-geo-far {
+      z-index: 2;
+    }
+
+    /* Layer 3: Geometric shapes — mid */
+    .layer-geo-mid {
+      z-index: 3;
+    }
+
+    /* Layer 4: Near shapes */
+    .layer-near {
+      z-index: 4;
+    }
+
+    /* Floating shape */
+    .shape {
+      position: absolute;
+      border-radius: 50%;
+      border: 1px solid;
+      opacity: 0.12;
+    }
+
+    .shape-rect {
+      border-radius: 4px;
+    }
+
+    .shape-line {
+      height: 1px;
+      border-radius: 0;
+      border-top: 1px solid;
+      border-bottom: none;
+      border-left: none;
+      border-right: none;
+    }
+
+    /* Layer 5: Glass surface (blur + grain) */
+    .layer-glass {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      /* Very subtle blur — feels like looking through glass */
+      backdrop-filter: blur(0.5px) brightness(0.98);
+      -webkit-backdrop-filter: blur(0.5px) brightness(0.98);
+      pointer-events: none;
+      /* Subtle noise grain overlay */
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+      background-size: 200px 200px;
+    }
+
+    /* Layer 6: Vignette */
+    .vignette {
+      position: fixed;
+      inset: 0;
+      z-index: 11;
+      background: radial-gradient(ellipse 80% 80% at 50% 50%, transparent 50%, rgba(0,0,0,0.55) 100%);
+      pointer-events: none;
+    }
+
+    /* ── Headline layer — moves at 3% (anchored to glass) ── */
+    .layer-headline {
+      position: fixed;
+      inset: 0;
+      z-index: 15;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1.2rem;
+      padding: 2rem;
+      text-align: center;
+      will-change: transform;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(13,17,23,0.5);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid var(--accent-border);
+      color: var(--accent);
+      padding: 0.35rem 0.9rem;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+    }
+
+    .headline {
+      font-family: var(--font-heading);
+      font-size: clamp(2.5rem, 6.5vw, 6rem);
+      font-weight: 700;
+      line-height: 1.05;
+      /* Crisp etched-in-glass feel */
+      text-shadow:
+        0 1px 0 rgba(255,255,255,0.08),
+        0 2px 20px rgba(0,0,0,0.7);
+    }
+
+    .headline em { font-style: normal; color: var(--accent); }
+
+    .subline {
+      font-size: clamp(1rem, 2vw, 1.15rem);
+      color: var(--text-secondary);
+      max-width: 460px;
+      line-height: 1.65;
+      text-shadow: 0 1px 12px rgba(0,0,0,0.8);
+    }
+
+    /* ── CTA — static, below glass level ── */
+    .cta-row {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .btn-primary {
+      padding: 0.9rem 2.2rem;
+      background: var(--accent);
+      color: #0D1117;
+      border: none;
+      border-radius: 999px;
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: box-shadow 0.25s, transform 0.2s;
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 0 32px rgba(16,185,129,0.5);
+      transform: scale(1.05);
+    }
+
+    .btn-ghost {
+      padding: 0.9rem 1.8rem;
+      background: rgba(13,17,23,0.4);
+      backdrop-filter: blur(8px);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+
+    .btn-ghost:hover { border-color: var(--accent-border); }
+
+    /* Mobile: disable parallax, show static version */
+    @media (max-width: 600px) {
+      .layer { inset: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="scene" id="scene">
+
+    <!-- Layer 1: Deep stars (factor 0.01) -->
+    <div class="layer layer-stars" id="layerStars"></div>
+
+    <!-- Layer 2: Far geometry (factor 0.02) -->
+    <div class="layer layer-geo-far" id="layerGeoFar"></div>
+
+    <!-- Layer 3: Mid geometry (factor 0.05) -->
+    <div class="layer layer-geo-mid" id="layerGeoMid"></div>
+
+    <!-- Layer 4: Near shapes (factor 0.08) -->
+    <div class="layer layer-near" id="layerNear"></div>
+  </div>
+
+  <!-- Glass overlay -->
+  <div class="layer-glass"></div>
+  <div class="vignette"></div>
+
+  <!-- Headline layer (factor 0.03) -->
+  <div class="layer-headline" id="layerHeadline">
+    <div class="eyebrow">Look Deeper</div>
+    <h1 class="headline">
+      The Deal Isn't<br>on the <em>Surface</em>
+    </h1>
+    <p class="subline">
+      Dig past the noise. Our platform gives you X-ray vision into every lead — their timeline, motivation, and readiness to close.
+    </p>
+    <div class="cta-row">
+      <button class="btn-primary">See Through →</button>
+      <button class="btn-ghost">Learn More</button>
+    </div>
+  </div>
+
+  <script>
+    // ── Generate stars ────────────────────────────────────────────
+    const layerStars = document.getElementById('layerStars');
+    for (let i = 0; i < 120; i++) {
+      const star = document.createElement('div');
+      star.className = 'star';
+      const size = 1 + Math.random() * 2;
+      star.style.cssText = `
+        width: ${size}px; height: ${size}px;
+        left: ${Math.random() * 100}%; top: ${Math.random() * 100}%;
+        opacity: ${0.1 + Math.random() * 0.35};
+      `;
+      layerStars.appendChild(star);
+    }
+
+    // ── Generate far geometry ─────────────────────────────────────
+    function addShape(parent, opts) {
+      const el = document.createElement('div');
+      el.className = 'shape ' + (opts.cls || '');
+      el.style.cssText = `
+        width: ${opts.w}px; height: ${opts.h}px;
+        left: ${opts.x}%; top: ${opts.y}%;
+        border-color: ${opts.color || 'rgba(148,163,184,0.2)'};
+        opacity: ${opts.opacity || 0.12};
+        ${opts.rotate ? `transform: rotate(${opts.rotate}deg);` : ''}
+      `;
+      parent.appendChild(el);
+    }
+
+    const layerGeoFar = document.getElementById('layerGeoFar');
+    // Large, very faint circles
+    [
+      { x:15, y:10, w:300, h:300, color:'rgba(16,185,129,0.08)', opacity:0.4 },
+      { x:65, y:60, w:200, h:200, color:'rgba(148,163,184,0.1)', opacity:0.4 },
+      { x:80, y:5,  w:150, h:150, color:'rgba(16,185,129,0.05)', opacity:0.3 },
+    ].forEach(o => addShape(layerGeoFar, o));
+
+    // Long horizontal lines
+    const layerGeoMid = document.getElementById('layerGeoMid');
+    [
+      { x:5,  y:30, w:300, h:1, cls:'shape-line', color:'rgba(148,163,184,0.3)', opacity:0.5 },
+      { x:60, y:70, w:200, h:1, cls:'shape-line', color:'rgba(16,185,129,0.3)',  opacity:0.5 },
+      { x:20, y:80, w:150, h:1, cls:'shape-line', color:'rgba(148,163,184,0.2)', opacity:0.4 },
+      { x:0,  y:55, w:250, h:250, color:'rgba(16,185,129,0.06)', opacity:0.3 },
+      { x:70, y:20, w:100, h:100, cls:'shape-rect', color:'rgba(148,163,184,0.15)', opacity:0.3, rotate:30 },
+    ].forEach(o => addShape(layerGeoMid, o));
+
+    // Near layer: accent-tinted shapes
+    const layerNear = document.getElementById('layerNear');
+    [
+      { x:8,  y:40, w:60,  h:60,  color:'rgba(16,185,129,0.35)', opacity:0.5 },
+      { x:85, y:15, w:80,  h:80,  cls:'shape-rect', color:'rgba(16,185,129,0.25)', opacity:0.4, rotate:45 },
+      { x:5,  y:70, w:40,  h:1,   cls:'shape-line', color:'rgba(16,185,129,0.5)', opacity:0.7 },
+      { x:75, y:75, w:50,  h:50,  color:'rgba(148,163,184,0.25)', opacity:0.4 },
+    ].forEach(o => addShape(layerNear, o));
+
+    // ── Parallax mouse tracking ───────────────────────────────────
+    // Each layer has a depth factor (0 = static, 1 = max movement)
+    const layers = [
+      { el: document.getElementById('layerStars'),    factor: 0.01 },
+      { el: document.getElementById('layerGeoFar'),   factor: 0.02 },
+      { el: document.getElementById('layerGeoMid'),   factor: 0.05 },
+      { el: document.getElementById('layerNear'),      factor: 0.08 },
+      { el: document.getElementById('layerHeadline'), factor: 0.03 },
+    ];
+
+    // Lerp targets
+    const targets = layers.map(() => ({ x: 0, y: 0 }));
+    const currents = layers.map(() => ({ x: 0, y: 0 }));
+
+    const CX = window.innerWidth / 2;
+    const CY = window.innerHeight / 2;
+    const MAX_MOVE = 60; // max pixel movement at cursor edge
+
+    const isMobile = window.innerWidth <= 768;
+
+    if (!isMobile) {
+      document.addEventListener('mousemove', e => {
+        const offsetX = (e.clientX - CX) / CX; // -1..1
+        const offsetY = (e.clientY - CY) / CY; // -1..1
+        layers.forEach((l, i) => {
+          targets[i].x = offsetX * MAX_MOVE * l.factor;
+          targets[i].y = offsetY * MAX_MOVE * l.factor;
+        });
+      });
+    }
+
+    // Lerp loop
+    const LERP = 0.08;
+
+    function tick() {
+      layers.forEach((l, i) => {
+        currents[i].x += (targets[i].x - currents[i].x) * LERP;
+        currents[i].y += (targets[i].y - currents[i].y) * LERP;
+        l.el.style.transform = `translate(${currents[i].x}px, ${currents[i].y}px)`;
+      });
+      requestAnimationFrame(tick);
+    }
+
+    tick();
+  </script>
+</body>
+</html>

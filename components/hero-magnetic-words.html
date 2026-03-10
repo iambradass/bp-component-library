@@ -1,0 +1,481 @@
+<!-- COMPONENT: Hero Magnetic Words | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hero: Magnetic Word Physics</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ============================================================
+       CUSTOMIZE — edit these to match your brand
+    ============================================================ */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+
+      /* Hero-specific */
+      --headline:       "Turn Clicks Into Closings";
+      --word-size:      clamp(2.5rem, 6vw, 5rem);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* Hero container — full viewport, position:relative so words can be absolute */
+    .hero {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    /* Magnetic field glow — follows the cursor, rendered as a radial gradient */
+    .field-glow {
+      position: fixed;
+      pointer-events: none;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(16,185,129,0.06) 0%, transparent 70%);
+      transform: translate(-50%, -50%);
+      transition: opacity 0.3s;
+      opacity: 0;
+      z-index: 1;
+    }
+
+    /* Each word is absolutely positioned and driven by JS spring physics */
+    .mag-word {
+      position: absolute;
+      font-family: var(--font-heading);
+      font-size: var(--word-size);
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+      cursor: default;
+      user-select: none;
+      will-change: transform;
+      /* Smooth initial appearance */
+      opacity: 0;
+      transition: opacity 0.3s;
+      z-index: 5;
+    }
+
+    .mag-word.visible { opacity: 1; }
+
+    /* Ghost layout — hidden row of words used only to measure natural positions */
+    .headline-ghost {
+      position: absolute;
+      font-family: var(--font-heading);
+      font-size: var(--word-size);
+      font-weight: 700;
+      white-space: nowrap;
+      visibility: hidden;
+      pointer-events: none;
+      display: flex;
+      gap: 0.3em;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 0;
+    }
+
+    /* Two-line headline: line-1 and line-2 */
+    .headline-ghost-wrap {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -55%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.15em;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .ghost-line {
+      display: flex;
+      gap: 0.3em;
+      font-family: var(--font-heading);
+      font-size: var(--word-size);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    /* CTA button — static, fades in after words settle */
+    .cta-wrap {
+      position: absolute;
+      bottom: 22%;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      opacity: 0;
+      transition: opacity 0.6s ease;
+    }
+
+    .cta-wrap.visible { opacity: 1; }
+
+    .cta-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.9rem 2.2rem;
+      background: var(--accent);
+      color: #0D1117;
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 1rem;
+      border: none;
+      border-radius: 999px;
+      cursor: pointer;
+      letter-spacing: 0.02em;
+      transition: transform 0.2s, box-shadow 0.2s;
+      white-space: nowrap;
+    }
+
+    .cta-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 32px rgba(16,185,129,0.4);
+    }
+
+    /* Subline — appears with the CTA */
+    .subline {
+      position: absolute;
+      bottom: 32%;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: var(--font-body);
+      font-size: clamp(0.95rem, 2vw, 1.2rem);
+      color: var(--text-secondary);
+      text-align: center;
+      white-space: nowrap;
+      z-index: 10;
+      opacity: 0;
+      transition: opacity 0.6s ease 0.2s;
+    }
+
+    .subline.visible { opacity: 1; }
+
+    /* Hint label at bottom */
+    .hint {
+      position: fixed;
+      bottom: 1.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      z-index: 20;
+      pointer-events: none;
+    }
+
+    /* Mobile: disable physics, show static headline */
+    @media (max-width: 768px) {
+      .mag-word {
+        position: static !important;
+        transform: none !important;
+        opacity: 1 !important;
+      }
+
+      .hero {
+        flex-direction: column;
+        justify-content: center;
+        gap: 1.5rem;
+        padding: 2rem;
+        text-align: center;
+      }
+
+      .mobile-headline {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.3em;
+        font-family: var(--font-heading);
+        font-size: clamp(2rem, 8vw, 3.5rem);
+        font-weight: 700;
+        z-index: 5;
+      }
+
+      .cta-wrap {
+        position: static;
+        transform: none;
+        opacity: 1;
+      }
+
+      .subline {
+        position: static;
+        transform: none;
+        opacity: 1;
+        white-space: normal;
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Magnetic field visual glow -->
+  <div class="field-glow" id="fieldGlow"></div>
+
+  <!-- Hero container -->
+  <div class="hero" id="hero">
+
+    <!-- Ghost layout: invisible reference for measuring real word positions -->
+    <div class="headline-ghost-wrap" id="ghostWrap" aria-hidden="true">
+      <div class="ghost-line" id="ghostLine1"></div>
+      <div class="ghost-line" id="ghostLine2"></div>
+    </div>
+
+    <!-- Mobile fallback: static flex headline, hidden on desktop by JS -->
+    <div class="mobile-headline" id="mobileHeadline" aria-hidden="true"></div>
+
+    <!-- Subline -->
+    <div class="subline" id="subline">Where real estate pros close faster and smarter.</div>
+
+    <!-- CTA -->
+    <div class="cta-wrap" id="ctaWrap">
+      <button class="cta-btn" onclick="alert('CTA clicked!')">
+        Get Started Free
+        <span style="font-size:1.1em">→</span>
+      </button>
+    </div>
+
+    <!-- Hint -->
+    <div class="hint">Move your cursor over the headline</div>
+  </div>
+
+  <script>
+    // ============================================================
+    // CUSTOMIZE
+    // ============================================================
+    const HEADLINE_LINES = [
+      ["Turn", "Clicks"],
+      ["Into", "Closings"]
+    ];
+    // Words to color with accent (0-indexed across all words)
+    const ACCENT_WORDS = [3]; // "Closings"
+
+    // Spring physics constants
+    const LERP_SPEED   = 0.08;  // How fast words chase target (lower = laggier)
+    const DAMPING      = 0.80;  // Velocity decay (lower = more oscillation)
+    const ATTRACT_DIST = 260;   // Cursor influence radius (px)
+    const ATTRACT_STR  = 0.35;  // How strongly words pull toward cursor
+
+    // ============================================================
+    // Setup
+    // ============================================================
+    const isMobile = window.innerWidth <= 768;
+    const ghostWrap = document.getElementById('ghostWrap');
+    const ghostLine1 = document.getElementById('ghostLine1');
+    const ghostLine2 = document.getElementById('ghostLine2');
+    const hero = document.getElementById('hero');
+    const fieldGlow = document.getElementById('fieldGlow');
+    const mobileHeadline = document.getElementById('mobileHeadline');
+
+    // Build ghost spans for position measurement
+    const allWords = [...HEADLINE_LINES[0], ...HEADLINE_LINES[1]];
+
+    if (isMobile) {
+      // Mobile: just render static words
+      allWords.forEach((word, i) => {
+        const span = document.createElement('span');
+        span.textContent = word;
+        if (ACCENT_WORDS.includes(i)) span.style.color = 'var(--accent)';
+        mobileHeadline.appendChild(span);
+      });
+      document.getElementById('subline').classList.add('visible');
+      document.getElementById('ctaWrap').classList.add('visible');
+      // Hide physics elements
+      ghostWrap.style.display = 'none';
+      fieldGlow.style.display = 'none';
+    } else {
+      // Desktop: full physics experience
+      mobileHeadline.style.display = 'none';
+      initMagneticWords();
+    }
+
+    function initMagneticWords() {
+      // Populate ghost lines for measurement
+      HEADLINE_LINES[0].forEach(w => {
+        const s = document.createElement('span'); s.textContent = w; ghostLine1.appendChild(s);
+      });
+      HEADLINE_LINES[1].forEach(w => {
+        const s = document.createElement('span'); s.textContent = w; ghostLine2.appendChild(s);
+      });
+
+      // Wait one frame so ghost layout is painted and measurable
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          buildWords();
+        });
+      });
+    }
+
+    let words = []; // Array of word state objects
+
+    function buildWords() {
+      const ghostSpansL1 = ghostLine1.querySelectorAll('span');
+      const ghostSpansL2 = ghostLine2.querySelectorAll('span');
+      const ghostSpans = [...ghostSpansL1, ...ghostSpansL2];
+
+      let wordIndex = 0;
+
+      ghostSpans.forEach((ghostSpan, i) => {
+        const rect = ghostSpan.getBoundingClientRect();
+
+        // Target position: center of the ghost span
+        const targetX = rect.left + rect.width / 2;
+        const targetY = rect.top + rect.height / 2;
+
+        // Start position: scattered (random offscreen positions)
+        const angle = Math.random() * Math.PI * 2;
+        const dist = 300 + Math.random() * 400;
+        const startX = window.innerWidth / 2 + Math.cos(angle) * dist;
+        const startY = window.innerHeight / 2 + Math.sin(angle) * dist;
+
+        // Create the real word span
+        const span = document.createElement('span');
+        span.className = 'mag-word';
+        span.textContent = allWords[i];
+        if (ACCENT_WORDS.includes(i)) span.style.color = 'var(--accent)';
+        hero.appendChild(span);
+
+        // Center the element on its position using translate
+        span.style.left = '0';
+        span.style.top = '0';
+        span.style.transform = `translate(${startX - span.offsetWidth / 2}px, ${startY - span.offsetHeight / 2}px)`;
+
+        const halfW = span.offsetWidth / 2;
+        const halfH = span.offsetHeight / 2;
+
+        words.push({
+          el: span,
+          // Home position (center of ghost element)
+          homeX: targetX,
+          homeY: targetY,
+          // Current position
+          x: startX,
+          y: startY,
+          // Velocity
+          vx: 0,
+          vy: 0,
+          halfW,
+          halfH,
+          // Stagger delay before word starts homing in
+          delay: i * 120 + 200,
+          active: false
+        });
+
+        wordIndex++;
+      });
+
+      // Reveal words one by one with stagger
+      words.forEach((w, i) => {
+        setTimeout(() => {
+          w.el.classList.add('visible');
+          w.active = true;
+        }, w.delay);
+      });
+
+      // Show CTA after all words settle
+      setTimeout(() => {
+        document.getElementById('subline').classList.add('visible');
+        document.getElementById('ctaWrap').classList.add('visible');
+      }, words.length * 120 + 1500);
+
+      // Start physics loop
+      startPhysics();
+    }
+
+    // Mouse state
+    let mouseX = window.innerWidth / 2;
+    let mouseY = window.innerHeight / 2;
+    let mouseActive = false;
+
+    document.addEventListener('mousemove', e => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+      mouseActive = true;
+
+      // Move glow to cursor
+      fieldGlow.style.opacity = '1';
+      fieldGlow.style.left = mouseX + 'px';
+      fieldGlow.style.top = mouseY + 'px';
+    });
+
+    document.addEventListener('mouseleave', () => {
+      mouseActive = false;
+      fieldGlow.style.opacity = '0';
+    });
+
+    function startPhysics() {
+      function tick() {
+        words.forEach(w => {
+          if (!w.active) return;
+
+          // Calculate target: blend between home position and cursor pull
+          let tX = w.homeX;
+          let tY = w.homeY;
+
+          if (mouseActive) {
+            const dx = mouseX - w.homeX;
+            const dy = mouseY - w.homeY;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            if (dist < ATTRACT_DIST) {
+              // Pull factor: stronger when closer (inverse linear)
+              const pull = (1 - dist / ATTRACT_DIST) * ATTRACT_STR;
+              tX = w.homeX + dx * pull;
+              tY = w.homeY + dy * pull;
+            }
+          }
+
+          // Spring toward target
+          w.vx += (tX - w.x) * LERP_SPEED;
+          w.vy += (tY - w.y) * LERP_SPEED;
+
+          // Damping
+          w.vx *= DAMPING;
+          w.vy *= DAMPING;
+
+          // Integrate
+          w.x += w.vx;
+          w.y += w.vy;
+
+          // Apply — center the element on its position
+          w.el.style.transform = `translate(${w.x - w.halfW}px, ${w.y - w.halfH}px)`;
+        });
+
+        requestAnimationFrame(tick);
+      }
+
+      requestAnimationFrame(tick);
+    }
+  </script>
+</body>
+</html>
