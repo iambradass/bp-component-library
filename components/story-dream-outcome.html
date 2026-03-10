@@ -1,0 +1,503 @@
+<!-- COMPONENT: Dream State First | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Story: Dream Outcome First</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── CUSTOMIZE BLOCK ─────────────────────────────────────────────────
+       --dream-bg:    cinematic opening section background color
+       --dream-orb-1: first atmospheric orb color
+       --dream-orb-2: second atmospheric orb color
+       ─────────────────────────────────────────────────────────────────── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+
+      /* CUSTOMIZE */
+      --dream-bg:       #060d16;
+      --dream-orb-1:    rgba(16,185,129,0.18);
+      --dream-orb-2:    rgba(99,102,241,0.12);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Progress bar ── */
+    #progress-bar {
+      position: fixed; top: 0; left: 0;
+      height: 3px; background: var(--accent); width: 0%;
+      z-index: 100;
+    }
+
+    /* ── Reveal ── */
+    .reveal {
+      opacity: 0; transform: translateY(24px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* ═══════════════════════════════════════════════
+       DREAM SCENE — full-width cinematic opener
+       ═══════════════════════════════════════════════ */
+    .dream-scene {
+      position: relative;
+      min-height: 100vh;
+      background: var(--dream-bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      padding: 4rem 2rem;
+    }
+
+    /* Atmospheric orbs */
+    .dream-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      animation: orb-drift 12s ease-in-out infinite alternate;
+      pointer-events: none;
+    }
+    .orb-1 {
+      width: 600px; height: 600px;
+      background: var(--dream-orb-1);
+      top: -15%; left: -10%;
+      animation-duration: 14s;
+    }
+    .orb-2 {
+      width: 400px; height: 400px;
+      background: var(--dream-orb-2);
+      bottom: -10%; right: 5%;
+      animation-duration: 10s;
+      animation-direction: alternate-reverse;
+    }
+    @keyframes orb-drift {
+      from { transform: translate(0, 0) scale(1); }
+      to   { transform: translate(40px, 30px) scale(1.05); }
+    }
+
+    .dream-content {
+      position: relative; z-index: 1;
+      max-width: 680px;
+      text-align: center;
+    }
+
+    .dream-time {
+      font-size: 0.875rem;
+      color: var(--accent);
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      margin-bottom: 2rem;
+      opacity: 0.8;
+    }
+
+    .dream-text {
+      font-family: var(--font-heading);
+      font-size: clamp(1.5rem, 4vw, 2.5rem);
+      font-weight: 400;
+      line-height: 1.55;
+      color: rgba(248,250,252,0.9);
+      letter-spacing: -0.01em;
+    }
+
+    .dream-text .highlight {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .dream-text .dim-word {
+      color: rgba(148,163,184,0.6);
+    }
+
+    /* Blinking cursor effect on the last line */
+    .dream-text .cursor::after {
+      content: '|';
+      color: var(--accent);
+      animation: blink 1s steps(1) infinite;
+      margin-left: 2px;
+    }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+    .dream-scroll-hint {
+      position: absolute;
+      bottom: 2rem; left: 50%;
+      transform: translateX(-50%);
+      display: flex; flex-direction: column;
+      align-items: center; gap: 0.5rem;
+      color: var(--text-muted);
+      font-size: 0.75rem; letter-spacing: 0.08em;
+      text-transform: uppercase;
+      animation: hint-fade 2s ease infinite;
+    }
+    @keyframes hint-fade { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+    .dream-scroll-hint svg { animation: bounce-down 2s ease infinite; }
+    @keyframes bounce-down { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(4px); } }
+
+    /* ═══════════════════════════════════════════════
+       REST OF PAGE — standard layout
+       ═══════════════════════════════════════════════ */
+    .story-wrap {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 80px 2rem 60px;
+    }
+
+    h2.section-h {
+      font-family: var(--font-heading);
+      font-size: 1.625rem; font-weight: 700;
+      color: var(--text); margin: 3rem 0 1rem;
+    }
+
+    .prose p { color: var(--text-secondary); margin-bottom: 1.25rem; line-height: 1.75; }
+    .prose strong { color: var(--text); }
+    .accent-text { color: var(--accent); font-weight: 600; }
+
+    /* Reality check divider */
+    .reality-divider {
+      margin: 4rem 0;
+      display: flex; align-items: center; gap: 1.5rem;
+      text-align: center;
+    }
+    .reality-divider::before, .reality-divider::after {
+      content: ''; flex: 1; height: 1px;
+      background: var(--border);
+    }
+    .reality-divider-inner {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.75rem 1.5rem;
+      white-space: nowrap;
+    }
+    .reality-divider-inner span {
+      font-family: var(--font-heading);
+      font-size: 0.8125rem; font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    /* Mini profile cards — who's living this */
+    .profiles-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem; margin: 1.5rem 0;
+    }
+    .profile-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+    }
+    .profile-avatar {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-border);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-heading); font-weight: 700;
+      color: var(--accent); font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+    }
+    .profile-name {
+      font-family: var(--font-heading);
+      font-size: 0.9375rem; font-weight: 600;
+      color: var(--text); margin-bottom: 0.25rem;
+    }
+    .profile-role {
+      font-size: 0.8125rem; color: var(--text-muted);
+      margin-bottom: 0.75rem;
+    }
+    .profile-stat {
+      font-size: 0.8125rem; color: var(--text-secondary);
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border);
+    }
+    .profile-stat strong { color: var(--accent); }
+
+    /* Roadmap */
+    .roadmap {
+      margin: 1.5rem 0;
+      display: flex; flex-direction: column; gap: 0;
+      counter-reset: roadmap;
+    }
+    .roadmap-step {
+      display: flex; gap: 1.25rem;
+      align-items: flex-start;
+      padding: 1.25rem 0;
+      border-bottom: 1px solid var(--border);
+      opacity: 0; transform: translateX(-12px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+    .roadmap-step:last-child { border-bottom: none; }
+    .roadmap-step.visible { opacity: 1; transform: translateX(0); }
+    .step-num {
+      min-width: 36px; height: 36px;
+      border-radius: 50%;
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-border);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-heading); font-weight: 700;
+      color: var(--accent); font-size: 0.875rem;
+    }
+    .step-title {
+      font-family: var(--font-heading);
+      font-size: 0.9375rem; font-weight: 600;
+      color: var(--text); margin-bottom: 0.25rem;
+    }
+    .step-desc { font-size: 0.875rem; color: var(--text-secondary); line-height: 1.6; }
+
+    /* Offer section */
+    .offer-box {
+      background: var(--surface);
+      border: 1px solid var(--accent-border);
+      border-radius: 16px;
+      padding: 2.5rem;
+      margin: 2.5rem 0;
+      position: relative;
+      overflow: hidden;
+    }
+    .offer-box::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(circle at 50% 0%, rgba(16,185,129,0.08), transparent 60%);
+      pointer-events: none;
+    }
+    .offer-eyebrow {
+      font-size: 0.75rem; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 0.75rem;
+    }
+    .offer-headline {
+      font-family: var(--font-heading);
+      font-size: 1.5rem; font-weight: 700;
+      color: var(--text); margin-bottom: 0.75rem;
+    }
+    .offer-price {
+      font-family: var(--font-heading);
+      font-size: 2.5rem; font-weight: 700;
+      color: var(--accent); margin-bottom: 0.5rem;
+    }
+    .offer-desc { font-size: 0.9375rem; color: var(--text-secondary); margin-bottom: 1.5rem; }
+    .offer-btn {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: var(--accent); color: #0D1117;
+      font-family: var(--font-heading); font-size: 1rem;
+      font-weight: 700; padding: 0.85rem 2rem;
+      border-radius: 100px; text-decoration: none;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 20px rgba(16,185,129,0.3);
+    }
+    .offer-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(16,185,129,0.4); }
+
+    @media (max-width: 600px) {
+      .dream-text { font-size: 1.375rem; }
+      .story-wrap { padding: 60px 1.25rem 60px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="progress-bar"></div>
+
+  <!-- ══ DREAM SCENE ══ -->
+  <section class="dream-scene">
+    <div class="dream-orb orb-1"></div>
+    <div class="dream-orb orb-2"></div>
+
+    <div class="dream-content">
+      <div class="dream-time">Tuesday, 7:12 AM</div>
+      <p class="dream-text">
+        Your phone buzzes. <span class="highlight">Another lead from your website.</span> A Keller Williams agent in Southlake — never met her — she found you on Google, read your bio, and wants to schedule a closing.<br><br>
+        <span class="dim-word">You're still in bed.</span><br><br>
+        By the time you make coffee, <span class="highlight">two more.</span><br><br>
+        This is <span class="highlight">your Tuesday</span><span class="cursor"></span>
+      </p>
+    </div>
+
+    <div class="dream-scroll-hint">
+      <span>Scroll to see how</span>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
+    </div>
+  </section>
+
+  <!-- ══ Main story content ══ -->
+  <div class="story-wrap">
+
+    <!-- Expand the dream -->
+    <h2 class="section-h reveal">What Your Year Looks Like When This Is Normal</h2>
+    <div class="prose reveal">
+      <p>Let's stay in that Tuesday for a moment. Not because it's unusual — but because it becomes your baseline. The Tuesday where you wake up to warm leads. The Tuesday where your Google Business profile shows 47 visitors overnight. The Tuesday where an agent you've never cold-called schedules a meeting because she found you first.</p>
+      <p>Now multiply that by 52. That's a year where <strong>your website does outreach while you sleep</strong>, where your name appears when agents search your market, where you close transactions with people who chose you specifically — not because you bought them lunch, but because your digital presence made the strongest case.</p>
+      <p><span class="accent-text">This is what $500,000 in commissions looks like for a title rep</span> who decided to stop being invisible and start being searchable.</p>
+    </div>
+
+    <!-- "Not a fantasy" -->
+    <div class="reality-divider reveal">
+      <div class="reality-divider-inner">
+        <span>This isn't a fantasy — it's a pattern</span>
+      </div>
+    </div>
+
+    <!-- Who's already living this -->
+    <h2 class="section-h reveal">Title Reps Already Living This</h2>
+    <div class="prose reveal">
+      <p>These aren't exceptional reps who got lucky breaks. They're good at their jobs and they built the right infrastructure.</p>
+    </div>
+
+    <div class="profiles-grid reveal">
+      <div class="profile-card">
+        <div class="profile-avatar">LM</div>
+        <div class="profile-name">Lisa M.</div>
+        <div class="profile-role">Title Rep · Fort Worth, TX</div>
+        <div class="profile-stat">Went from 0 to <strong>14 inbound leads/month</strong> in 60 days of launch.</div>
+      </div>
+      <div class="profile-card">
+        <div class="profile-avatar">MR</div>
+        <div class="profile-name">Marcus R.</div>
+        <div class="profile-role">Title Rep · Austin, TX</div>
+        <div class="profile-stat">Closed <strong>$62K in additional commissions</strong> in his first 6 months with a web presence.</div>
+      </div>
+      <div class="profile-card">
+        <div class="profile-avatar">CT</div>
+        <div class="profile-name">Carla T.</div>
+        <div class="profile-role">Title Rep · Dallas, TX</div>
+        <div class="profile-stat">Ranks <strong>Page 1 on Google</strong> for her city — receives 3–5 inbound calls per week from agents she's never met.</div>
+      </div>
+    </div>
+
+    <!-- Why most don't get here -->
+    <h2 class="section-h reveal">Why Most Reps Never Get Here</h2>
+    <div class="prose reveal">
+      <p>It's not ability. It's not market. It's not even effort — most reps work incredibly hard. The gap is simpler than that: <strong>most reps rely entirely on relationships they have to build one at a time</strong>, and they never build the asset that works whether they're at a closing, at dinner, or on vacation.</p>
+      <p>They mean to build a website. They tried once and it didn't look right. They asked their company's marketing team and got something generic. They planned to "do it soon" for two years.</p>
+      <p>Meanwhile, the 3% of reps who have a professional digital presence quietly absorb the leads their invisible colleagues never see.</p>
+    </div>
+
+    <!-- The specific path (roadmap) -->
+    <h2 class="section-h reveal">The Specific Path to Get There</h2>
+    <div class="prose reveal">
+      <p>There's nothing mysterious about how this works. It's a set of specific components, built in the right order, that compound over time.</p>
+    </div>
+
+    <div class="roadmap reveal" id="roadmap">
+      <div class="roadmap-step">
+        <div class="step-num">1</div>
+        <div>
+          <div class="step-title">Your own domain — independent of any company</div>
+          <div class="step-desc">yourname.com or yournametitle.com. You own it forever. If you switch companies tomorrow, your presence travels with you.</div>
+        </div>
+      </div>
+      <div class="roadmap-step">
+        <div class="step-num">2</div>
+        <div>
+          <div class="step-title">A professionally written, SEO-optimized website</div>
+          <div class="step-desc">Not a template — a site that tells your story, lists your service areas, and ranks when agents search your name and city.</div>
+        </div>
+      </div>
+      <div class="roadmap-step">
+        <div class="step-num">3</div>
+        <div>
+          <div class="step-title">Google Business Profile — configured correctly</div>
+          <div class="step-desc">This is the single most important local ranking signal. Most reps either don't have one or haven't optimized it. This is where Page 1 rankings come from.</div>
+        </div>
+      </div>
+      <div class="roadmap-step">
+        <div class="step-num">4</div>
+        <div>
+          <div class="step-title">Lead capture system</div>
+          <div class="step-desc">A contact form that goes somewhere. An automated acknowledgment that makes the experience feel professional. A follow-up sequence in your CRM so nothing falls through the cracks.</div>
+        </div>
+      </div>
+      <div class="roadmap-step">
+        <div class="step-num">5</div>
+        <div>
+          <div class="step-title">Credibility assets — reviews, bio, transaction history</div>
+          <div class="step-desc">The things that make an agent say "I want to work with this person" before they've even spoken to you. Built into the site from day one.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- The offer -->
+    <div class="offer-box reveal">
+      <div class="offer-eyebrow">Done For You — Live in 3 Weeks</div>
+      <div class="offer-headline">We Build the Whole System.<br>You Show Up to the Closings.</div>
+      <div class="offer-price">$1,497</div>
+      <p class="offer-desc">One-time setup fee covers everything: domain, design, copy, Google Business Profile, lead capture, and launch. Then $99/month for hosting and ongoing maintenance. We handle every piece so you don't have to.</p>
+      <a class="offer-btn" href="#">
+        Start Building Your Dream Tuesday
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+      </a>
+    </div>
+
+    <div class="prose reveal" style="text-align: center; padding: 1rem 0 2rem;">
+      <p>4 client spots open per month. We're booking <strong>2 weeks out</strong> for April.</p>
+    </div>
+
+  </div>
+
+  <script>
+  (function() {
+    'use strict';
+
+    /* ── Progress bar ── */
+    var bar = document.getElementById('progress-bar');
+    window.addEventListener('scroll', function() {
+      var total = document.documentElement.scrollHeight - window.innerHeight;
+      bar.style.width = (total > 0 ? (window.scrollY / total) * 100 : 0) + '%';
+    }, { passive: true });
+
+    /* ── General reveal ── */
+    var obs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(e) {
+        if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
+      });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal').forEach(function(el) {
+      obs.observe(el);
+      if (el.getBoundingClientRect().top < window.innerHeight) el.classList.add('visible');
+    });
+
+    /* ── Roadmap step stagger ── */
+    var rmObs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(e) {
+        if (e.isIntersecting) {
+          e.target.querySelectorAll('.roadmap-step').forEach(function(step, i) {
+            setTimeout(function() { step.classList.add('visible'); }, i * 120);
+          });
+          rmObs.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.05 });
+    var rm = document.getElementById('roadmap');
+    if (rm) rmObs.observe(rm);
+
+  })();
+  </script>
+
+</body>
+</html>

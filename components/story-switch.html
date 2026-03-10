@@ -1,0 +1,579 @@
+<!-- COMPONENT: The Switching Story | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Story: The Switching Story — Why Previous Attempts Failed</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── CUSTOMIZE BLOCK ─────────────────────────────────────────────────
+       --failed-bg:   background for "failed alternatives" empathy cards
+       --key-insight-bg: special section for the key insight reveal
+       ─────────────────────────────────────────────────────────────────── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+
+      /* CUSTOMIZE */
+      --column-width:   740px;
+      --failed-bg:      rgba(148,163,184,0.04);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Progress bar ── */
+    #progress-bar {
+      position: fixed; top: 0; left: 0;
+      height: 3px; background: var(--accent); width: 0%;
+      z-index: 100;
+    }
+
+    /* ── Reveal ── */
+    .reveal {
+      opacity: 0; transform: translateY(20px);
+      transition: opacity 0.65s ease, transform 0.65s ease;
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* ── Layout ── */
+    .story-wrap {
+      max-width: var(--column-width);
+      margin: 0 auto;
+      padding: 80px 2rem 100px;
+    }
+
+    /* ── Hero ── */
+    .hero-eyebrow {
+      font-size: 0.75rem; font-weight: 600;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 1rem;
+    }
+    h1.hero-title {
+      font-family: var(--font-heading);
+      font-size: clamp(2rem, 4.5vw, 2.875rem);
+      font-weight: 700; line-height: 1.15;
+      letter-spacing: -0.02em; color: var(--text);
+      margin-bottom: 1.25rem;
+    }
+    .hero-sub {
+      font-size: 1.125rem; color: var(--text-secondary);
+      line-height: 1.65; margin-bottom: 2.5rem;
+    }
+
+    h2.section-h {
+      font-family: var(--font-heading);
+      font-size: 1.5rem; font-weight: 700;
+      color: var(--text); margin: 3.5rem 0 1rem;
+    }
+
+    .prose p { color: var(--text-secondary); margin-bottom: 1.25rem; line-height: 1.75; }
+    .prose strong { color: var(--text); }
+    .accent-text { color: var(--accent); font-weight: 600; }
+
+    /* ── Failed alternatives — empathy cards ── */
+    .alternatives-grid {
+      display: flex; flex-direction: column;
+      gap: 0.875rem; margin: 1.5rem 0;
+    }
+    .alt-card {
+      background: var(--failed-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      opacity: 0; transform: translateY(12px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+    .alt-card.visible { opacity: 1; transform: translateY(0); }
+    .alt-card-top {
+      display: flex; gap: 1rem; align-items: flex-start;
+      margin-bottom: 0.75rem;
+    }
+    .alt-icon {
+      width: 40px; height: 40px; min-width: 40px;
+      border-radius: 10px;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.125rem;
+    }
+    .alt-name {
+      font-family: var(--font-heading);
+      font-size: 0.9375rem; font-weight: 700;
+      color: var(--text); margin-bottom: 0.15rem;
+    }
+    .alt-attempt {
+      font-size: 0.8125rem; color: var(--text-muted);
+      font-style: italic;
+    }
+    .alt-empathy {
+      font-size: 0.9rem; color: var(--text-secondary);
+      line-height: 1.65; padding-left: 0;
+      border-top: 1px solid var(--border);
+      padding-top: 0.75rem;
+    }
+    .alt-why-fail {
+      display: inline-block;
+      margin-top: 0.6rem;
+      font-size: 0.8125rem; font-weight: 600;
+      color: #FCA5A5;
+      background: rgba(239,68,68,0.08);
+      border: 1px solid rgba(239,68,68,0.2);
+      border-radius: 6px;
+      padding: 2px 10px;
+    }
+
+    /* ── Comparison matrix ── */
+    .matrix-wrap {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin: 1.5rem 0;
+      overflow-x: auto;
+    }
+    .matrix-table {
+      width: 100%; border-collapse: collapse;
+      min-width: 520px;
+    }
+    .matrix-table th {
+      background: var(--elevated);
+      padding: 0.75rem 1rem;
+      font-family: var(--font-heading);
+      font-size: 0.75rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      text-align: center;
+    }
+    .matrix-table th:first-child { text-align: left; }
+    .matrix-table td {
+      padding: 0.75rem 1rem;
+      font-size: 0.875rem;
+      border-bottom: 1px solid var(--border);
+      text-align: center;
+    }
+    .matrix-table tr:last-child td { border-bottom: none; }
+    .matrix-table td:first-child {
+      text-align: left; color: var(--text-secondary);
+    }
+    .matrix-table th:last-child,
+    .matrix-table td:last-child {
+      background: var(--accent-dim);
+      color: var(--accent);
+      font-weight: 600;
+      border-left: 1px solid var(--accent-border);
+    }
+    .check { color: var(--accent); }
+    .cross { color: #F87171; }
+
+    /* ── KEY INSIGHT section — visually distinct ── */
+    .key-insight {
+      margin: 4rem -2rem;
+      padding: 4rem 2rem;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      text-align: center;
+    }
+    .ki-label {
+      font-size: 0.75rem; font-weight: 700;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 1.5rem;
+      display: flex; align-items: center; justify-content: center; gap: 0.75rem;
+    }
+    .ki-label::before, .ki-label::after {
+      content: ''; display: block; height: 1px; width: 40px;
+      background: var(--accent-border);
+    }
+    .ki-quote {
+      font-family: var(--font-heading);
+      font-size: clamp(1.375rem, 3.5vw, 2rem);
+      font-weight: 700; line-height: 1.35;
+      color: var(--text); max-width: 560px;
+      margin: 0 auto 1.25rem;
+    }
+    .ki-quote span { color: var(--accent); }
+    .ki-body {
+      font-size: 1rem; color: var(--text-secondary);
+      line-height: 1.7; max-width: 520px;
+      margin: 0 auto;
+    }
+
+    /* ── Skeptic-to-believer testimonials ── */
+    .skeptic-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem; margin: 1.5rem 0;
+    }
+    .skeptic-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+    }
+    .skeptic-before {
+      font-size: 0.8125rem; color: #FCA5A5;
+      background: rgba(239,68,68,0.06);
+      border: 1px solid rgba(239,68,68,0.15);
+      border-radius: 6px;
+      padding: 0.5rem 0.75rem;
+      margin-bottom: 0.75rem;
+      font-style: italic;
+    }
+    .skeptic-after {
+      font-size: 0.875rem; color: var(--text-secondary);
+      line-height: 1.6; font-style: italic;
+      margin-bottom: 0.875rem;
+    }
+    .skeptic-name {
+      font-size: 0.8125rem; font-weight: 600;
+      color: var(--accent);
+    }
+
+    /* ── Side by side then vs now ── */
+    .then-now {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 1rem; margin: 1.5rem 0;
+    }
+    .tn-col {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+    }
+    .tn-col.now-col { border-color: var(--accent-border); }
+    .tn-label {
+      font-family: var(--font-heading);
+      font-size: 0.75rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      margin-bottom: 1rem;
+    }
+    .tn-col:not(.now-col) .tn-label { color: var(--text-muted); }
+    .tn-col.now-col .tn-label { color: var(--accent); }
+    .tn-item {
+      display: flex; gap: 8px; align-items: flex-start;
+      padding: 0.5rem 0; border-bottom: 1px solid var(--border);
+      font-size: 0.875rem;
+    }
+    .tn-item:last-child { border-bottom: none; }
+    .tn-col:not(.now-col) .tn-item { color: var(--text-muted); }
+    .tn-col.now-col .tn-item { color: var(--text-secondary); }
+    .tn-dot-bad  { color: #F87171; margin-top: 1px; flex-shrink: 0; }
+    .tn-dot-good { color: var(--accent); margin-top: 1px; flex-shrink: 0; }
+
+    /* ── CTA ── */
+    .cta-wrap { text-align: center; margin: 3rem 0; }
+    .cta-btn {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: var(--accent); color: #0D1117;
+      font-family: var(--font-heading); font-size: 1.0625rem;
+      font-weight: 700; padding: 0.9rem 2.25rem;
+      border-radius: 100px; text-decoration: none;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 20px rgba(16,185,129,0.3);
+    }
+    .cta-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(16,185,129,0.4); }
+
+    /* ── Risk removal ── */
+    .risk-box {
+      display: flex; gap: 1.25rem; align-items: flex-start;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.5rem; margin: 1.5rem 0;
+    }
+    .risk-icon {
+      width: 48px; height: 48px; min-width: 48px;
+      border-radius: 50%; background: var(--accent-dim);
+      border: 1px solid var(--accent-border);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--accent);
+    }
+
+    @media (max-width: 600px) {
+      .story-wrap { padding: 60px 1.25rem 80px; }
+      .key-insight { margin: 4rem -1.25rem; padding: 3rem 1.25rem; }
+      .then-now { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="progress-bar"></div>
+
+  <div class="story-wrap">
+
+    <!-- ── Hero ── -->
+    <div class="reveal">
+      <div class="hero-eyebrow">For the Skeptic Who's Been Burned Before</div>
+      <h1 class="hero-title">You've Already Tried This. Here's Why It Didn't Work — and Why This Is Fundamentally Different.</h1>
+      <p class="hero-sub">This page is written for the title rep who's already invested time or money in "digital marketing" and got nothing back. Your skepticism is valid. And there's a specific reason those attempts failed that has nothing to do with your effort.</p>
+    </div>
+
+    <!-- ── Acknowledge failed attempts ── -->
+    <h2 class="section-h reveal">We Know What You've Already Tried</h2>
+    <div class="prose reveal">
+      <p>Before we talk about why this is different, let's acknowledge what you've probably already done — and why each of those attempts was set up to fail. This isn't a critique. <strong>These tools weren't built for what you need.</strong></p>
+    </div>
+
+    <div class="alternatives-grid reveal" id="alt-grid">
+      <div class="alt-card">
+        <div class="alt-card-top">
+          <div class="alt-icon">🏢</div>
+          <div>
+            <div class="alt-name">Your Company's Website / Profile Page</div>
+            <div class="alt-attempt">Probably still your first hit when you Google yourself</div>
+          </div>
+        </div>
+        <div class="alt-empathy">We get it — it's there, it was free, and it's better than nothing. But that page exists to market the company, not you. Your name is listed alongside 10–20 other reps. There's no lead capture tied to you specifically. If you leave that company tomorrow, the page disappears with you.</div>
+        <span class="alt-why-fail">Can't rank for your name independently · Not yours to keep</span>
+      </div>
+      <div class="alt-card">
+        <div class="alt-card-top">
+          <div class="alt-icon">📘</div>
+          <div>
+            <div class="alt-name">Facebook Business Page</div>
+            <div class="alt-attempt">Posted consistently for 3 weeks, then it got quiet</div>
+          </div>
+        </div>
+        <div class="alt-empathy">Facebook doesn't rank you on Google for local searches. It's a social platform — it surfaces content to people who already follow you. If a new agent in your city searches "title rep Fort Worth," your Facebook page won't appear. You're speaking to an existing audience that's already seen your work, not capturing new ones.</div>
+        <span class="alt-why-fail">Invisible to search · Requires constant content to maintain</span>
+      </div>
+      <div class="alt-card">
+        <div class="alt-card-top">
+          <div class="alt-icon">📣</div>
+          <div>
+            <div class="alt-name">Social Media Management Service</div>
+            <div class="alt-attempt">Paid $300/mo, got generic posts that could be for a dentist</div>
+          </div>
+        </div>
+        <div class="alt-empathy">Generic social media doesn't build search presence or credibility. If the posts could have been written for any professional service — and they probably could have — they're not doing the specific work a title rep needs: establishing expertise, ranking on Google, capturing leads from people who are actively searching.</div>
+        <span class="alt-why-fail">Builds engagement, not searchability · Zero lead capture</span>
+      </div>
+      <div class="alt-card">
+        <div class="alt-card-top">
+          <div class="alt-icon">🎨</div>
+          <div>
+            <div class="alt-name">DIY Wix or Squarespace Site</div>
+            <div class="alt-attempt">Started it, never finished, or finished and embarrassed by it</div>
+          </div>
+        </div>
+        <div class="alt-empathy">DIY website tools are genuinely fine — for someone who has time to learn design, copywriting, and local SEO. For a title rep whose time is spent closing transactions, the result is usually: half-finished, poorly designed, with no SEO, no copy strategy, and not connected to any lead system. Looking amateur is worse than not being there at all.</div>
+        <span class="alt-why-fail">No SEO · Generic design · Hours of your time · Usually unpublished</span>
+      </div>
+      <div class="alt-card">
+        <div class="alt-card-top">
+          <div class="alt-icon">👨‍💻</div>
+          <div>
+            <div class="alt-name">Nephew / Friend / Cheap Freelancer</div>
+            <div class="alt-attempt">Built something technically live — but you don't want to share the link</div>
+          </div>
+        </div>
+        <div class="alt-empathy">We've heard this one more times than we can count. The site is live, yes. But it doesn't represent you the way you deserve, it has no SEO, and you're not comfortable sharing it with the agents you want to impress. A site you're embarrassed by actually does damage — it tells people what you don't want them to believe.</div>
+        <span class="alt-why-fail">No copywriting expertise · No SEO strategy · Hard to maintain</span>
+      </div>
+    </div>
+
+    <!-- ── Why they fail (systemic) ── -->
+    <h2 class="section-h reveal">It Was Never Your Fault</h2>
+    <div class="prose reveal">
+      <p>Every one of those failed attempts has something in common: <strong>none of them were built around the specific combination of elements a title rep needs to rank, convert, and build credibility</strong>. They're general tools used for a specialized job.</p>
+      <p>Building a local professional web presence that actually generates leads requires: your own domain, professional design, copy written specifically for your market, local SEO configuration, a functioning Google Business Profile, and a lead capture system — all working together. No single tool does all of that. And most people building "websites" are building the design part and ignoring the other six.</p>
+    </div>
+
+    <!-- ── Comparison matrix ── -->
+    <div class="matrix-wrap reveal">
+      <table class="matrix-table">
+        <thead>
+          <tr>
+            <th>What matters for lead generation</th>
+            <th>Facebook Page</th>
+            <th>DIY Site</th>
+            <th>Company Page</th>
+            <th>This Service</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Ranks on Google for your name + city</td>
+            <td class="cross">✕</td>
+            <td class="cross">Rarely</td>
+            <td class="cross">Company only</td>
+            <td class="check">✓</td>
+          </tr>
+          <tr>
+            <td>You own it forever (no company dependency)</td>
+            <td class="cross">✕</td>
+            <td class="check">✓</td>
+            <td class="cross">✕</td>
+            <td class="check">✓</td>
+          </tr>
+          <tr>
+            <td>Professional copy written for title reps</td>
+            <td class="cross">✕</td>
+            <td class="cross">✕</td>
+            <td class="cross">✕</td>
+            <td class="check">✓</td>
+          </tr>
+          <tr>
+            <td>Google Business Profile optimized</td>
+            <td class="cross">✕</td>
+            <td class="cross">✕</td>
+            <td class="cross">✕</td>
+            <td class="check">✓</td>
+          </tr>
+          <tr>
+            <td>Lead capture with CRM integration</td>
+            <td class="cross">✕</td>
+            <td class="cross">Rarely</td>
+            <td class="cross">✕</td>
+            <td class="check">✓</td>
+          </tr>
+          <tr>
+            <td>Live in 3 weeks, no work on your end</td>
+            <td class="check">✓</td>
+            <td class="cross">✕</td>
+            <td class="check">✓</td>
+            <td class="check">✓</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ── Key insight ── -->
+    <div class="key-insight reveal">
+      <div class="ki-label">The Key Insight</div>
+      <p class="ki-quote">A website isn't the product. <span>A complete, rankable, lead-generating system</span> is the product. Most "website services" only build one piece of it.</p>
+      <p class="ki-body">The reason previous attempts haven't worked isn't the tools — it's that each one addressed only one part of the problem. Design without SEO. Content without lead capture. Presence without authority. What actually works is all of it, built correctly, by someone who understands the title business specifically.</p>
+    </div>
+
+    <!-- ── Skeptic to believer testimonials ── -->
+    <h2 class="section-h reveal">People Who Said "I've Tried This Before"</h2>
+    <div class="skeptic-grid reveal">
+      <div class="skeptic-card">
+        <div class="skeptic-before">"I've already spent money on this. I'm not doing it again."</div>
+        <p class="skeptic-after">"Two months later I was on page one of Google and getting 3 inbound leads a week. I wish I'd done this instead of the other stuff."</p>
+        <div class="skeptic-name">— Marcus D., Austin TX</div>
+      </div>
+      <div class="skeptic-card">
+        <div class="skeptic-before">"My nephew built me a site. It's fine."</div>
+        <p class="skeptic-after">"It wasn't fine — I just didn't know what 'fine' looked like. After seeing the difference in inbound leads, I understood what I'd been missing."</p>
+        <div class="skeptic-name">— Carla R., Dallas TX</div>
+      </div>
+      <div class="skeptic-card">
+        <div class="skeptic-before">"My company already has a website with my bio on it."</div>
+        <p class="skeptic-after">"That bio disappeared when I moved companies. My own domain stayed with me. That was a $20K lesson about why ownership matters."</p>
+        <div class="skeptic-name">— Sarah P., Houston TX</div>
+      </div>
+    </div>
+
+    <!-- ── Side by side then vs now ── -->
+    <h2 class="section-h reveal">Then vs. Now</h2>
+    <div class="then-now reveal">
+      <div class="tn-col">
+        <div class="tn-label">What They Had Before</div>
+        <div class="tn-item"><span class="tn-dot-bad">✕</span> Company page with 12 other reps listed</div>
+        <div class="tn-item"><span class="tn-dot-bad">✕</span> Facebook page, last post 3 months ago</div>
+        <div class="tn-item"><span class="tn-dot-bad">✕</span> DIY website they were embarrassed to share</div>
+        <div class="tn-item"><span class="tn-dot-bad">✕</span> 0 inbound leads per month</div>
+        <div class="tn-item"><span class="tn-dot-bad">✕</span> Page 4 on Google for their own name</div>
+      </div>
+      <div class="tn-col now-col">
+        <div class="tn-label">What They Have Now</div>
+        <div class="tn-item"><span class="tn-dot-good">✓</span> Personal domain — theirs forever, any company</div>
+        <div class="tn-item"><span class="tn-dot-good">✓</span> Professional site they send agents to confidently</div>
+        <div class="tn-item"><span class="tn-dot-good">✓</span> Google Business Profile — Page 1 rankings</div>
+        <div class="tn-item"><span class="tn-dot-good">✓</span> 8–14 inbound leads per month</div>
+        <div class="tn-item"><span class="tn-dot-good">✓</span> Lead capture → CRM → automated follow-up</div>
+      </div>
+    </div>
+
+    <!-- ── Risk removal ── -->
+    <div class="risk-box reveal">
+      <div class="risk-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <div>
+        <strong style="color: var(--text);">60-Day First Lead Guarantee</strong>
+        <p style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.5rem;">If you don't receive at least one inbound lead through your new site within 60 days of launch, we rebuild and keep working until you do. If you've been burned before, this removes the risk of being burned again.</p>
+      </div>
+    </div>
+
+    <!-- ── Invitation ── -->
+    <h2 class="section-h reveal">An Invitation, Not a Pitch</h2>
+    <div class="prose reveal">
+      <p>If you've read this far, you're at least curious — and your skepticism probably means you care enough about your business to get this right rather than just check a box. That's the exact mindset that leads to real results.</p>
+      <p>Schedule a 20-minute call. Come with your questions, your objections, and your past experiences. We'll show you exactly what we'd build for you and why it works differently than what you've tried before.</p>
+    </div>
+
+    <div class="cta-wrap reveal">
+      <a class="cta-btn" href="#">
+        Schedule Your 20-Min Call
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+      </a>
+      <p style="margin-top: 0.75rem; font-size: 0.8125rem; color: var(--text-muted);">No commitment. Come skeptical. Leave informed.</p>
+    </div>
+
+  </div>
+
+  <script>
+  (function() {
+    'use strict';
+
+    /* ── Progress bar ── */
+    var bar = document.getElementById('progress-bar');
+    window.addEventListener('scroll', function() {
+      var total = document.documentElement.scrollHeight - window.innerHeight;
+      bar.style.width = (total > 0 ? (window.scrollY / total) * 100 : 0) + '%';
+    }, { passive: true });
+
+    /* ── General reveal ── */
+    var obs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(e) {
+        if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
+      });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal').forEach(function(el) {
+      obs.observe(el);
+      if (el.getBoundingClientRect().top < window.innerHeight) el.classList.add('visible');
+    });
+
+    /* ── Alt cards staggered reveal ── */
+    var altObs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(e) {
+        if (e.isIntersecting) {
+          e.target.querySelectorAll('.alt-card').forEach(function(card, i) {
+            setTimeout(function() { card.classList.add('visible'); }, i * 80);
+          });
+          altObs.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.05 });
+    var ag = document.getElementById('alt-grid');
+    if (ag) altObs.observe(ag);
+
+  })();
+  </script>
+
+</body>
+</html>

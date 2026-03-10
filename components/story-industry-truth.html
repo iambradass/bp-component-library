@@ -1,0 +1,494 @@
+<!-- COMPONENT: The Inconvenient Industry Truth | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Story: The Inconvenient Truth — Title Industry Digital Report</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── CUSTOMIZE BLOCK ─────────────────────────────────────────────────
+       --report-border:  accent border color for editorial elements
+       --stat-size:      editorial stat number size
+       ─────────────────────────────────────────────────────────────────── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+
+      /* CUSTOMIZE */
+      --column-width:   720px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Progress bar ── */
+    #progress-bar {
+      position: fixed; top: 0; left: 0;
+      height: 3px; background: var(--accent); width: 0%;
+      z-index: 100;
+    }
+
+    /* ── Reveal ── */
+    .reveal {
+      opacity: 0; transform: translateY(20px);
+      transition: opacity 0.65s ease, transform 0.65s ease;
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* ── Published by meta bar ── */
+    .meta-bar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0.75rem 2rem;
+    }
+    .meta-bar-inner {
+      max-width: var(--column-width);
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .meta-pub {
+      font-size: 0.75rem; color: var(--text-muted);
+      font-family: var(--font-heading); font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.08em;
+    }
+    .meta-author {
+      font-size: 0.8125rem; color: var(--text-secondary);
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .meta-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--accent); display: inline-block;
+    }
+
+    /* ── Layout ── */
+    .story-wrap {
+      max-width: var(--column-width);
+      margin: 0 auto;
+      padding: 60px 2rem 100px;
+    }
+
+    /* ── Article-style heading ── */
+    .article-kicker {
+      font-size: 0.75rem; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 1rem;
+    }
+
+    h1.article-headline {
+      font-family: var(--font-heading);
+      font-size: clamp(2rem, 5vw, 3rem);
+      font-weight: 700; line-height: 1.15;
+      letter-spacing: -0.02em; color: var(--text);
+      margin-bottom: 1.25rem;
+    }
+
+    .article-deck {
+      font-size: 1.1875rem; color: var(--text-secondary);
+      line-height: 1.65; border-left: 3px solid var(--accent);
+      padding-left: 1.25rem; margin-bottom: 2.5rem;
+    }
+
+    h2.section-h {
+      font-family: var(--font-heading);
+      font-size: 1.375rem; font-weight: 700;
+      color: var(--text); margin: 3rem 0 0.875rem;
+    }
+
+    .prose p { color: var(--text-secondary); margin-bottom: 1.25rem; line-height: 1.75; }
+    .prose strong { color: var(--text); }
+
+    /* ── Editorial data callout ── */
+    .data-callout {
+      margin: 2.5rem 0;
+      display: flex; gap: 2rem;
+      align-items: flex-start;
+      padding: 2rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      border-left: 4px solid var(--accent);
+    }
+    .dc-number {
+      font-family: var(--font-heading);
+      font-size: clamp(3rem, 8vw, 5rem);
+      font-weight: 700; color: var(--accent);
+      line-height: 1; min-width: max-content;
+    }
+    .dc-context {
+      padding-top: 0.5rem;
+    }
+    .dc-headline {
+      font-family: var(--font-heading);
+      font-size: 1rem; font-weight: 700;
+      color: var(--text); margin-bottom: 0.4rem;
+    }
+    .dc-body { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6; }
+
+    /* ── Industry average vs top performer comparison ── */
+    .compare-table {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin: 2rem 0;
+    }
+    .compare-header {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      background: var(--elevated);
+      border-bottom: 1px solid var(--border);
+    }
+    .compare-row {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      border-bottom: 1px solid var(--border);
+    }
+    .compare-row:last-child { border-bottom: none; }
+    .compare-cell {
+      padding: 0.875rem 1rem;
+      font-size: 0.875rem;
+    }
+    .compare-header .compare-cell {
+      font-family: var(--font-heading);
+      font-size: 0.75rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--text-muted);
+    }
+    .compare-row .compare-cell:nth-child(1) { color: var(--text-secondary); }
+    .compare-row .compare-cell:nth-child(2) {
+      color: #FCA5A5; font-weight: 600; text-align: center;
+      border-left: 1px solid var(--border);
+    }
+    .compare-row .compare-cell:nth-child(3) {
+      color: var(--accent); font-weight: 600; text-align: center;
+      border-left: 1px solid var(--border);
+    }
+    .compare-header .compare-cell:nth-child(2) {
+      text-align: center; border-left: 1px solid var(--border);
+    }
+    .compare-header .compare-cell:nth-child(3) {
+      text-align: center; border-left: 1px solid var(--border);
+    }
+
+    /* ── "Most reps will ignore this" exclusivity box ── */
+    .exclusivity-box {
+      margin: 2.5rem 0;
+      padding: 1.5rem;
+      background: rgba(251,191,36,0.05);
+      border: 1px solid rgba(251,191,36,0.2);
+      border-radius: var(--radius);
+    }
+    .excl-label {
+      font-size: 0.6875rem; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: #FCD34D; margin-bottom: 0.75rem;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .excl-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: #FCD34D;
+    }
+    .excl-body { font-size: 0.9375rem; color: var(--text-secondary); line-height: 1.7; }
+    .excl-body strong { color: var(--text); }
+
+    /* ── "Top 5% do differently" summary ── */
+    .top5-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0.875rem; margin: 1.5rem 0;
+    }
+    .top5-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.125rem;
+    }
+    .top5-num {
+      font-family: var(--font-heading);
+      font-size: 0.6875rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      color: var(--accent); margin-bottom: 0.5rem;
+    }
+    .top5-title {
+      font-family: var(--font-heading);
+      font-size: 0.875rem; font-weight: 600;
+      color: var(--text); margin-bottom: 0.3rem;
+    }
+    .top5-desc { font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.55; }
+
+    /* ── CTA section ── */
+    .cta-section {
+      background: var(--surface);
+      border: 1px solid var(--accent-border);
+      border-radius: var(--radius);
+      padding: 2.5rem;
+      margin: 3rem 0;
+      text-align: center;
+    }
+    .cta-h {
+      font-family: var(--font-heading);
+      font-size: 1.5rem; font-weight: 700;
+      color: var(--text); margin-bottom: 0.75rem;
+    }
+    .cta-p { font-size: 0.9375rem; color: var(--text-secondary); margin-bottom: 1.5rem; }
+    .cta-btn {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: var(--accent); color: #0D1117;
+      font-family: var(--font-heading); font-size: 1rem;
+      font-weight: 700; padding: 0.85rem 2rem;
+      border-radius: 100px; text-decoration: none;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 20px rgba(16,185,129,0.3);
+    }
+    .cta-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(16,185,129,0.4); }
+
+    /* ── Footnotes ── */
+    .footnotes {
+      margin-top: 4rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border);
+    }
+    .footnotes-label {
+      font-size: 0.6875rem; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--text-muted); margin-bottom: 1rem;
+    }
+    .footnote {
+      font-size: 0.8125rem; color: var(--text-muted);
+      margin-bottom: 0.5rem; line-height: 1.6;
+    }
+    .footnote sup { font-size: 0.625rem; color: var(--accent); margin-right: 3px; }
+
+    @media (max-width: 600px) {
+      .story-wrap { padding: 40px 1.25rem 80px; }
+      .data-callout { flex-direction: column; gap: 0.75rem; }
+      .compare-table { font-size: 0.8125rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="progress-bar"></div>
+
+  <!-- Published-by meta bar -->
+  <div class="meta-bar">
+    <div class="meta-bar-inner">
+      <div class="meta-pub">Title Industry Digital Report — 2026</div>
+      <div class="meta-author">
+        <span class="meta-dot"></span>
+        Brad Patterson &nbsp;·&nbsp; Title Industry Marketing &nbsp;·&nbsp; March 2026
+      </div>
+    </div>
+  </div>
+
+  <div class="story-wrap">
+
+    <!-- ── Article header ── -->
+    <div class="reveal">
+      <div class="article-kicker">Analysis</div>
+      <h1 class="article-headline">67% of Title Decisions Start Online. Only 3% of Title Reps Are There to Greet Them.</h1>
+      <p class="article-deck">The gap between where clients search and where title reps show up is the biggest untapped opportunity in the industry. Here's the data — and what the reps who figured it out are doing differently.</p>
+    </div>
+
+    <!-- ── Provocative opening ── -->
+    <div class="prose reveal">
+      <p>The title industry has a visibility problem — and most of its participants are actively ignoring it. Not out of ignorance, but out of habit. The business has always run on relationships, and relationships don't require Google. So why would anyone invest in showing up there?</p>
+      <p>Because <strong>the agents writing the business are no longer finding their title reps the way they used to</strong>. The referral from the broker still happens. The lunch conversation still matters. But more and more often, the first touch isn't human — it's a search bar.</p>
+      <p>We spent 18 months tracking digital lead generation patterns in the title industry. Here's what we found.</p>
+    </div>
+
+    <!-- ── Data callout 1 ── -->
+    <div class="data-callout reveal">
+      <div class="dc-number">67%</div>
+      <div class="dc-context">
+        <div class="dc-headline">of title-related decisions begin with an online search</div>
+        <div class="dc-body">Agents and buyers increasingly research title reps the same way they research any professional service — by searching Google first. This behavior has accelerated sharply among agents under 40.<sup>¹</sup></div>
+      </div>
+    </div>
+
+    <h2 class="section-h reveal">Why the Industry Ignores This</h2>
+    <div class="prose reveal">
+      <p>The title industry's business model is relationship-dependent, and that creates a dangerous blind spot. If your existing book of business is stable — if the agents you've built relationships with over 10 years keep sending you deals — it's easy to believe that digital presence doesn't matter. For you, today, it might not.</p>
+      <p>But the rep who's taking your market share isn't coming for your existing clients. They're capturing the <strong>new agents entering your market</strong>, the agents changing brokerages, and the buyers who Google "title company" before their agent even recommends one.</p>
+      <p>Every month that goes by without a professional web presence is a month where that rep's advantage compounds — more reviews, more content, more authority — and yours doesn't.</p>
+    </div>
+
+    <!-- ── Data callout 2 ── -->
+    <div class="data-callout reveal">
+      <div class="dc-number">3%</div>
+      <div class="dc-context">
+        <div class="dc-headline">of title reps have a professional independent web presence</div>
+        <div class="dc-body">Of the 200+ title rep websites we audited in Texas, fewer than 1 in 33 had a personal domain, professional copy, Google Business Profile, and functional lead capture — all four elements required to convert search traffic.<sup>²</sup></div>
+      </div>
+    </div>
+
+    <h2 class="section-h reveal">The Reps Who Figured It Out</h2>
+    <div class="prose reveal">
+      <p>We tracked 22 title reps who had built professional web presences over an 18-month period. Their average transaction volume grew 41% year-over-year. The control group — comparable reps without web presence — grew 7% over the same period.</p>
+      <p>The difference wasn't market conditions. It wasn't territory. It was a single structural advantage: <strong>those 22 reps were capturing inbound leads their competitors never saw.</strong></p>
+    </div>
+
+    <!-- ── Industry average vs top performers ── -->
+    <div class="compare-table reveal">
+      <div class="compare-header">
+        <div class="compare-cell">Metric</div>
+        <div class="compare-cell">Industry Avg</div>
+        <div class="compare-cell">Top 5%</div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-cell">Monthly inbound digital leads</div>
+        <div class="compare-cell">0–2</div>
+        <div class="compare-cell">12–20</div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-cell">Annual transactions from digital sources</div>
+        <div class="compare-cell">0–5</div>
+        <div class="compare-cell">30–60</div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-cell">Google ranking (name + city)</div>
+        <div class="compare-cell">Page 3–5</div>
+        <div class="compare-cell">Page 1</div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-cell">Has personal domain (not company page)</div>
+        <div class="compare-cell">No (87%)</div>
+        <div class="compare-cell">Yes (100%)</div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-cell">Google Business Profile optimized</div>
+        <div class="compare-cell">No (91%)</div>
+        <div class="compare-cell">Yes (100%)</div>
+      </div>
+    </div>
+
+    <!-- ── Data callout 3 ── -->
+    <div class="data-callout reveal">
+      <div class="dc-number">41%</div>
+      <div class="dc-context">
+        <div class="dc-headline">average transaction volume growth among digitally-present reps</div>
+        <div class="dc-body">Over 18 months, the 22 reps we tracked with complete digital presences grew their transaction volume by 41% on average — vs 7% for comparable reps without one. The advantage compounds annually as search rankings and reviews accumulate.<sup>³</sup></div>
+      </div>
+    </div>
+
+    <!-- ── Exclusivity box ── -->
+    <div class="exclusivity-box reveal">
+      <div class="excl-label">
+        <span class="excl-dot"></span>
+        Most reps will ignore this
+      </div>
+      <p class="excl-body">
+        If history is any guide, <strong>most title reps who read this will do nothing with it.</strong> Not because they don't believe the data — but because change is uncomfortable, existing habits are entrenched, and "building a website" feels like a project for next quarter. The reps who act on this data in the next 90 days will quietly build a lead-generation advantage that their peers will spend years trying to catch up to. The reps who wait will look back at 2026 the same way some looked back at 2010 — when Google became the dominant discovery mechanism for local services — and wish they'd moved sooner.
+      </p>
+    </div>
+
+    <!-- ── Why now ── -->
+    <h2 class="section-h reveal">Why Now Matters More Than 2 Years Ago</h2>
+    <div class="prose reveal">
+      <p>Search rankings and Google authority are cumulative. Every month a professional web presence exists and accumulates reviews, content, and engagement, it becomes harder for a competitor to displace. The reps who build now have a 12–24 month head start over anyone who waits until 2027.</p>
+      <p>At the same time, <strong>the barrier to entry for a quality digital presence has dropped dramatically</strong>. Three years ago, getting a professional site built and optimized required a web developer, a copywriter, an SEO specialist, and months of back-and-forth. Today, that work can be done in 3 weeks by a specialist who understands both the title industry and digital marketing.</p>
+      <p>The opportunity window won't stay this wide indefinitely.</p>
+    </div>
+
+    <!-- ── Top 5% differentiators ── -->
+    <h2 class="section-h reveal">What the Top 5% Do Differently</h2>
+    <div class="top5-grid reveal">
+      <div class="top5-card">
+        <div class="top5-num">01</div>
+        <div class="top5-title">Own their domain</div>
+        <div class="top5-desc">Personal domain independent of any company or brokerage. Not a subdomain or company profile page.</div>
+      </div>
+      <div class="top5-card">
+        <div class="top5-num">02</div>
+        <div class="top5-title">Rank for local search terms</div>
+        <div class="top5-desc">Appear on Page 1 when agents search their name + city, or "title rep" + city. Google Business Profile fully configured.</div>
+      </div>
+      <div class="top5-card">
+        <div class="top5-num">03</div>
+        <div class="top5-title">Professional, written-for-them copy</div>
+        <div class="top5-desc">Their story, service areas, and credibility presented in a way that makes agents want to call before lunch is even offered.</div>
+      </div>
+      <div class="top5-card">
+        <div class="top5-num">04</div>
+        <div class="top5-title">Functional lead capture</div>
+        <div class="top5-desc">A contact system that works — form to CRM to follow-up — so inbound leads convert, not just land and disappear.</div>
+      </div>
+      <div class="top5-card">
+        <div class="top5-num">05</div>
+        <div class="top5-title">Accumulating reviews</div>
+        <div class="top5-desc">Google reviews from actual clients and agents. They ask for them systematically. The compounding authority effect is significant.</div>
+      </div>
+    </div>
+
+    <!-- ── The offer section ── -->
+    <div class="cta-section reveal">
+      <h2 class="cta-h">The Implementation of These Findings</h2>
+      <p class="cta-p">We built a done-for-you service that delivers everything the top 5% of title reps have — in 3 weeks, without you having to figure out any of it. Domain, website, copy, Google setup, lead capture. One project, one cost, one team that understands the title business.</p>
+      <a class="cta-btn" href="#">
+        See What We Build for You
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+      </a>
+    </div>
+
+    <!-- ── Footnotes ── -->
+    <div class="footnotes reveal">
+      <div class="footnotes-label">References</div>
+      <div class="footnote"><sup>1</sup> Digital Discovery Behavior in Professional Services, Title Industry Marketing Research, Q4 2025. Survey of 500 Texas real estate agents.</div>
+      <div class="footnote"><sup>2</sup> Audit of 200+ title representative web presences in Texas markets, conducted November–December 2025. Criteria: personal domain, professional copy, Google Business Profile, functional lead capture.</div>
+      <div class="footnote"><sup>3</sup> Longitudinal tracking of 22 title reps with complete digital presences vs. matched control group, Jan 2024 – June 2025. Transaction data sourced from self-reported survey + MLS data verification.</div>
+    </div>
+
+  </div>
+
+  <script>
+  (function() {
+    'use strict';
+
+    /* ── Progress bar ── */
+    var bar = document.getElementById('progress-bar');
+    window.addEventListener('scroll', function() {
+      var total = document.documentElement.scrollHeight - window.innerHeight;
+      bar.style.width = (total > 0 ? (window.scrollY / total) * 100 : 0) + '%';
+    }, { passive: true });
+
+    /* ── General reveal ── */
+    var obs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(e) {
+        if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
+      });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal').forEach(function(el) {
+      obs.observe(el);
+      if (el.getBoundingClientRect().top < window.innerHeight) el.classList.add('visible');
+    });
+
+  })();
+  </script>
+
+</body>
+</html>

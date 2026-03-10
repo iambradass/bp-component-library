@@ -1,0 +1,752 @@
+<!-- COMPONENT: Cohort Launch Story | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Story: Cohort Offer — 10 Reps, 30 Days</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── CUSTOMIZE BLOCK ─────────────────────────────────────────────────
+       --cohort-spots:  total spots in cohort (update data-spots on HTML too)
+       --cohort-filled: spots already filled (update data-filled on HTML too)
+       --launch-date:   cohort start date (update countdown target too)
+       ─────────────────────────────────────────────────────────────────── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+
+      /* CUSTOMIZE */
+      --column-width: 760px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Progress bar ── */
+    #progress-bar {
+      position: fixed; top: 0; left: 0;
+      height: 3px; background: var(--accent); width: 0%;
+      z-index: 100;
+    }
+
+    /* ── Reveal ── */
+    .reveal {
+      opacity: 0; transform: translateY(20px);
+      transition: opacity 0.65s ease, transform 0.65s ease;
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* ── Layout ── */
+    .story-wrap {
+      max-width: var(--column-width);
+      margin: 0 auto;
+      padding: 60px 2rem 100px;
+    }
+
+    /* ── Hero enrollment card ── */
+    .enrollment-card {
+      background: var(--surface);
+      border: 1px solid var(--accent-border);
+      border-radius: 16px;
+      padding: 2.5rem;
+      margin-bottom: 3rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .enrollment-card::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(circle at 50% 0%, rgba(16,185,129,0.08), transparent 60%);
+      pointer-events: none;
+    }
+    .enroll-eyebrow {
+      font-size: 0.75rem; font-weight: 700;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 1rem;
+    }
+    .enroll-headline {
+      font-family: var(--font-heading);
+      font-size: clamp(1.5rem, 4vw, 2.25rem);
+      font-weight: 700; line-height: 1.2;
+      color: var(--text); margin-bottom: 1.25rem;
+    }
+    .enroll-meta {
+      display: flex; gap: 1.5rem; flex-wrap: wrap;
+      margin-bottom: 1.75rem;
+    }
+    .enroll-meta-item {
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .em-label {
+      font-size: 0.75rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--text-muted);
+    }
+    .em-value {
+      font-family: var(--font-heading);
+      font-size: 0.9375rem; font-weight: 700;
+      color: var(--text);
+    }
+
+    /* Spots bar */
+    .spots-bar-wrap { margin-bottom: 1.5rem; }
+    .spots-label {
+      display: flex; justify-content: space-between;
+      align-items: center; margin-bottom: 0.5rem;
+      font-size: 0.875rem;
+    }
+    .spots-label span { color: var(--text-secondary); }
+    .spots-label strong { color: var(--accent); }
+    .spots-bar-bg {
+      height: 8px; background: var(--elevated);
+      border-radius: 100px; overflow: hidden;
+    }
+    .spots-bar-fill {
+      height: 100%; border-radius: 100px;
+      background: var(--accent);
+      width: 0%; transition: width 1s ease;
+      box-shadow: 0 0 8px rgba(16,185,129,0.5);
+    }
+
+    /* Visual seat circles */
+    .seats-visual {
+      display: flex; gap: 0.5rem; flex-wrap: wrap;
+      margin-bottom: 1.75rem;
+    }
+    .seat {
+      width: 32px; height: 32px;
+      border-radius: 50%; border: 2px solid var(--border);
+      background: var(--elevated);
+      transition: all 0.3s ease;
+      position: relative;
+    }
+    .seat.filled {
+      background: var(--accent-dim);
+      border-color: var(--accent-border);
+    }
+    .seat.filled::after {
+      content: '';
+      position: absolute; inset: 4px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    .enroll-price-row {
+      display: flex; align-items: baseline; gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+    .ep-amount {
+      font-family: var(--font-heading);
+      font-size: 2.5rem; font-weight: 700;
+      color: var(--accent);
+    }
+    .ep-note { font-size: 0.9rem; color: var(--text-secondary); }
+
+    .enroll-btn {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: var(--accent); color: #0D1117;
+      font-family: var(--font-heading); font-size: 1.0625rem;
+      font-weight: 700; padding: 0.95rem 2.5rem;
+      border-radius: 100px; text-decoration: none;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 24px rgba(16,185,129,0.4);
+    }
+    .enroll-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(16,185,129,0.5); }
+
+    /* ── Body sections ── */
+    h2.section-h {
+      font-family: var(--font-heading);
+      font-size: 1.5rem; font-weight: 700;
+      color: var(--text); margin: 3.5rem 0 1rem;
+    }
+    .prose p { color: var(--text-secondary); margin-bottom: 1.25rem; line-height: 1.75; }
+    .prose strong { color: var(--text); }
+
+    /* ── Who this is for / not for ── */
+    .qualify-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 1rem; margin: 1.5rem 0;
+    }
+    .qualify-col {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .qualify-header {
+      padding: 0.875rem 1.25rem;
+      font-family: var(--font-heading);
+      font-size: 0.875rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      background: var(--elevated);
+      border-bottom: 1px solid var(--border);
+    }
+    .qualify-col.for-col .qualify-header { color: var(--accent); }
+    .qualify-col.not-col .qualify-header { color: #FCA5A5; }
+    .qualify-items { padding: 0.75rem; }
+    .qualify-item {
+      display: flex; gap: 8px; align-items: flex-start;
+      padding: 0.6rem 0.5rem; border-bottom: 1px solid var(--border);
+      font-size: 0.875rem; color: var(--text-secondary);
+      line-height: 1.5;
+    }
+    .qualify-item:last-child { border-bottom: none; }
+    .qi-icon-good { color: var(--accent); margin-top: 1px; flex-shrink: 0; }
+    .qi-icon-bad  { color: #F87171; margin-top: 1px; flex-shrink: 0; }
+
+    /* ── Week schedule calendar ── */
+    .schedule-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 0.875rem; margin: 1.5rem 0;
+    }
+    .schedule-week {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      opacity: 0; transform: translateY(12px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+    .schedule-week.visible { opacity: 1; transform: translateY(0); }
+    .sw-week {
+      font-family: var(--font-heading);
+      font-size: 0.6875rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      color: var(--accent); margin-bottom: 0.5rem;
+    }
+    .sw-title {
+      font-family: var(--font-heading);
+      font-size: 0.9375rem; font-weight: 600;
+      color: var(--text); margin-bottom: 0.4rem;
+    }
+    .sw-items { list-style: none; }
+    .sw-items li {
+      font-size: 0.8125rem; color: var(--text-secondary);
+      padding: 0.25rem 0;
+      display: flex; align-items: flex-start; gap: 6px;
+    }
+    .sw-items li::before {
+      content: '→'; color: var(--accent);
+      font-size: 0.75rem; margin-top: 1px; flex-shrink: 0;
+    }
+
+    /* ── Alumni results ── */
+    .alumni-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem; margin: 1.5rem 0;
+    }
+    .alumni-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+    }
+    .alumni-initials {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-border);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-heading); font-weight: 700;
+      color: var(--accent); font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+    }
+    .alumni-name {
+      font-family: var(--font-heading);
+      font-size: 0.875rem; font-weight: 600;
+      color: var(--text); margin-bottom: 0.15rem;
+    }
+    .alumni-location {
+      font-size: 0.75rem; color: var(--text-muted);
+      margin-bottom: 0.75rem;
+    }
+    .alumni-stat {
+      font-size: 0.875rem; color: var(--text-secondary);
+      padding-top: 0.75rem; border-top: 1px solid var(--border);
+    }
+    .alumni-stat strong { color: var(--accent); }
+
+    /* ── Countdown timer ── */
+    .countdown-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem;
+      text-align: center; margin: 2rem 0;
+    }
+    .countdown-label {
+      font-size: 0.75rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      color: var(--text-muted); margin-bottom: 1.25rem;
+    }
+    .countdown-units {
+      display: flex; justify-content: center;
+      gap: 1rem; flex-wrap: wrap;
+    }
+    .countdown-unit {
+      min-width: 70px;
+    }
+    .countdown-num {
+      font-family: var(--font-heading);
+      font-size: 2.5rem; font-weight: 700;
+      color: var(--text); line-height: 1;
+    }
+    .countdown-unit-label {
+      font-size: 0.6875rem; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.08em;
+      margin-top: 0.25rem;
+    }
+    .countdown-sep {
+      font-family: var(--font-heading);
+      font-size: 2rem; color: var(--text-muted);
+      padding-top: 0.25rem; align-self: flex-start; margin-top: 0.25rem;
+    }
+
+    /* ── Guarantee ── */
+    .guarantee-box {
+      display: flex; gap: 1.25rem; align-items: flex-start;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.5rem; margin: 1.5rem 0;
+    }
+    .guarantee-icon {
+      width: 48px; height: 48px; min-width: 48px;
+      border-radius: 50%; background: var(--accent-dim);
+      border: 1px solid var(--accent-border);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--accent);
+    }
+
+    /* ── After section ── */
+    .after-section {
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem; margin: 1.5rem 0;
+    }
+    .after-list { list-style: none; }
+    .after-list li {
+      display: flex; gap: 10px; align-items: flex-start;
+      padding: 0.5rem 0; color: var(--text-secondary); font-size: 0.9375rem;
+    }
+    .after-list li svg { color: var(--accent); flex-shrink: 0; margin-top: 2px; }
+
+    /* ── CTA ── */
+    .cta-final { text-align: center; margin: 3rem 0; }
+    .cta-btn {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: var(--accent); color: #0D1117;
+      font-family: var(--font-heading); font-size: 1.0625rem;
+      font-weight: 700; padding: 0.9rem 2.25rem;
+      border-radius: 100px; text-decoration: none;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 20px rgba(16,185,129,0.3);
+    }
+    .cta-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(16,185,129,0.4); }
+
+    @media (max-width: 600px) {
+      .story-wrap { padding: 40px 1.25rem 80px; }
+      .qualify-grid { grid-template-columns: 1fr; }
+      .enroll-meta { flex-direction: column; gap: 0.75rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="progress-bar"></div>
+
+  <div class="story-wrap">
+
+    <!-- ── Enrollment card ── -->
+    <div class="enrollment-card reveal" id="enrollment-card" data-spots="10" data-filled="8">
+      <div class="enroll-eyebrow">April 2026 Cohort — Enrollment Open</div>
+      <h1 class="enroll-headline">10 Title Reps. 30 Days. Your Complete Web Presence — Built and Launched.</h1>
+
+      <div class="enroll-meta">
+        <div class="enroll-meta-item">
+          <div>
+            <div class="em-label">Cohort Starts</div>
+            <div class="em-value">April 1, 2026</div>
+          </div>
+        </div>
+        <div class="enroll-meta-item">
+          <div>
+            <div class="em-label">Format</div>
+            <div class="em-value">Done-For-You + Weekly Check-ins</div>
+          </div>
+        </div>
+        <div class="enroll-meta-item">
+          <div>
+            <div class="em-label">Cohort Size</div>
+            <div class="em-value">10 reps maximum</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Spots bar -->
+      <div class="spots-bar-wrap">
+        <div class="spots-label">
+          <span>Enrollment progress</span>
+          <strong id="spots-remaining">2 spots left</strong>
+        </div>
+        <div class="spots-bar-bg">
+          <div class="spots-bar-fill" id="spots-bar"></div>
+        </div>
+      </div>
+
+      <!-- Seat circles: 10 total -->
+      <div class="seats-visual" id="seats-visual">
+        <!-- Generated by JS -->
+      </div>
+
+      <div class="enroll-price-row">
+        <div class="ep-amount">$1,497</div>
+        <div class="ep-note">One-time · Then $99/month · Includes everything</div>
+      </div>
+
+      <a class="enroll-btn" href="#">
+        Reserve Your Spot in April's Cohort
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+      </a>
+    </div>
+
+    <!-- ── Why cohort format ── -->
+    <h2 class="section-h reveal">Why a Cohort — Not Just Any Time?</h2>
+    <div class="prose reveal">
+      <p>We cap every cohort at 10 reps because each build gets real attention. Not a template spit out by a tool — a professional site crafted around your story, your market, and your specific differentiators. That requires focused time from our team, and 10 is our limit for delivering the quality we guarantee.</p>
+      <p>The cohort format also means <strong>you're building alongside other title reps</strong> who are solving the same problem at the same time. The shared weekly calls create accountability, answer common questions once instead of 10 times, and let you see what works for others in real-time. Past cohort members have said these calls alone were worth the investment.</p>
+    </div>
+
+    <!-- ── Who it's for / not for ── -->
+    <h2 class="section-h reveal">Is This Right for You?</h2>
+    <div class="qualify-grid reveal">
+      <div class="qualify-col for-col">
+        <div class="qualify-header">This is for you if...</div>
+        <div class="qualify-items">
+          <div class="qualify-item">
+            <svg class="qi-icon-good" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            You're a working title rep with 2+ years in the industry
+          </div>
+          <div class="qualify-item">
+            <svg class="qi-icon-good" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            You want this done right, done fast, and done for you
+          </div>
+          <div class="qualify-item">
+            <svg class="qi-icon-good" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            You're ready to commit 2–3 hours for intake/review calls
+          </div>
+          <div class="qualify-item">
+            <svg class="qi-icon-good" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            You want inbound leads — not just a website that looks nice
+          </div>
+          <div class="qualify-item">
+            <svg class="qi-icon-good" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            You can invest $1,497 in your business infrastructure
+          </div>
+        </div>
+      </div>
+      <div class="qualify-col not-col">
+        <div class="qualify-header">This is NOT for you if...</div>
+        <div class="qualify-items">
+          <div class="qualify-item">
+            <svg class="qi-icon-bad" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            You want to be heavily involved in designing every detail
+          </div>
+          <div class="qualify-item">
+            <svg class="qi-icon-bad" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            You're brand new to title and don't have a story yet
+          </div>
+          <div class="qualify-item">
+            <svg class="qi-icon-bad" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            You expect results without any input on your intake form
+          </div>
+          <div class="qualify-item">
+            <svg class="qi-icon-bad" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            You think a website alone (without SEO or GBP) is enough
+          </div>
+          <div class="qualify-item">
+            <svg class="qi-icon-bad" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            You want the lowest possible cost, not the best possible result
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── The timeline / schedule ── -->
+    <h2 class="section-h reveal">The 30-Day Schedule</h2>
+    <div class="schedule-grid reveal" id="schedule-grid">
+      <div class="schedule-week">
+        <div class="sw-week">Week 1</div>
+        <div class="sw-title">Discovery + Strategy</div>
+        <ul class="sw-items">
+          <li>Intake form completion</li>
+          <li>30-min onboarding call</li>
+          <li>Brand + market audit</li>
+          <li>Copy brief approved</li>
+        </ul>
+      </div>
+      <div class="schedule-week">
+        <div class="sw-week">Week 2</div>
+        <div class="sw-title">Build Phase</div>
+        <ul class="sw-items">
+          <li>Domain registered</li>
+          <li>Website built + copy written</li>
+          <li>Google Business setup starts</li>
+          <li>Group call: Q&amp;A + progress</li>
+        </ul>
+      </div>
+      <div class="schedule-week">
+        <div class="sw-week">Week 3</div>
+        <div class="sw-title">Review + Polish</div>
+        <ul class="sw-items">
+          <li>Design review call (20 min)</li>
+          <li>Revisions completed</li>
+          <li>GBP verification completed</li>
+          <li>Lead capture tested</li>
+        </ul>
+      </div>
+      <div class="schedule-week">
+        <div class="sw-week">Week 4</div>
+        <div class="sw-title">Launch + Handoff</div>
+        <ul class="sw-items">
+          <li>Site goes live</li>
+          <li>GBP published + optimized</li>
+          <li>Review request sequence setup</li>
+          <li>Group launch call + celebration</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ── What happens after ── -->
+    <h2 class="section-h reveal">What Happens After Month 1</h2>
+    <div class="after-section reveal">
+      <ul class="after-list">
+        <li>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Monthly hosting and maintenance at $99/month — includes security, uptime, and quarterly content updates
+        </li>
+        <li>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Access to our alumni Slack channel — ongoing questions, tips, and community from past cohort members
+        </li>
+        <li>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          You own the domain — it travels with you regardless of which company you work for
+        </li>
+        <li>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          60-day guarantee window starts at launch — if no inbound leads in 60 days, we rebuild for free
+        </li>
+      </ul>
+    </div>
+
+    <!-- ── Alumni results ── -->
+    <h2 class="section-h reveal">Alumni Results (From Past Cohorts)</h2>
+    <div class="alumni-grid reveal">
+      <div class="alumni-card">
+        <div class="alumni-initials">LM</div>
+        <div class="alumni-name">Lisa M.</div>
+        <div class="alumni-location">Fort Worth, TX · Cohort 3</div>
+        <div class="alumni-stat"><strong>14 inbound leads/month</strong> within 60 days of launch</div>
+      </div>
+      <div class="alumni-card">
+        <div class="alumni-initials">JK</div>
+        <div class="alumni-name">James K.</div>
+        <div class="alumni-location">Plano, TX · Cohort 1</div>
+        <div class="alumni-stat">First inbound lead on <strong>day 12</strong>. Page 1 ranking in 45 days</div>
+      </div>
+      <div class="alumni-card">
+        <div class="alumni-initials">MR</div>
+        <div class="alumni-name">Marcus R.</div>
+        <div class="alumni-location">Austin, TX · Cohort 2</div>
+        <div class="alumni-stat"><strong>+$62K</strong> in commissions from digital leads in first 6 months</div>
+      </div>
+      <div class="alumni-card">
+        <div class="alumni-initials">CT</div>
+        <div class="alumni-name">Carla T.</div>
+        <div class="alumni-location">Dallas, TX · Cohort 2</div>
+        <div class="alumni-stat">Page 1 Google for city search term — <strong>3–5 inbound calls/week</strong></div>
+      </div>
+      <div class="alumni-card">
+        <div class="alumni-initials">SP</div>
+        <div class="alumni-name">Sarah P.</div>
+        <div class="alumni-location">Houston, TX · Cohort 4</div>
+        <div class="alumni-stat">Domain survived company switch — <strong>zero leads lost</strong> during transition</div>
+      </div>
+      <div class="alumni-card">
+        <div class="alumni-initials">DW</div>
+        <div class="alumni-name">David W.</div>
+        <div class="alumni-location">San Antonio, TX · Cohort 3</div>
+        <div class="alumni-stat">Closed <strong>8 new clients</strong> from digital leads by month 3</div>
+      </div>
+    </div>
+
+    <!-- ── Countdown timer ── -->
+    <div class="countdown-wrap reveal">
+      <div class="countdown-label">Enrollment closes in</div>
+      <div class="countdown-units">
+        <div class="countdown-unit">
+          <div class="countdown-num" id="cd-days">--</div>
+          <div class="countdown-unit-label">Days</div>
+        </div>
+        <div class="countdown-sep">:</div>
+        <div class="countdown-unit">
+          <div class="countdown-num" id="cd-hours">--</div>
+          <div class="countdown-unit-label">Hours</div>
+        </div>
+        <div class="countdown-sep">:</div>
+        <div class="countdown-unit">
+          <div class="countdown-num" id="cd-mins">--</div>
+          <div class="countdown-unit-label">Minutes</div>
+        </div>
+        <div class="countdown-sep">:</div>
+        <div class="countdown-unit">
+          <div class="countdown-num" id="cd-secs">--</div>
+          <div class="countdown-unit-label">Seconds</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Guarantee ── -->
+    <div class="guarantee-box reveal">
+      <div class="guarantee-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <div>
+        <strong style="color: var(--text);">60-Day First Lead Guarantee</strong>
+        <p style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.5rem; line-height: 1.6;">If you don't receive at least one inbound inquiry through your new site within 60 days of launch, we rebuild and iterate at no additional cost until you do. Every cohort member is covered.</p>
+      </div>
+    </div>
+
+    <!-- ── Final CTA ── -->
+    <div class="cta-final reveal">
+      <p style="font-size: 1.125rem; color: var(--text); font-family: var(--font-heading); font-weight: 600; margin-bottom: 0.5rem;">2 spots left in April's cohort.</p>
+      <p style="font-size: 0.9375rem; color: var(--text-secondary); margin-bottom: 1.5rem;">This cohort starts April 1st. Enrollment closes March 25th.</p>
+      <a class="cta-btn" href="#">
+        Reserve My Spot — April Cohort
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+      </a>
+    </div>
+
+  </div>
+
+  <script>
+  (function() {
+    'use strict';
+
+    /* ── Progress bar ── */
+    var bar = document.getElementById('progress-bar');
+    window.addEventListener('scroll', function() {
+      var total = document.documentElement.scrollHeight - window.innerHeight;
+      bar.style.width = (total > 0 ? (window.scrollY / total) * 100 : 0) + '%';
+    }, { passive: true });
+
+    /* ── General reveal ── */
+    var obs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(e) {
+        if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
+      });
+    }, { threshold: 0.08 });
+    document.querySelectorAll('.reveal').forEach(function(el) {
+      obs.observe(el);
+      if (el.getBoundingClientRect().top < window.innerHeight) el.classList.add('visible');
+    });
+
+    /* ── Schedule week stagger ── */
+    var schObs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(e) {
+        if (e.isIntersecting) {
+          e.target.querySelectorAll('.schedule-week').forEach(function(w, i) {
+            setTimeout(function() { w.classList.add('visible'); }, i * 100);
+          });
+          schObs.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.05 });
+    var sg = document.getElementById('schedule-grid');
+    if (sg) schObs.observe(sg);
+
+    /* ── Enrollment card: seats + bar ── */
+    var card = document.getElementById('enrollment-card');
+    if (card) {
+      var total  = parseInt(card.dataset.spots  || '10', 10);
+      var filled = parseInt(card.dataset.filled || '8',  10);
+      var remaining = total - filled;
+
+      document.getElementById('spots-remaining').textContent = remaining + ' spot' + (remaining === 1 ? '' : 's') + ' left';
+
+      // Animate bar on observe
+      var barObs = new IntersectionObserver(function(entries) {
+        entries.forEach(function(e) {
+          if (e.isIntersecting) {
+            setTimeout(function() {
+              document.getElementById('spots-bar').style.width = ((filled / total) * 100) + '%';
+            }, 300);
+            barObs.unobserve(e.target);
+          }
+        });
+      }, { threshold: 0.3 });
+      barObs.observe(card);
+
+      // Build seat circles
+      var sv = document.getElementById('seats-visual');
+      if (sv) {
+        for (var i = 0; i < total; i++) {
+          var seat = document.createElement('div');
+          seat.className = 'seat' + (i < filled ? ' filled' : '');
+          sv.appendChild(seat);
+        }
+      }
+    }
+
+    /* ── Countdown timer — target: March 25, 2026 ── */
+    var TARGET_DATE = new Date('2026-03-25T23:59:59');
+
+    function updateCountdown() {
+      var now  = new Date();
+      var diff = TARGET_DATE - now;
+      if (diff <= 0) {
+        ['cd-days','cd-hours','cd-mins','cd-secs'].forEach(function(id) {
+          document.getElementById(id).textContent = '00';
+        });
+        return;
+      }
+      var d = Math.floor(diff / 86400000);
+      var h = Math.floor((diff % 86400000) / 3600000);
+      var m = Math.floor((diff % 3600000) / 60000);
+      var s = Math.floor((diff % 60000) / 1000);
+      document.getElementById('cd-days').textContent  = String(d).padStart(2, '0');
+      document.getElementById('cd-hours').textContent = String(h).padStart(2, '0');
+      document.getElementById('cd-mins').textContent  = String(m).padStart(2, '0');
+      document.getElementById('cd-secs').textContent  = String(s).padStart(2, '0');
+    }
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
+
+  })();
+  </script>
+
+</body>
+</html>

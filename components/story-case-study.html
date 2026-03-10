@@ -1,0 +1,600 @@
+<!-- COMPONENT: Single Client Transformation Case Study | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Story: Case Study — Lisa M., Fort Worth TX</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── CUSTOMIZE BLOCK ─────────────────────────────────────────────────
+       --accent:       brand highlight color
+       --before-color: "before" state accent (red-ish)
+       --after-color:  "after" state accent (green = default)
+       --column-width: reading column
+       ─────────────────────────────────────────────────────────────────── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+
+      /* CUSTOMIZE */
+      --column-width:   760px;
+      --before-color:   rgba(239,68,68,0.15);
+      --before-border:  rgba(239,68,68,0.3);
+      --before-text:    #FCA5A5;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 1rem;
+      line-height: 1.75;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Progress bar ── */
+    #progress-bar {
+      position: fixed; top: 0; left: 0;
+      height: 3px; background: var(--accent); width: 0%;
+      z-index: 100; box-shadow: 0 0 8px rgba(16,185,129,0.5);
+    }
+
+    /* ── Layout ── */
+    .story-wrap {
+      max-width: var(--column-width);
+      margin: 0 auto;
+      padding: 80px 2rem 100px;
+    }
+
+    /* ── Reveal ── */
+    .reveal {
+      opacity: 0; transform: translateY(24px);
+      transition: opacity 0.65s ease, transform 0.65s ease;
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* ── Hero ── */
+    .case-eyebrow {
+      font-size: 0.75rem; font-weight: 600;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 1rem;
+    }
+    h1.case-title {
+      font-family: var(--font-heading);
+      font-size: clamp(1.75rem, 4vw, 2.75rem);
+      font-weight: 700; line-height: 1.2;
+      letter-spacing: -0.02em; color: var(--text);
+      margin-bottom: 1rem;
+    }
+    .case-subtitle {
+      font-size: 1.125rem; color: var(--text-secondary);
+      margin-bottom: 2.5rem; line-height: 1.6;
+    }
+
+    /* ── Before/After comparison card ── */
+    .ba-card {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1px solid var(--border);
+      margin: 2rem 0 3rem;
+    }
+    .ba-col {
+      padding: 1.5rem;
+    }
+    .ba-col.before {
+      background: rgba(239,68,68,0.05);
+      border-right: 1px solid var(--border);
+    }
+    .ba-col.after {
+      background: var(--accent-dim);
+    }
+    .ba-label {
+      font-size: 0.6875rem; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      margin-bottom: 1.25rem;
+    }
+    .ba-col.before .ba-label { color: var(--before-text); }
+    .ba-col.after  .ba-label { color: var(--accent); }
+    .ba-stat {
+      margin-bottom: 1rem;
+    }
+    .ba-stat-val {
+      font-family: var(--font-heading);
+      font-size: 1.75rem; font-weight: 700;
+      line-height: 1;
+    }
+    .ba-col.before .ba-stat-val { color: #F87171; }
+    .ba-col.after  .ba-stat-val { color: var(--accent); }
+    .ba-stat-label {
+      font-size: 0.8125rem; color: var(--text-muted); margin-top: 2px;
+    }
+
+    /* ── Client profile card ── */
+    .client-profile {
+      display: flex;
+      gap: 1.5rem;
+      align-items: center;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin: 2rem 0;
+    }
+    .client-avatar {
+      width: 72px; height: 72px; min-width: 72px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent-dim), var(--elevated));
+      border: 2px solid var(--accent-border);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-heading);
+      font-size: 1.5rem; font-weight: 700; color: var(--accent);
+    }
+    .client-info-name {
+      font-family: var(--font-heading);
+      font-size: 1.125rem; font-weight: 700; color: var(--text);
+      margin-bottom: 0.25rem;
+    }
+    .client-info-meta {
+      font-size: 0.875rem; color: var(--text-secondary);
+      line-height: 1.5;
+    }
+    .client-info-tags {
+      display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem;
+    }
+    .client-tag {
+      font-size: 0.6875rem; font-weight: 600;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      padding: 2px 8px;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text-muted);
+    }
+
+    /* ── Body prose ── */
+    .prose p { color: var(--text-secondary); margin-bottom: 1.25rem; }
+    .prose strong { color: var(--text); }
+    .accent-text { color: var(--accent); font-weight: 600; }
+
+    h2.section-h {
+      font-family: var(--font-heading);
+      font-size: 1.5rem; font-weight: 700;
+      color: var(--text); margin: 3rem 0 1rem;
+    }
+
+    /* ── Pull quote ── */
+    .pull-quote {
+      border-left: 3px solid var(--accent);
+      padding: 1.25rem 1.5rem;
+      margin: 2rem 0;
+      background: var(--accent-dim);
+      border-radius: 0 var(--radius) var(--radius) 0;
+    }
+    .pull-quote p {
+      font-family: var(--font-heading); font-size: 1.25rem;
+      font-style: italic; color: var(--text); margin: 0; line-height: 1.5;
+    }
+    .pull-quote cite {
+      display: block; margin-top: 0.6rem;
+      font-size: 0.875rem; color: var(--accent); font-style: normal;
+    }
+
+    /* ── Project timeline milestones ── */
+    .milestones {
+      display: flex; flex-direction: column; gap: 0;
+      margin: 1.5rem 0;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .milestone {
+      display: flex; gap: 0;
+      align-items: stretch;
+      border-bottom: 1px solid var(--border);
+      opacity: 0; transform: translateX(-16px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+    .milestone:last-child { border-bottom: none; }
+    .milestone.visible { opacity: 1; transform: translateX(0); }
+    .ms-week {
+      min-width: 90px;
+      padding: 1rem 1.25rem;
+      background: var(--elevated);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      justify-content: center;
+    }
+    .ms-week-label {
+      font-family: var(--font-heading);
+      font-size: 0.6875rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      color: var(--accent);
+    }
+    .ms-week-name {
+      font-size: 0.875rem; color: var(--text-secondary);
+    }
+    .ms-content {
+      padding: 1rem 1.25rem; flex: 1;
+    }
+    .ms-title {
+      font-family: var(--font-heading);
+      font-size: 0.9375rem; font-weight: 600;
+      color: var(--text); margin-bottom: 0.25rem;
+    }
+    .ms-desc {
+      font-size: 0.875rem; color: var(--text-secondary);
+    }
+
+    /* ── Count-up stats ── */
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem; margin: 1.5rem 0;
+    }
+    .result-stat {
+      background: var(--surface);
+      border: 1px solid var(--accent-border);
+      border-radius: var(--radius);
+      padding: 1.25rem 1rem;
+      text-align: center;
+    }
+    .result-num {
+      font-family: var(--font-heading);
+      font-size: 2.25rem; font-weight: 700;
+      color: var(--accent); line-height: 1;
+    }
+    .result-label {
+      font-size: 0.8125rem; color: var(--text-secondary);
+      margin-top: 0.4rem;
+    }
+
+    /* ── What changed ── */
+    .changed-list { list-style: none; margin: 1.25rem 0; }
+    .changed-list li {
+      display: flex; gap: 12px; align-items: flex-start;
+      padding: 0.75rem 0; border-bottom: 1px solid var(--border);
+      font-size: 0.9375rem; color: var(--text-secondary);
+    }
+    .changed-list li:last-child { border-bottom: none; }
+    .changed-num {
+      font-family: var(--font-heading); font-size: 1.25rem;
+      font-weight: 700; color: var(--accent);
+      min-width: 28px; line-height: 1.4;
+    }
+
+    /* ── Full testimonial ── */
+    .full-testimonial {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem;
+      margin: 2rem 0;
+      position: relative;
+    }
+    .testimonial-quote-mark {
+      font-size: 5rem; line-height: 1;
+      color: var(--accent-border);
+      font-family: Georgia, serif;
+      position: absolute; top: 0.5rem; left: 1.25rem;
+    }
+    .full-testimonial blockquote {
+      font-size: 1rem; line-height: 1.8;
+      color: var(--text-secondary); font-style: italic;
+      padding-top: 1.5rem;
+    }
+    .testimonial-attribution {
+      margin-top: 1.25rem; display: flex;
+      align-items: center; gap: 0.75rem;
+    }
+    .ta-avatar {
+      width: 40px; height: 40px;
+      border-radius: 50%; background: var(--elevated);
+      border: 1px solid var(--accent-border);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-heading); font-weight: 700;
+      color: var(--accent); font-size: 0.875rem;
+    }
+    .ta-name { font-weight: 600; color: var(--text); font-size: 0.9375rem; }
+    .ta-role { font-size: 0.8125rem; color: var(--text-muted); }
+
+    /* ── CTA ── */
+    .cta-section { text-align: center; margin: 3rem 0; }
+    .cta-btn {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: var(--accent); color: #0D1117;
+      font-family: var(--font-heading); font-size: 1.0625rem;
+      font-weight: 700; padding: 0.9rem 2.25rem;
+      border-radius: 100px; text-decoration: none;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 20px rgba(16,185,129,0.3);
+    }
+    .cta-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(16,185,129,0.4); }
+
+    @media (max-width: 600px) {
+      .story-wrap { padding: 60px 1.25rem 80px; }
+      .ba-card { grid-template-columns: 1fr; }
+      .ba-col.before { border-right: none; border-bottom: 1px solid var(--border); }
+      .client-profile { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="progress-bar"></div>
+
+  <div class="story-wrap">
+
+    <!-- ── Hero ── -->
+    <div class="reveal">
+      <div class="case-eyebrow">Client Case Study</div>
+      <h1 class="case-title">From 0 Inbound Leads to 14 Per Month in 60 Days</h1>
+      <p class="case-subtitle">How Lisa M., a title rep in Fort Worth, went from invisible online to the most-searched rep in her ZIP code — without changing how she works.</p>
+    </div>
+
+    <!-- ── Before/After card (result revealed upfront) ── -->
+    <div class="ba-card reveal">
+      <div class="ba-col before">
+        <div class="ba-label">Before — Day 0</div>
+        <div class="ba-stat">
+          <div class="ba-stat-val">0</div>
+          <div class="ba-stat-label">Monthly inbound leads</div>
+        </div>
+        <div class="ba-stat">
+          <div class="ba-stat-val">Page 4</div>
+          <div class="ba-stat-label">Google ranking (name + city)</div>
+        </div>
+        <div class="ba-stat">
+          <div class="ba-stat-val">None</div>
+          <div class="ba-stat-label">Personal domain or website</div>
+        </div>
+      </div>
+      <div class="ba-col after">
+        <div class="ba-label">After — Day 60</div>
+        <div class="ba-stat">
+          <div class="ba-stat-val">14</div>
+          <div class="ba-stat-label">Monthly inbound leads</div>
+        </div>
+        <div class="ba-stat">
+          <div class="ba-stat-val">Page 1</div>
+          <div class="ba-stat-label">Google ranking (name + city)</div>
+        </div>
+        <div class="ba-stat">
+          <div class="ba-stat-val">Live</div>
+          <div class="ba-stat-label">lisamortontitle.com — owned forever</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Client profile ── -->
+    <div class="client-profile reveal">
+      <div class="client-avatar">LM</div>
+      <div class="client-info">
+        <div class="client-info-name">Lisa Morton</div>
+        <div class="client-info-meta">Title Representative · Fort Worth, TX · 7 years in industry</div>
+        <div class="client-info-tags">
+          <span class="client-tag">Residential</span>
+          <span class="client-tag">DFW Market</span>
+          <span class="client-tag">Independent Rep</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Meet Lisa ── -->
+    <h2 class="section-h reveal">Meet Lisa</h2>
+    <div class="prose reveal">
+      <p>Lisa Morton has been a title rep for seven years in the Fort Worth market. She's good at her job — agents who work with her consistently rebook because she keeps transactions from falling apart and communicates at every step. She had built a solid referral base through relationships, lunches, and consistency.</p>
+      <p>But her growth had plateaued. She was closing about 85 transactions a year, and she could see the ceiling. <strong>The reps growing fastest in her market all had something she didn't: a professional web presence.</strong></p>
+      <p>She'd thought about it for two years. She had a domain registered — it pointed to a blank parking page. She'd started a website on Squarespace and never finished it. She kept deprioritizing it because she didn't know where to start and didn't want to end up with something unprofessional.</p>
+    </div>
+
+    <!-- ── The hesitation ── -->
+    <div class="pull-quote reveal">
+      <p>"I kept telling myself I'd do it 'when things slowed down.' Things never slowed down. I realized I had to decide — or I'd still be saying the same thing in five years."</p>
+      <cite>— Lisa Morton</cite>
+    </div>
+
+    <!-- ── What happened — milestone timeline ── -->
+    <h2 class="section-h reveal">What Happened: Week by Week</h2>
+    <div class="prose reveal">
+      <p>Lisa came in as a client in early February. Here's exactly what the process looked like:</p>
+    </div>
+
+    <div class="milestones reveal" id="milestones">
+      <div class="milestone">
+        <div class="ms-week"><div class="ms-week-label">Week 1</div><div class="ms-week-name">Discovery</div></div>
+        <div class="ms-content">
+          <div class="ms-title">30-min intake call + brand audit</div>
+          <div class="ms-desc">We reviewed Lisa's current digital footprint, identified the gaps, and gathered everything needed — her story, her market, her differentiators. She spent 45 minutes total on her end.</div>
+        </div>
+      </div>
+      <div class="milestone">
+        <div class="ms-week"><div class="ms-week-label">Week 1–2</div><div class="ms-week-name">Build</div></div>
+        <div class="ms-content">
+          <div class="ms-title">Domain, website, and copy — built from scratch</div>
+          <div class="ms-desc">We registered lisamortontitle.com, built a 6-page website with her story, service areas, lead capture, and SEO-optimized content. All copy written by us based on the intake call.</div>
+        </div>
+      </div>
+      <div class="milestone">
+        <div class="ms-week"><div class="ms-week-label">Week 2</div><div class="ms-week-name">Google</div></div>
+        <div class="ms-content">
+          <div class="ms-title">Google Business Profile configured</div>
+          <div class="ms-desc">Set up, verified, and fully optimized her Google Business Profile — service areas, categories, description, photos, first 5 reviews strategically requested from existing clients.</div>
+        </div>
+      </div>
+      <div class="milestone">
+        <div class="ms-week"><div class="ms-week-label">Week 3</div><div class="ms-week-name">Launch</div></div>
+        <div class="ms-content">
+          <div class="ms-title">Site goes live — review sent, zero to do on Lisa's end</div>
+          <div class="ms-desc">Lisa approved the final design in a 20-minute video call, we made two minor copy tweaks, and the site went live. Total time spent by Lisa: under 2 hours across 3 weeks.</div>
+        </div>
+      </div>
+      <div class="milestone">
+        <div class="ms-week"><div class="ms-week-label">Day 19</div><div class="ms-week-name">First Lead</div></div>
+        <div class="ms-content">
+          <div class="ms-title">First inbound inquiry arrives</div>
+          <div class="ms-desc">"I got a form submission from a Keller Williams agent I'd never met. She found me on Google searching 'title rep Fort Worth.' That was the moment I knew this was real." — Lisa</div>
+        </div>
+      </div>
+      <div class="milestone">
+        <div class="ms-week"><div class="ms-week-label">Day 60</div><div class="ms-week-name">Results</div></div>
+        <div class="ms-content">
+          <div class="ms-title">14 monthly inbound leads, Page 1 Google ranking</div>
+          <div class="ms-desc">At the 60-day mark, Lisa's site was receiving 312 monthly visitors, she ranked Page 1 for 4 target search terms, and had received 14 inbound inquiries — 7 of which converted into active clients.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── The results section with count-up ── -->
+    <h2 class="section-h reveal">The Results at 60 Days</h2>
+
+    <div class="results-grid reveal" id="results-grid">
+      <div class="result-stat">
+        <div class="result-num" data-target="14" data-suffix="">0</div>
+        <div class="result-label">Inbound leads / month</div>
+      </div>
+      <div class="result-stat">
+        <div class="result-num" data-target="312" data-suffix="">0</div>
+        <div class="result-label">Monthly website visitors</div>
+      </div>
+      <div class="result-stat">
+        <div class="result-num" data-target="7" data-suffix="">0</div>
+        <div class="result-label">New active clients</div>
+      </div>
+      <div class="result-stat">
+        <div class="result-num" data-target="19" data-suffix=" days">0</div>
+        <div class="result-label">To first inbound lead</div>
+      </div>
+    </div>
+
+    <!-- ── What changed ── -->
+    <h2 class="section-h reveal">5 Things That Are Different Now</h2>
+    <ul class="changed-list reveal">
+      <li><span class="changed-num">01</span><span>Agents Lisa has never met reach out to her — she no longer has to cold-initiate every relationship</span></li>
+      <li><span class="changed-num">02</span><span>Her Google Business profile shows up when agents in Fort Worth search for title services — she's now in the first three results</span></li>
+      <li><span class="changed-num">03</span><span>She owns her domain — lisamortontitle.com is hers regardless of what company she works with in the future</span></li>
+      <li><span class="changed-num">04</span><span>New leads arrive pre-qualified — they've already read her story and service areas before reaching out</span></li>
+      <li><span class="changed-num">05</span><span>She's on track to close 130+ transactions this year — a 52% increase without working more hours</span></li>
+    </ul>
+
+    <!-- ── Full testimonial ── -->
+    <h2 class="section-h reveal">In Lisa's Words</h2>
+    <div class="full-testimonial reveal">
+      <div class="testimonial-quote-mark">"</div>
+      <blockquote>
+        I had been putting this off for two years. Two years of watching other reps grow their business online while I relied entirely on my existing relationships. When I finally pulled the trigger, I honestly didn't know what to expect — I'd been burned by marketing spend before and gotten nothing in return.
+        <br><br>
+        The process was so much easier than I expected. I spent maybe two hours on my end, total. The team handled everything — the writing, the design, Google setup, all of it. They asked good questions and actually understood the title business, which made the copy feel authentic rather than generic.
+        <br><br>
+        The day I got that first form submission from an agent I'd never met — found me on Google — I sent Brad a voice message. I was genuinely excited. That doesn't happen often when you've been in this business as long as I have.
+        <br><br>
+        If you're a title rep who keeps telling yourself you'll do this "someday," someday is costing you business right now.
+      </blockquote>
+      <div class="testimonial-attribution">
+        <div class="ta-avatar">LM</div>
+        <div>
+          <div class="ta-name">Lisa Morton</div>
+          <div class="ta-role">Title Representative · Fort Worth, TX</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CTA ── -->
+    <div class="cta-section reveal">
+      <p style="font-size: 1.125rem; color: var(--text); font-family: var(--font-heading); font-weight: 600; margin-bottom: 1rem;">Want results like Lisa's?</p>
+      <a class="cta-btn" href="#">
+        Schedule Your Free Strategy Call
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+      </a>
+      <p style="margin-top: 0.75rem; font-size: 0.8125rem; color: var(--text-muted);">We take on 4 new clients per month. Spots fill by mid-month.</p>
+    </div>
+
+  </div>
+
+  <script>
+  (function() {
+    'use strict';
+
+    /* ── Progress bar ── */
+    var bar = document.getElementById('progress-bar');
+    window.addEventListener('scroll', function() {
+      var total = document.documentElement.scrollHeight - window.innerHeight;
+      bar.style.width = (total > 0 ? (window.scrollY / total) * 100 : 0) + '%';
+    }, { passive: true });
+
+    /* ── General reveal ── */
+    var revealObs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(e) {
+        if (e.isIntersecting) { e.target.classList.add('visible'); revealObs.unobserve(e.target); }
+      });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal').forEach(function(el) {
+      revealObs.observe(el);
+      if (el.getBoundingClientRect().top < window.innerHeight) el.classList.add('visible');
+    });
+
+    /* ── Milestones stagger ── */
+    var msObs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(e) {
+        if (e.isIntersecting) {
+          e.target.querySelectorAll('.milestone').forEach(function(m, i) {
+            setTimeout(function() { m.classList.add('visible'); }, i * 100);
+          });
+          msObs.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.05 });
+    var msEl = document.getElementById('milestones');
+    if (msEl) msObs.observe(msEl);
+
+    /* ── Count-up stats ── */
+    function countUp(el) {
+      var target = parseInt(el.dataset.target, 10);
+      var suffix = el.dataset.suffix || '';
+      var start = performance.now();
+      var duration = 1400;
+      function tick(now) {
+        var progress = Math.min((now - start) / duration, 1);
+        var ease = 1 - Math.pow(1 - progress, 4);
+        el.textContent = Math.round(ease * target) + suffix;
+        if (progress < 1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    }
+
+    var statsObs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(e) {
+        if (e.isIntersecting) {
+          e.target.querySelectorAll('[data-target]').forEach(countUp);
+          statsObs.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.3 });
+    var sg = document.getElementById('results-grid');
+    if (sg) statsObs.observe(sg);
+
+  })();
+  </script>
+
+</body>
+</html>

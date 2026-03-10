@@ -1,0 +1,567 @@
+<!-- COMPONENT: Parallel Day Comparison | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Story: Day in the Life — Before & After</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── CUSTOMIZE BLOCK ─────────────────────────────────────────────────
+       --before-accent:   color for "before" column header/icons
+       --after-accent:    color for "after" column (keep as brand green)
+       --turning-point-bg: background of the middle "turning point" section
+       ─────────────────────────────────────────────────────────────────── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+
+      /* CUSTOMIZE */
+      --before-accent:  #F87171;
+      --before-dim:     rgba(239,68,68,0.08);
+      --before-border:  rgba(239,68,68,0.25);
+      --after-accent:   #10B981;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Progress bar ── */
+    #progress-bar {
+      position: fixed; top: 0; left: 0;
+      height: 3px; background: var(--accent); width: 0%;
+      z-index: 100;
+    }
+
+    /* ── Reveal ── */
+    .reveal {
+      opacity: 0; transform: translateY(20px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* ── Hero section ── */
+    .hero {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 80px 2rem 3rem;
+      text-align: center;
+    }
+    .hero-eyebrow {
+      font-size: 0.75rem; font-weight: 600;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 1rem;
+      display: block;
+    }
+    h1.hero-title {
+      font-family: var(--font-heading);
+      font-size: clamp(1.875rem, 4vw, 2.75rem);
+      font-weight: 700; line-height: 1.2;
+      letter-spacing: -0.02em; color: var(--text);
+      margin-bottom: 1rem;
+    }
+    .hero-sub {
+      font-size: 1.0625rem; color: var(--text-secondary);
+      line-height: 1.65; max-width: 560px; margin: 0 auto;
+    }
+
+    /* ── Mobile tab switcher (shown only on mobile) ── */
+    .day-tabs {
+      display: none;
+      max-width: 440px;
+      margin: 2rem auto 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 4px;
+    }
+    .day-tabs-inner {
+      display: flex;
+      gap: 0;
+    }
+    .day-tab-btn {
+      flex: 1;
+      padding: 0.6rem 1rem;
+      border: none;
+      border-radius: 100px;
+      font-family: var(--font-heading);
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+      color: var(--text-muted);
+      background: transparent;
+    }
+    .day-tab-btn.before-tab.active { background: var(--before-dim); color: var(--before-accent); }
+    .day-tab-btn.after-tab.active  { background: var(--accent-dim); color: var(--accent); }
+
+    /* ── Two-column comparison grid ── */
+    .day-grid-wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+
+    /* Desktop: column headers */
+    .col-headers {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 0.5rem;
+      position: sticky;
+      top: 3px;
+      z-index: 10;
+      background: var(--bg);
+      padding: 1rem 0 0.75rem;
+    }
+    .col-header {
+      padding: 0.75rem 1.25rem;
+      border-radius: var(--radius);
+      text-align: center;
+      font-family: var(--font-heading);
+      font-size: 0.9375rem;
+      font-weight: 700;
+    }
+    .col-header.before-header {
+      background: var(--before-dim);
+      border: 1px solid var(--before-border);
+      color: var(--before-accent);
+    }
+    .col-header.after-header {
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-border);
+      color: var(--accent);
+    }
+
+    /* Day rows */
+    .day-rows { display: flex; flex-direction: column; gap: 1rem; }
+
+    .day-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    .day-row.visible { opacity: 1; transform: translateY(0); }
+
+    /* Each cell */
+    .day-cell {
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      border: 1px solid var(--border);
+      transition: opacity 0.4s ease;
+    }
+    .day-cell.before-cell {
+      background: var(--before-dim);
+      border-color: var(--before-border);
+    }
+    .day-cell.after-cell {
+      background: var(--accent-dim);
+      border-color: var(--accent-border);
+    }
+
+    /* Progressive dim effect — JS adds --scroll-pct to each row */
+    .day-row .before-cell {
+      opacity: calc(1 - var(--scroll-dim, 0) * 0.6);
+    }
+
+    .time-label {
+      font-family: var(--font-heading);
+      font-size: 0.6875rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      margin-bottom: 0.75rem;
+    }
+    .before-cell .time-label { color: var(--before-accent); }
+    .after-cell  .time-label { color: var(--accent); }
+
+    .cell-icon {
+      font-size: 1.5rem; margin-bottom: 0.5rem;
+    }
+    .cell-headline {
+      font-family: var(--font-heading);
+      font-size: 0.9375rem; font-weight: 600;
+      color: var(--text); margin-bottom: 0.4rem;
+    }
+    .cell-body {
+      font-size: 0.875rem; color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* ── Turning point break ── */
+    .turning-point {
+      max-width: 600px;
+      margin: 4rem auto;
+      text-align: center;
+      padding: 3rem 2rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    .turning-point::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(circle at 50% 0%, rgba(16,185,129,0.1), transparent 70%);
+      pointer-events: none;
+    }
+    .tp-label {
+      font-size: 0.75rem; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--text-muted); margin-bottom: 1rem;
+    }
+    .tp-headline {
+      font-family: var(--font-heading);
+      font-size: clamp(1.5rem, 4vw, 2.25rem);
+      font-weight: 700; color: var(--text);
+      line-height: 1.2; margin-bottom: 0.75rem;
+    }
+    .tp-highlight { color: var(--accent); }
+    .tp-body {
+      font-size: 1rem; color: var(--text-secondary);
+      line-height: 1.65;
+    }
+
+    /* ── Weekly summary ── */
+    .week-summary {
+      max-width: 760px;
+      margin: 3rem auto;
+      padding: 0 2rem;
+    }
+    .week-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem; margin-top: 1.5rem;
+    }
+    .week-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      text-align: center;
+    }
+    .week-card-label {
+      font-size: 0.75rem; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--text-muted); margin-bottom: 0.5rem;
+    }
+    .week-before { font-size: 1rem; color: var(--before-accent); font-weight: 600; margin-bottom: 0.25rem; }
+    .week-after  { font-size: 1rem; color: var(--accent); font-weight: 600; }
+    .week-arrow  { color: var(--text-muted); font-size: 0.75rem; margin: 0.15rem 0; }
+
+    /* ── Final CTA ── */
+    .cta-section {
+      max-width: 600px;
+      margin: 3rem auto 5rem;
+      padding: 0 2rem;
+      text-align: center;
+    }
+    .cta-h {
+      font-family: var(--font-heading);
+      font-size: 1.75rem; font-weight: 700;
+      color: var(--text); margin-bottom: 0.75rem;
+    }
+    .cta-sub { font-size: 1rem; color: var(--text-secondary); margin-bottom: 2rem; }
+    .cta-btn {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: var(--accent); color: #0D1117;
+      font-family: var(--font-heading); font-size: 1.0625rem;
+      font-weight: 700; padding: 0.9rem 2.25rem;
+      border-radius: 100px; text-decoration: none;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 20px rgba(16,185,129,0.3);
+    }
+    .cta-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(16,185,129,0.4); }
+
+    /* ── Mobile: show tabs, hide before/after columns with JS class ── */
+    @media (max-width: 700px) {
+      .day-tabs { display: block; }
+      .col-headers { display: none; }
+      .day-row { grid-template-columns: 1fr; }
+      /* Hide the inactive column via JS class */
+      .day-row.show-before .after-cell  { display: none; }
+      .day-row.show-after  .before-cell { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="progress-bar"></div>
+
+  <!-- Hero -->
+  <div class="hero reveal">
+    <span class="hero-eyebrow">A Tale of Two Mondays</span>
+    <h1 class="hero-title">The Same Day. Two Different Realities.<br>One Decision Made the Difference.</h1>
+    <p class="hero-sub">Scroll through a title rep's Monday — before and after building a professional web presence. The hours are identical. The outcomes aren't.</p>
+
+    <!-- Mobile tab switcher -->
+    <div class="day-tabs">
+      <div class="day-tabs-inner">
+        <button class="day-tab-btn before-tab active" data-view="before">Without Presence</button>
+        <button class="day-tab-btn after-tab" data-view="after">With Presence</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="day-grid-wrap">
+
+    <!-- Sticky column headers (desktop) -->
+    <div class="col-headers reveal">
+      <div class="col-header before-header">Without Web Presence</div>
+      <div class="col-header after-header">With Web Presence</div>
+    </div>
+
+    <!-- Day rows -->
+    <div class="day-rows" id="day-rows">
+
+      <!-- 6:45 AM -->
+      <div class="day-row">
+        <div class="day-cell before-cell">
+          <div class="time-label">6:45 AM — Wake Up</div>
+          <div class="cell-icon">📵</div>
+          <div class="cell-headline">No new notifications</div>
+          <div class="cell-body">Phone is quiet. The day starts from zero — just a to-do list and the hope that outreach will land.</div>
+        </div>
+        <div class="day-cell after-cell">
+          <div class="time-label">6:45 AM — Wake Up</div>
+          <div class="cell-icon">📬</div>
+          <div class="cell-headline">Two form submissions overnight</div>
+          <div class="cell-body">Two agents found the website via Google and filled out the contact form. The day starts with warm leads already waiting.</div>
+        </div>
+      </div>
+
+      <!-- 8:30 AM -->
+      <div class="day-row">
+        <div class="day-cell before-cell">
+          <div class="time-label">8:30 AM — Morning Routine</div>
+          <div class="cell-icon">📋</div>
+          <div class="cell-headline">Building a call list</div>
+          <div class="cell-body">Spending 45 minutes pulling names from the MLS, cross-referencing with last contact dates, writing a script for cold outreach. Starting from scratch, again.</div>
+        </div>
+        <div class="day-cell after-cell">
+          <div class="time-label">8:30 AM — Morning Routine</div>
+          <div class="cell-icon">📊</div>
+          <div class="cell-headline">Reviewing Google Analytics</div>
+          <div class="cell-body">47 people visited the website overnight. 3 from the "title rep Fort Worth" search term. Two clicked the contact page. Spending 15 minutes reviewing — not building.</div>
+        </div>
+      </div>
+
+      <!-- 10:00 AM -->
+      <div class="day-row">
+        <div class="day-cell before-cell">
+          <div class="time-label">10:00 AM — Lead Generation</div>
+          <div class="cell-icon">📞</div>
+          <div class="cell-headline">Cold calls — 18 placed, 3 answered</div>
+          <div class="cell-body">The math of outreach: 18 calls to get 3 live conversations. One promising, two polite brush-offs. 90 minutes of work for one maybe.</div>
+        </div>
+        <div class="day-cell after-cell">
+          <div class="time-label">10:00 AM — Lead Follow-Up</div>
+          <div class="cell-icon">💬</div>
+          <div class="cell-headline">Following up on 2 warm inbound leads</div>
+          <div class="cell-body">Both agents from the form submissions get a personal reply. Both already read the website — one specifically mentioned the bio page. Calls scheduled for Tuesday.</div>
+        </div>
+      </div>
+
+      <!-- 12:00 PM -->
+      <div class="day-row">
+        <div class="day-cell before-cell">
+          <div class="time-label">12:00 PM — Lunch</div>
+          <div class="cell-icon">🍽️</div>
+          <div class="cell-headline">Buying lunch to stay in front of contacts</div>
+          <div class="cell-body">$45 lunch meeting with an agent who's been "thinking about switching" for six months. Maintenance spending, not growth investing.</div>
+        </div>
+        <div class="day-cell after-cell">
+          <div class="time-label">12:00 PM — Lunch</div>
+          <div class="cell-icon">✅</div>
+          <div class="cell-headline">Lunch actually feels like a break</div>
+          <div class="cell-body">Caught up on email, took a real 45-minute break. The automated CRM sequence sent a follow-up to last week's form fills without any manual effort.</div>
+        </div>
+      </div>
+
+      <!-- 2:30 PM -->
+      <div class="day-row">
+        <div class="day-cell before-cell">
+          <div class="time-label">2:30 PM — Digital Presence</div>
+          <div class="cell-icon">😩</div>
+          <div class="cell-headline">Agent asks for your website — you hesitate</div>
+          <div class="cell-body">A prospect asks "Can I check out your website?" You give them your company page. It has 14 other reps on it. Not a great first impression.</div>
+        </div>
+        <div class="day-cell after-cell">
+          <div class="time-label">2:30 PM — Digital Presence</div>
+          <div class="cell-icon">🌟</div>
+          <div class="cell-headline">Agent visits site — calls impressed</div>
+          <div class="cell-body">"I looked at your site before this call — I love that you have your transaction history there." Third time this week an agent mentioned the website unprompted.</div>
+        </div>
+      </div>
+
+      <!-- 4:00 PM -->
+      <div class="day-row">
+        <div class="day-cell before-cell">
+          <div class="time-label">4:00 PM — After Work</div>
+          <div class="cell-icon">🔁</div>
+          <div class="cell-headline">Planning tomorrow's outreach, same as today</div>
+          <div class="cell-body">Building another call list. Setting reminders. Hoping this week's effort compounds. The work never stops because the system never starts.</div>
+        </div>
+        <div class="day-cell after-cell">
+          <div class="time-label">4:00 PM — After Work</div>
+          <div class="cell-icon">📈</div>
+          <div class="cell-headline">Google indexed a new page — rankings up</div>
+          <div class="cell-body">Google Search Console shows a new page indexed. Rankings up for "title rep Southlake." The website worked today whether there was anything on the calendar or not.</div>
+        </div>
+      </div>
+
+    </div><!-- /day-rows -->
+  </div><!-- /day-grid-wrap -->
+
+  <!-- Turning point break -->
+  <div class="turning-point reveal" id="turning-point">
+    <div class="tp-label">The Difference</div>
+    <h2 class="tp-headline">One Decision.<br><span class="tp-highlight">Two Completely Different Days.</span></h2>
+    <p class="tp-body">Everything you just read — the same 10-hour workday, the same market, the same number of hours. The only variable is whether a professional web presence is working for you in the background. One rep is building. The other is treading water.</p>
+  </div>
+
+  <!-- Weekly summary -->
+  <div class="week-summary reveal">
+    <div style="text-align: center; margin-bottom: 0.5rem;">
+      <span style="font-family: var(--font-heading); font-size: 1.375rem; font-weight: 700; color: var(--text);">The Week in Numbers</span>
+    </div>
+    <div class="week-cards">
+      <div class="week-card">
+        <div class="week-card-label">Inbound Leads</div>
+        <div class="week-before">0 / week</div>
+        <div class="week-arrow">vs</div>
+        <div class="week-after">8–14 / week</div>
+      </div>
+      <div class="week-card">
+        <div class="week-card-label">Cold Calls Needed</div>
+        <div class="week-before">100+ / week</div>
+        <div class="week-arrow">vs</div>
+        <div class="week-after">30 / week</div>
+      </div>
+      <div class="week-card">
+        <div class="week-card-label">Site Visitors</div>
+        <div class="week-before">0 / week</div>
+        <div class="week-arrow">vs</div>
+        <div class="week-after">200–400 / week</div>
+      </div>
+      <div class="week-card">
+        <div class="week-card-label">First Impression</div>
+        <div class="week-before">Company page</div>
+        <div class="week-arrow">vs</div>
+        <div class="week-after">Your own site</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Final CTA -->
+  <div class="cta-section reveal">
+    <h2 class="cta-h">Which day do you want to be living?</h2>
+    <p class="cta-sub">The after version isn't luck. It's infrastructure. We build it for you in 3 weeks — you show up to the closings.</p>
+    <a class="cta-btn" href="#">
+      Start Living the After Day
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+    </a>
+    <p style="margin-top: 1rem; font-size: 0.8125rem; color: var(--text-muted);">Schedule a free 20-min strategy call. No commitment required.</p>
+  </div>
+
+  <script>
+  (function() {
+    'use strict';
+
+    /* ── Progress bar ── */
+    var bar = document.getElementById('progress-bar');
+    window.addEventListener('scroll', function() {
+      var total = document.documentElement.scrollHeight - window.innerHeight;
+      bar.style.width = (total > 0 ? (window.scrollY / total) * 100 : 0) + '%';
+    }, { passive: true });
+
+    /* ── General reveal ── */
+    var obs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(e) {
+        if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
+      });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal').forEach(function(el) {
+      obs.observe(el);
+      if (el.getBoundingClientRect().top < window.innerHeight) el.classList.add('visible');
+    });
+
+    /* ── Day row staggered reveal ── */
+    var rowObs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(e) {
+        if (e.isIntersecting) { e.target.classList.add('visible'); rowObs.unobserve(e.target); }
+      });
+    }, { threshold: 0.2 });
+    document.querySelectorAll('.day-row').forEach(function(row, i) {
+      row.style.transitionDelay = (i * 60) + 'ms';
+      rowObs.observe(row);
+    });
+
+    /* ── Progressive dim on before-column as user scrolls ── */
+    var rows = document.querySelectorAll('.day-row');
+    function applyDim() {
+      var vpH = window.innerHeight;
+      rows.forEach(function(row, idx) {
+        var rect = row.getBoundingClientRect();
+        // Calculate how far past midpoint the row is
+        var midY = rect.top + rect.height / 2;
+        var pct = Math.max(0, Math.min(1, (vpH * 0.6 - midY) / (vpH * 0.6)));
+        // Apply progressively more dim to later rows
+        var intensityMultiplier = 0.5 + (idx / rows.length) * 0.5;
+        row.style.setProperty('--scroll-dim', (pct * intensityMultiplier).toFixed(3));
+      });
+    }
+    window.addEventListener('scroll', applyDim, { passive: true });
+    applyDim();
+
+    /* ── Mobile tab switcher ── */
+    var mobileView = 'before';
+    var tabBtns = document.querySelectorAll('.day-tab-btn');
+    var allRows = document.querySelectorAll('.day-row');
+
+    function applyMobileView(view) {
+      mobileView = view;
+      allRows.forEach(function(row) {
+        row.classList.remove('show-before', 'show-after');
+        row.classList.add('show-' + view);
+      });
+      tabBtns.forEach(function(btn) {
+        btn.classList.toggle('active', btn.dataset.view === view);
+      });
+    }
+
+    tabBtns.forEach(function(btn) {
+      btn.addEventListener('click', function() { applyMobileView(btn.dataset.view); });
+    });
+
+    // Initialize mobile view
+    applyMobileView('before');
+
+  })();
+  </script>
+
+</body>
+</html>

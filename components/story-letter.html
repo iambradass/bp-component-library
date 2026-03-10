@@ -1,0 +1,354 @@
+<!-- COMPONENT: Personal Letter Format | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Story: Personal Letter — A Note to Title Reps</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── CUSTOMIZE BLOCK ─────────────────────────────────────────────────
+       --letter-width:    letter paper width (560px = narrow, intimate feel)
+       --letter-bg:       the letter "paper" background color
+       --signature-color: signature text color
+       --page-bg:         outer background (dark envelope feel)
+       ─────────────────────────────────────────────────────────────────── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+
+      /* CUSTOMIZE */
+      --letter-width:   600px;
+      --letter-bg:      #131f2e;
+      --letter-border:  rgba(148,163,184,0.12);
+      --signature-color:#10B981;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      background-image: radial-gradient(ellipse at 50% 0%, rgba(16,185,129,0.04), transparent 70%);
+      color: var(--text);
+      font-family: var(--font-body);
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+      padding: 60px 1.5rem 100px;
+    }
+
+    /* ── Progress bar ── */
+    #progress-bar {
+      position: fixed; top: 0; left: 0;
+      height: 3px; background: var(--accent); width: 0%;
+      z-index: 100;
+    }
+
+    /* ── Reveal ── */
+    .reveal {
+      opacity: 0; transform: translateY(16px);
+      transition: opacity 0.65s ease, transform 0.65s ease;
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* ── The letter card ── */
+    .letter-card {
+      max-width: var(--letter-width);
+      margin: 0 auto;
+      background: var(--letter-bg);
+      border: 1px solid var(--letter-border);
+      border-radius: 4px;
+      padding: 3.5rem;
+      box-shadow:
+        0 4px 6px rgba(0,0,0,0.3),
+        0 20px 60px rgba(0,0,0,0.5),
+        0 0 0 1px rgba(255,255,255,0.02);
+      position: relative;
+    }
+
+    /* Subtle corner fold effect */
+    .letter-card::after {
+      content: '';
+      position: absolute;
+      bottom: 0; right: 0;
+      width: 0; height: 0;
+      border-style: solid;
+      border-width: 0 0 28px 28px;
+      border-color: transparent transparent var(--bg) transparent;
+    }
+
+    /* ── Date line (top right of letter) ── */
+    .letter-date {
+      text-align: right;
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      margin-bottom: 2.5rem;
+      font-style: italic;
+    }
+
+    /* ── Salutation ── */
+    .letter-salutation {
+      font-family: var(--font-heading);
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 1.75rem;
+    }
+
+    /* ── Letter body paragraphs ── */
+    .letter-body p {
+      color: var(--text-secondary);
+      font-size: 1rem;
+      line-height: 1.85;
+      margin-bottom: 1.5rem;
+      text-indent: 1.5em;
+    }
+    .letter-body p:first-child { text-indent: 0; }
+    .letter-body strong { color: var(--text); }
+    .letter-body em { color: var(--text-secondary); }
+    .letter-body .accent-text { color: var(--accent); font-weight: 600; font-style: normal; }
+
+    /* ── Section divider within letter ── */
+    .letter-divider {
+      border: none;
+      border-top: 1px solid var(--letter-border);
+      margin: 2.25rem 0;
+    }
+
+    /* ── Photo placeholder (desk photo) ── */
+    .photo-placeholder {
+      width: 100%;
+      height: 160px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--elevated) 0%, var(--surface) 100%);
+      border: 1px solid var(--letter-border);
+      margin: 2rem 0;
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 0.5rem;
+      color: var(--text-muted);
+    }
+    .photo-placeholder svg { opacity: 0.4; }
+    .photo-caption {
+      font-size: 0.75rem; text-align: center;
+      color: var(--text-muted); font-style: italic;
+      margin-top: -1rem; margin-bottom: 1.75rem;
+    }
+
+    /* ── Closing ── */
+    .letter-closing {
+      margin-top: 2rem;
+    }
+    .closing-word {
+      font-size: 1rem; color: var(--text-secondary);
+      margin-bottom: 0.25rem;
+    }
+
+    /* ── Signature ── */
+    .signature {
+      font-family: cursive;
+      font-size: 3rem;
+      color: var(--signature-color);
+      line-height: 1.2;
+      margin: 0.5rem 0 0.25rem;
+    }
+    .signature-name {
+      font-family: var(--font-heading);
+      font-size: 0.875rem; font-weight: 600;
+      color: var(--text-secondary);
+    }
+    .signature-role {
+      font-size: 0.8125rem; color: var(--text-muted);
+    }
+
+    /* ── P.S. Section — always the most-read part of a letter ── */
+    .ps-section {
+      margin-top: 2.5rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--letter-border);
+    }
+    .ps-label {
+      font-family: var(--font-heading);
+      font-size: 0.875rem; font-weight: 700;
+      color: var(--accent); margin-bottom: 0.75rem;
+    }
+    .ps-text {
+      font-size: 0.9375rem; color: var(--text-secondary);
+      line-height: 1.7;
+      border-left: 2px solid var(--accent);
+      padding-left: 1rem;
+    }
+    .ps-text strong { color: var(--text); }
+
+    /* ── CTA inside letter ── */
+    .letter-cta {
+      margin: 2rem 0;
+      text-align: center;
+    }
+    .letter-cta-btn {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: var(--accent); color: #0D1117;
+      font-family: var(--font-heading); font-size: 1rem;
+      font-weight: 700; padding: 0.875rem 2rem;
+      border-radius: 100px; text-decoration: none;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 20px rgba(16,185,129,0.3);
+    }
+    .letter-cta-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(16,185,129,0.4); }
+    .letter-cta-sub {
+      margin-top: 0.6rem; font-size: 0.8125rem;
+      color: var(--text-muted);
+    }
+
+    /* ── Promise block ── */
+    .promise-block {
+      background: var(--elevated);
+      border: 1px solid var(--letter-border);
+      border-radius: 8px;
+      padding: 1.25rem 1.5rem;
+      margin: 2rem 0;
+    }
+    .promise-label {
+      font-size: 0.6875rem; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 0.5rem;
+    }
+    .promise-text {
+      font-size: 0.9375rem; color: var(--text-secondary);
+      font-style: italic; line-height: 1.7;
+    }
+
+    @media (max-width: 640px) {
+      body { padding: 40px 1rem 80px; }
+      .letter-card { padding: 2rem 1.5rem; }
+      .signature { font-size: 2.25rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="progress-bar"></div>
+
+  <div class="letter-card reveal">
+
+    <!-- Date -->
+    <div class="letter-date">March 2026 · Fort Worth, Texas</div>
+
+    <!-- Salutation -->
+    <div class="letter-salutation">Dear Title Rep,</div>
+
+    <!-- ── Letter body ── -->
+    <div class="letter-body">
+
+      <p>I want to start with something I don't say in most of my marketing: I know exactly where you are right now.</p>
+
+      <p>You're good at your job. You've built relationships over years — some over a decade. Agents trust you. Transactions close because you kept them together when others would have walked away. That's real, and it matters, and I'm not here to tell you it isn't enough.</p>
+
+      <p>But I am going to tell you something I wish someone had told me earlier: <strong>your digital invisible-ness is costing you business you don't even know you're missing.</strong></p>
+
+      <hr class="letter-divider">
+
+      <p>I spent six years as a title rep. Good years — I made a living, built a reputation, and genuinely loved the work. But I hit a ceiling. 90 transactions, 95 transactions, 88 the next year. The same faces, the same relationships, the same ceiling.</p>
+
+      <p>Then I discovered, by accident, that a newer rep with half my experience was closing 40 more transactions a year than me. Not because she worked harder. Not because she had better relationships. Because when an agent in my market searched Google for a title rep, <em>she showed up and I didn't.</em></p>
+
+      <!-- Photo placeholder — swap for real image in production -->
+      <div class="photo-placeholder">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        <span style="font-size: 0.75rem;">A photo from my desk — where I figured most of this out</span>
+      </div>
+      <div class="photo-caption">My desk in Fort Worth, where I built my first digital presence at midnight after a long week of closings.</div>
+
+      <p>That discovery changed the next three years of my career. I rebuilt my digital presence — not with a fancy agency, not with a team — but by learning, failing, learning again, and eventually getting it right. My transaction volume grew 47% in 18 months. Most of that growth came from people I'd never met who found me online.</p>
+
+      <hr class="letter-divider">
+
+      <p>Here's the specific thing I want you to know: a professional web presence isn't about being tech-savvy or marketing-forward. It's about being <span class="accent-text">findable when someone is already looking for what you offer.</span> You've already done the hard work — built the reputation, the expertise, the story. The web presence is just the system that lets people discover that before you've ever had to buy them lunch.</p>
+
+      <p>I built this service because I spent six months helping colleagues set up theirs — individually, manually, one rep at a time — and realized that the same process worked every time. I had it. I just needed to package it in a way that didn't require you to give up 80 hours of your life to build something that might not work.</p>
+
+      <p>So I did. And now I'm offering it to you.</p>
+
+      <hr class="letter-divider">
+
+      <p>Here's what I've built for other title reps: a complete digital presence — your own domain, a professionally designed and written website, an optimized Google Business Profile, and a lead capture system — all done for you in three weeks. You fill out a form, show up to one call, review the final product, and go live. Everything else is handled.</p>
+
+      <p>The reps who've done this are getting 8–14 inbound leads per month. Some got their first lead in under three weeks. One client added $62,000 in commissions in her first six months from digital leads alone.</p>
+
+      <!-- Promise block -->
+      <div class="promise-block">
+        <div class="promise-label">My Promise to You</div>
+        <p class="promise-text">If you don't receive at least one inbound inquiry through your new site within 60 days of going live, I'll rebuild your landing pages and keep working — at no additional cost to you — until you do. Your success is the only thing that will make this service worth building.</p>
+      </div>
+
+      <p>The investment is $1,497, then $99/month for hosting and maintenance. One additional closing per year covers the entire setup. Most clients see their first return in the first month.</p>
+
+    </div><!-- /letter-body -->
+
+    <!-- CTA inside letter -->
+    <div class="letter-cta">
+      <a class="letter-cta-btn" href="#">
+        Schedule a Free 20-Minute Call
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+      </a>
+      <div class="letter-cta-sub">No pitch. 20 minutes. We'll look at your current presence and talk through what's possible.</div>
+    </div>
+
+    <!-- Closing -->
+    <div class="letter-closing">
+      <div class="closing-word">Warmly,</div>
+      <div class="signature">Brad</div>
+      <div class="signature-name">Brad Patterson</div>
+      <div class="signature-role">Founder, Title Rep Web Presence · Fort Worth, TX · Brad@titlerepmarketing.com</div>
+    </div>
+
+    <!-- P.S. — always the highest-read section of a letter -->
+    <div class="ps-section">
+      <div class="ps-label">P.S.</div>
+      <p class="ps-text">
+        We take on 4 new clients per month — not because I can't handle more, but because each project deserves real attention. <strong>If you're reading this in March 2026, we have 2 spots remaining before April fills.</strong> If you've been thinking about this for a while, there's genuinely no better time to start than right now, while the window is open. Schedule a call at the link above — takes 30 seconds and you can cancel any time before it happens.
+      </p>
+    </div>
+
+  </div><!-- /letter-card -->
+
+  <script>
+  (function() {
+    'use strict';
+
+    /* ── Progress bar ── */
+    var bar = document.getElementById('progress-bar');
+    window.addEventListener('scroll', function() {
+      var total = document.documentElement.scrollHeight - window.innerHeight;
+      bar.style.width = (total > 0 ? (window.scrollY / total) * 100 : 0) + '%';
+    }, { passive: true });
+
+    /* ── Reveal ── */
+    var obs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(e) {
+        if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
+      });
+    }, { threshold: 0.05 });
+    document.querySelectorAll('.reveal').forEach(function(el) {
+      obs.observe(el);
+      if (el.getBoundingClientRect().top < window.innerHeight) el.classList.add('visible');
+    });
+
+  })();
+  </script>
+
+</body>
+</html>

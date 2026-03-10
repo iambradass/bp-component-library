@@ -1,0 +1,717 @@
+<!-- COMPONENT: Chapter-Based Documentary | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Story: Documentary — The Invisible Rep</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── CUSTOMIZE BLOCK ─────────────────────────────────────────────────
+       --chapter-bg:    cinematic chapter title card background
+       --chapter-num-color: large chapter number color
+       --progress-dot-size: right-side chapter dot indicator size
+       ─────────────────────────────────────────────────────────────────── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+
+      /* CUSTOMIZE */
+      --chapter-bg:     #050a10;
+      --column-width:   720px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Progress bar ── */
+    #progress-bar {
+      position: fixed; top: 0; left: 0;
+      height: 3px; background: var(--accent); width: 0%;
+      z-index: 200;
+    }
+
+    /* ── Chapter progress indicator (right side, fixed) ── */
+    #chapter-nav {
+      position: fixed;
+      right: 24px; top: 50%;
+      transform: translateY(-50%);
+      z-index: 100;
+      display: flex; flex-direction: column;
+      gap: 12px; align-items: center;
+    }
+    .chapter-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      border: 2px solid var(--text-muted);
+      background: transparent;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+    .chapter-dot.active {
+      border-color: var(--accent);
+      background: var(--accent);
+      box-shadow: 0 0 8px rgba(16,185,129,0.6);
+    }
+    .chapter-dot-label {
+      position: absolute;
+      right: 18px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 3px 8px;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transform: translateX(4px);
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    .chapter-dot:hover .chapter-dot-label {
+      opacity: 1; transform: translateX(0);
+    }
+
+    /* ── Reveal ── */
+    .reveal {
+      opacity: 0; transform: translateY(24px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* ── Opening title ── */
+    .opening-title {
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--chapter-bg);
+      position: relative; overflow: hidden;
+      padding: 4rem 2rem;
+      text-align: center;
+    }
+    .opening-title::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 50% 60%, rgba(16,185,129,0.1), transparent 70%);
+      pointer-events: none;
+    }
+    .film-grain {
+      position: absolute; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none; opacity: 0.5;
+    }
+    .opening-inner { position: relative; z-index: 1; max-width: 700px; }
+    .film-label {
+      font-family: var(--font-heading);
+      font-size: 0.6875rem; font-weight: 700;
+      letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--text-muted); margin-bottom: 2rem;
+    }
+    .doc-title {
+      font-family: var(--font-heading);
+      font-size: clamp(2.5rem, 7vw, 5rem);
+      font-weight: 700; line-height: 1.05;
+      letter-spacing: -0.04em; color: var(--text);
+      margin-bottom: 1rem;
+    }
+    .doc-subtitle {
+      font-size: 1.125rem; color: var(--text-secondary);
+      line-height: 1.6;
+    }
+    .scroll-cue {
+      position: absolute; bottom: 2.5rem; left: 50%;
+      transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+      color: var(--text-muted); font-size: 0.75rem; letter-spacing: 0.1em;
+      text-transform: uppercase;
+      animation: cue-pulse 2.5s ease infinite;
+    }
+    @keyframes cue-pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 0.8; } }
+
+    /* ── Chapter title cards ── */
+    .chapter-card {
+      min-height: 60vh;
+      background: var(--chapter-bg);
+      display: flex; align-items: center; justify-content: center;
+      padding: 4rem 2rem;
+      position: relative; overflow: hidden;
+      text-align: center;
+    }
+    .chapter-card::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(to bottom, var(--bg) 0%, transparent 20%, transparent 80%, var(--bg) 100%);
+      pointer-events: none;
+    }
+    .chapter-inner { position: relative; z-index: 1; }
+    .chapter-number-big {
+      font-family: var(--font-heading);
+      font-size: clamp(6rem, 20vw, 12rem);
+      font-weight: 700;
+      color: rgba(16,185,129,0.06);
+      line-height: 1;
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      user-select: none;
+      white-space: nowrap;
+    }
+    .chapter-label {
+      font-size: 0.75rem; font-weight: 700;
+      letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 1rem;
+    }
+    .chapter-title {
+      font-family: var(--font-heading);
+      font-size: clamp(1.75rem, 5vw, 3.5rem);
+      font-weight: 700; line-height: 1.15;
+      letter-spacing: -0.02em; color: var(--text);
+    }
+
+    /* ── Chapter content ── */
+    .chapter-content {
+      max-width: var(--column-width);
+      margin: 0 auto;
+      padding: 60px 2rem;
+    }
+
+    /* ── "Dissolve" between sections ── */
+    .dissolve-divider {
+      height: 80px;
+      background: linear-gradient(to bottom, var(--chapter-bg), var(--bg));
+    }
+    .dissolve-divider.reverse {
+      background: linear-gradient(to bottom, var(--bg), var(--chapter-bg));
+    }
+
+    h3.section-h {
+      font-family: var(--font-heading);
+      font-size: 1.375rem; font-weight: 700;
+      color: var(--text); margin: 2.5rem 0 0.875rem;
+    }
+    .prose p { color: var(--text-secondary); margin-bottom: 1.25rem; line-height: 1.75; }
+    .prose strong { color: var(--text); }
+    .accent-text { color: var(--accent); font-weight: 600; }
+
+    /* ── Interview / lower-third quotes ── */
+    .interview-quote {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin: 2rem 0;
+      position: relative;
+    }
+    .interview-quote::before {
+      content: '';
+      position: absolute; left: 0; top: 0; bottom: 0;
+      width: 3px; background: var(--accent);
+      border-radius: 3px 0 0 3px;
+    }
+    .iq-text {
+      font-family: var(--font-heading);
+      font-size: 1.125rem; font-style: italic;
+      color: var(--text); line-height: 1.5;
+      margin-bottom: 0.875rem;
+    }
+    .iq-lower-third {
+      display: flex; align-items: center; gap: 0.75rem;
+    }
+    .iq-bar {
+      width: 3px; height: 28px;
+      background: var(--accent); flex-shrink: 0;
+    }
+    .iq-name {
+      font-family: var(--font-heading);
+      font-size: 0.875rem; font-weight: 700;
+      color: var(--text);
+    }
+    .iq-role {
+      font-size: 0.75rem; color: var(--text-muted);
+    }
+
+    /* ── Mini profile before/after (Chapter 3) ── */
+    .profile-ba {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin: 1.5rem 0;
+    }
+    .pba-header {
+      display: grid; grid-template-columns: 1fr 1fr;
+    }
+    .pba-col {
+      padding: 1.25rem;
+    }
+    .pba-col.before-col {
+      background: rgba(239,68,68,0.05);
+      border-right: 1px solid var(--border);
+    }
+    .pba-col.after-col { background: var(--accent-dim); }
+    .pba-col-label {
+      font-size: 0.6875rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      margin-bottom: 0.5rem;
+    }
+    .before-col .pba-col-label { color: #FCA5A5; }
+    .after-col  .pba-col-label { color: var(--accent); }
+    .pba-stat-big {
+      font-family: var(--font-heading);
+      font-size: 1.75rem; font-weight: 700;
+      line-height: 1;
+    }
+    .before-col .pba-stat-big { color: #F87171; }
+    .after-col  .pba-stat-big { color: var(--accent); }
+    .pba-stat-label { font-size: 0.8125rem; color: var(--text-muted); margin-top: 2px; }
+    .pba-name-row {
+      padding: 0.875rem 1.25rem;
+      background: var(--elevated);
+      font-family: var(--font-heading);
+      font-size: 0.875rem; font-weight: 700;
+      color: var(--text);
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── Chapter 4: The System (numbered pieces) ── */
+    .system-pieces {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem; margin: 1.5rem 0;
+    }
+    .system-piece {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      opacity: 0; transform: scale(0.96);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+    .system-piece.visible { opacity: 1; transform: scale(1); }
+    .sp-num {
+      font-family: var(--font-heading);
+      font-size: 0.6875rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      color: var(--accent); margin-bottom: 0.5rem;
+    }
+    .sp-title {
+      font-family: var(--font-heading);
+      font-size: 0.9375rem; font-weight: 600;
+      color: var(--text); margin-bottom: 0.35rem;
+    }
+    .sp-desc { font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.55; }
+
+    /* ── Chapter 5: offer / CTA ── */
+    .offer-card {
+      background: var(--surface);
+      border: 1px solid var(--accent-border);
+      border-radius: 16px; padding: 2.5rem;
+      text-align: center;
+      box-shadow: 0 0 60px rgba(16,185,129,0.06);
+    }
+    .offer-eyebrow {
+      font-size: 0.75rem; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 0.75rem;
+    }
+    .offer-headline {
+      font-family: var(--font-heading);
+      font-size: 1.75rem; font-weight: 700;
+      color: var(--text); margin-bottom: 0.75rem;
+    }
+    .offer-price {
+      font-family: var(--font-heading);
+      font-size: 3rem; font-weight: 700;
+      color: var(--accent); margin-bottom: 0.5rem; line-height: 1;
+    }
+    .offer-desc { font-size: 0.9375rem; color: var(--text-secondary); margin-bottom: 1.75rem; }
+    .offer-btn {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: var(--accent); color: #0D1117;
+      font-family: var(--font-heading); font-size: 1.0625rem;
+      font-weight: 700; padding: 0.95rem 2.5rem;
+      border-radius: 100px; text-decoration: none;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 24px rgba(16,185,129,0.4);
+    }
+    .offer-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(16,185,129,0.5); }
+
+    @media (max-width: 700px) {
+      #chapter-nav { display: none; }
+      .pba-header { grid-template-columns: 1fr; }
+      .pba-col.before-col { border-right: none; border-bottom: 1px solid var(--border); }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="progress-bar"></div>
+
+  <!-- Chapter progress dots (right side) -->
+  <nav id="chapter-nav" aria-label="Chapter navigation">
+    <!-- Generated by JS -->
+  </nav>
+
+  <!-- ══ Opening Title Card ══ -->
+  <section class="opening-title" id="opening">
+    <div class="film-grain"></div>
+    <div class="opening-inner">
+      <div class="film-label">A Documentary in Five Chapters</div>
+      <h1 class="doc-title">The Invisible Rep</h1>
+      <p class="doc-subtitle">A story about the title insurance industry's quiet digital crisis — and the reps who quietly solved it.</p>
+    </div>
+    <div class="scroll-cue">
+      <span>Begin</span>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
+    </div>
+  </section>
+
+  <!-- ══ CHAPTER 1: The Problem ══ -->
+  <div class="dissolve-divider reverse"></div>
+  <section class="chapter-card" id="chapter1">
+    <div class="chapter-number-big">01</div>
+    <div class="chapter-inner reveal">
+      <div class="chapter-label">Chapter One</div>
+      <h2 class="chapter-title">The Problem</h2>
+    </div>
+  </section>
+  <div class="dissolve-divider"></div>
+
+  <div class="chapter-content reveal">
+    <div class="prose">
+      <p>Every day, someone in your market is choosing a title rep. An agent picks up their phone, opens Google, types "title rep Fort Worth" — and makes a decision based entirely on what they see. That moment happens dozens of times a week in every major market.</p>
+      <p>It's just not you they're choosing.</p>
+      <p>Not because you're not the best option. Not because you haven't earned the reputation. <strong>Because you're not there when they look.</strong></p>
+    </div>
+
+    <div class="interview-quote reveal">
+      <p class="iq-text">"I had been in title for seven years. Seven years of relationships, closings, referrals — and I was invisible online. An agent I'd never met told me she almost used my competitor because she couldn't find me. That was my wake-up call."</p>
+      <div class="iq-lower-third">
+        <div class="iq-bar"></div>
+        <div>
+          <div class="iq-name">Lisa Morton</div>
+          <div class="iq-role">Title Representative · Fort Worth, TX · 7 years experience</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="prose reveal">
+      <p>The data makes the problem concrete: 67% of title-related decisions now begin with an online search. The agents entering your market — the ones growing their businesses, building their teams, writing new volume — they're digital natives. They don't ask their broker who to use for title. They search first.</p>
+      <p>And in most markets, when they search, they find the same handful of reps who had the foresight to build a digital presence. Everyone else is invisible.</p>
+    </div>
+  </div>
+
+  <!-- ══ CHAPTER 2: Why It Happens ══ -->
+  <div class="dissolve-divider reverse"></div>
+  <section class="chapter-card" id="chapter2">
+    <div class="chapter-number-big">02</div>
+    <div class="chapter-inner reveal">
+      <div class="chapter-label">Chapter Two</div>
+      <h2 class="chapter-title">Why It Happens</h2>
+    </div>
+  </section>
+  <div class="dissolve-divider"></div>
+
+  <div class="chapter-content reveal">
+    <div class="prose">
+      <p>The title industry wasn't built for digital. It was built for relationships — long lunches, handshakes at the closing table, referrals passed through tight-knit networks. That model worked beautifully for decades. And for the reps who are 15 years in with deep roots in their market, it still mostly works today.</p>
+      <p>But the model has a fatal weakness: it doesn't compound. Every new client still requires a personal touchpoint. There's no system running in the background, no presence working while you sleep, <strong>no infrastructure that lets an agent discover you before you've ever had to find them.</strong></p>
+    </div>
+
+    <div class="interview-quote reveal">
+      <p class="iq-text">"Most reps don't have a website problem. They have a model problem. They're running a 2005 playbook in a 2026 market. The market changed. The playbook didn't."</p>
+      <div class="iq-lower-third">
+        <div class="iq-bar"></div>
+        <div>
+          <div class="iq-name">Brad Patterson</div>
+          <div class="iq-role">Founder · Title Rep Web Presence Services · Former Title Rep</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="prose reveal">
+      <p>The structural reasons are predictable: company websites exist for the company, not for you. LinkedIn doesn't rank for local searches. Facebook pages don't generate title leads. DIY websites take 80 hours to build correctly and most reps don't have those hours.</p>
+      <p>The result is a market where <span class="accent-text">3% of title reps capture the majority of search-driven business</span>, and 97% of reps don't know what they're missing because they never see the leads that go to someone else.</p>
+    </div>
+  </div>
+
+  <!-- ══ CHAPTER 3: The Reps Who Cracked It ══ -->
+  <div class="dissolve-divider reverse"></div>
+  <section class="chapter-card" id="chapter3">
+    <div class="chapter-number-big">03</div>
+    <div class="chapter-inner reveal">
+      <div class="chapter-label">Chapter Three</div>
+      <h2 class="chapter-title">The Reps Who Cracked It</h2>
+    </div>
+  </section>
+  <div class="dissolve-divider"></div>
+
+  <div class="chapter-content reveal">
+    <div class="prose">
+      <p>Across the Texas title market, a handful of reps figured it out. Not by accident — by building the right infrastructure and letting it work. Their stories are remarkably similar. Each one reached a moment of recognition, made a decision, and then built something that changed their trajectory.</p>
+    </div>
+
+    <h3 class="section-h reveal">Lisa Morton — Fort Worth, TX</h3>
+    <div class="profile-ba reveal">
+      <div class="pba-header">
+        <div class="pba-col before-col">
+          <div class="pba-col-label">Before</div>
+          <div class="pba-stat-big">0</div>
+          <div class="pba-stat-label">Inbound leads/month</div>
+        </div>
+        <div class="pba-col after-col">
+          <div class="pba-col-label">After (60 days)</div>
+          <div class="pba-stat-big">14</div>
+          <div class="pba-stat-label">Inbound leads/month</div>
+        </div>
+      </div>
+      <div class="pba-name-row">Lisa Morton · 7 years experience · Built complete digital presence in 3 weeks</div>
+    </div>
+
+    <h3 class="section-h reveal">Marcus Rodriguez — Austin, TX</h3>
+    <div class="profile-ba reveal">
+      <div class="pba-header">
+        <div class="pba-col before-col">
+          <div class="pba-col-label">Before</div>
+          <div class="pba-stat-big">Page 4</div>
+          <div class="pba-stat-label">Google rank for name + city</div>
+        </div>
+        <div class="pba-col after-col">
+          <div class="pba-col-label">After (45 days)</div>
+          <div class="pba-stat-big">Page 1</div>
+          <div class="pba-stat-label">Google rank for name + city</div>
+        </div>
+      </div>
+      <div class="pba-name-row">Marcus Rodriguez · 9 years experience · +$62K commissions from digital leads in 6 months</div>
+    </div>
+
+    <h3 class="section-h reveal">Carla Thompson — Dallas, TX</h3>
+    <div class="profile-ba reveal">
+      <div class="pba-header">
+        <div class="pba-col before-col">
+          <div class="pba-col-label">Before</div>
+          <div class="pba-stat-big">95</div>
+          <div class="pba-stat-label">Annual transactions</div>
+        </div>
+        <div class="pba-col after-col">
+          <div class="pba-col-label">After (12 months)</div>
+          <div class="pba-stat-big">148</div>
+          <div class="pba-stat-label">Annual transactions (+56%)</div>
+        </div>
+      </div>
+      <div class="pba-name-row">Carla Thompson · 11 years experience · Receives 3–5 inbound calls/week from agents she's never met</div>
+    </div>
+
+    <div class="interview-quote reveal">
+      <p class="iq-text">"I'd tell my past self: build the website two years earlier. Those two years of leads I didn't capture — I can't get them back."</p>
+      <div class="iq-lower-third">
+        <div class="iq-bar"></div>
+        <div>
+          <div class="iq-name">Carla Thompson</div>
+          <div class="iq-role">Title Representative · Dallas, TX</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ CHAPTER 4: The System ══ -->
+  <div class="dissolve-divider reverse"></div>
+  <section class="chapter-card" id="chapter4">
+    <div class="chapter-number-big">04</div>
+    <div class="chapter-inner reveal">
+      <div class="chapter-label">Chapter Four</div>
+      <h2 class="chapter-title">The System</h2>
+    </div>
+  </section>
+  <div class="dissolve-divider"></div>
+
+  <div class="chapter-content reveal">
+    <div class="prose">
+      <p>What Lisa, Marcus, and Carla have in common isn't market advantage or luck. They all built the same four-piece system — and each piece is necessary. Remove any one of them and the results collapse.</p>
+    </div>
+
+    <div class="system-pieces reveal" id="system-pieces">
+      <div class="system-piece">
+        <div class="sp-num">Piece 01</div>
+        <div class="sp-title">Personal Domain</div>
+        <div class="sp-desc">Your own domain — independent of any company. yourname.com. You own it forever, regardless of where you work.</div>
+      </div>
+      <div class="system-piece">
+        <div class="sp-num">Piece 02</div>
+        <div class="sp-title">Professional Website + Copy</div>
+        <div class="sp-desc">A site that tells your story, lists your service areas, and ranks when people search your name and city. Written for you, built for search.</div>
+      </div>
+      <div class="system-piece">
+        <div class="sp-num">Piece 03</div>
+        <div class="sp-title">Google Business Profile</div>
+        <div class="sp-desc">Fully configured and verified. This is the single most important local ranking signal. It's how you appear on Google Maps and in local packs.</div>
+      </div>
+      <div class="system-piece">
+        <div class="sp-num">Piece 04</div>
+        <div class="sp-title">Lead Capture + Follow-Up</div>
+        <div class="sp-desc">A form that works, connected to a CRM, with automated follow-up that responds in minutes — not days. Traffic without capture is wasted.</div>
+      </div>
+    </div>
+
+    <div class="interview-quote reveal" style="margin-top: 2rem;">
+      <p class="iq-text">"It's not complicated. It's just all four pieces, done correctly. The reps who do three out of four don't get results and conclude digital doesn't work. The reps who do all four can't stop leads from coming in."</p>
+      <div class="iq-lower-third">
+        <div class="iq-bar"></div>
+        <div>
+          <div class="iq-name">Brad Patterson</div>
+          <div class="iq-role">Founder · Title Rep Web Presence Services</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ CHAPTER 5: Your Move ══ -->
+  <div class="dissolve-divider reverse"></div>
+  <section class="chapter-card" id="chapter5">
+    <div class="chapter-number-big">05</div>
+    <div class="chapter-inner reveal">
+      <div class="chapter-label">Chapter Five</div>
+      <h2 class="chapter-title">Your Move</h2>
+    </div>
+  </section>
+  <div class="dissolve-divider"></div>
+
+  <div class="chapter-content reveal">
+    <div class="prose">
+      <p>You've now seen the problem, the cause, the reps who solved it, and the system they used. The question left isn't "does this work?" — the evidence is clear. The question is what you do with it.</p>
+      <p>The reps in this documentary made one decision that changed their trajectory. Not a big expensive gamble — a specific investment in infrastructure that paid back many times over. <strong>That decision is sitting in front of you right now.</strong></p>
+    </div>
+
+    <div class="offer-card reveal">
+      <div class="offer-eyebrow">Done For You — Live in 3 Weeks</div>
+      <h3 class="offer-headline">Your Complete Web Presence, Built and Launched.</h3>
+      <div class="offer-price">$1,497</div>
+      <p class="offer-desc">One-time setup fee. Domain, design, professional copy written for you, Google Business Profile, lead capture system, and launch — complete. Then $99/month for hosting and maintenance. 60-day first lead guarantee.</p>
+      <a class="offer-btn" href="#">
+        Schedule Your Free Strategy Call
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+      </a>
+    </div>
+
+    <div class="prose reveal" style="text-align: center; padding: 1.5rem 0 2rem;">
+      <p>4 spots per month. April 2026 cohort is <strong>2 spots from full.</strong><br>The next documentary chapter could be yours.</p>
+    </div>
+  </div>
+
+  <script>
+  (function() {
+    'use strict';
+
+    /* ── Progress bar ── */
+    var bar = document.getElementById('progress-bar');
+    window.addEventListener('scroll', function() {
+      var total = document.documentElement.scrollHeight - window.innerHeight;
+      bar.style.width = (total > 0 ? (window.scrollY / total) * 100 : 0) + '%';
+    }, { passive: true });
+
+    /* ── General reveal ── */
+    var revObs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(e) {
+        if (e.isIntersecting) { e.target.classList.add('visible'); revObs.unobserve(e.target); }
+      });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal').forEach(function(el) {
+      revObs.observe(el);
+      if (el.getBoundingClientRect().top < window.innerHeight) el.classList.add('visible');
+    });
+
+    /* ── System pieces stagger ── */
+    var spObs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(e) {
+        if (e.isIntersecting) {
+          e.target.querySelectorAll('.system-piece').forEach(function(p, i) {
+            setTimeout(function() { p.classList.add('visible'); }, i * 120);
+          });
+          spObs.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.1 });
+    var sp = document.getElementById('system-pieces');
+    if (sp) spObs.observe(sp);
+
+    /* ── Chapter progress nav (right side dots) ── */
+    var chapters = [
+      { id: 'chapter1', label: 'Ch.1: The Problem' },
+      { id: 'chapter2', label: 'Ch.2: Why It Happens' },
+      { id: 'chapter3', label: 'Ch.3: Who Cracked It' },
+      { id: 'chapter4', label: 'Ch.4: The System' },
+      { id: 'chapter5', label: 'Ch.5: Your Move' }
+    ];
+
+    var nav = document.getElementById('chapter-nav');
+    var dots = [];
+
+    chapters.forEach(function(ch, i) {
+      var dot = document.createElement('div');
+      dot.className = 'chapter-dot';
+      dot.setAttribute('title', ch.label);
+      dot.setAttribute('role', 'button');
+      dot.setAttribute('tabindex', '0');
+
+      var label = document.createElement('span');
+      label.className = 'chapter-dot-label';
+      label.textContent = ch.label;
+      dot.appendChild(label);
+
+      dot.addEventListener('click', function() {
+        var target = document.getElementById(ch.id);
+        if (target) target.scrollIntoView({ behavior: 'smooth' });
+      });
+      dot.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') dot.click();
+      });
+
+      nav.appendChild(dot);
+      dots.push({ el: dot, id: ch.id });
+    });
+
+    // Update active dot on scroll
+    function updateActiveDot() {
+      var scrollMid = window.scrollY + window.innerHeight / 2;
+      var activeIdx = -1;
+
+      chapters.forEach(function(ch, i) {
+        var el = document.getElementById(ch.id);
+        if (el && el.offsetTop <= scrollMid) activeIdx = i;
+      });
+
+      dots.forEach(function(d, i) {
+        d.el.classList.toggle('active', i === activeIdx);
+      });
+    }
+
+    window.addEventListener('scroll', updateActiveDot, { passive: true });
+    updateActiveDot();
+
+  })();
+  </script>
+
+</body>
+</html>
