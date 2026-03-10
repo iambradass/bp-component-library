@@ -1,0 +1,685 @@
+<!-- COMPONENT: Benefit → Outcome Chain | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Benefit → Outcome Chain</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ============================================================
+       CUSTOMIZE — edit these variables to retheme the component
+    ============================================================ */
+    :root {
+      --bg:               #0D1117;
+      --surface:          #111827;
+      --elevated:         #1E293B;
+      --accent:           #10B981;
+      --accent-dim:       rgba(16, 185, 129, 0.1);
+      --accent-border:    rgba(16, 185, 129, 0.4);
+      --accent-glow:      rgba(16, 185, 129, 0.25);
+      --text:             #F8FAFC;
+      --text-2:           #94A3B8;
+      --text-3:           #475569;
+      --border:           rgba(148, 163, 184, 0.1);
+      --font-head:        'Space Grotesk', system-ui, sans-serif;
+      --font-body:        'Inter', system-ui, sans-serif;
+      --font-mono:        ui-monospace, 'Cascadia Code', monospace;
+      --radius:           12px;
+      --spring:           cubic-bezier(0.34, 1.56, 0.64, 1);
+      --spring-soft:      cubic-bezier(0.34, 1.3, 0.64, 1);
+      /* Node sizing */
+      --node-w-feat:      200px;
+      --node-w-benefit:   210px;
+      --node-w-outcome:   230px;
+    }
+    /* ============================================================ */
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* ── Section shell ── */
+    .section-outer {
+      padding: 6rem 1.5rem 5rem;
+    }
+    .section-inner {
+      max-width: 1040px;
+      margin: 0 auto;
+    }
+
+    /* ── Section header ── */
+    .section-header {
+      text-align: center;
+      margin-bottom: 4rem;
+    }
+    .eyebrow {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-border);
+      padding: 0.32rem 0.8rem;
+      border-radius: 100px;
+      margin-bottom: 1.1rem;
+    }
+    .section-title {
+      font-family: var(--font-head);
+      font-size: clamp(1.9rem, 4.5vw, 3rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.12;
+      margin-bottom: 0.85rem;
+    }
+    .section-sub {
+      font-size: 1rem;
+      color: var(--text-2);
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    /* ── Column headers ── */
+    .chain-col-headers {
+      display: grid;
+      grid-template-columns: var(--node-w-feat) 1fr var(--node-w-benefit) 1fr var(--node-w-outcome);
+      gap: 0;
+      margin-bottom: 1.5rem;
+      padding: 0 0.5rem;
+    }
+    .col-header {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      text-align: center;
+    }
+    .col-header.outcome-col { color: var(--accent); opacity: 0.7; }
+    .col-header.spacer { /* connector column header — empty */ }
+
+    /* ============================================================
+       CHAIN ROW
+    ============================================================ */
+    .chain-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .chain-row {
+      display: grid;
+      grid-template-columns: var(--node-w-feat) 1fr var(--node-w-benefit) 1fr var(--node-w-outcome);
+      align-items: center;
+      gap: 0;
+      opacity: 0;
+    }
+
+    /* Connectors are SVG overlays handled per-row */
+    .chain-connector {
+      position: relative;
+      height: 2px;
+      display: flex;
+      align-items: center;
+    }
+    .chain-connector svg {
+      width: 100%;
+      overflow: visible;
+    }
+
+    /* ── Node base ── */
+    .chain-node {
+      border-radius: var(--radius);
+      padding: 0.9rem 1rem;
+      position: relative;
+      transform: scale(0.85) translateX(-8px);
+      opacity: 0;
+      transition: transform 0.45s var(--spring), opacity 0.35s ease;
+    }
+    .chain-node.animated { transform: scale(1) translateX(0); opacity: 1; }
+
+    /* Feature node */
+    .node-feature {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      width: var(--node-w-feat);
+    }
+    .node-feature .node-icon {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 0.6rem;
+    }
+    .node-feature .node-icon svg {
+      width: 16px; height: 16px;
+      stroke: var(--text-2);
+      stroke-width: 1.75;
+    }
+    .node-label {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      letter-spacing: 0.07em;
+      color: var(--text-3);
+      text-transform: uppercase;
+      margin-bottom: 0.25rem;
+    }
+    .node-title {
+      font-family: var(--font-head);
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.3;
+    }
+
+    /* Benefit node */
+    .node-benefit {
+      background: var(--elevated);
+      border: 1px solid rgba(148, 163, 184, 0.15);
+      width: var(--node-w-benefit);
+      transform: scale(0.85) translateX(-4px);
+    }
+    .node-benefit .node-title {
+      font-size: 0.88rem;
+      color: var(--text-2);
+    }
+
+    /* Outcome node — the money shot */
+    .node-outcome {
+      background: rgba(16, 185, 129, 0.05);
+      border: 1.5px solid var(--accent-border);
+      width: var(--node-w-outcome);
+      box-shadow: 0 0 0 transparent;
+      transform: scale(0.85) translateX(-4px);
+      transition: transform 0.55s var(--spring), opacity 0.35s ease, box-shadow 0.5s ease;
+    }
+    .node-outcome.animated {
+      box-shadow: 0 0 28px var(--accent-glow);
+    }
+    .node-outcome .node-label { color: var(--accent); opacity: 0.7; }
+    .node-outcome .node-title {
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.35;
+    }
+
+    /* Each row slightly scales up to build momentum */
+    .chain-row:nth-child(1) { --row-scale-bonus: 1.000; }
+    .chain-row:nth-child(2) { --row-scale-bonus: 1.002; }
+    .chain-row:nth-child(3) { --row-scale-bonus: 1.004; }
+    .chain-row:nth-child(4) { --row-scale-bonus: 1.006; }
+    .chain-row:nth-child(5) { --row-scale-bonus: 1.008; }
+
+    /* ============================================================
+       SVG CONNECTOR LINES
+       Each row gets its own inline SVG
+    ============================================================ */
+    .chain-connector svg line {
+      stroke: var(--accent);
+      stroke-width: 1.5;
+      stroke-dasharray: 200;
+      stroke-dashoffset: 200;
+      transition: stroke-dashoffset 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+      opacity: 0.5;
+    }
+    .chain-connector svg .arrow {
+      stroke-dasharray: none;
+      stroke-dashoffset: 0;
+      stroke-width: 1.5;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+    .chain-connector.drawn svg line { stroke-dashoffset: 0; }
+    .chain-connector.drawn svg .arrow { opacity: 0.6; }
+
+    /* ============================================================
+       MOBILE — stacked vertical layout
+    ============================================================ */
+    @media (max-width: 860px) {
+      .chain-col-headers { display: none; }
+
+      .chain-row {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0;
+        padding: 0;
+      }
+
+      .chain-connector {
+        height: 32px;
+        width: 2px;
+        flex-direction: column;
+        margin-left: 1.25rem;
+      }
+
+      .chain-connector svg {
+        width: 2px;
+        height: 100%;
+      }
+
+      .chain-node {
+        width: 100% !important;
+        max-width: 400px;
+      }
+
+      .node-feature, .node-benefit, .node-outcome {
+        width: 100% !important;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .section-outer { padding: 4rem 1rem 3rem; }
+      .chain-list { gap: 2rem; }
+    }
+
+    /* ── Final stat strip ── */
+    .stat-strip {
+      margin-top: 4rem;
+      padding-top: 3rem;
+      border-top: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+      text-align: center;
+    }
+    @media (max-width: 600px) { .stat-strip { grid-template-columns: 1fr; } }
+    .stat-num {
+      font-family: var(--font-head);
+      font-size: 2.4rem;
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      color: var(--accent);
+      line-height: 1;
+      margin-bottom: 0.3rem;
+    }
+    .stat-label {
+      font-size: 0.82rem;
+      color: var(--text-3);
+    }
+
+    /* ── CTA strip ── */
+    .cta-strip {
+      margin-top: 3.5rem;
+      text-align: center;
+    }
+    .cta-strip h3 {
+      font-family: var(--font-head);
+      font-size: clamp(1.4rem, 3vw, 2rem);
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      margin-bottom: 0.6rem;
+    }
+    .cta-strip p { color: var(--text-2); margin-bottom: 1.75rem; font-size: 0.95rem; }
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.9rem 2.25rem;
+      background: var(--accent);
+      color: #0a1a12;
+      font-family: var(--font-head);
+      font-size: 0.95rem;
+      font-weight: 700;
+      border-radius: 100px;
+      text-decoration: none;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px var(--accent-glow);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="section-outer">
+    <div class="section-inner">
+
+      <!-- Section header -->
+      <div class="section-header">
+        <div class="eyebrow">// The Value Path</div>
+        <h2 class="section-title">Feature. Benefit. Outcome.<br>See exactly what you get.</h2>
+        <p class="section-sub">Every tool in your platform traces a direct line from what it does to what it means for your business.</p>
+      </div>
+
+      <!-- Column headers (desktop only) -->
+      <div class="chain-col-headers">
+        <div class="col-header">Feature</div>
+        <div class="col-header spacer"></div>
+        <div class="col-header">Benefit</div>
+        <div class="col-header spacer"></div>
+        <div class="col-header outcome-col">Outcome</div>
+      </div>
+
+      <!-- Chain rows -->
+      <div class="chain-list" id="chain-list">
+
+        <!-- Row 1 -->
+        <div class="chain-row" data-row="0">
+          <div class="chain-node node-feature" data-node="feature">
+            <div class="node-icon">
+              <!-- Globe icon -->
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+            </div>
+            <div class="node-label">Feature</div>
+            <div class="node-title">Professional Website</div>
+          </div>
+          <div class="chain-connector" data-line="0">
+            <svg viewBox="0 0 100 10" preserveAspectRatio="none">
+              <line x1="0" y1="5" x2="90" y2="5"/>
+              <polyline class="arrow" points="84,1 90,5 84,9"/>
+            </svg>
+          </div>
+          <div class="chain-node node-benefit" data-node="benefit">
+            <div class="node-label">Benefit</div>
+            <div class="node-title">First impression credibility</div>
+          </div>
+          <div class="chain-connector" data-line="1">
+            <svg viewBox="0 0 100 10" preserveAspectRatio="none">
+              <line x1="0" y1="5" x2="90" y2="5"/>
+              <polyline class="arrow" points="84,1 90,5 84,9"/>
+            </svg>
+          </div>
+          <div class="chain-node node-outcome" data-node="outcome">
+            <div class="node-label">Outcome</div>
+            <div class="node-title">Agents refer before calling competitors</div>
+          </div>
+        </div>
+
+        <!-- Row 2 -->
+        <div class="chain-row" data-row="1">
+          <div class="chain-node node-feature" data-node="feature">
+            <div class="node-icon">
+              <!-- Search icon -->
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            </div>
+            <div class="node-label">Feature</div>
+            <div class="node-title">SEO Optimization</div>
+          </div>
+          <div class="chain-connector" data-line="2">
+            <svg viewBox="0 0 100 10" preserveAspectRatio="none">
+              <line x1="0" y1="5" x2="90" y2="5"/>
+              <polyline class="arrow" points="84,1 90,5 84,9"/>
+            </svg>
+          </div>
+          <div class="chain-node node-benefit" data-node="benefit">
+            <div class="node-label">Benefit</div>
+            <div class="node-title">You show up in local search</div>
+          </div>
+          <div class="chain-connector" data-line="3">
+            <svg viewBox="0 0 100 10" preserveAspectRatio="none">
+              <line x1="0" y1="5" x2="90" y2="5"/>
+              <polyline class="arrow" points="84,1 90,5 84,9"/>
+            </svg>
+          </div>
+          <div class="chain-node node-outcome" data-node="outcome">
+            <div class="node-label">Outcome</div>
+            <div class="node-title">Inbound leads find you — you don't chase them</div>
+          </div>
+        </div>
+
+        <!-- Row 3 -->
+        <div class="chain-row" data-row="2">
+          <div class="chain-node node-feature" data-node="feature">
+            <div class="node-icon">
+              <!-- Pen/content icon -->
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            </div>
+            <div class="node-label">Feature</div>
+            <div class="node-title">Content Strategy</div>
+          </div>
+          <div class="chain-connector" data-line="4">
+            <svg viewBox="0 0 100 10" preserveAspectRatio="none">
+              <line x1="0" y1="5" x2="90" y2="5"/>
+              <polyline class="arrow" points="84,1 90,5 84,9"/>
+            </svg>
+          </div>
+          <div class="chain-node node-benefit" data-node="benefit">
+            <div class="node-label">Benefit</div>
+            <div class="node-title">You become the known expert</div>
+          </div>
+          <div class="chain-connector" data-line="5">
+            <svg viewBox="0 0 100 10" preserveAspectRatio="none">
+              <line x1="0" y1="5" x2="90" y2="5"/>
+              <polyline class="arrow" points="84,1 90,5 84,9"/>
+            </svg>
+          </div>
+          <div class="chain-node node-outcome" data-node="outcome">
+            <div class="node-label">Outcome</div>
+            <div class="node-title">Clients close faster because trust is pre-built</div>
+          </div>
+        </div>
+
+        <!-- Row 4 -->
+        <div class="chain-row" data-row="3">
+          <div class="chain-node node-feature" data-node="feature">
+            <div class="node-icon">
+              <!-- Mail icon -->
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+            </div>
+            <div class="node-label">Feature</div>
+            <div class="node-title">Email Automation</div>
+          </div>
+          <div class="chain-connector" data-line="6">
+            <svg viewBox="0 0 100 10" preserveAspectRatio="none">
+              <line x1="0" y1="5" x2="90" y2="5"/>
+              <polyline class="arrow" points="84,1 90,5 84,9"/>
+            </svg>
+          </div>
+          <div class="chain-node node-benefit" data-node="benefit">
+            <div class="node-label">Benefit</div>
+            <div class="node-title">Consistent top-of-mind presence</div>
+          </div>
+          <div class="chain-connector" data-line="7">
+            <svg viewBox="0 0 100 10" preserveAspectRatio="none">
+              <line x1="0" y1="5" x2="90" y2="5"/>
+              <polyline class="arrow" points="84,1 90,5 84,9"/>
+            </svg>
+          </div>
+          <div class="chain-node node-outcome" data-node="outcome">
+            <div class="node-label">Outcome</div>
+            <div class="node-title">Your name is the first they say at closing</div>
+          </div>
+        </div>
+
+        <!-- Row 5 -->
+        <div class="chain-row" data-row="4">
+          <div class="chain-node node-feature" data-node="feature">
+            <div class="node-icon">
+              <!-- Chart icon -->
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+            </div>
+            <div class="node-label">Feature</div>
+            <div class="node-title">Analytics Dashboard</div>
+          </div>
+          <div class="chain-connector" data-line="8">
+            <svg viewBox="0 0 100 10" preserveAspectRatio="none">
+              <line x1="0" y1="5" x2="90" y2="5"/>
+              <polyline class="arrow" points="84,1 90,5 84,9"/>
+            </svg>
+          </div>
+          <div class="chain-node node-benefit" data-node="benefit">
+            <div class="node-label">Benefit</div>
+            <div class="node-title">Know what's actually working</div>
+          </div>
+          <div class="chain-connector" data-line="9">
+            <svg viewBox="0 0 100 10" preserveAspectRatio="none">
+              <line x1="0" y1="5" x2="90" y2="5"/>
+              <polyline class="arrow" points="84,1 90,5 84,9"/>
+            </svg>
+          </div>
+          <div class="chain-node node-outcome" data-node="outcome">
+            <div class="node-label">Outcome</div>
+            <div class="node-title">Double down on what wins, cut what doesn't</div>
+          </div>
+        </div>
+
+      </div><!-- /chain-list -->
+
+      <!-- Stat strip -->
+      <div class="stat-strip">
+        <div>
+          <div class="stat-num">400+</div>
+          <div class="stat-label">Title reps on the platform</div>
+        </div>
+        <div>
+          <div class="stat-num">3.2x</div>
+          <div class="stat-label">Average referral increase in year 1</div>
+        </div>
+        <div>
+          <div class="stat-num">24hr</div>
+          <div class="stat-label">From signup to live site</div>
+        </div>
+      </div>
+
+      <!-- CTA -->
+      <div class="cta-strip">
+        <h3>See the full value chain in action.</h3>
+        <p>Live demo. No credit card. No commitment.</p>
+        <a href="#" class="btn-primary">
+          Start Free
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </a>
+      </div>
+
+    </div><!-- /section-inner -->
+  </div><!-- /section-outer -->
+
+  <script>
+  (function() {
+    'use strict';
+
+    const rows = document.querySelectorAll('.chain-row');
+    const isMobile = () => window.innerWidth <= 860;
+
+    /* ── Animate a single row ── */
+    function animateRow(row) {
+      const nodes = row.querySelectorAll('.chain-node');
+      const connectors = row.querySelectorAll('.chain-connector');
+
+      const featureNode  = row.querySelector('[data-node="feature"]');
+      const benefitNode  = row.querySelector('[data-node="benefit"]');
+      const outcomeNode  = row.querySelector('[data-node="outcome"]');
+      const conn1        = connectors[0]; // feature → benefit
+      const conn2        = connectors[1]; // benefit → outcome
+
+      /* Phase 1: Feature node slides in (0ms) */
+      requestAnimationFrame(() => {
+        featureNode.classList.add('animated');
+      });
+
+      /* Phase 2: First connector draws (200ms) */
+      setTimeout(() => {
+        if (conn1) conn1.classList.add('drawn');
+      }, 200);
+
+      /* Phase 3: Benefit node pops in (420ms) */
+      setTimeout(() => {
+        if (benefitNode) benefitNode.classList.add('animated');
+      }, 420);
+
+      /* Phase 4: Second connector draws (620ms) */
+      setTimeout(() => {
+        if (conn2) conn2.classList.add('drawn');
+      }, 620);
+
+      /* Phase 5: Outcome node springs in — the money moment (900ms) */
+      setTimeout(() => {
+        if (outcomeNode) outcomeNode.classList.add('animated');
+      }, 900);
+    }
+
+    /* ── Reset a row (for re-observation) ── */
+    function resetRow(row) {
+      const nodes = row.querySelectorAll('.chain-node');
+      const connectors = row.querySelectorAll('.chain-connector');
+      nodes.forEach(n => n.classList.remove('animated'));
+      connectors.forEach(c => c.classList.remove('drawn'));
+    }
+
+    /* ── IntersectionObserver ── */
+    /* Stagger threshold slightly per row to build cascading feel */
+    const baseThreshold = 0.3;
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        const row = entry.target;
+        if (entry.isIntersecting) {
+          // Fade the row container in first
+          row.style.opacity = '1';
+          row.style.transition = 'opacity 0.3s ease';
+          animateRow(row);
+          // Stop observing after first trigger (we want one-shot)
+          observer.unobserve(row);
+        }
+      });
+    }, {
+      threshold: baseThreshold,
+      rootMargin: '0px 0px -40px 0px'
+    });
+
+    rows.forEach((row, idx) => {
+      // Stagger the rootMargin slightly per row for cascade
+      const staggeredObserver = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting) {
+          entries[0].target.style.opacity = '1';
+          entries[0].target.style.transition = 'opacity 0.3s ease';
+          // Small additional delay per row for cascade feel
+          setTimeout(() => animateRow(entries[0].target), idx * 60);
+          staggeredObserver.unobserve(entries[0].target);
+        }
+      }, {
+        threshold: 0.25,
+        rootMargin: `0px 0px -${20 + idx * 10}px 0px`
+      });
+      staggeredObserver.observe(row);
+    });
+
+    /* ── Mobile: vertical SVG connectors ── */
+    function applyMobileConnectors() {
+      if (!isMobile()) return;
+      document.querySelectorAll('.chain-connector').forEach(conn => {
+        const svg = conn.querySelector('svg');
+        if (!svg) return;
+        // Replace horizontal line with vertical
+        svg.setAttribute('viewBox', '0 0 10 100');
+        svg.setAttribute('preserveAspectRatio', 'none');
+        const line = svg.querySelector('line');
+        const arrow = svg.querySelector('.arrow');
+        if (line) { line.setAttribute('x1','5'); line.setAttribute('y1','0'); line.setAttribute('x2','5'); line.setAttribute('y2','90'); }
+        if (arrow) { arrow.setAttribute('points','1,84 5,90 9,84'); }
+      });
+    }
+
+    applyMobileConnectors();
+    window.addEventListener('resize', applyMobileConnectors);
+
+    /* ── Replay on row click (dev utility) ── */
+    rows.forEach(row => {
+      row.addEventListener('click', () => {
+        resetRow(row);
+        setTimeout(() => animateRow(row), 80);
+      });
+    });
+
+  })();
+  </script>
+</body>
+</html>
