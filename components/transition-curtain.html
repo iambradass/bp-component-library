@@ -1,0 +1,348 @@
+<!-- COMPONENT: Transition Curtain Wipe | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transition: Curtain Wipe</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── CUSTOMIZE ── */
+    :root {
+      --bg:             #0D1117;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16, 185, 129, 0.08);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --curtain-bg:     #080C10;
+      --curtain-stripe: rgba(16, 185, 129, 0.04);
+      --curtain-speed:  500ms;
+      --curtain-ease:   cubic-bezier(0.7, 0, 0.3, 1);
+      --font-heading:   'Space Grotesk', system-ui, sans-serif;
+      --font-body:      'Inter', system-ui, sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+    }
+
+    /* ── Pages ── */
+    .pages-container {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+    }
+
+    .page {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2rem;
+      padding: 2rem;
+      transition: opacity 60ms ease;
+    }
+
+    .page.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .page-number {
+      font-family: var(--font-heading);
+      font-size: clamp(0.75rem, 2vw, 0.875rem);
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .page-headline {
+      font-family: var(--font-heading);
+      font-size: clamp(2.5rem, 8vw, 5.5rem);
+      font-weight: 700;
+      line-height: 1.05;
+      text-align: center;
+      max-width: 14ch;
+    }
+
+    .page-headline em {
+      font-style: normal;
+      color: var(--accent);
+    }
+
+    .page-sub {
+      font-size: clamp(0.95rem, 2.5vw, 1.125rem);
+      color: var(--text-secondary);
+      text-align: center;
+      max-width: 40ch;
+      line-height: 1.6;
+    }
+
+    /* Page 1 accent shape */
+    .page-1-shape {
+      position: absolute;
+      width: 500px;
+      height: 500px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(16,185,129,0.06) 0%, transparent 70%);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    /* Page 2 accent shape */
+    .page-2-shape {
+      position: absolute;
+      width: 600px;
+      height: 300px;
+      background: radial-gradient(ellipse, rgba(16,185,129,0.05) 0%, transparent 70%);
+      bottom: 10%;
+      right: 5%;
+      pointer-events: none;
+    }
+
+    /* ── Nav Button ── */
+    .nav-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.875rem 2rem;
+      border-radius: 9999px;
+      border: 1.5px solid var(--accent);
+      background: transparent;
+      color: var(--accent);
+      font-family: var(--font-heading);
+      font-size: 0.9375rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 200ms ease, color 200ms ease, transform 200ms ease;
+      position: relative;
+      z-index: 1;
+    }
+
+    .nav-btn:hover {
+      background: var(--accent);
+      color: #0D1117;
+      transform: translateY(-2px);
+    }
+
+    .nav-btn:active {
+      transform: translateY(0);
+    }
+
+    /* ── Curtain Overlay ── */
+    #curtain {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: var(--curtain-bg);
+      /* Velvet texture — thin vertical lines */
+      background-image:
+        repeating-linear-gradient(
+          90deg,
+          transparent 0px,
+          transparent 3px,
+          var(--curtain-stripe) 3px,
+          var(--curtain-stripe) 4px
+        );
+      transform: translateX(-100%);
+      will-change: transform;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ── Progress Bar on Curtain ── */
+    #curtain-progress-wrap {
+      position: absolute;
+      bottom: 40%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(300px, 60vw);
+      opacity: 0;
+      transition: opacity 150ms ease;
+    }
+
+    #curtain-progress-wrap.visible {
+      opacity: 1;
+    }
+
+    #curtain-progress-bar {
+      height: 2px;
+      width: 100%;
+      background: rgba(255,255,255,0.08);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    #curtain-progress-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--accent);
+      border-radius: 2px;
+      transition: width var(--curtain-speed) linear;
+    }
+
+    /* ── Page indicators (top) ── */
+    .page-dots {
+      position: fixed;
+      top: 1.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 0.5rem;
+      z-index: 10;
+    }
+
+    .page-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(248,250,252,0.2);
+      transition: background 300ms ease, transform 300ms ease;
+    }
+
+    .page-dot.active {
+      background: var(--accent);
+      transform: scale(1.4);
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 375px) {
+      .page-headline { font-size: 2rem; }
+      .nav-btn { padding: 0.75rem 1.5rem; font-size: 0.875rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="pages-container">
+
+  <!-- Page Dots -->
+  <div class="page-dots">
+    <div class="page-dot active" id="dot-0"></div>
+    <div class="page-dot" id="dot-1"></div>
+  </div>
+
+  <!-- Page 1 -->
+  <div class="page" id="page-0">
+    <div class="page-1-shape"></div>
+    <div class="page-number">Page One</div>
+    <h1 class="page-headline">The Stage<br>is <em>Set.</em></h1>
+    <p class="page-sub">A velvet curtain sweeps across the viewport — covering, swapping, then revealing with theatrical precision.</p>
+    <button class="nav-btn" onclick="transitionTo(1, 'forward')">
+      Next Page
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Page 2 -->
+  <div class="page hidden" id="page-1">
+    <div class="page-2-shape"></div>
+    <div class="page-number">Page Two</div>
+    <h1 class="page-headline"><em>Revealed</em><br>at Last.</h1>
+    <p class="page-sub">The curtain has passed. The new scene is visible. Motion IS the message — no fade, no cut. Pure wipe.</p>
+    <button class="nav-btn" onclick="transitionTo(0, 'backward')">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M13 8H3M7 12l-4-4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Back
+    </button>
+  </div>
+
+</div>
+
+<!-- Curtain Overlay -->
+<div id="curtain">
+  <div id="curtain-progress-wrap">
+    <div id="curtain-progress-bar">
+      <div id="curtain-progress-fill"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let currentPage = 0;
+  let isTransitioning = false;
+
+  const curtain = document.getElementById('curtain');
+  const progressWrap = document.getElementById('curtain-progress-wrap');
+  const progressFill = document.getElementById('curtain-progress-fill');
+  const SPEED = 500; // ms — must match --curtain-speed
+
+  function setPage(index) {
+    document.querySelectorAll('.page').forEach((p, i) => {
+      p.classList.toggle('hidden', i !== index);
+    });
+    document.querySelectorAll('.page-dot').forEach((d, i) => {
+      d.classList.toggle('active', i === index);
+    });
+    currentPage = index;
+  }
+
+  function transitionTo(targetIndex, direction) {
+    if (isTransitioning) return;
+    isTransitioning = true;
+
+    const enterFrom = direction === 'forward' ? '-100%' : '100%';
+    const exitTo   = direction === 'forward' ? '100%'  : '-100%';
+
+    // Reset curtain position instantly (no transition)
+    curtain.style.transition = 'none';
+    curtain.style.transform = `translateX(${enterFrom})`;
+    progressFill.style.transition = 'none';
+    progressFill.style.width = '0%';
+
+    // Force reflow
+    curtain.offsetHeight;
+
+    // Curtain sweeps IN
+    curtain.style.transition = `transform ${SPEED}ms cubic-bezier(0.7, 0, 0.3, 1)`;
+    curtain.style.transform = 'translateX(0)';
+
+    // Show progress bar slightly after curtain starts
+    setTimeout(() => {
+      progressWrap.classList.add('visible');
+      // Animate progress fill across curtain-in duration
+      progressFill.style.transition = `width ${SPEED - 60}ms linear`;
+      progressFill.style.width = '100%';
+    }, 40);
+
+    // Mid-point: swap page while curtain covers viewport
+    setTimeout(() => {
+      setPage(targetIndex);
+    }, SPEED / 2);
+
+    // Curtain sweeps OUT
+    setTimeout(() => {
+      progressWrap.classList.remove('visible');
+      progressFill.style.transition = 'none';
+      progressFill.style.width = '0%';
+
+      curtain.style.transition = `transform ${SPEED}ms cubic-bezier(0.7, 0, 0.3, 1)`;
+      curtain.style.transform = `translateX(${exitTo})`;
+    }, SPEED + 20);
+
+    // Done
+    setTimeout(() => {
+      isTransitioning = false;
+    }, SPEED * 2 + 40);
+  }
+</script>
+</body>
+</html>

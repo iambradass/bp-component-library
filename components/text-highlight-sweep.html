@@ -1,0 +1,363 @@
+<!-- COMPONENT: Text Highlight Sweep | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Text Highlight Sweep — Component Library</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ============================================================
+       CUSTOMIZE
+    ============================================================ */
+    :root {
+      --bg:            #0D1117;
+      --bg-surface:    #161B22;
+      --accent:        #10B981;
+      --accent-soft:   rgba(16, 185, 129, 0.22);
+      --accent-mark:   rgba(16, 185, 129, 0.28);
+      --text:          #F8FAFC;
+      --text-muted:    #475569;
+      --text-dim:      #94A3B8;
+      --border:        rgba(255,255,255,0.06);
+      --radius:        12px;
+      --font-head:     'Space Grotesk', sans-serif;
+      --font-body:     'Inter', sans-serif;
+    }
+    /* ============================================================ */
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ── Demo Header ── */
+    .demo-header {
+      text-align: center;
+      padding: 5rem 2rem 3rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .demo-header .badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: rgba(16,185,129,0.12);
+      border: 1px solid rgba(16,185,129,0.2);
+      border-radius: 100px;
+      padding: 0.3rem 0.85rem;
+      margin-bottom: 1rem;
+    }
+    .demo-header h1 {
+      font-family: var(--font-head);
+      font-size: clamp(1rem, 2.5vw, 1.4rem);
+      font-weight: 600;
+      color: var(--text-dim);
+    }
+
+    /* ── Content column ── */
+    .ths-wrapper {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 6rem 2rem 8rem;
+    }
+
+    /* Opening headline */
+    .ths-opener {
+      margin-bottom: 4rem;
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .ths-opener.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .ths-opener-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 1rem;
+      display: block;
+    }
+    .ths-opener h2 {
+      font-family: var(--font-head);
+      font-size: clamp(1.8rem, 5vw, 3.2rem);
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+    }
+
+    /* ── Paragraphs ── */
+    .ths-para {
+      margin-bottom: 2.25rem;
+      font-size: clamp(1rem, 2vw, 1.125rem);
+      line-height: 1.85;
+      color: var(--text-dim);
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .ths-para.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ── Sweep marks ── */
+    .sweep-mark {
+      background: linear-gradient(var(--accent-mark), var(--accent-mark)) no-repeat left center;
+      background-size: 0% 85%;
+      border-radius: 3px;
+      padding: 0 3px;
+      color: var(--text);
+      font-weight: 500;
+      transition: background-size 420ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .sweep-mark.swept {
+      background-size: 100% 85%;
+    }
+
+    /* Stagger delay classes */
+    .sweep-mark[data-delay="1"] { transition-delay: 0ms; }
+    .sweep-mark[data-delay="2"] { transition-delay: 80ms; }
+    .sweep-mark[data-delay="3"] { transition-delay: 160ms; }
+    .sweep-mark[data-delay="4"] { transition-delay: 240ms; }
+
+    /* ── Pull quotes ── */
+    .ths-pullquote {
+      border-left: 3px solid var(--accent);
+      padding: 1rem 1.5rem;
+      margin: 3rem 0;
+      background: rgba(16,185,129,0.04);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      opacity: 0;
+      transform: translateX(-12px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .ths-pullquote.visible {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    .ths-pullquote p {
+      font-family: var(--font-head);
+      font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.4;
+      margin-bottom: 0;
+      opacity: 1;
+      transform: none;
+    }
+
+    /* ── Divider ── */
+    .ths-divider {
+      width: 48px;
+      height: 2px;
+      background: var(--border);
+      margin: 3rem 0;
+    }
+
+    /* ── CTA at bottom ── */
+    .ths-cta {
+      margin-top: 4rem;
+      text-align: center;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.7s ease 0.1s, transform 0.7s ease 0.1s;
+    }
+    .ths-cta.visible { opacity: 1; transform: translateY(0); }
+
+    .ths-cta-btn {
+      display: inline-block;
+      font-family: var(--font-head);
+      font-size: 1rem;
+      font-weight: 700;
+      color: #000;
+      background: var(--accent);
+      border-radius: 8px;
+      padding: 0.9rem 2.5rem;
+      text-decoration: none;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .ths-cta-btn:hover { opacity: 0.85; }
+
+    .ths-cta p {
+      margin-top: 1rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    /* ── Reading progress bar ── */
+    .read-progress {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 2px;
+      width: 0%;
+      background: var(--accent);
+      z-index: 200;
+      transition: width 0.1s linear;
+    }
+
+    /* ── Mobile ── */
+    @media (max-width: 375px) {
+      .ths-opener h2 { font-size: 1.7rem; }
+      .ths-para { font-size: 0.97rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="read-progress" id="readProgress"></div>
+
+  <header class="demo-header">
+    <div class="badge">Scroll-Driven Text Effect</div>
+    <h1>Text Highlight Sweep — Phrases illuminate as you read, like a real highlighter</h1>
+  </header>
+
+  <div class="ths-wrapper">
+
+    <!-- Opening -->
+    <div class="ths-opener" data-reveal>
+      <span class="ths-opener-label">Why Title Reps Need a Digital Presence</span>
+      <h2>The Agent Already Decided Before They Called.</h2>
+    </div>
+
+    <!-- Paragraph 1 -->
+    <p class="ths-para" data-reveal>
+      Here's the reality no one in title sales wants to say out loud: the moment a real estate agent
+      needs a title rep, they open Google. Not their contact list — Google. And if your name isn't
+      <mark class="sweep-mark" data-delay="1">the first result they see</mark>, you don't get the call.
+      It doesn't matter how great your service is, how many transactions you've closed, or how many
+      holiday cards you've sent. If you're not showing up
+      <mark class="sweep-mark" data-delay="2">before your competitors</mark>, you're invisible when it counts most.
+    </p>
+
+    <!-- Paragraph 2 -->
+    <p class="ths-para" data-reveal>
+      Think about when agents actually make referral decisions.
+      It's not at the office. It's not at networking events you both attend.
+      It's <mark class="sweep-mark" data-delay="1">at 11pm when they're deciding</mark> which title rep to
+      recommend to a client closing next week. That's when your website, your reviews, and your Google presence
+      either speak for you — or they don't. The rep with a professional digital footprint wins that moment
+      every single time, because <mark class="sweep-mark" data-delay="2">they've already decided</mark> before
+      they ever pick up the phone.
+    </p>
+
+    <!-- Pull quote 1 -->
+    <div class="ths-pullquote" data-reveal>
+      <p>"The rep who shows up online gets the call. The rep who doesn't get found doesn't get the chance."</p>
+    </div>
+
+    <!-- Paragraph 3 -->
+    <p class="ths-para" data-reveal>
+      The real estate industry is more competitive than ever, and <mark class="sweep-mark" data-delay="1">digital
+      presence is now table stakes</mark> — not a differentiator. Your competitors have already figured this out.
+      While you're relying on last year's relationships, they're getting discovered by agents who've never heard
+      of either of you. A new agent who moves into your market and builds a strong online presence can
+      <mark class="sweep-mark" data-delay="2">capture referrals that should have been yours</mark> in a matter
+      of months. Relationships matter, but search results matter first.
+    </p>
+
+    <div class="ths-divider"></div>
+
+    <!-- Paragraph 4 -->
+    <p class="ths-para" data-reveal>
+      The math is simple. If even <mark class="sweep-mark" data-delay="1">one additional closing per month</mark>
+      comes from your digital presence, the ROI on any reasonable investment in your online platform is immediate
+      and undeniable. Most title reps we work with see results far faster than that — because the agents searching
+      for title services in your market aren't overwhelmed with options. There are usually two or three reps with
+      a real digital presence. <mark class="sweep-mark" data-delay="2">The rep who shows up wins</mark> simply
+      by being findable when everyone else is invisible.
+    </p>
+
+    <!-- Paragraph 5 -->
+    <p class="ths-para" data-reveal>
+      Building that presence doesn't mean spending all day on social media. It means having a professional site
+      that converts, SEO content that answers the questions agents are Googling, and an automated follow-up
+      system that keeps you <mark class="sweep-mark" data-delay="1">top of mind between closings</mark> without
+      requiring you to manually touch anything. That's not a fantasy — it's exactly what
+      <mark class="sweep-mark" data-delay="2">the best-performing title reps</mark> have built for themselves,
+      quietly, while the rest of the market waits for the next referral to fall in their lap.
+    </p>
+
+    <!-- Pull quote 2 -->
+    <div class="ths-pullquote" data-reveal>
+      <p>"Stop waiting for the phone to ring. Start owning the search results where agents decide who to call."</p>
+    </div>
+
+    <!-- Paragraph 6 -->
+    <p class="ths-para" data-reveal>
+      The window to act is now. Every month you're invisible online is a month your competitor is getting found
+      instead of you. Every <mark class="sweep-mark" data-delay="1">agent who searches and finds someone else</mark>
+      is a relationship you never got the chance to build. The good news: most of your local competition still
+      hasn't figured this out. <mark class="sweep-mark" data-delay="2">The first mover advantage is real</mark>
+      and it belongs to whoever acts first. That can be you — but only if you decide to show up.
+    </p>
+
+    <!-- CTA -->
+    <div class="ths-cta" data-reveal>
+      <a href="#" class="ths-cta-btn">Start Showing Up →</a>
+      <p>Free strategy session. No contracts. Setup in 7 days.</p>
+    </div>
+
+  </div>
+
+  <script>
+    (() => {
+      'use strict';
+
+      const progressBar = document.getElementById('readProgress');
+
+      // ── Reading progress ───────────────────────────────────
+      window.addEventListener('scroll', () => {
+        const scrollTop = window.scrollY;
+        const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+        progressBar.style.width = (Math.min(1, scrollTop / docHeight) * 100) + '%';
+      }, { passive: true });
+
+      // ── Reveal observer (paragraphs, opener, pullquotes) ──
+      const revealObserver = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+          if (e.isIntersecting) {
+            e.target.classList.add('visible');
+            revealObserver.unobserve(e.target);
+          }
+        });
+      }, { threshold: 0.2 });
+
+      document.querySelectorAll('[data-reveal]').forEach(el => revealObserver.observe(el));
+
+      // ── Sweep mark observer ────────────────────────────────
+      // Group marks by their parent paragraph
+      // When paragraph becomes visible, trigger marks in staggered order
+      const markObserver = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+          if (!e.isIntersecting) return;
+          const marks = e.target.querySelectorAll('.sweep-mark:not(.swept)');
+          marks.forEach(mark => {
+            // delay is already set via CSS transition-delay on data-delay attr
+            mark.classList.add('swept');
+          });
+          markObserver.unobserve(e.target);
+        });
+      }, { threshold: 0.65 });
+
+      document.querySelectorAll('.ths-para').forEach(p => markObserver.observe(p));
+
+    })();
+  </script>
+</body>
+</html>

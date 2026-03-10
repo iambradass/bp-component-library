@@ -1,0 +1,367 @@
+<!-- COMPONENT: Intro Typewriter Reveal | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Intro: Typewriter Reveal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── CUSTOMIZE ── */
+    :root {
+      --bg:             #0D1117;
+      --accent:         #10B981;
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --type-speed:     45;    /* ms per character */
+      --delete-speed:   25;    /* ms per character */
+      --cursor-blink:   530ms;
+      --font-heading:   'Space Grotesk', system-ui, sans-serif;
+      --font-body:      'Inter', system-ui, sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      overflow: hidden;
+    }
+
+    /* ── Page Content (revealed after intro) ── */
+    #page-content {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2.25rem;
+      padding: 2rem;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #page-content.revealed {
+      pointer-events: auto;
+      animation: page-in 700ms ease forwards;
+    }
+
+    @keyframes page-in {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    .hero-eyebrow {
+      font-family: var(--font-heading);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent);
+      opacity: 0;
+    }
+
+    .hero-eyebrow.in { animation: stagger-up 500ms 100ms ease forwards; }
+
+    .hero-headline {
+      font-family: var(--font-heading);
+      font-size: clamp(2.5rem, 7vw, 5.5rem);
+      font-weight: 700;
+      line-height: 1.05;
+      text-align: center;
+      max-width: 14ch;
+      opacity: 0;
+    }
+
+    .hero-headline.in { animation: stagger-up 600ms 200ms ease forwards; }
+
+    .hero-headline em {
+      font-style: normal;
+      color: var(--accent);
+    }
+
+    .hero-sub {
+      font-size: clamp(0.9rem, 2.5vw, 1.0625rem);
+      color: var(--text-secondary);
+      text-align: center;
+      max-width: 40ch;
+      line-height: 1.65;
+      opacity: 0;
+    }
+
+    .hero-sub.in { animation: stagger-up 600ms 350ms ease forwards; }
+
+    .hero-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.625rem;
+      padding: 0.9375rem 2.25rem;
+      border-radius: 9999px;
+      background: var(--accent);
+      color: #0D1117;
+      font-family: var(--font-heading);
+      font-size: 1rem;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      opacity: 0;
+      transition: transform 200ms ease, box-shadow 200ms ease;
+    }
+
+    .hero-cta.in { animation: stagger-up 600ms 500ms ease forwards; }
+    .hero-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(16,185,129,0.3); }
+
+    @keyframes stagger-up {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Intro Screen ── */
+    #intro-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    #intro-screen.exiting {
+      animation: overlay-fade 400ms ease forwards;
+    }
+
+    @keyframes overlay-fade {
+      from { opacity: 1; }
+      to   { opacity: 0; pointer-events: none; }
+    }
+
+    /* ── Typewriter Text ── */
+    #typewriter-wrap {
+      text-align: center;
+      position: relative;
+    }
+
+    #typewriter-text {
+      font-family: var(--font-heading);
+      font-size: clamp(1.75rem, 5vw, 3.5rem);
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.2;
+      display: inline;
+      white-space: pre-wrap;
+    }
+
+    /* Cursor */
+    #cursor {
+      display: inline-block;
+      width: 2.5px;
+      height: 1.1em;
+      background: var(--accent);
+      margin-left: 2px;
+      vertical-align: text-bottom;
+      animation: cursor-blink var(--cursor-blink) step-end infinite;
+      border-radius: 1px;
+    }
+
+    @keyframes cursor-blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0; }
+    }
+
+    /* Scale-up fade exit for typed text */
+    #typewriter-wrap.scale-exit {
+      animation: scale-up-fade 600ms ease forwards;
+    }
+
+    @keyframes scale-up-fade {
+      from { opacity: 1; transform: scale(1); }
+      to   { opacity: 0; transform: scale(1.18); filter: blur(4px); }
+    }
+
+    /* Ghost: typed message visible behind hero at very low opacity */
+    #ghost-text {
+      position: fixed;
+      inset: 0;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-heading);
+      font-size: clamp(1.75rem, 5vw, 3.5rem);
+      font-weight: 600;
+      color: var(--text);
+      opacity: 0;
+      transform: scale(1.1);
+      pointer-events: none;
+      text-align: center;
+      padding: 2rem;
+    }
+
+    #ghost-text.visible {
+      animation: ghost-fade 800ms ease forwards;
+    }
+
+    @keyframes ghost-fade {
+      0%   { opacity: 0.08; transform: scale(1.1); }
+      100% { opacity: 0; transform: scale(1.15); }
+    }
+
+    /* ── Decorative bg ── */
+    .page-bg {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse 60% 50% at 50% 55%, rgba(16,185,129,0.05) 0%, transparent 70%);
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    @media (max-width: 375px) {
+      #typewriter-text { font-size: 1.5rem; }
+      .hero-headline { font-size: 2.25rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page-bg"></div>
+
+<!-- Hero page (revealed after intro) -->
+<div id="page-content">
+  <div class="hero-eyebrow">Ready to Talk</div>
+  <h1 class="hero-headline">We Should<br><em>Connect.</em></h1>
+  <p class="hero-sub">You read the message. Now the real conversation starts. Every great project begins with a single interaction.</p>
+  <button class="hero-cta" onclick="replayIntro()">
+    Replay Intro
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <path d="M13 8A5 5 0 1 1 8 3m5 0V3m0 0h-4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+</div>
+
+<!-- Ghost of typewriter text that lingers behind hero briefly -->
+<div id="ghost-text"></div>
+
+<!-- Intro overlay -->
+<div id="intro-screen">
+  <div id="typewriter-wrap">
+    <span id="typewriter-text"></span><span id="cursor"></span>
+  </div>
+</div>
+
+<script>
+  const TYPE_SPEED   = 45;  // ms per character
+  const DELETE_SPEED = 25;  // ms per character
+
+  const SEQUENCE = [
+    { text: 'Hey.',                          pauseAfter: 500  },
+    { text: "You're looking for more clients.", pauseAfter: 800  },
+    { deleteTo: 0,                             pauseAfter: 300  },
+    { text: 'We should talk.',                pauseAfter: 1200 },
+  ];
+
+  const typeEl   = document.getElementById('typewriter-text');
+  const wrap     = document.getElementById('typewriter-wrap');
+  const ghost    = document.getElementById('ghost-text');
+  const screen   = document.getElementById('intro-screen');
+  const pageContent = document.getElementById('page-content');
+
+  let running = false;
+
+  function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  async function typeText(text) {
+    for (const char of text) {
+      typeEl.textContent += char;
+      await sleep(TYPE_SPEED + (Math.random() * 20 - 10)); // slight jitter
+    }
+  }
+
+  async function deleteText(targetLength) {
+    while (typeEl.textContent.length > targetLength) {
+      typeEl.textContent = typeEl.textContent.slice(0, -1);
+      await sleep(DELETE_SPEED);
+    }
+  }
+
+  async function runIntro() {
+    if (running) return;
+    running = true;
+
+    // Reset state
+    typeEl.textContent = '';
+    wrap.classList.remove('scale-exit');
+    screen.classList.remove('exiting');
+    screen.style.opacity = '1';
+    screen.style.display = 'flex';
+    ghost.classList.remove('visible');
+    ghost.textContent = '';
+    pageContent.classList.remove('revealed');
+    pageContent.style.opacity = '0';
+    document.querySelectorAll('.hero-eyebrow, .hero-headline, .hero-sub, .hero-cta').forEach(el => {
+      el.classList.remove('in');
+    });
+
+    // Initial pause — blinking cursor only
+    await sleep(400);
+
+    // Run sequence
+    for (const step of SEQUENCE) {
+      if (step.text !== undefined) {
+        await typeText(step.text);
+      } else if (step.deleteTo !== undefined) {
+        await deleteText(step.deleteTo);
+      }
+      if (step.pauseAfter) await sleep(step.pauseAfter);
+    }
+
+    // Save final text for ghost
+    const finalText = typeEl.textContent;
+
+    // Scale up and fade out typed text
+    wrap.classList.add('scale-exit');
+    await sleep(550);
+
+    // Show ghost text behind the transitioning overlay
+    ghost.textContent = finalText;
+
+    // Fade out intro overlay
+    screen.classList.add('exiting');
+    await sleep(50);
+    ghost.classList.add('visible');
+
+    await sleep(350);
+
+    // Reveal page content
+    screen.style.display = 'none';
+    pageContent.classList.add('revealed');
+    document.querySelectorAll('.hero-eyebrow, .hero-headline, .hero-sub, .hero-cta').forEach(el => {
+      el.classList.add('in');
+    });
+
+    await sleep(800);
+    ghost.classList.remove('visible');
+    running = false;
+  }
+
+  function replayIntro() {
+    runIntro();
+  }
+
+  // Auto-start
+  window.addEventListener('load', () => {
+    setTimeout(runIntro, 200);
+  });
+</script>
+</body>
+</html>

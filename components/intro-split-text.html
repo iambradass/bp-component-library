@@ -1,0 +1,334 @@
+<!-- COMPONENT: Intro Split Text Reveal | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Intro: Split Text Reveal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── CUSTOMIZE ── */
+    :root {
+      --bg:             #0D1117;
+      --accent:         #10B981;
+      --accent-glow:    rgba(16, 185, 129, 0.6);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --split-speed:    800ms;
+      --split-ease:     cubic-bezier(0.7, 0, 0.3, 1);
+      --split-text:     'Open Up.';   /* Intro headline that splits */
+      --font-heading:   'Space Grotesk', system-ui, sans-serif;
+      --font-body:      'Inter', system-ui, sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      overflow: hidden;
+    }
+
+    /* ── Page Content (behind the intro) ── */
+    #page-content {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2rem;
+      padding: 2rem;
+      opacity: 0;
+    }
+
+    #page-content.revealed {
+      animation: content-fade 600ms ease forwards;
+    }
+
+    @keyframes content-fade {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    .hero-eyebrow {
+      font-family: var(--font-heading);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent);
+      opacity: 0;
+    }
+
+    .hero-eyebrow.in { animation: up-in 500ms 100ms ease forwards; }
+
+    .hero-headline {
+      font-family: var(--font-heading);
+      font-size: clamp(2.5rem, 7vw, 5.5rem);
+      font-weight: 700;
+      line-height: 1.05;
+      text-align: center;
+      max-width: 14ch;
+      opacity: 0;
+    }
+
+    .hero-headline.in { animation: up-in 600ms 200ms ease forwards; }
+
+    .hero-headline em {
+      font-style: normal;
+      color: var(--accent);
+    }
+
+    .hero-sub {
+      font-size: clamp(0.9rem, 2.5vw, 1.0625rem);
+      color: var(--text-secondary);
+      text-align: center;
+      max-width: 40ch;
+      line-height: 1.65;
+      opacity: 0;
+    }
+
+    .hero-sub.in { animation: up-in 600ms 350ms ease forwards; }
+
+    .hero-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.625rem;
+      padding: 0.9375rem 2.25rem;
+      border-radius: 9999px;
+      background: var(--accent);
+      color: #0D1117;
+      font-family: var(--font-heading);
+      font-size: 1rem;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      opacity: 0;
+      transition: transform 200ms ease, box-shadow 200ms ease;
+    }
+
+    .hero-cta.in { animation: up-in 600ms 500ms ease forwards; }
+    .hero-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(16,185,129,0.3); }
+
+    @keyframes up-in {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Intro Overlay ── */
+    #intro-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: var(--bg);
+      pointer-events: none;
+    }
+
+    /* ── Split Text Container ── */
+    #split-container {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    /* The two halves — positioned absolutely on top of each other */
+    .split-half {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      text-align: center;
+      font-family: var(--font-heading);
+      font-size: clamp(2.5rem, 9vw, 7rem);
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+      padding: 0 2rem;
+    }
+
+    /* Top half: only show the top portion of text */
+    #split-top {
+      clip-path: inset(0 0 50% 0);
+      top: 50%;
+      margin-top: -0.65em; /* pull up so text is centered */
+    }
+
+    /* Bottom half: only show the bottom portion of text */
+    #split-bottom {
+      clip-path: inset(50% 0 0 0);
+      top: 50%;
+      margin-top: -0.65em;
+    }
+
+    /* Split animations */
+    #split-top.splitting {
+      transition: transform var(--split-speed) var(--split-ease);
+      transform: translateX(-50%) translateY(-100vh);
+    }
+
+    #split-bottom.splitting {
+      transition: transform var(--split-speed) var(--split-ease);
+      transform: translateX(-50%) translateY(100vh);
+    }
+
+    /* ── Glow seam at split line ── */
+    #split-seam {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 50%;
+      height: 1px;
+      background: var(--accent);
+      box-shadow: 0 0 12px var(--accent-glow), 0 0 24px var(--accent-glow);
+      opacity: 0;
+      transform: scaleX(0);
+      transform-origin: center;
+    }
+
+    #split-seam.visible {
+      animation: seam-appear 300ms ease forwards;
+    }
+
+    @keyframes seam-appear {
+      0%   { opacity: 0; transform: scaleX(0); }
+      50%  { opacity: 1; transform: scaleX(1); }
+      100% { opacity: 1; transform: scaleX(1); }
+    }
+
+    /* ── Overlay fade-out as halves split ── */
+    #intro-overlay.clearing {
+      transition: background 400ms ease;
+      background: transparent;
+    }
+
+    /* ── Background decor for page ── */
+    .page-bg {
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 50% at 50% 55%, rgba(16,185,129,0.06) 0%, transparent 70%);
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    @media (max-width: 375px) {
+      .split-half { font-size: 2rem; }
+      .hero-headline { font-size: 2.25rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page-bg"></div>
+
+<!-- Hero page revealed after split -->
+<div id="page-content">
+  <div class="hero-eyebrow">Now Revealed</div>
+  <h1 class="hero-headline">The Page<br><em>Opened.</em></h1>
+  <p class="hero-sub">The headline split in two — top half ascending, bottom half descending — and the page emerged in the widening gap.</p>
+  <button class="hero-cta" onclick="replayIntro()">
+    Replay Intro
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <path d="M13 8A5 5 0 1 1 8 3m5 0V3m0 0h-4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+</div>
+
+<!-- Intro overlay -->
+<div id="intro-overlay">
+  <!-- Glow seam at the split line -->
+  <div id="split-seam"></div>
+
+  <!-- Split text container -->
+  <div id="split-container">
+    <!-- Top half of headline (clip-path shows only top 50%) -->
+    <div class="split-half" id="split-top">Open Up.</div>
+    <!-- Bottom half (clip-path shows only bottom 50%) -->
+    <div class="split-half" id="split-bottom">Open Up.</div>
+  </div>
+</div>
+
+<script>
+  const overlay   = document.getElementById('intro-overlay');
+  const seam      = document.getElementById('split-seam');
+  const splitTop  = document.getElementById('split-top');
+  const splitBot  = document.getElementById('split-bottom');
+  const pageContent = document.getElementById('page-content');
+
+  const SPLIT_SPEED = 800;
+  let running = false;
+
+  function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  async function runIntro() {
+    if (running) return;
+    running = true;
+
+    // Reset state
+    overlay.style.display = 'block';
+    overlay.style.background = 'var(--bg)';
+    overlay.classList.remove('clearing');
+    splitTop.classList.remove('splitting');
+    splitBot.classList.remove('splitting');
+    seam.classList.remove('visible');
+    splitTop.style.transform = 'translateX(-50%)';
+    splitBot.style.transform = 'translateX(-50%)';
+    pageContent.classList.remove('revealed');
+    pageContent.style.opacity = '0';
+    document.querySelectorAll('.hero-eyebrow, .hero-headline, .hero-sub, .hero-cta').forEach(el => {
+      el.classList.remove('in');
+      el.style.opacity = '0';
+    });
+
+    // Brief pause before the seam appears
+    await sleep(500);
+
+    // Seam glow appears at the split line
+    seam.classList.add('visible');
+    await sleep(280);
+
+    // Start splitting — both halves slide away simultaneously
+    splitTop.classList.add('splitting');
+    splitBot.classList.add('splitting');
+
+    // Simultaneously start clearing the overlay background
+    // so the page becomes visible as the halves clear
+    await sleep(100);
+    overlay.classList.add('clearing');
+
+    // Wait for split animation to complete
+    await sleep(SPLIT_SPEED + 100);
+
+    // Reveal page content
+    overlay.style.display = 'none';
+    pageContent.classList.add('revealed');
+    document.querySelectorAll('.hero-eyebrow, .hero-headline, .hero-sub, .hero-cta').forEach(el => {
+      el.classList.add('in');
+    });
+
+    running = false;
+  }
+
+  function replayIntro() {
+    runIntro();
+  }
+
+  // Auto-start
+  window.addEventListener('load', () => {
+    setTimeout(runIntro, 200);
+  });
+</script>
+</body>
+</html>

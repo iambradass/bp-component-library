@@ -1,0 +1,383 @@
+<!-- COMPONENT: Intro Liquid Blob | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Intro: Liquid Blob</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── CUSTOMIZE ── */
+    :root {
+      --bg:             #0D1117;
+      --accent:         #10B981;
+      --accent-glow:    rgba(16, 185, 129, 0.4);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --blob-size-init: 200px;
+      --font-heading:   'Space Grotesk', system-ui, sans-serif;
+      --font-body:      'Inter', system-ui, sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      overflow: hidden;
+    }
+
+    /* ── Page Content (hidden initially) ── */
+    #page-content {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2rem;
+      padding: 2rem;
+      opacity: 0;
+    }
+
+    #page-content.reveal {
+      animation: content-reveal 600ms ease forwards;
+    }
+
+    @keyframes content-reveal {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .hero-tag {
+      font-family: var(--font-heading);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent);
+      opacity: 0;
+      animation: none;
+    }
+
+    .hero-tag.animate { animation: stagger-in 500ms 100ms ease forwards; }
+
+    .hero-headline {
+      font-family: var(--font-heading);
+      font-size: clamp(2.5rem, 7vw, 5.5rem);
+      font-weight: 700;
+      line-height: 1.05;
+      text-align: center;
+      max-width: 14ch;
+      opacity: 0;
+    }
+
+    .hero-headline.animate { animation: stagger-in 600ms 200ms ease forwards; }
+
+    .hero-headline em {
+      font-style: normal;
+      color: var(--accent);
+    }
+
+    .hero-sub {
+      font-size: clamp(0.9rem, 2.5vw, 1.0625rem);
+      color: var(--text-secondary);
+      text-align: center;
+      max-width: 42ch;
+      line-height: 1.65;
+      opacity: 0;
+    }
+
+    .hero-sub.animate { animation: stagger-in 600ms 350ms ease forwards; }
+
+    .hero-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.625rem;
+      padding: 0.9375rem 2.25rem;
+      border-radius: 9999px;
+      background: var(--accent);
+      color: #0D1117;
+      font-family: var(--font-heading);
+      font-size: 1rem;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      opacity: 0;
+      transition: transform 200ms ease, box-shadow 200ms ease;
+    }
+
+    .hero-cta.animate { animation: stagger-in 600ms 500ms ease forwards; }
+
+    .hero-cta:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(16,185,129,0.35);
+    }
+
+    @keyframes stagger-in {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Intro Overlay ── */
+    #intro-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    #intro-overlay.fade-out {
+      transition: opacity 600ms ease;
+      opacity: 0;
+    }
+
+    /* ── SVG Blob ── */
+    #blob-svg {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      overflow: visible;
+      width: var(--blob-size-init);
+      height: var(--blob-size-init);
+      pointer-events: none;
+    }
+
+    #blob-circle {
+      cx: 100;
+      cy: 100;
+      r: 90;
+      fill: var(--accent);
+      filter: url(#blob-filter);
+    }
+
+    /* Glow ring behind blob */
+    #blob-glow {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: var(--blob-size-init);
+      height: var(--blob-size-init);
+      transform: translate(-50%, -50%) scale(1);
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(16,185,129,0.35) 0%, transparent 70%);
+      filter: blur(20px);
+      transition: opacity 400ms ease;
+    }
+
+    /* ── Decorative background for page ── */
+    .page-bg {
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 50% at 50% 60%, rgba(16,185,129,0.06) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    @media (max-width: 375px) {
+      .hero-headline { font-size: 2.25rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Page background -->
+<div class="page-bg"></div>
+
+<!-- Page content (revealed after intro) -->
+<div id="page-content">
+  <div class="hero-tag">Motion Design</div>
+  <h1 class="hero-headline">Liquid<br><em>Entrance.</em></h1>
+  <p class="hero-sub">The page was cloaked in darkness. A blob pulsed, expanded — then drained back to nothing, leaving only this.</p>
+  <button class="hero-cta" onclick="replayIntro()">
+    Replay Intro
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <path d="M13 8A5 5 0 1 1 8 3m5 0V3m0 0h-4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+</div>
+
+<!-- Intro overlay -->
+<div id="intro-overlay">
+  <div id="blob-glow"></div>
+  <svg id="blob-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <filter id="blob-filter" x="-50%" y="-50%" width="200%" height="200%">
+        <feTurbulence
+          id="blob-turbulence"
+          type="fractalNoise"
+          baseFrequency="0.015"
+          numOctaves="3"
+          seed="2"
+          result="noise"/>
+        <feDisplacementMap
+          id="blob-displacement"
+          in="SourceGraphic"
+          in2="noise"
+          scale="40"
+          xChannelSelector="R"
+          yChannelSelector="G"/>
+      </filter>
+    </defs>
+    <circle id="blob-circle" cx="100" cy="100" r="90" fill="#10B981"/>
+  </svg>
+</div>
+
+<script>
+  const overlay = document.getElementById('intro-overlay');
+  const blobSvg = document.getElementById('blob-svg');
+  const blobGlow = document.getElementById('blob-glow');
+  const blobDisplacement = document.getElementById('blob-displacement');
+  const pageContent = document.getElementById('page-content');
+  const blobCircle = document.getElementById('blob-circle');
+
+  let animFrame = null;
+  let phase = 'idle'; // idle | pulse | expand | drain | done
+  let startTime = null;
+  let currentScale = 40; // feDisplacementMap scale attribute
+  let blobDiameter = 200; // SVG element size in px
+
+  function easeInOut(t) {
+    return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+  }
+
+  function easeInCubic(t) {
+    return t * t * t;
+  }
+
+  function easeOutCubic(t) {
+    return 1 - Math.pow(1 - t, 3);
+  }
+
+  function setBlobSize(diameter) {
+    blobSvg.style.width = diameter + 'px';
+    blobSvg.style.height = diameter + 'px';
+    blobGlow.style.width = (diameter * 1.4) + 'px';
+    blobGlow.style.height = (diameter * 1.4) + 'px';
+  }
+
+  function setBlobDisplace(scale) {
+    blobDisplacement.setAttribute('scale', scale);
+  }
+
+  function runIntro() {
+    phase = 'pulse';
+    startTime = null;
+    overlay.style.opacity = '1';
+    overlay.classList.remove('fade-out');
+    overlay.style.display = 'flex';
+    setBlobSize(200);
+    setBlobDisplace(40);
+    blobGlow.style.opacity = '1';
+
+    // Reset page content
+    pageContent.style.opacity = '0';
+    pageContent.classList.remove('reveal');
+    document.querySelectorAll('.hero-tag, .hero-headline, .hero-sub, .hero-cta').forEach(el => {
+      el.classList.remove('animate');
+      el.style.opacity = '0';
+    });
+
+    animFrame = requestAnimationFrame(animate);
+  }
+
+  function animate(timestamp) {
+    if (!startTime) startTime = timestamp;
+    const elapsed = timestamp - startTime;
+
+    if (phase === 'pulse') {
+      // 0-1500ms: blob pulses (displacement oscillates 40->80->40) and gently breathes
+      const t = Math.min(elapsed / 1500, 1);
+      const pulseT = Math.sin(t * Math.PI * 2.5); // oscillate
+      const dispScale = 40 + pulseT * 40;
+      const breathe = 1 + pulseT * 0.06;
+      setBlobDisplace(dispScale);
+      setBlobSize(200 * breathe);
+
+      if (elapsed >= 1500) {
+        phase = 'expand';
+        startTime = timestamp;
+      }
+      animFrame = requestAnimationFrame(animate);
+
+    } else if (phase === 'expand') {
+      // 0-600ms: blob rapidly expands to 250vw diameter, overlay fades out
+      const maxDiameter = Math.max(window.innerWidth, window.innerHeight) * 2.5;
+      const t = Math.min(elapsed / 600, 1);
+      const easedT = easeOutCubic(t);
+      const diameter = 200 + (maxDiameter - 200) * easedT;
+      setBlobSize(diameter);
+
+      // Displacement also ramps up then ramps down
+      const dispScale = 80 * (1 - easedT * 0.5);
+      setBlobDisplace(dispScale);
+
+      // Fade overlay background (not the blob itself) — reveal page behind
+      overlay.style.background = `rgba(13,17,23,${1 - easedT})`;
+
+      if (t >= 0.3) {
+        // Start fading glow earlier
+        blobGlow.style.opacity = String(1 - ((t - 0.3) / 0.7));
+      }
+
+      if (t >= 1) {
+        phase = 'drain';
+        startTime = timestamp;
+        overlay.style.background = 'transparent';
+      }
+
+      animFrame = requestAnimationFrame(animate);
+
+    } else if (phase === 'drain') {
+      // 0-400ms: blob contracts to 0 (sucked into center)
+      const initDiameter = Math.max(window.innerWidth, window.innerHeight) * 2.5;
+      const t = Math.min(elapsed / 400, 1);
+      const easedT = easeInCubic(t);
+      const diameter = initDiameter * (1 - easedT);
+      setBlobSize(diameter);
+      setBlobDisplace(40 * (1 - easedT));
+      blobGlow.style.opacity = '0';
+
+      if (t >= 1) {
+        phase = 'done';
+        // Hide overlay
+        overlay.style.display = 'none';
+
+        // Reveal page content with stagger
+        pageContent.classList.add('reveal');
+        setTimeout(() => {
+          document.querySelectorAll('.hero-tag, .hero-headline, .hero-sub, .hero-cta').forEach(el => {
+            el.classList.add('animate');
+          });
+        }, 50);
+        return;
+      }
+
+      animFrame = requestAnimationFrame(animate);
+    }
+  }
+
+  function replayIntro() {
+    if (animFrame) cancelAnimationFrame(animFrame);
+    runIntro();
+  }
+
+  // Auto-start on load
+  window.addEventListener('load', () => {
+    setTimeout(runIntro, 100);
+  });
+</script>
+</body>
+</html>

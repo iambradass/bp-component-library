@@ -1,0 +1,423 @@
+<!-- COMPONENT: Intro Particle Assembly | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Intro: Particle Assembly</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── CUSTOMIZE ── */
+    :root {
+      --bg:             #0D1117;
+      --accent:         #10B981;
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --brand-name:     'MOTION';     /* Text sampled for particle targets */
+      --particle-count: 1000;
+      --font-heading:   'Space Grotesk', system-ui, sans-serif;
+      --font-body:      'Inter', system-ui, sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      overflow: hidden;
+    }
+
+    /* ── Canvas ── */
+    #particle-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      pointer-events: none;
+    }
+
+    /* ── Page Content ── */
+    #page-content {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2rem;
+      padding: 2rem;
+      opacity: 0;
+    }
+
+    #page-content.revealed {
+      animation: reveal-in 700ms ease forwards;
+    }
+
+    @keyframes reveal-in {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    .hero-eyebrow {
+      font-family: var(--font-heading);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent);
+      opacity: 0;
+    }
+
+    .hero-eyebrow.in { animation: slide-up 500ms 100ms ease forwards; }
+
+    .hero-headline {
+      font-family: var(--font-heading);
+      font-size: clamp(2.5rem, 7vw, 5.5rem);
+      font-weight: 700;
+      line-height: 1.05;
+      text-align: center;
+      max-width: 14ch;
+      opacity: 0;
+    }
+
+    .hero-headline.in { animation: slide-up 600ms 200ms ease forwards; }
+
+    .hero-headline em {
+      font-style: normal;
+      color: var(--accent);
+    }
+
+    .hero-sub {
+      font-size: clamp(0.9rem, 2.5vw, 1.0625rem);
+      color: var(--text-secondary);
+      text-align: center;
+      max-width: 42ch;
+      line-height: 1.65;
+      opacity: 0;
+    }
+
+    .hero-sub.in { animation: slide-up 600ms 350ms ease forwards; }
+
+    .hero-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.625rem;
+      padding: 0.9375rem 2.25rem;
+      border-radius: 9999px;
+      background: var(--accent);
+      color: #0D1117;
+      font-family: var(--font-heading);
+      font-size: 1rem;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      opacity: 0;
+      transition: transform 200ms ease, box-shadow 200ms ease;
+    }
+
+    .hero-cta.in { animation: slide-up 600ms 500ms ease forwards; }
+    .hero-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(16,185,129,0.3); }
+
+    @keyframes slide-up {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .page-bg {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse 60% 50% at 50% 55%, rgba(16,185,129,0.05) 0%, transparent 70%);
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    @media (max-width: 375px) {
+      .hero-headline { font-size: 2.25rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page-bg"></div>
+
+<!-- Page content -->
+<div id="page-content">
+  <div class="hero-eyebrow">Assembled</div>
+  <h1 class="hero-headline"><em>Particles</em><br>United.</h1>
+  <p class="hero-sub">One thousand particles swarmed from the edges, assembled into the brand name — then exploded outward as one.</p>
+  <button class="hero-cta" onclick="replayIntro()">
+    Replay Intro
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <path d="M13 8A5 5 0 1 1 8 3m5 0V3m0 0h-4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+</div>
+
+<!-- Particle canvas -->
+<canvas id="particle-canvas"></canvas>
+
+<script>
+  const canvas = document.getElementById('particle-canvas');
+  const ctx = canvas.getContext('2d');
+  const pageContent = document.getElementById('page-content');
+
+  const BRAND_NAME = 'MOTION';
+  const PARTICLE_COUNT = 1000;
+  const ASSEMBLE_DURATION = 2000;   // ms
+  const HOLD_DURATION     = 400;    // ms
+  const EXPLODE_DURATION  = 400;    // ms
+
+  let particles = [];
+  let phase = 'idle';
+  let phaseStart = 0;
+  let animFrame = null;
+  let canvasOpacity = 1;
+
+  function resize() {
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+
+  // Sample pixel positions from brand text rendered on offscreen canvas
+  function sampleTextPositions(text, count) {
+    const offscreen = document.createElement('canvas');
+    const W = Math.min(window.innerWidth * 0.9, 900);
+    const H = 200;
+    offscreen.width  = W;
+    offscreen.height = H;
+    const oc = offscreen.getContext('2d');
+
+    // Find font size that fills width
+    let fontSize = 160;
+    oc.font = `700 ${fontSize}px 'Space Grotesk', system-ui, sans-serif`;
+    let measured = oc.measureText(text).width;
+    while (measured > W * 0.9 && fontSize > 20) {
+      fontSize -= 4;
+      oc.font = `700 ${fontSize}px 'Space Grotesk', system-ui, sans-serif`;
+      measured = oc.measureText(text).width;
+    }
+
+    oc.fillStyle = '#ffffff';
+    oc.textAlign = 'center';
+    oc.textBaseline = 'middle';
+    oc.fillText(text, W / 2, H / 2);
+
+    const imageData = oc.getImageData(0, 0, W, H);
+    const pixels = imageData.data;
+    const brightPixels = [];
+
+    for (let y = 0; y < H; y += 2) {
+      for (let x = 0; x < W; x += 2) {
+        const idx = (y * W + x) * 4;
+        const brightness = pixels[idx]; // R channel
+        if (brightness > 100) {
+          brightPixels.push({ x, y });
+        }
+      }
+    }
+
+    // Shuffle and pick `count` positions
+    for (let i = brightPixels.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [brightPixels[i], brightPixels[j]] = [brightPixels[j], brightPixels[i]];
+    }
+
+    // Map to screen coordinates (center the text block)
+    const offsetX = (window.innerWidth  - W) / 2;
+    const offsetY = (window.innerHeight - H) / 2;
+
+    return brightPixels.slice(0, count).map(p => ({
+      x: p.x + offsetX,
+      y: p.y + offsetY,
+    }));
+  }
+
+  // Generate a random starting position on the screen edges
+  function randomEdgePosition() {
+    const side = Math.floor(Math.random() * 4);
+    const W = window.innerWidth;
+    const H = window.innerHeight;
+    switch (side) {
+      case 0: return { x: Math.random() * W, y: -20 };            // top
+      case 1: return { x: W + 20,             y: Math.random() * H }; // right
+      case 2: return { x: Math.random() * W, y: H + 20 };          // bottom
+      case 3: return { x: -20,               y: Math.random() * H }; // left
+    }
+  }
+
+  function initParticles(targets) {
+    particles = [];
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+      const start = randomEdgePosition();
+      const target = targets[i % targets.length];
+
+      // Angle from center for explosion
+      const cx = window.innerWidth / 2;
+      const cy = window.innerHeight / 2;
+      const angle = Math.atan2((target.y || cy) - cy, (target.x || cx) - cx);
+      const explodeSpeed = 8 + Math.random() * 14;
+
+      particles.push({
+        x: start.x,
+        y: start.y,
+        vx: 0,
+        vy: 0,
+        targetX: target.x + (Math.random() - 0.5) * 2,
+        targetY: target.y + (Math.random() - 0.5) * 2,
+        explodeVx: Math.cos(angle) * explodeSpeed,
+        explodeVy: Math.sin(angle) * explodeSpeed,
+        size: 1.5 + Math.random() * 1.5,
+        opacity: 0.6 + Math.random() * 0.4,
+        orbitAngle: Math.random() * Math.PI * 2,
+        orbitRadius: 1 + Math.random() * 2,
+        orbitSpeed: (Math.random() - 0.5) * 0.08,
+      });
+    }
+  }
+
+  function easeOutQuart(t) {
+    return 1 - Math.pow(1 - t, 4);
+  }
+
+  function easeInQuart(t) {
+    return t * t * t * t;
+  }
+
+  function draw(timestamp) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const elapsed = timestamp - phaseStart;
+
+    if (phase === 'assemble') {
+      const t = Math.min(elapsed / ASSEMBLE_DURATION, 1);
+
+      particles.forEach(p => {
+        // Spring toward target
+        const spring = 0.028 + easeOutQuart(t) * 0.055;
+        const damping = 0.82;
+        p.vx += (p.targetX - p.x) * spring;
+        p.vy += (p.targetY - p.y) * spring;
+        p.vx *= damping;
+        p.vy *= damping;
+        p.x += p.vx;
+        p.y += p.vy;
+
+        const alpha = Math.min(1, t * 3) * p.opacity;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(16,185,129,${alpha})`;
+        ctx.fill();
+      });
+
+      if (t >= 1) {
+        phase = 'hold';
+        phaseStart = timestamp;
+      }
+
+    } else if (phase === 'hold') {
+      const t = elapsed / HOLD_DURATION;
+
+      particles.forEach(p => {
+        // Gentle orbit around target
+        p.orbitAngle += p.orbitSpeed;
+        const ox = Math.cos(p.orbitAngle) * p.orbitRadius;
+        const oy = Math.sin(p.orbitAngle) * p.orbitRadius;
+
+        ctx.beginPath();
+        ctx.arc(p.targetX + ox, p.targetY + oy, p.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(16,185,129,${p.opacity})`;
+        ctx.fill();
+      });
+
+      if (t >= 1) {
+        phase = 'explode';
+        phaseStart = timestamp;
+        // Initialize explosion velocities
+        particles.forEach(p => {
+          p.x = p.targetX;
+          p.y = p.targetY;
+        });
+      }
+
+    } else if (phase === 'explode') {
+      const t = Math.min(elapsed / EXPLODE_DURATION, 1);
+      canvasOpacity = 1 - easeInQuart(t);
+      canvas.style.opacity = canvasOpacity;
+
+      particles.forEach(p => {
+        // No damping — full speed out
+        p.x += p.explodeVx * (1 + t * 3);
+        p.y += p.explodeVy * (1 + t * 3);
+
+        const alpha = (1 - t) * p.opacity;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size * (1 - t * 0.5), 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(16,185,129,${alpha})`;
+        ctx.fill();
+      });
+
+      if (t >= 1) {
+        phase = 'done';
+        canvas.style.display = 'none';
+        revealPage();
+        return;
+      }
+    }
+
+    animFrame = requestAnimationFrame(draw);
+  }
+
+  function revealPage() {
+    pageContent.classList.add('revealed');
+    setTimeout(() => {
+      document.querySelectorAll('.hero-eyebrow, .hero-headline, .hero-sub, .hero-cta').forEach(el => {
+        el.classList.add('in');
+      });
+    }, 50);
+  }
+
+  function runIntro() {
+    if (animFrame) cancelAnimationFrame(animFrame);
+
+    canvas.style.display = 'block';
+    canvas.style.opacity = '1';
+    canvasOpacity = 1;
+    phase = 'idle';
+
+    // Reset page
+    pageContent.classList.remove('revealed');
+    pageContent.style.opacity = '0';
+    document.querySelectorAll('.hero-eyebrow, .hero-headline, .hero-sub, .hero-cta').forEach(el => {
+      el.classList.remove('in');
+      el.style.opacity = '0';
+    });
+
+    resize();
+
+    // Wait for fonts to load then sample text
+    document.fonts.ready.then(() => {
+      const targets = sampleTextPositions(BRAND_NAME, PARTICLE_COUNT);
+      initParticles(targets);
+
+      phase = 'assemble';
+      phaseStart = performance.now();
+      animFrame = requestAnimationFrame(draw);
+    });
+  }
+
+  function replayIntro() {
+    runIntro();
+  }
+
+  window.addEventListener('resize', resize);
+  window.addEventListener('load', () => {
+    setTimeout(runIntro, 200);
+  });
+</script>
+</body>
+</html>

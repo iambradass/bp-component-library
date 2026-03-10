@@ -1,0 +1,428 @@
+<!-- COMPONENT: Text Scramble Reveal | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Text Scramble Reveal — Component Library</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ============================================================
+       CUSTOMIZE
+    ============================================================ */
+    :root {
+      --bg:            #0D1117;
+      --bg-surface:    #161B22;
+      --bg-card:       #1C2333;
+      --accent:        #10B981;
+      --accent-soft:   rgba(16, 185, 129, 0.12);
+      --accent-flash:  #6EE7B7;
+      --text:          #F8FAFC;
+      --text-muted:    #475569;
+      --text-dim:      #94A3B8;
+      --border:        rgba(255,255,255,0.06);
+      --radius:        16px;
+      --font-head:     'Space Grotesk', sans-serif;
+      --font-body:     'Inter', sans-serif;
+    }
+    /* ============================================================ */
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ── Demo Header ── */
+    .demo-header {
+      text-align: center;
+      padding: 5rem 2rem 3rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .demo-header .badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: var(--accent-soft);
+      border: 1px solid rgba(16,185,129,0.2);
+      border-radius: 100px;
+      padding: 0.3rem 0.85rem;
+      margin-bottom: 1rem;
+    }
+    .demo-header h1 {
+      font-family: var(--font-head);
+      font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+      font-weight: 600;
+      color: var(--text-dim);
+    }
+
+    /* ── Page layout ── */
+    .tsr-page {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+
+    /* ── Each content section ── */
+    .tsr-section {
+      padding: 7rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .tsr-section:last-child {
+      border-bottom: none;
+    }
+
+    /* Eyebrow */
+    .tsr-eyebrow {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 1.25rem;
+      opacity: 1; /* always visible */
+    }
+
+    /* Scramble headline */
+    .tsr-headline {
+      font-family: var(--font-head);
+      font-size: clamp(2rem, 5vw, 3.75rem);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      margin-bottom: 1.5rem;
+      /* chars colored individually by JS */
+      word-break: break-word;
+    }
+
+    /* Body copy */
+    .tsr-body {
+      font-size: clamp(1rem, 2vw, 1.15rem);
+      color: var(--text-dim);
+      max-width: 600px;
+      line-height: 1.75;
+      opacity: 0;
+      transform: translateY(18px);
+      transition: opacity 0.5s ease 0.2s, transform 0.5s ease 0.2s;
+    }
+    .tsr-body.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Number accent */
+    .tsr-num {
+      position: absolute;
+      top: 0;
+      right: 0;
+      font-family: var(--font-head);
+      font-size: 8rem;
+      font-weight: 800;
+      color: rgba(16, 185, 129, 0.04);
+      line-height: 1;
+      pointer-events: none;
+      user-select: none;
+      letter-spacing: -0.05em;
+    }
+
+    .tsr-inner {
+      position: relative;
+    }
+
+    /* ── Section decorative lines ── */
+    .tsr-section-line {
+      width: 40px;
+      height: 2px;
+      background: var(--accent);
+      margin-bottom: 2rem;
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .tsr-section-line.animated {
+      transform: scaleX(1);
+    }
+
+    /* ── Char spans inside headline ── */
+    .tsr-char {
+      display: inline;
+      /* color set by JS */
+    }
+
+    /* Flash keyframe */
+    @keyframes charFlash {
+      0%   { color: var(--accent-flash); }
+      100% { color: var(--text); }
+    }
+
+    .tsr-char.flash {
+      animation: charFlash 120ms ease-out forwards;
+    }
+
+    /* ── Final CTA block ── */
+    .tsr-cta {
+      text-align: center;
+      padding: 6rem 2rem 8rem;
+    }
+    .tsr-cta p {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      letter-spacing: 0.04em;
+    }
+    .tsr-cta-btn {
+      display: inline-block;
+      font-family: var(--font-head);
+      font-size: 1rem;
+      font-weight: 700;
+      color: #000;
+      background: var(--accent);
+      border: none;
+      border-radius: 8px;
+      padding: 0.85rem 2.5rem;
+      cursor: pointer;
+      text-decoration: none;
+      letter-spacing: 0.01em;
+      transition: opacity 0.2s;
+    }
+    .tsr-cta-btn:hover { opacity: 0.85; }
+
+    /* ── Responsive ── */
+    @media (max-width: 375px) {
+      .tsr-headline { font-size: 1.75rem; }
+      .tsr-num { font-size: 5rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="demo-header">
+    <div class="badge">Scroll-Driven Text Effect</div>
+    <h1>Text Scramble Reveal — Headlines lock in as they enter the viewport</h1>
+  </header>
+
+  <div class="tsr-page">
+
+    <!-- SECTION 1 -->
+    <section class="tsr-section" data-tsr>
+      <div class="tsr-inner">
+        <div class="tsr-num" aria-hidden="true">01</div>
+        <span class="tsr-eyebrow">Prospecting</span>
+        <div class="tsr-section-line" data-line></div>
+        <h2 class="tsr-headline"
+            data-scramble="Close More. Chase Less."
+            aria-label="Close More. Chase Less."></h2>
+        <p class="tsr-body">
+          When your digital presence does the qualifying, only motivated clients reach out.
+          Stop burning hours on cold calls and expired referrals. The right system filters
+          for you — so every conversation you have is already halfway to a close.
+        </p>
+      </div>
+    </section>
+
+    <!-- SECTION 2 -->
+    <section class="tsr-section" data-tsr>
+      <div class="tsr-inner">
+        <div class="tsr-num" aria-hidden="true">02</div>
+        <span class="tsr-eyebrow">Authority</span>
+        <div class="tsr-section-line" data-line></div>
+        <h2 class="tsr-headline"
+            data-scramble="Be The Expert They Find."
+            aria-label="Be The Expert They Find."></h2>
+        <p class="tsr-body">
+          Position yourself as the authority in your market before they ever pick up the phone.
+          When agents search for a title rep in your city, your name is what comes up —
+          not a competitor's. Authority is earned, but it starts with showing up.
+        </p>
+      </div>
+    </section>
+
+    <!-- SECTION 3 -->
+    <section class="tsr-section" data-tsr>
+      <div class="tsr-inner">
+        <div class="tsr-num" aria-hidden="true">03</div>
+        <span class="tsr-eyebrow">Automation</span>
+        <div class="tsr-section-line" data-line></div>
+        <h2 class="tsr-headline"
+            data-scramble="Your Pipeline. Automated."
+            aria-label="Your Pipeline. Automated."></h2>
+        <p class="tsr-body">
+          Lead capture, nurture sequences, and follow-up — running 24/7 without you touching
+          a thing. While you're at the closing table, your system is warming up the next
+          referral partner. Automation isn't the future. It's the advantage you've been missing.
+        </p>
+      </div>
+    </section>
+
+    <!-- SECTION 4 -->
+    <section class="tsr-section" data-tsr>
+      <div class="tsr-inner">
+        <div class="tsr-num" aria-hidden="true">04</div>
+        <span class="tsr-eyebrow">Analytics</span>
+        <div class="tsr-section-line" data-line></div>
+        <h2 class="tsr-headline"
+            data-scramble="Results You Can Measure."
+            aria-label="Results You Can Measure."></h2>
+        <p class="tsr-body">
+          Every lead, every open, every conversion — tracked and reported so you know exactly
+          what's working. No more guessing whether your marketing budget is doing anything.
+          Real numbers, real attribution, real decisions. That's how you scale what's winning.
+        </p>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- CTA -->
+  <div class="tsr-cta">
+    <p>Ready to stop chasing and start closing?</p>
+    <a href="#" class="tsr-cta-btn">Book Your Free Strategy Session →</a>
+  </div>
+
+  <script>
+    (() => {
+      'use strict';
+
+      // ── Constants ─────────────────────────────────────────
+      const CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%&';
+      const SCRAMBLE_INTERVAL = 80;  // ms between scramble ticks
+      const LOCK_PER_CHAR     = 55;  // ms between each char locking
+      const COLOR_UNLOCKED    = 'var(--text-muted)';
+      const COLOR_LOCKED      = 'var(--text)';
+
+      function randomChar() {
+        return CHARS[Math.floor(Math.random() * CHARS.length)];
+      }
+
+      // ── Build char spans for a headline ──────────────────
+      function buildCharSpans(el) {
+        const text = el.dataset.scramble;
+        el.innerHTML = '';
+        const spans = [];
+
+        for (let i = 0; i < text.length; i++) {
+          const char = text[i];
+          if (char === ' ') {
+            // non-breaking space for layout
+            el.appendChild(document.createTextNode('\u00A0'));
+            spans.push(null); // placeholder for space
+          } else {
+            const span = document.createElement('span');
+            span.className = 'tsr-char';
+            span.style.color = COLOR_UNLOCKED;
+            span.textContent = randomChar();
+            el.appendChild(span);
+            spans.push({ el: span, final: char, locked: false });
+          }
+        }
+
+        return { text, spans };
+      }
+
+      // ── Run scramble then lock animation ─────────────────
+      function runScramble(headlineEl, bodyEl, lineEl) {
+        const { text, spans } = buildCharSpans(headlineEl);
+        const charCount = spans.filter(Boolean).length;
+        let startTime = null;
+        let scrambleTimer = null;
+        let lockIndex = 0;
+
+        // Animate line
+        if (lineEl) lineEl.classList.add('animated');
+
+        // Scramble phase — keep randomizing unlocked chars
+        scrambleTimer = setInterval(() => {
+          spans.forEach(s => {
+            if (s && !s.locked) {
+              s.el.textContent = randomChar();
+            }
+          });
+        }, SCRAMBLE_INTERVAL);
+
+        // Lock phase — lock one char at a time
+        function lockNext() {
+          // Find next real char to lock
+          while (lockIndex < spans.length && spans[lockIndex] === null) {
+            lockIndex++;
+          }
+          if (lockIndex >= spans.length) {
+            // All locked
+            clearInterval(scrambleTimer);
+            // Show body copy
+            if (bodyEl) bodyEl.classList.add('visible');
+            return;
+          }
+
+          const s = spans[lockIndex];
+          lockIndex++;
+
+          // Set final char
+          s.el.textContent = s.final;
+          s.el.style.color = COLOR_LOCKED;
+          s.locked = true;
+
+          // Flash effect
+          s.el.classList.remove('flash');
+          void s.el.offsetWidth; // reflow
+          s.el.classList.add('flash');
+
+          setTimeout(lockNext, LOCK_PER_CHAR);
+        }
+
+        // Start locking after a brief scramble warmup
+        setTimeout(lockNext, 400);
+      }
+
+      // ── IntersectionObserver setup ────────────────────────
+      const sections = document.querySelectorAll('[data-tsr]');
+
+      const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting) return;
+
+          const sec = entry.target;
+          const headlineEl = sec.querySelector('[data-scramble]');
+          const bodyEl     = sec.querySelector('.tsr-body');
+          const lineEl     = sec.querySelector('[data-line]');
+
+          if (!headlineEl || headlineEl.dataset.scrambled) return;
+          headlineEl.dataset.scrambled = 'true';
+
+          runScramble(headlineEl, bodyEl, lineEl);
+          observer.unobserve(sec);
+        });
+      }, { threshold: 0.45 });
+
+      sections.forEach(sec => observer.observe(sec));
+
+      // ── Seed scrambled chars on load (before observer fires) ──
+      document.querySelectorAll('[data-scramble]').forEach(el => {
+        const text = el.dataset.scramble;
+        el.innerHTML = '';
+        for (let i = 0; i < text.length; i++) {
+          if (text[i] === ' ') {
+            el.appendChild(document.createTextNode('\u00A0'));
+          } else {
+            const span = document.createElement('span');
+            span.className = 'tsr-char';
+            span.style.color = COLOR_UNLOCKED;
+            span.textContent = randomChar();
+            el.appendChild(span);
+          }
+        }
+      });
+
+    })();
+  </script>
+</body>
+</html>

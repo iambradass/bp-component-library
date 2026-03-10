@@ -1,0 +1,414 @@
+<!-- COMPONENT: Text Gradient Reveal | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Text Gradient Reveal — Component Library</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ============================================================
+       CUSTOMIZE
+    ============================================================ */
+    :root {
+      --bg:            #0D1117;
+      --bg-panel:      #0A0F16;
+      --accent:        #10B981;
+      --accent-soft:   rgba(16, 185, 129, 0.12);
+      --text:          #F8FAFC;
+      --text-muted:    #475569;
+      --text-dim:      #94A3B8;
+      --border:        rgba(255,255,255,0.06);
+      --font-head:     'Space Grotesk', sans-serif;
+      --font-body:     'Inter', sans-serif;
+
+      /* Beam settings */
+      --beam-duration: 1.5s;
+      --beam-ease:     cubic-bezier(0.4, 0, 0.2, 1);
+      --settle-delay:  200ms; /* extra pause after beam before solid */
+    }
+    /* ============================================================ */
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ── Demo header ── */
+    .demo-header {
+      text-align: center;
+      padding: 5rem 2rem 3rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .demo-header .badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: var(--accent-soft);
+      border: 1px solid rgba(16,185,129,0.2);
+      border-radius: 100px;
+      padding: 0.3rem 0.85rem;
+      margin-bottom: 1rem;
+    }
+    .demo-header h1 {
+      font-family: var(--font-head);
+      font-size: clamp(1rem, 2.5vw, 1.4rem);
+      font-weight: 600;
+      color: var(--text-dim);
+    }
+
+    /* ── Spacer ── */
+    .spacer {
+      min-height: 50vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 4rem 2rem;
+    }
+    .spacer p {
+      max-width: 480px;
+      font-size: clamp(1rem, 2vw, 1.15rem);
+      color: var(--text-dim);
+      line-height: 1.8;
+    }
+
+    /* ── Statement section wrapper ── */
+    .tgr-section {
+      position: relative;
+      padding: 10rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      overflow: hidden;
+    }
+
+    /* Alternating subtle bg for separation */
+    .tgr-section:nth-child(even) {
+      background: var(--bg-panel);
+    }
+
+    /* Atmospheric radial glow behind each statement */
+    .tgr-glow {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 70vw;
+      height: 50vh;
+      background: radial-gradient(ellipse 60% 50% at 50% 50%,
+        rgba(16, 185, 129, 0.06) 0%,
+        transparent 70%);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 1s ease;
+    }
+    .tgr-section.lit .tgr-glow {
+      opacity: 1;
+    }
+
+    /* ── The headline itself ── */
+    .tgr-inner {
+      position: relative;
+      z-index: 1;
+      max-width: 900px;
+    }
+
+    /* Eyebrow label */
+    .tgr-eyebrow {
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 1.5rem;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+    .tgr-section.lit .tgr-eyebrow {
+      opacity: 1;
+    }
+
+    /* The beam headline */
+    .tgr-headline {
+      font-family: var(--font-head);
+      font-size: clamp(2rem, 6vw, 5rem);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.025em;
+
+      /* Start: muted color, no gradient */
+      color: var(--text-muted);
+
+      /* Gradient beam — initially positioned off-screen left */
+      background: linear-gradient(
+        90deg,
+        var(--text-muted)  0%,
+        var(--text-muted)  28%,
+        #ffffff            50%,
+        var(--text-muted)  72%,
+        var(--text-muted)  100%
+      );
+      background-size: 300% 100%;
+      background-clip: text;
+      -webkit-background-clip: text;
+
+      /* Initially color is solid muted (not transparent) so gradient starts hidden */
+      -webkit-text-fill-color: var(--text-muted);
+
+      will-change: background-position;
+    }
+
+    /* State: beam firing — gradient animates left→right */
+    .tgr-headline.beaming {
+      -webkit-text-fill-color: transparent;
+      background-position-x: -100%;
+      transition: background-position-x var(--beam-duration) var(--beam-ease);
+    }
+
+    .tgr-headline.beaming.go {
+      background-position-x: 200%;
+    }
+
+    /* State: beam finished — solid white text */
+    .tgr-headline.lit {
+      -webkit-text-fill-color: var(--text);
+      color: var(--text);
+      background: none;
+      transition: color 0.4s ease, -webkit-text-fill-color 0.4s ease;
+    }
+
+    /* Subline beneath headline */
+    .tgr-subline {
+      font-size: clamp(1rem, 2vw, 1.15rem);
+      color: var(--text-dim);
+      margin-top: 2rem;
+      max-width: 580px;
+      margin-left: auto;
+      margin-right: auto;
+      line-height: 1.75;
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .tgr-section.lit .tgr-subline {
+      opacity: 1;
+      transform: translateY(0);
+      transition-delay: calc(var(--beam-duration) + 0.3s);
+    }
+
+    /* ── Accent divider ── */
+    .tgr-divider {
+      width: 48px;
+      height: 2px;
+      background: var(--accent);
+      margin: 1.5rem auto 0;
+      transform: scaleX(0);
+      transition: transform 0.5s cubic-bezier(0.4,0,0.2,1);
+      transition-delay: calc(var(--beam-duration) + 0.1s);
+    }
+    .tgr-section.lit .tgr-divider {
+      transform: scaleX(1);
+    }
+
+    /* ── Final CTA section ── */
+    .tgr-final {
+      text-align: center;
+      padding: 7rem 2rem;
+      background: radial-gradient(ellipse 80% 60% at 50% 50%,
+        rgba(16,185,129,0.07) 0%, transparent 70%);
+    }
+    .tgr-final h3 {
+      font-family: var(--font-head);
+      font-size: clamp(1.4rem, 3.5vw, 2.5rem);
+      font-weight: 700;
+      margin-bottom: 1rem;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .tgr-final h3.visible { opacity: 1; transform: translateY(0); }
+
+    .tgr-final p {
+      font-size: clamp(0.95rem, 1.8vw, 1.1rem);
+      color: var(--text-dim);
+      max-width: 480px;
+      margin: 0 auto 2rem;
+      line-height: 1.75;
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.6s ease 0.15s, transform 0.6s ease 0.15s;
+    }
+    .tgr-final p.visible { opacity: 1; transform: translateY(0); }
+
+    .tgr-btn {
+      display: inline-block;
+      font-family: var(--font-head);
+      font-size: 1rem;
+      font-weight: 700;
+      color: #000;
+      background: var(--accent);
+      border-radius: 8px;
+      padding: 0.9rem 2.5rem;
+      text-decoration: none;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.6s ease 0.25s, transform 0.6s ease 0.25s, filter 0.2s;
+    }
+    .tgr-btn.visible { opacity: 1; transform: translateY(0); }
+    .tgr-btn:hover { filter: brightness(1.1); }
+
+    /* ── Mobile ── */
+    @media (max-width: 375px) {
+      .tgr-headline { font-size: 1.75rem; }
+      .tgr-section { padding: 6rem 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="demo-header">
+    <div class="badge">Scroll-Driven Text Effect</div>
+    <h1>Text Gradient Reveal — A spotlight sweeps across each statement as it enters view</h1>
+  </header>
+
+  <div class="spacer">
+    <p>Scroll down. Each statement begins in shadow — then a beam of light passes over it, word by word, revealing the full weight of what it's saying.</p>
+  </div>
+
+  <!-- STATEMENT 1 -->
+  <section class="tgr-section" data-tgr>
+    <div class="tgr-glow"></div>
+    <div class="tgr-inner">
+      <span class="tgr-eyebrow">The Hard Truth</span>
+      <h2 class="tgr-headline">
+        The rep who shows up online wins the referral.
+      </h2>
+      <div class="tgr-divider"></div>
+      <p class="tgr-subline">
+        Every agent searching for a title rep right now is forming an opinion before they ever meet you.
+        Your digital presence is the first handshake. Make it count.
+      </p>
+    </div>
+  </section>
+
+  <!-- STATEMENT 2 -->
+  <section class="tgr-section" data-tgr>
+    <div class="tgr-glow"></div>
+    <div class="tgr-inner">
+      <span class="tgr-eyebrow">Competitive Reality</span>
+      <h2 class="tgr-headline">
+        Your competitor is one Google search away from your next client.
+      </h2>
+      <div class="tgr-divider"></div>
+      <p class="tgr-subline">
+        They've already built the website, claimed the profile, and started collecting reviews.
+        The agent who searches your market today sees them first. Not you.
+      </p>
+    </div>
+  </section>
+
+  <!-- STATEMENT 3 -->
+  <section class="tgr-section" data-tgr>
+    <div class="tgr-glow"></div>
+    <div class="tgr-inner">
+      <span class="tgr-eyebrow">The Cost of Waiting</span>
+      <h2 class="tgr-headline">
+        Every month you're invisible is a month they win.
+      </h2>
+      <div class="tgr-divider"></div>
+      <p class="tgr-subline">
+        It's not just lost leads — it's lost relationships, lost trust, and lost momentum.
+        The agent who finds your competitor this month might refer them for the next five years.
+      </p>
+    </div>
+  </section>
+
+  <div class="spacer">
+    <p style="color: var(--text-dim);">You don't have to stay invisible. The platform exists. The system is ready. The only question is whether you act first.</p>
+  </div>
+
+  <!-- Final CTA -->
+  <div class="tgr-final">
+    <h3 data-reveal-item>Stop being invisible. Start winning online.</h3>
+    <p data-reveal-item>Join 200+ title reps who took control of their digital presence and started seeing inbound leads within their first month.</p>
+    <a href="#" class="tgr-btn" data-reveal-item>Book Your Free Strategy Session →</a>
+  </div>
+
+  <script>
+    (() => {
+      'use strict';
+
+      // ── Config ─────────────────────────────────────────────
+      const BEAM_DURATION_MS = 1500; // must match CSS --beam-duration
+
+      // ── Beam sections ──────────────────────────────────────
+      const sections = document.querySelectorAll('[data-tgr]');
+
+      const sectionObserver = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting) return;
+          const sec = entry.target;
+          if (sec.dataset.fired) return;
+          sec.dataset.fired = '1';
+
+          fireBeam(sec);
+          sectionObserver.unobserve(sec);
+        });
+      }, { threshold: 0.4 });
+
+      sections.forEach(sec => sectionObserver.observe(sec));
+
+      function fireBeam(sec) {
+        const headline = sec.querySelector('.tgr-headline');
+        if (!headline) return;
+
+        // 1. Add section lit class (triggers glow, eyebrow, subline, divider)
+        sec.classList.add('lit');
+
+        // 2. Prep headline for beam
+        headline.classList.add('beaming');
+
+        // 3. Trigger beam movement on next frame
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            headline.classList.add('go');
+          });
+        });
+
+        // 4. After beam completes, switch to solid color
+        const settleDuration = BEAM_DURATION_MS + 200;
+        setTimeout(() => {
+          headline.classList.remove('beaming', 'go');
+          headline.classList.add('lit');
+        }, settleDuration);
+      }
+
+      // ── Final CTA items ────────────────────────────────────
+      const finalObserver = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            finalObserver.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.3 });
+
+      document.querySelectorAll('[data-reveal-item]').forEach(el => finalObserver.observe(el));
+
+    })();
+  </script>
+</body>
+</html>

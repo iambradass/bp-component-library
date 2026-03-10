@@ -1,0 +1,450 @@
+<!-- COMPONENT: Transition Drag Swipe | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transition: Drag Swipe</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── CUSTOMIZE ── */
+    :root {
+      --bg:             #0D1117;
+      --accent:         #10B981;
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --snap-spring:    cubic-bezier(0.22, 1, 0.36, 1);
+      --snap-duration:  400ms;
+      --font-heading:   'Space Grotesk', system-ui, sans-serif;
+      --font-body:      'Inter', system-ui, sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      touch-action: none;
+      user-select: none;
+    }
+
+    /* ── Slider Track ── */
+    .track-wrapper {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .track {
+      display: flex;
+      width: 200vw;
+      height: 100%;
+      will-change: transform;
+    }
+
+    /* ── Individual Pages ── */
+    .page {
+      width: 100vw;
+      height: 100%;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2rem;
+      padding: 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Page 1 */
+    .page-1-decor {
+      position: absolute;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      border: 1px solid rgba(16,185,129,0.08);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    .page-1-decor::after {
+      content: '';
+      position: absolute;
+      width: 400px;
+      height: 400px;
+      border-radius: 50%;
+      border: 1px solid rgba(16,185,129,0.12);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    /* Page 2 */
+    .page-2-decor {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 70% 50% at 30% 40%, rgba(16,185,129,0.06) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 70% at 80% 70%, rgba(16,185,129,0.04) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .page-eyebrow {
+      font-family: var(--font-heading);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .page-headline {
+      font-family: var(--font-heading);
+      font-size: clamp(2.25rem, 6vw, 4.5rem);
+      font-weight: 700;
+      line-height: 1.05;
+      text-align: center;
+      max-width: 14ch;
+    }
+
+    .page-headline em {
+      font-style: normal;
+      color: var(--accent);
+    }
+
+    .page-sub {
+      font-size: clamp(0.875rem, 2.5vw, 1.0625rem);
+      color: var(--text-secondary);
+      text-align: center;
+      max-width: 38ch;
+      line-height: 1.6;
+    }
+
+    /* ── Nav Buttons ── */
+    .nav-row {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    .nav-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      border-radius: 9999px;
+      border: 1.5px solid rgba(248,250,252,0.15);
+      background: transparent;
+      color: var(--text-secondary);
+      font-family: var(--font-heading);
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: border-color 200ms ease, color 200ms ease;
+    }
+
+    .nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .nav-btn:disabled { opacity: 0.2; cursor: default; }
+
+    /* ── Drag Hint ── */
+    .drag-hint {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      opacity: 0.6;
+      position: relative;
+      z-index: 1;
+    }
+
+    .drag-hint svg {
+      animation: hint-bounce 1.8s ease-in-out infinite;
+    }
+
+    @keyframes hint-bounce {
+      0%, 100% { transform: translateX(0); }
+      50% { transform: translateX(5px); }
+    }
+
+    /* ── Page Indicator ── */
+    #page-indicator {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      z-index: 50;
+    }
+
+    .indicator-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 9999px;
+      background: rgba(248,250,252,0.2);
+      transition: background 200ms ease, transform 200ms ease, width 200ms ease;
+    }
+
+    .indicator-dot.active {
+      background: var(--accent);
+      width: 24px;
+    }
+
+    /* ── Keyboard hint ── */
+    .key-hint {
+      position: fixed;
+      top: 1.5rem;
+      right: 1.5rem;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      opacity: 0.5;
+      font-family: var(--font-body);
+    }
+
+    .key-hint kbd {
+      display: inline-block;
+      padding: 0.2em 0.4em;
+      border: 1px solid rgba(148,163,184,0.2);
+      border-radius: 4px;
+      font-size: 0.75em;
+    }
+
+    @media (max-width: 375px) {
+      .page-headline { font-size: 2rem; }
+      .key-hint { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="track-wrapper" id="track-wrapper">
+  <div class="track" id="track">
+
+    <!-- Page 1 -->
+    <div class="page" id="page-1">
+      <div class="page-1-decor"></div>
+      <div class="page-eyebrow">Swipe Right</div>
+      <h1 class="page-headline">Drag to<br><em>Navigate.</em></h1>
+      <p class="page-sub">Swipe, drag, or use arrow keys. 1:1 finger tracking — spring-snaps to the nearest page on release.</p>
+      <div class="nav-row">
+        <button class="nav-btn" disabled id="btn-prev-1">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M11 7H3M6 10L3 7l3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Prev
+        </button>
+        <button class="nav-btn" onclick="snapTo(1)" id="btn-next-1">
+          Next
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M3 7h8M8 4l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+      <div class="drag-hint">
+        Drag anywhere
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M3 8h10M9 5l4 3-4 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Page 2 -->
+    <div class="page" id="page-2">
+      <div class="page-2-decor"></div>
+      <div class="page-eyebrow">Swipe Left</div>
+      <h1 class="page-headline"><em>Spring</em><br>Physics.</h1>
+      <p class="page-sub">On release, the cubic-bezier spring snaps back. The indicator updates in real-time as you cross the 50% threshold.</p>
+      <div class="nav-row">
+        <button class="nav-btn" onclick="snapTo(0)" id="btn-prev-2">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M11 7H3M6 10L3 7l3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Prev
+        </button>
+        <button class="nav-btn" disabled id="btn-next-2">
+          Next
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M3 7h8M8 4l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+      <div class="drag-hint">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="transform:scaleX(-1)">
+          <path d="M3 8h10M9 5l4 3-4 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Drag back
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Page indicator -->
+<div id="page-indicator">
+  <div class="indicator-dot active" id="dot-0"></div>
+  <div class="indicator-dot" id="dot-1"></div>
+</div>
+
+<!-- Keyboard hint -->
+<div class="key-hint"><kbd>←</kbd> <kbd>→</kbd> arrow keys</div>
+
+<script>
+  const track = document.getElementById('track');
+  const NUM_PAGES = 2;
+  const SNAP_DURATION = 400;
+  const SPRING = 'cubic-bezier(0.22, 1, 0.36, 1)';
+
+  let currentPage = 0;
+  let isDragging = false;
+  let startX = 0;
+  let currentDelta = 0;
+  let baseOffset = 0; // in px, negative = scrolled right
+
+  function getPageOffset(pageIndex) {
+    return -(pageIndex * window.innerWidth);
+  }
+
+  function setTrackTransform(offsetPx, animate) {
+    if (animate) {
+      track.style.transition = `transform ${SNAP_DURATION}ms ${SPRING}`;
+    } else {
+      track.style.transition = 'none';
+    }
+    track.style.transform = `translateX(${offsetPx}px)`;
+  }
+
+  function updateIndicator(activeIndex) {
+    document.querySelectorAll('.indicator-dot').forEach((d, i) => {
+      d.classList.toggle('active', i === activeIndex);
+    });
+  }
+
+  function snapTo(pageIndex) {
+    pageIndex = Math.max(0, Math.min(NUM_PAGES - 1, pageIndex));
+    currentPage = pageIndex;
+    baseOffset = getPageOffset(pageIndex);
+    setTrackTransform(baseOffset, true);
+    updateIndicator(currentPage);
+    currentDelta = 0;
+  }
+
+  // ── Touch events ──
+  track.addEventListener('touchstart', e => {
+    startX = e.touches[0].clientX;
+    isDragging = true;
+    track.style.transition = 'none';
+  }, { passive: true });
+
+  track.addEventListener('touchmove', e => {
+    if (!isDragging) return;
+    const delta = e.touches[0].clientX - startX;
+    currentDelta = delta;
+
+    // Resistance at edges
+    let rawOffset = baseOffset + delta;
+    const maxOffset = 0;
+    const minOffset = getPageOffset(NUM_PAGES - 1);
+
+    if (rawOffset > maxOffset) {
+      rawOffset = maxOffset + (rawOffset - maxOffset) * 0.2;
+    } else if (rawOffset < minOffset) {
+      rawOffset = minOffset + (rawOffset - minOffset) * 0.2;
+    }
+
+    track.style.transform = `translateX(${rawOffset}px)`;
+
+    // Real-time indicator update at 50% threshold
+    const pctMoved = delta / window.innerWidth;
+    let indicatorPage = currentPage;
+    if (delta < 0 && pctMoved < -0.5) indicatorPage = Math.min(NUM_PAGES - 1, currentPage + 1);
+    if (delta > 0 && pctMoved > 0.5) indicatorPage = Math.max(0, currentPage - 1);
+    updateIndicator(indicatorPage);
+  }, { passive: true });
+
+  track.addEventListener('touchend', () => {
+    if (!isDragging) return;
+    isDragging = false;
+    const threshold = window.innerWidth * 0.25;
+
+    if (currentDelta < -threshold) {
+      snapTo(Math.min(NUM_PAGES - 1, currentPage + 1));
+    } else if (currentDelta > threshold) {
+      snapTo(Math.max(0, currentPage - 1));
+    } else {
+      snapTo(currentPage);
+    }
+  });
+
+  // ── Mouse drag events ──
+  let mouseStartX = 0;
+  let mouseDelta = 0;
+
+  track.addEventListener('mousedown', e => {
+    mouseStartX = e.clientX;
+    isDragging = true;
+    mouseDelta = 0;
+    track.style.transition = 'none';
+    document.body.style.cursor = 'grabbing';
+  });
+
+  document.addEventListener('mousemove', e => {
+    if (!isDragging) return;
+    mouseDelta = e.clientX - mouseStartX;
+    currentDelta = mouseDelta;
+
+    let rawOffset = baseOffset + mouseDelta;
+    const maxOffset = 0;
+    const minOffset = getPageOffset(NUM_PAGES - 1);
+
+    if (rawOffset > maxOffset) rawOffset = maxOffset + (rawOffset - maxOffset) * 0.15;
+    else if (rawOffset < minOffset) rawOffset = minOffset + (rawOffset - minOffset) * 0.15;
+
+    track.style.transform = `translateX(${rawOffset}px)`;
+
+    const pctMoved = mouseDelta / window.innerWidth;
+    let indicatorPage = currentPage;
+    if (mouseDelta < 0 && pctMoved < -0.5) indicatorPage = Math.min(NUM_PAGES - 1, currentPage + 1);
+    if (mouseDelta > 0 && pctMoved > 0.5) indicatorPage = Math.max(0, currentPage - 1);
+    updateIndicator(indicatorPage);
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (!isDragging) return;
+    isDragging = false;
+    document.body.style.cursor = '';
+    const threshold = window.innerWidth * 0.2;
+
+    if (currentDelta < -threshold) {
+      snapTo(Math.min(NUM_PAGES - 1, currentPage + 1));
+    } else if (currentDelta > threshold) {
+      snapTo(Math.max(0, currentPage - 1));
+    } else {
+      snapTo(currentPage);
+    }
+  });
+
+  // ── Keyboard navigation ──
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight') snapTo(Math.min(NUM_PAGES - 1, currentPage + 1));
+    if (e.key === 'ArrowLeft') snapTo(Math.max(0, currentPage - 1));
+  });
+
+  // ── Init ──
+  setTrackTransform(0, false);
+  updateIndicator(0);
+</script>
+</body>
+</html>

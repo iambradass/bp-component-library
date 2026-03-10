@@ -1,0 +1,286 @@
+<!-- COMPONENT: Transition Block Dissolve | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transition: Block Dissolve</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── CUSTOMIZE ── */
+    :root {
+      --bg:             #0D1117;
+      --accent:         #10B981;
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --cell-color:     #0D1117;
+      --cols:           12;
+      --rows:           10;
+      --cell-delay-max: 400ms;
+      --font-heading:   'Space Grotesk', system-ui, sans-serif;
+      --font-body:      'Inter', system-ui, sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+    }
+
+    /* ── Pages ── */
+    .pages-container {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+    }
+
+    .page {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2rem;
+      padding: 2rem;
+    }
+
+    .page.hidden {
+      display: none;
+    }
+
+    .page-eyebrow {
+      font-family: var(--font-heading);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .page-headline {
+      font-family: var(--font-heading);
+      font-size: clamp(2.25rem, 7vw, 5rem);
+      font-weight: 700;
+      line-height: 1.05;
+      text-align: center;
+      max-width: 14ch;
+    }
+
+    .page-headline em {
+      font-style: normal;
+      color: var(--accent);
+    }
+
+    .page-sub {
+      font-size: clamp(0.875rem, 2.5vw, 1.0625rem);
+      color: var(--text-secondary);
+      text-align: center;
+      max-width: 40ch;
+      line-height: 1.6;
+    }
+
+    /* Decorative background patterns */
+    .page-1-bg {
+      position: absolute;
+      inset: 0;
+      background-image:
+        radial-gradient(circle at 20% 80%, rgba(16,185,129,0.05) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(16,185,129,0.04) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    .page-2-bg {
+      position: absolute;
+      inset: 0;
+      background-image:
+        radial-gradient(circle at 70% 60%, rgba(16,185,129,0.07) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    /* ── Nav Buttons ── */
+    .nav-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.875rem 2rem;
+      border-radius: 9999px;
+      border: 1.5px solid var(--accent);
+      background: transparent;
+      color: var(--accent);
+      font-family: var(--font-heading);
+      font-size: 0.9375rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 200ms ease, color 200ms ease;
+      position: relative;
+      z-index: 1;
+    }
+
+    .nav-btn:hover { background: var(--accent); color: #0D1117; }
+
+    /* ── Dissolve Grid ── */
+    #dissolve-grid {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: grid;
+      /* columns/rows set by JS */
+      pointer-events: none;
+    }
+
+    .d-cell {
+      background: var(--cell-color);
+      opacity: 0;
+      transition: opacity 300ms ease, transform 300ms ease;
+      transform-origin: center;
+    }
+
+    .d-cell.covered {
+      opacity: 1;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 375px) {
+      .page-headline { font-size: 2rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="pages-container">
+
+  <!-- Page 1 -->
+  <div class="page" id="page-1">
+    <div class="page-1-bg"></div>
+    <div class="page-eyebrow">Dissolve Out</div>
+    <h1 class="page-headline">Pixel by<br><em>Pixel.</em></h1>
+    <p class="page-sub">A grid of cells covers the screen with randomized timing — organic, analog, alive. No two transitions look the same.</p>
+    <button class="nav-btn" onclick="dissolveTransition(2)">
+      Next Page
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Page 2 -->
+  <div class="page hidden" id="page-2">
+    <div class="page-2-bg"></div>
+    <div class="page-eyebrow">Dissolve In</div>
+    <h1 class="page-headline"><em>Assembled</em><br>from Dust.</h1>
+    <p class="page-sub">Each cell cleared with its own random delay — the page assembled itself from 120 independent fragments.</p>
+    <button class="nav-btn" onclick="dissolveTransition(1)">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M13 8H3M7 12l-4-4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Back
+    </button>
+  </div>
+
+</div>
+
+<!-- Dissolve grid overlay -->
+<div id="dissolve-grid"></div>
+
+<script>
+  const grid = document.getElementById('dissolve-grid');
+  const COLS = 12;
+  const ROWS = 10;
+  const MAX_DELAY = 400; // ms
+  const CELL_DURATION = 300; // ms individual cell transition
+  const TOTAL_COVER_TIME = MAX_DELAY + CELL_DURATION; // ~700ms until all covered
+  let isTransitioning = false;
+  let cells = [];
+
+  function buildGrid() {
+    grid.style.gridTemplateColumns = `repeat(${COLS}, 1fr)`;
+    grid.style.gridTemplateRows = `repeat(${ROWS}, 1fr)`;
+    grid.innerHTML = '';
+    cells = [];
+
+    for (let i = 0; i < COLS * ROWS; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'd-cell';
+      // Random scale variation for organic feel
+      const scale = 0.95 + Math.random() * 0.1;
+      cell.dataset.scale = scale;
+      grid.appendChild(cell);
+      cells.push(cell);
+    }
+  }
+
+  function coverAll() {
+    return new Promise(resolve => {
+      cells.forEach(cell => {
+        const delay = Math.random() * MAX_DELAY;
+        const scale = parseFloat(cell.dataset.scale);
+        cell.style.transitionDelay = delay + 'ms';
+        cell.style.transform = `scale(${scale})`;
+        cell.classList.add('covered');
+      });
+      setTimeout(resolve, TOTAL_COVER_TIME + 50);
+    });
+  }
+
+  function revealAll() {
+    return new Promise(resolve => {
+      cells.forEach(cell => {
+        const delay = Math.random() * MAX_DELAY;
+        cell.style.transitionDelay = delay + 'ms';
+        cell.style.transform = 'scale(1)';
+        cell.classList.remove('covered');
+      });
+      setTimeout(resolve, TOTAL_COVER_TIME + 50);
+    });
+  }
+
+  function resetCells() {
+    cells.forEach(cell => {
+      cell.style.transitionDelay = '0ms';
+      cell.classList.remove('covered');
+      cell.style.transform = 'scale(1)';
+    });
+  }
+
+  async function dissolveTransition(targetPage) {
+    if (isTransitioning) return;
+    isTransitioning = true;
+
+    // Phase 1: Cover with randomized delays
+    await coverAll();
+
+    // Swap page
+    document.querySelectorAll('.page').forEach((p, i) => {
+      p.classList.toggle('hidden', (i + 1) !== targetPage);
+    });
+
+    // Brief pause while covered
+    await new Promise(r => setTimeout(r, 80));
+
+    // Phase 2: Reveal with new random delays
+    await revealAll();
+
+    // Clean up
+    resetCells();
+    isTransitioning = false;
+  }
+
+  // Initialize
+  buildGrid();
+
+  // Rebuild grid on resize for correct proportions
+  window.addEventListener('resize', () => {
+    buildGrid();
+    // Re-cover if mid-transition (edge case)
+  });
+</script>
+</body>
+</html>
