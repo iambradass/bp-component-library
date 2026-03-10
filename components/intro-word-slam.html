@@ -1,0 +1,381 @@
+<!-- COMPONENT: Intro: Word Slam | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Intro: Word Slam — Component Library</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+
+    /* ─────────────────────────────────────────
+       CUSTOMIZE
+    ───────────────────────────────────────── */
+    :root {
+      --bg:              #000000;
+      --accent:          #10B981;
+      --text:            #FFFFFF;
+      --hero-bg:         #0D1117;
+      --hero-text:       #F8FAFC;
+      --text-secondary:  #94A3B8;
+      --font-heading:    'Space Grotesk', system-ui, sans-serif;
+      --font-body:       'Inter', system-ui, sans-serif;
+
+      /* Word config */
+      --word-1: "CLOSE";
+      --word-2: "MORE";
+      --word-3: "DEALS";
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      overflow-x: hidden;
+    }
+
+    body {
+      background: var(--hero-bg);
+      font-family: var(--font-body);
+      color: var(--hero-text);
+    }
+
+    /* ── Intro overlay ── */
+    #intro {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      pointer-events: auto;
+    }
+
+    #intro.revealed {
+      pointer-events: none;
+    }
+
+    /* ── Words ── */
+    .word-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      line-height: 0.9;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .word {
+      font-family: var(--font-heading);
+      font-size: clamp(4.5rem, 18vw, 13rem);
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -0.03em;
+      display: block;
+      opacity: 0;
+      will-change: transform, opacity;
+    }
+
+    .word span.accent-letter {
+      color: var(--accent);
+    }
+
+    /* ── Shake keyframe — applied briefly when word lands ── */
+    @keyframes land-shake {
+      0%   { transform: translateY(0) translateX(0); }
+      20%  { transform: translateY(-4px) translateX(2px); }
+      40%  { transform: translateY(3px) translateX(-2px); }
+      60%  { transform: translateY(-2px) translateX(1px); }
+      80%  { transform: translateY(1px) translateX(-1px); }
+      100% { transform: translateY(0) translateX(0); }
+    }
+
+    .word.shaking {
+      animation: land-shake 80ms ease-out forwards;
+    }
+
+    /* ── Clip-path circle reveal on hero ── */
+    #clip-reveal {
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+      clip-path: circle(0% at 50% 50%);
+      transition: clip-path 700ms cubic-bezier(0.4, 0, 0.2, 1);
+      pointer-events: none;
+      background: var(--hero-bg);
+    }
+
+    #clip-reveal.open {
+      clip-path: circle(150% at 50% 50%);
+    }
+
+    /* ── Skip button ── */
+    #skip-btn {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 1100;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.7);
+      font-family: var(--font-body);
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 8px 18px;
+      border-radius: 100px;
+      cursor: pointer;
+      transition: opacity 600ms ease, color 200ms, border-color 200ms;
+      letter-spacing: 0.04em;
+    }
+    #skip-btn:hover { color: #fff; border-color: rgba(255,255,255,0.3); }
+    #skip-btn.hidden { opacity: 0; pointer-events: none; }
+
+    /* ── Hero page beneath ── */
+    #hero-page {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 40px 24px;
+      background: var(--hero-bg);
+    }
+
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: rgba(16,185,129,0.1);
+      border: 1px solid rgba(16,185,129,0.3);
+      border-radius: 100px;
+      padding: 5px 14px;
+      margin-bottom: 24px;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 600ms ease 200ms, transform 600ms ease 200ms;
+    }
+    .hero-eyebrow.in { opacity: 1; transform: translateY(0); }
+
+    .hero-title {
+      font-family: var(--font-heading);
+      font-size: clamp(2.5rem, 6vw, 4rem);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1.05;
+      margin-bottom: 20px;
+      max-width: 700px;
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 600ms ease 400ms, transform 600ms cubic-bezier(0.34, 1.2, 0.64, 1) 400ms;
+    }
+    .hero-title.in { opacity: 1; transform: translateY(0); }
+
+    .hero-sub {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      max-width: 480px;
+      margin-bottom: 36px;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 600ms ease 550ms, transform 600ms ease 550ms;
+    }
+    .hero-sub.in { opacity: 1; transform: translateY(0); }
+
+    .hero-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--accent);
+      color: #0D1117;
+      font-family: var(--font-heading);
+      font-size: 0.95rem;
+      font-weight: 700;
+      padding: 14px 32px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      opacity: 0;
+      transform: translateY(20px) scale(0.96);
+      transition: opacity 600ms ease 700ms, transform 600ms cubic-bezier(0.34, 1.56, 0.64, 1) 700ms;
+    }
+    .hero-cta.in { opacity: 1; transform: translateY(0) scale(1); }
+    .hero-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(16,185,129,0.35); }
+
+    @media (max-width: 375px) {
+      .word { font-size: clamp(3.5rem, 22vw, 8rem); }
+      #skip-btn { top: 16px; right: 16px; }
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- ── Skip button ── -->
+  <button id="skip-btn">Skip →</button>
+
+  <!-- ── Intro overlay ── -->
+  <div id="intro">
+    <div class="word-container" id="word-container">
+      <span class="word" id="w1"><span class="accent-letter">C</span>LOSE</span>
+      <span class="word" id="w2"><span class="accent-letter">M</span>ORE</span>
+      <span class="word" id="w3"><span class="accent-letter">D</span>EALS</span>
+    </div>
+  </div>
+
+  <!-- ── Clip-path reveal layer ── -->
+  <div id="clip-reveal"></div>
+
+  <!-- ── Hero page ── -->
+  <div id="hero-page">
+    <div class="hero-eyebrow" id="hero-eyebrow"><span style="width:5px;height:5px;border-radius:50%;background:currentColor;display:inline-block"></span> Title Marketing Platform</div>
+    <h1 class="hero-title" id="hero-title">The only marketing system built for title professionals.</h1>
+    <p class="hero-sub" id="hero-sub">We build your site, handle your content, and fill your pipeline — so you can do what you actually got into this industry to do.</p>
+    <button class="hero-cta" id="hero-cta">Get Your Free Audit →</button>
+  </div>
+
+  <script>
+  (function() {
+    'use strict';
+
+    const w1 = document.getElementById('w1');
+    const w2 = document.getElementById('w2');
+    const w3 = document.getElementById('w3');
+    const intro = document.getElementById('intro');
+    const clipReveal = document.getElementById('clip-reveal');
+    const skipBtn = document.getElementById('skip-btn');
+
+    const heroEls = [
+      document.getElementById('hero-eyebrow'),
+      document.getElementById('hero-title'),
+      document.getElementById('hero-sub'),
+      document.getElementById('hero-cta'),
+    ];
+
+    let done = false;
+
+    function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+    function slamIn(el, fromY) {
+      return new Promise(resolve => {
+        el.style.transform = `translateY(${fromY}px)`;
+        el.style.opacity = '0';
+
+        requestAnimationFrame(() => {
+          el.style.transition = 'transform 300ms cubic-bezier(0.22, 1, 0.36, 1), opacity 200ms ease';
+          requestAnimationFrame(() => {
+            el.style.transform = 'translateY(0)';
+            el.style.opacity = '1';
+            setTimeout(() => {
+              el.classList.add('shaking');
+              setTimeout(() => el.classList.remove('shaking'), 90);
+              resolve();
+            }, 260);
+          });
+        });
+      });
+    }
+
+    function explodeWords() {
+      const vectors = [
+        { x: '-140vw', y: '-80vh', r: '-15deg' },
+        { x: '160vw',  y: '60vh',  r: '12deg'  },
+        { x: '-120vw', y: '120vh', r: '-8deg'   },
+      ];
+      [w1, w2, w3].forEach((w, i) => {
+        w.style.transition = 'transform 600ms cubic-bezier(0.55, 0, 1, 0.45), opacity 500ms ease';
+        w.style.transform = `translateX(${vectors[i].x}) translateY(${vectors[i].y}) rotate(${vectors[i].r})`;
+        w.style.opacity = '0';
+      });
+    }
+
+    function revealHero() {
+      // Expand clip-path circle over hero
+      clipReveal.classList.add('open');
+
+      // After clip fully opens, remove the intro overlay
+      setTimeout(() => {
+        intro.style.display = 'none';
+        clipReveal.style.display = 'none';
+      }, 750);
+
+      // Animate hero content in
+      heroEls.forEach(el => {
+        requestAnimationFrame(() => el.classList.add('in'));
+      });
+
+      // Hide skip
+      skipBtn.classList.add('hidden');
+      done = true;
+    }
+
+    async function runIntro() {
+      await sleep(400);
+
+      // Word 1 slams from top
+      await slamIn(w1, -120);
+      await sleep(380);
+
+      // Word 2 slams from bottom
+      await slamIn(w2, 120);
+      await sleep(380);
+
+      // Word 3 slams — with extra scale spring
+      w3.style.transform = 'translateY(100px) scale(1.3)';
+      w3.style.opacity = '0';
+      requestAnimationFrame(() => {
+        w3.style.transition = 'transform 350ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 200ms ease';
+        requestAnimationFrame(() => {
+          w3.style.transform = 'translateY(0) scale(1)';
+          w3.style.opacity = '1';
+          setTimeout(() => {
+            w3.classList.add('shaking');
+            setTimeout(() => w3.classList.remove('shaking'), 90);
+          }, 280);
+        });
+      });
+
+      // Tension pause
+      await sleep(1100);
+
+      // Explode words outward
+      explodeWords();
+
+      // Start circle reveal 100ms into explosion
+      await sleep(100);
+      revealHero();
+    }
+
+    function skipToReveal() {
+      if (done) return;
+      done = true;
+      // Instant — kill words, open reveal
+      [w1, w2, w3].forEach(w => { w.style.opacity = '1'; }); // ensure visible before skip
+      explodeWords();
+      revealHero();
+    }
+
+    skipBtn.addEventListener('click', skipToReveal);
+
+    // Start
+    runIntro();
+
+  })();
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,475 @@
+<!-- COMPONENT: Intro: Counter Shatter | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Intro: Counter Shatter — Component Library</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+
+    /* ─────────────────────────────────────────
+       CUSTOMIZE
+    ───────────────────────────────────────── */
+    :root {
+      --bg:              #0D1117;
+      --overlay-bg:      #08090F;
+      --accent:          #10B981;
+      --accent-dim:      rgba(16, 185, 129, 0.12);
+      --text:            #F8FAFC;
+      --text-secondary:  #94A3B8;
+      --text-muted:      #475569;
+      --font-heading:    'Space Grotesk', system-ui, sans-serif;
+      --font-body:       'Inter', system-ui, sans-serif;
+      --font-mono:       ui-monospace, 'Cascadia Code', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body { height: 100%; overflow-x: hidden; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+    }
+
+    /* ── Overlay: 5 shards that tile the screen ── */
+    #overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      pointer-events: auto;
+    }
+
+    #overlay.done { pointer-events: none; }
+
+    .shard {
+      position: absolute;
+      inset: 0;
+      background: var(--overlay-bg);
+      will-change: transform, opacity;
+      transition: none;
+    }
+
+    /* Pre-set clip-path polygons that tile the full screen like broken glass */
+    /* Polygon vertices are in "x% y%" format — together they cover 100% */
+    #shard-1 { clip-path: polygon(0% 0%, 55% 0%, 40% 45%, 0% 30%); }
+    #shard-2 { clip-path: polygon(55% 0%, 100% 0%, 100% 35%, 60% 55%, 40% 45%); }
+    #shard-3 { clip-path: polygon(0% 30%, 40% 45%, 60% 55%, 30% 100%, 0% 100%); }
+    #shard-4 { clip-path: polygon(60% 55%, 100% 35%, 100% 100%, 30% 100%); }
+    #shard-5 { clip-path: polygon(40% 45%, 60% 55%, 30% 100%, 0% 100%, 0% 30%); }
+
+    /* Shatter: each shard flies in a different direction */
+    .shard.fly {
+      transition: transform 360ms cubic-bezier(0.55, 0, 1, 0.45), opacity 280ms ease 60ms !important;
+      opacity: 0 !important;
+    }
+    #shard-1.fly { transform: translate(-40vw, -50vh) rotate(-8deg) !important; }
+    #shard-2.fly { transform: translate(50vw, -40vh) rotate(12deg) !important; }
+    #shard-3.fly { transform: translate(-45vw, 50vh) rotate(-6deg) !important; }
+    #shard-4.fly { transform: translate(55vw, 45vh) rotate(10deg) !important; }
+    #shard-5.fly { transform: translate(-10vw, 60vh) rotate(-14deg) !important; }
+
+    /* ── Counter ── */
+    #counter-wrap {
+      position: fixed;
+      inset: 0;
+      z-index: 1001;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    #counter-num {
+      font-family: var(--font-mono);
+      font-size: clamp(5rem, 22vw, 14rem);
+      font-weight: 800;
+      color: var(--text);
+      line-height: 1;
+      letter-spacing: -0.04em;
+      transition: color 100ms ease, text-shadow 100ms ease;
+      font-variant-numeric: tabular-nums;
+      min-width: 3ch;
+      text-align: center;
+    }
+
+    #counter-num.flash {
+      color: #fff;
+      text-shadow: 0 0 40px rgba(255,255,255,0.6), 0 0 80px var(--accent);
+    }
+
+    #counter-label {
+      font-family: var(--font-body);
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-top: 12px;
+      opacity: 0;
+      transition: opacity 400ms ease;
+    }
+
+    #counter-label.in { opacity: 1; }
+
+    /* ── Geometric background shapes ── */
+    #shapes {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .shape {
+      position: absolute;
+      opacity: 0;
+      transition: opacity 600ms ease;
+    }
+    .shape.in { opacity: 1; }
+
+    /* Large circle */
+    .shape-circle {
+      width: 420px; height: 420px;
+      border-radius: 50%;
+      border: 1px solid rgba(16,185,129,0.12);
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      animation: spin-cw 18s linear infinite;
+    }
+
+    /* Medium rectangle */
+    .shape-rect {
+      width: 260px; height: 180px;
+      border: 1px solid rgba(148,163,184,0.08);
+      top: 15%; right: 10%;
+      transform: rotate(15deg);
+      animation: spin-ccw 14s linear infinite;
+    }
+
+    /* Triangle (border trick) */
+    .shape-tri {
+      width: 0; height: 0;
+      border-left: 40px solid transparent;
+      border-right: 40px solid transparent;
+      border-bottom: 70px solid rgba(16,185,129,0.15);
+      bottom: 20%;
+      left: 8%;
+      animation: scale-pulse 3s ease-in-out infinite;
+    }
+
+    /* Diagonal lines */
+    .shape-line-1 {
+      width: 200px; height: 1px;
+      background: rgba(148,163,184,0.08);
+      top: 30%; left: 5%;
+      transform: rotate(35deg);
+    }
+    .shape-line-2 {
+      width: 160px; height: 1px;
+      background: rgba(16,185,129,0.1);
+      bottom: 25%; right: 5%;
+      transform: rotate(-28deg);
+    }
+
+    /* Small pulsing ring */
+    .shape-ring {
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      border: 2px solid rgba(16,185,129,0.3);
+      top: 20%; left: 20%;
+      animation: ring-pulse 2.2s ease-in-out infinite;
+    }
+
+    /* Second outer ring */
+    .shape-ring-2 {
+      width: 620px; height: 620px;
+      border-radius: 50%;
+      border: 1px solid rgba(148,163,184,0.05);
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      animation: spin-ccw 30s linear infinite;
+    }
+
+    @keyframes spin-cw  { from { transform: translate(-50%,-50%) rotate(0deg); }   to { transform: translate(-50%,-50%) rotate(360deg); } }
+    @keyframes spin-ccw { from { transform: rotate(15deg); } to { transform: rotate(-345deg); } }
+    @keyframes scale-pulse {
+      0%,100% { transform: scale(0.85); opacity: 0.6; }
+      50%      { transform: scale(1.15); opacity: 1; }
+    }
+    @keyframes ring-pulse {
+      0%,100% { transform: scale(1); opacity: 0.4; }
+      50%      { transform: scale(1.4); opacity: 0.8; }
+    }
+
+    /* ── Hero page ── */
+    #hero-page {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 40px 24px;
+      background: var(--bg);
+      opacity: 0;
+      transition: opacity 600ms ease;
+    }
+
+    #hero-page.in { opacity: 1; }
+
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: rgba(16,185,129,0.1);
+      border: 1px solid rgba(16,185,129,0.3);
+      border-radius: 100px;
+      padding: 5px 14px;
+      margin-bottom: 24px;
+      opacity: 0;
+      transform: translateY(16px);
+    }
+    .hero-eyebrow.in {
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity 500ms ease 200ms, transform 500ms ease 200ms;
+    }
+
+    .hero-title {
+      font-family: var(--font-heading);
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1.07;
+      margin-bottom: 20px;
+      max-width: 640px;
+      opacity: 0;
+      transform: translateY(24px);
+    }
+    .hero-title.in {
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity 550ms ease 380ms, transform 600ms cubic-bezier(0.34, 1.2, 0.64, 1) 380ms;
+    }
+
+    .hero-sub {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      max-width: 480px;
+      margin-bottom: 36px;
+      opacity: 0;
+      transform: translateY(16px);
+    }
+    .hero-sub.in {
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity 500ms ease 530ms, transform 500ms ease 530ms;
+    }
+
+    .hero-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--accent);
+      color: #0D1117;
+      font-family: var(--font-heading);
+      font-size: 0.95rem;
+      font-weight: 700;
+      padding: 14px 32px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      opacity: 0;
+      transform: translateY(16px) scale(0.94);
+    }
+    .hero-cta.in {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      transition: opacity 500ms ease 680ms, transform 600ms cubic-bezier(0.34, 1.56, 0.64, 1) 680ms;
+    }
+    .hero-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(16,185,129,0.35); }
+
+    @media (max-width: 375px) {
+      #counter-num { font-size: clamp(4rem, 24vw, 8rem); }
+      .shape-circle { width: 260px; height: 260px; }
+      .shape-ring-2 { width: 360px; height: 360px; }
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- ── 5 overlay shards ── -->
+  <div id="overlay">
+    <div class="shard" id="shard-1"></div>
+    <div class="shard" id="shard-2"></div>
+    <div class="shard" id="shard-3"></div>
+    <div class="shard" id="shard-4"></div>
+    <div class="shard" id="shard-5"></div>
+  </div>
+
+  <!-- ── Geometric background shapes (inside overlay z-layer) ── -->
+  <div id="shapes">
+    <div class="shape shape-ring-2"></div>
+    <div class="shape shape-circle"></div>
+    <div class="shape shape-rect"></div>
+    <div class="shape shape-line-1"></div>
+    <div class="shape shape-line-2"></div>
+    <div class="shape shape-ring"></div>
+    <div class="shape shape-tri"></div>
+  </div>
+
+  <!-- ── Counter ── -->
+  <div id="counter-wrap">
+    <div id="counter-num">0</div>
+    <div id="counter-label">Loading your dashboard</div>
+  </div>
+
+  <!-- ── Hero page ── -->
+  <div id="hero-page">
+    <div class="hero-eyebrow" id="hero-eyebrow">
+      <span style="width:5px;height:5px;border-radius:50%;background:currentColor;display:inline-block"></span>
+      Title Marketing Platform
+    </div>
+    <h1 class="hero-title" id="hero-title">100% Done-For-You Digital Marketing for Title Professionals</h1>
+    <p class="hero-sub" id="hero-sub">We build it. We run it. You close deals. Your website, content, and lead pipeline — handled end to end.</p>
+    <button class="hero-cta" id="hero-cta">Book Your Free Audit →</button>
+  </div>
+
+  <script>
+  (function() {
+    'use strict';
+
+    function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+    const numEl    = document.getElementById('counter-num');
+    const labelEl  = document.getElementById('counter-label');
+    const overlay  = document.getElementById('overlay');
+    const counterWrap = document.getElementById('counter-wrap');
+    const shapes   = document.querySelectorAll('.shape');
+    const heroPg   = document.getElementById('hero-page');
+    const shards   = document.querySelectorAll('.shard');
+
+    const heroEls  = [
+      document.getElementById('hero-eyebrow'),
+      document.getElementById('hero-title'),
+      document.getElementById('hero-sub'),
+      document.getElementById('hero-cta'),
+    ];
+
+    // ── Variable-speed counter ──
+    // Segments: [from, to, duration_ms]
+    const segments = [
+      [0,  30, 1200],  // slow start
+      [30, 80,  800],  // accelerate
+      [80, 99,  600],  // fast
+      [99, 99,  350],  // tension hold at 99
+      [99,100,  120],  // snap to 100
+    ];
+
+    function setCount(n) {
+      numEl.textContent = Math.floor(n);
+    }
+
+    function animateSegment(from, to, duration) {
+      return new Promise(resolve => {
+        if (from === to) {
+          // Hold — just wait
+          setTimeout(resolve, duration);
+          return;
+        }
+        const start = performance.now();
+        const diff  = to - from;
+
+        function tick(now) {
+          const elapsed = now - start;
+          const progress = Math.min(elapsed / duration, 1);
+          setCount(from + diff * progress);
+          if (progress < 1) {
+            requestAnimationFrame(tick);
+          } else {
+            setCount(to);
+            resolve();
+          }
+        }
+        requestAnimationFrame(tick);
+      });
+    }
+
+    async function runCounter() {
+      // Show label after short delay
+      await sleep(200);
+      labelEl.classList.add('in');
+
+      // Shapes fade in staggered as counter runs
+      shapes.forEach((s, i) => {
+        setTimeout(() => s.classList.add('in'), 300 + i * 250);
+      });
+
+      // Run all counter segments
+      for (const [from, to, dur] of segments) {
+        await animateSegment(from, to, dur);
+      }
+
+      // ── At 100 ──
+      // Brief flash
+      numEl.classList.add('flash');
+      await sleep(200);
+      numEl.classList.remove('flash');
+
+      // 100ms then shatter
+      await sleep(100);
+      shatter();
+    }
+
+    function shatter() {
+      // Hide counter
+      counterWrap.style.transition = 'opacity 200ms ease';
+      counterWrap.style.opacity = '0';
+
+      // Fly all shards
+      shards.forEach(s => s.classList.add('fly'));
+
+      // Shapes fade out
+      shapes.forEach(s => {
+        s.style.transition = 'opacity 300ms ease';
+        s.style.opacity = '0';
+      });
+
+      // Reveal hero
+      setTimeout(() => {
+        heroPg.classList.add('in');
+        heroEls.forEach(el => el.classList.add('in'));
+      }, 200);
+
+      // Remove overlay
+      setTimeout(() => {
+        overlay.classList.add('done');
+        overlay.style.display = 'none';
+        counterWrap.style.display = 'none';
+        document.getElementById('shapes').style.display = 'none';
+      }, 700);
+    }
+
+    runCounter();
+
+  })();
+  </script>
+
+</body>
+</html>

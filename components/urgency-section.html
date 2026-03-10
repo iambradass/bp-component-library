@@ -1,0 +1,584 @@
+<!-- COMPONENT: Urgency Section | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Urgency Section — Component Library</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+
+    /* ─────────────────────────────────────────
+       CUSTOMIZE
+    ───────────────────────────────────────── */
+    :root {
+      --bg:              #0D1117;
+      --surface:         #111827;
+      --elevated:        #161D2B;
+      --accent:          #10B981;
+      --accent-dim:      rgba(16, 185, 129, 0.14);
+      --accent-glow:     rgba(16, 185, 129, 0.3);
+      --accent-border:   rgba(16, 185, 129, 0.3);
+      --text:            #F8FAFC;
+      --text-secondary:  #94A3B8;
+      --text-muted:      #475569;
+      --border:          rgba(148, 163, 184, 0.1);
+      --font-heading:    'Space Grotesk', system-ui, sans-serif;
+      --font-body:       'Inter', system-ui, sans-serif;
+      --font-mono:       ui-monospace, 'Cascadia Code', monospace;
+
+      /* Total slots and filled slots */
+      --total-slots:     12;
+      --filled-slots:    9;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      padding: 80px 24px;
+    }
+
+    /* ── Section shell ── */
+    .urgency-section {
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .section-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-border);
+      border-radius: 100px;
+      padding: 5px 14px;
+      margin-bottom: 20px;
+    }
+    .eyebrow-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: blink 1.4s ease-in-out infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.25} }
+
+    .section-title {
+      font-family: var(--font-heading);
+      font-size: clamp(1.75rem, 4vw, 2.5rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      margin-bottom: 14px;
+    }
+    .section-sub {
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      margin-bottom: 56px;
+    }
+
+    /* ── Signal card ── */
+    .signal-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px;
+      margin-bottom: 20px;
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 500ms ease, transform 500ms cubic-bezier(0.34, 1.2, 0.64, 1);
+    }
+    .signal-card.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .signal-card:nth-child(2) { transition-delay: 120ms; }
+    .signal-card:nth-child(3) { transition-delay: 240ms; }
+
+    .signal-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+
+    /* ── 1: Capacity Meter ── */
+    .capacity-headline {
+      font-family: var(--font-heading);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+    .capacity-sub {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+    }
+
+    /* Slot grid */
+    .capacity-slots {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .slot {
+      height: 24px;
+      flex: 1;
+      min-width: 20px;
+      border-radius: 4px;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      transition: background 400ms ease, border-color 400ms ease, box-shadow 400ms ease;
+    }
+    .slot.filled {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+    .slot.empty {
+      animation: pulse-slot 2s ease-in-out infinite;
+      border-color: rgba(16, 185, 129, 0.4);
+    }
+    @keyframes pulse-slot {
+      0%,100% { background: var(--elevated); box-shadow: none; }
+      50%      { background: rgba(16,185,129,0.08); box-shadow: 0 0 8px rgba(16,185,129,0.2); }
+    }
+
+    /* Bar */
+    .capacity-bar-wrap {
+      height: 6px;
+      background: var(--elevated);
+      border-radius: 100px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+    .capacity-bar-fill {
+      height: 100%;
+      width: 0;
+      background: linear-gradient(90deg, var(--accent), #06d6a0);
+      border-radius: 100px;
+      transition: width 1200ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .capacity-remaining {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--accent);
+    }
+    .rem-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: blink 1.2s ease-in-out infinite;
+    }
+
+    /* ── 2: Activity Feed ── */
+    .feed-headline {
+      font-family: var(--font-heading);
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .feed-sub {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+    }
+    .activity-feed {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      overflow: hidden;
+      position: relative;
+      min-height: 120px;
+    }
+    .activity-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 14px;
+      background: var(--elevated);
+      border-radius: 10px;
+      margin-bottom: 8px;
+      opacity: 0;
+      transform: translateX(24px);
+      transition: opacity 400ms ease, transform 400ms cubic-bezier(0.34, 1.2, 0.64, 1);
+      position: absolute;
+      width: 100%;
+    }
+    .activity-item.show {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    .activity-item.exit {
+      opacity: 0;
+      transform: translateX(-24px);
+      transition: opacity 300ms ease, transform 300ms ease;
+    }
+    .activity-avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-heading);
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+    .activity-text {
+      flex: 1;
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+    .activity-text strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+    .activity-time {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+    .live-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-border);
+      border-radius: 4px;
+      padding: 3px 8px;
+      margin-bottom: 12px;
+    }
+
+    /* ── 3: Decision Cost Calculator ── */
+    .calc-headline {
+      font-family: var(--font-heading);
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .calc-sub {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+    }
+    .calc-lines {
+      font-family: var(--font-mono);
+      font-size: 0.88rem;
+      line-height: 1;
+    }
+    .calc-line {
+      margin-bottom: 14px;
+      color: var(--text-secondary);
+      opacity: 0;
+      transition: opacity 300ms ease;
+      min-height: 1.5em;
+    }
+    .calc-line.show { opacity: 1; }
+    .calc-line .val {
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .calc-line.calc-total {
+      color: var(--text);
+      font-family: var(--font-heading);
+      font-size: 1.1rem;
+      font-weight: 700;
+      padding-top: 6px;
+      border-top: 1px solid var(--border);
+      margin-top: 8px;
+    }
+    .calc-line.calc-kicker {
+      color: var(--text-secondary);
+      font-family: var(--font-body);
+      font-size: 0.82rem;
+      font-style: italic;
+      margin-top: 4px;
+    }
+    .cursor {
+      display: inline-block;
+      width: 2px;
+      height: 1em;
+      background: var(--accent);
+      vertical-align: text-bottom;
+      margin-left: 2px;
+      animation: cursor-blink 0.9s step-end infinite;
+    }
+    @keyframes cursor-blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+    .cta-spring {
+      margin-top: 24px;
+      opacity: 0;
+      transform: translateY(16px) scale(0.95);
+      transition: opacity 400ms ease, transform 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .cta-spring.show {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+    .btn-stop {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--accent);
+      color: #0D1117;
+      font-family: var(--font-heading);
+      font-size: 0.95rem;
+      font-weight: 700;
+      padding: 14px 32px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: transform 200ms, box-shadow 200ms;
+    }
+    .btn-stop:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px var(--accent-glow);
+    }
+
+    @media (max-width: 375px) {
+      body { padding: 48px 16px; }
+      .signal-card { padding: 22px 18px; }
+      .calc-lines { font-size: 0.8rem; }
+    }
+
+  </style>
+</head>
+<body>
+
+  <section class="urgency-section">
+
+    <div class="section-eyebrow">
+      <span class="eyebrow-dot"></span>
+      Market Availability
+    </div>
+    <h2 class="section-title">The Window Is Open.<br>Not for Long.</h2>
+    <p class="section-sub">We work with a small number of markets at a time — by design. Here's the real picture right now.</p>
+
+    <!-- Signal 1: Capacity Meter -->
+    <div class="signal-card" id="card-capacity">
+      <div class="signal-label">Market Capacity</div>
+      <div class="capacity-headline">We work with 12 markets at a time.</div>
+      <p class="capacity-sub">Right now, 9 are active. That leaves 3 open spots — first committed, first served.</p>
+      <div class="capacity-slots" id="capacity-slots"></div>
+      <div class="capacity-bar-wrap">
+        <div class="capacity-bar-fill" id="capacity-bar"></div>
+      </div>
+      <div class="capacity-remaining">
+        <span class="rem-dot"></span>
+        3 spots remaining
+      </div>
+    </div>
+
+    <!-- Signal 2: Activity Feed -->
+    <div class="signal-card" id="card-feed">
+      <div class="signal-label">Live Activity</div>
+      <div class="live-badge"><span class="eyebrow-dot"></span> Live</div>
+      <div class="feed-headline">Others are looking at this right now.</div>
+      <p class="feed-sub">Your market doesn't sleep — and neither does the competition.</p>
+      <div class="activity-feed" id="activity-feed"></div>
+    </div>
+
+    <!-- Signal 3: Decision Cost Calculator -->
+    <div class="signal-card" id="card-calc">
+      <div class="signal-label">The Cost of Waiting</div>
+      <div class="calc-headline">Every month you wait costs more than you think.</div>
+      <p class="calc-sub">Run the math — it's simpler than you want it to be.</p>
+      <div class="calc-lines" id="calc-lines">
+        <div class="calc-line" id="cl-1">If you get <span class="val">1 new client</span> from your site per month...</div>
+        <div class="calc-line" id="cl-2">Average title commission: <span class="val" id="commission-val"></span><span class="cursor" id="cursor-1"></span></div>
+        <div class="calc-line calc-total" id="cl-3">= <span class="val" id="total-val"></span> you're leaving on the table right now<span class="cursor" id="cursor-2" style="display:none"></span></div>
+        <div class="calc-line calc-kicker" id="cl-4">Next month that's $4,800. The month after, $7,200. The math doesn't stop.</div>
+      </div>
+      <div class="cta-spring" id="cta-spring">
+        <button class="btn-stop">Stop the math. Let's talk. →</button>
+      </div>
+    </div>
+
+  </section>
+
+  <script>
+  (function() {
+    'use strict';
+
+    /* ── Helpers ── */
+    function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+    function typeText(el, text, speed) {
+      return new Promise(resolve => {
+        let i = 0;
+        el.textContent = '';
+        const iv = setInterval(() => {
+          el.textContent += text[i];
+          i++;
+          if (i >= text.length) { clearInterval(iv); resolve(); }
+        }, speed);
+      });
+    }
+
+    /* ── Capacity Meter ── */
+    function buildCapacity() {
+      const total = 12, filled = 9;
+      const container = document.getElementById('capacity-slots');
+      for (let i = 0; i < total; i++) {
+        const slot = document.createElement('div');
+        slot.className = 'slot';
+        container.appendChild(slot);
+      }
+      const slots = container.querySelectorAll('.slot');
+      // Animate slots filling in sequence
+      slots.forEach((slot, i) => {
+        setTimeout(() => {
+          if (i < filled) {
+            slot.classList.add('filled');
+          } else {
+            slot.classList.add('empty');
+          }
+        }, i * 80);
+      });
+      // Animate bar
+      setTimeout(() => {
+        document.getElementById('capacity-bar').style.width = ((filled / total) * 100) + '%';
+      }, 200);
+    }
+
+    /* ── Activity Feed ── */
+    const activities = [
+      { initials: 'SM', name: 'Sarah M.', city: 'Fort Worth', action: 'started a free audit', time: '2 hours ago' },
+      { initials: 'JT', name: 'James T.', city: 'Austin', action: 'upgraded to Pro', time: 'yesterday' },
+      { initials: 'RK', name: 'Renee K.', city: 'Dallas', action: 'submitted an inquiry', time: '4 hours ago' },
+      { initials: 'MP', name: 'Marcus P.', city: 'Houston', action: 'booked a strategy call', time: '6 hours ago' },
+    ];
+
+    let feedIndex = 0;
+    let currentItem = null;
+    const feedEl = document.getElementById('activity-feed');
+
+    function showFeedItem() {
+      const data = activities[feedIndex % activities.length];
+      feedIndex++;
+
+      // Exit current if exists
+      if (currentItem) {
+        currentItem.classList.add('exit');
+        setTimeout(() => {
+          if (currentItem && currentItem.parentNode) currentItem.parentNode.removeChild(currentItem);
+        }, 350);
+      }
+
+      const item = document.createElement('div');
+      item.className = 'activity-item';
+      item.innerHTML = `
+        <div class="activity-avatar">${data.initials}</div>
+        <div class="activity-text"><strong>${data.name}</strong> from ${data.city} ${data.action}</div>
+        <div class="activity-time">${data.time}</div>
+      `;
+      feedEl.appendChild(item);
+      currentItem = item;
+
+      // Force reflow then show
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          item.classList.add('show');
+        });
+      });
+
+      feedEl.style.minHeight = '52px';
+    }
+
+    function startFeed() {
+      showFeedItem();
+      setInterval(showFeedItem, 3200);
+    }
+
+    /* ── Decision Cost Calculator ── */
+    async function runCalculator() {
+      const cl1 = document.getElementById('cl-1');
+      const cl2 = document.getElementById('cl-2');
+      const cl3 = document.getElementById('cl-3');
+      const cl4 = document.getElementById('cl-4');
+      const commissionVal = document.getElementById('commission-val');
+      const totalVal = document.getElementById('total-val');
+      const cursor1 = document.getElementById('cursor-1');
+      const cursor2 = document.getElementById('cursor-2');
+      const cta = document.getElementById('cta-spring');
+
+      await sleep(400);
+      cl1.classList.add('show');
+      await sleep(900);
+      cl2.classList.add('show');
+      await sleep(300);
+
+      // Type commission
+      cursor1.style.display = 'inline-block';
+      await typeText(commissionVal, '$2,400', 80);
+      cursor1.style.display = 'none';
+
+      await sleep(500);
+      cl3.classList.add('show');
+      cursor2.style.display = 'inline-block';
+      await sleep(200);
+      await typeText(totalVal, '$2,400', 70);
+      cursor2.style.display = 'none';
+
+      await sleep(700);
+      cl4.classList.add('show');
+      await sleep(1000);
+      cta.classList.add('show');
+    }
+
+    /* ── IntersectionObserver ── */
+    const cards = [
+      document.getElementById('card-capacity'),
+      document.getElementById('card-feed'),
+      document.getElementById('card-calc'),
+    ];
+
+    const cardObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        const card = entry.target;
+        card.classList.add('visible');
+        cardObserver.unobserve(card);
+
+        if (card.id === 'card-capacity') buildCapacity();
+        if (card.id === 'card-feed')     startFeed();
+        if (card.id === 'card-calc')     runCalculator();
+      });
+    }, { threshold: 0.3 });
+
+    cards.forEach(c => cardObserver.observe(c));
+
+  })();
+  </script>
+
+</body>
+</html>

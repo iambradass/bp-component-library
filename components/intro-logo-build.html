@@ -1,0 +1,313 @@
+<!-- COMPONENT: Intro: Logo Build | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Intro: Logo Build — Component Library</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+
+    /* ─────────────────────────────────────────
+       CUSTOMIZE
+    ───────────────────────────────────────── */
+    :root {
+      --brand-name:      "TITLE EDGE";
+      --tagline:         "Turn Clicks Into Closings";
+      --accent:          #10B981;
+      --bg:              #0D1117;
+      --hero-bg:         #0D1117;
+      --text:            #F8FAFC;
+      --text-secondary:  #94A3B8;
+      --font-heading:    'Space Grotesk', system-ui, sans-serif;
+      --font-body:       'Inter', system-ui, sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body { height: 100%; overflow-x: hidden; }
+
+    body {
+      background: var(--hero-bg);
+      color: var(--text);
+      font-family: var(--font-body);
+    }
+
+    /* ── Intro overlay ── */
+    #intro {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+
+      /* Radial glow background */
+      background:
+        radial-gradient(ellipse 60% 50% at 50% 50%, rgba(16,185,129,0.1) 0%, transparent 70%),
+        var(--bg);
+    }
+
+    #intro.fade-out {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 600ms ease;
+    }
+
+    /* ── Logo assembly area ── */
+    .logo-stage {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+    }
+
+    /* Spacer between TITLE and EDGE */
+    .word-gap {
+      width: clamp(14px, 2vw, 24px);
+    }
+
+    /* Each letter */
+    .letter {
+      font-family: var(--font-heading);
+      font-size: clamp(2.8rem, 9vw, 7rem);
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -0.02em;
+      display: inline-block;
+      opacity: 0;
+      will-change: transform, opacity;
+      line-height: 1;
+      position: relative;
+    }
+
+    /* The accent dots above I and E */
+    .letter-accent { color: var(--accent); }
+
+    /* ── Tagline ── */
+    .logo-tagline {
+      font-family: var(--font-body);
+      font-size: clamp(0.75rem, 2vw, 1rem);
+      font-weight: 500;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin-top: 16px;
+      opacity: 0;
+      transition: opacity 600ms ease;
+      text-align: center;
+    }
+
+    .logo-tagline.in { opacity: 1; }
+
+    /* ── Underline bar ── */
+    .logo-bar {
+      height: 2px;
+      background: var(--accent);
+      width: 0;
+      margin-top: 12px;
+      border-radius: 2px;
+      transition: width 600ms cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 0 12px rgba(16,185,129,0.5);
+    }
+    .logo-bar.in { width: 100%; }
+
+    /* ── Hero page ── */
+    #hero-page {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 40px 24px;
+      background: var(--hero-bg);
+      opacity: 0;
+      transition: opacity 700ms ease;
+    }
+
+    #hero-page.in { opacity: 1; }
+
+    .hero-brand {
+      font-family: var(--font-heading);
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 24px;
+      opacity: 0;
+      transform: translateY(14px);
+      transition: opacity 500ms ease 300ms, transform 500ms ease 300ms;
+    }
+    #hero-page.in .hero-brand { opacity: 1; transform: translateY(0); }
+
+    .hero-title {
+      font-family: var(--font-heading);
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1.08;
+      margin-bottom: 20px;
+      max-width: 640px;
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 550ms ease 450ms, transform 550ms cubic-bezier(0.34, 1.2, 0.64, 1) 450ms;
+    }
+    #hero-page.in .hero-title { opacity: 1; transform: translateY(0); }
+
+    .hero-sub {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      max-width: 480px;
+      margin-bottom: 36px;
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 500ms ease 600ms, transform 500ms ease 600ms;
+    }
+    #hero-page.in .hero-sub { opacity: 1; transform: translateY(0); }
+
+    .hero-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--accent);
+      color: #0D1117;
+      font-family: var(--font-heading);
+      font-size: 0.95rem;
+      font-weight: 700;
+      padding: 14px 32px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      opacity: 0;
+      transform: translateY(16px) scale(0.95);
+      transition: opacity 500ms ease 750ms, transform 600ms cubic-bezier(0.34, 1.56, 0.64, 1) 750ms;
+    }
+    #hero-page.in .hero-cta { opacity: 1; transform: translateY(0) scale(1); }
+    .hero-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(16,185,129,0.35); }
+
+    @media (max-width: 375px) {
+      .letter { font-size: clamp(2rem, 11vw, 4rem); }
+      .logo-tagline { font-size: 0.65rem; letter-spacing: 0.14em; }
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- ── Intro ── -->
+  <div id="intro">
+    <div id="logo-wrap">
+      <div class="logo-stage" id="logo-stage">
+        <!-- Letters of "TITLE EDGE" with a gap for the space -->
+        <!-- T I T L E [space] E D G E -->
+        <span class="letter" id="l-T1">T</span>
+        <span class="letter letter-accent" id="l-I">I</span>
+        <span class="letter" id="l-T2">T</span>
+        <span class="letter" id="l-L">L</span>
+        <span class="letter letter-accent" id="l-E1">E</span>
+        <span class="word-gap"></span>
+        <span class="letter letter-accent" id="l-E2">E</span>
+        <span class="letter" id="l-D">D</span>
+        <span class="letter" id="l-G">G</span>
+        <span class="letter" id="l-E3">E</span>
+      </div>
+      <div class="logo-bar" id="logo-bar"></div>
+      <div class="logo-tagline" id="logo-tagline">Turn Clicks Into Closings</div>
+    </div>
+  </div>
+
+  <!-- ── Hero page ── -->
+  <div id="hero-page">
+    <div class="hero-brand">Title Edge</div>
+    <h1 class="hero-title">The Title Professional's Digital Growth Engine</h1>
+    <p class="hero-sub">We build the website, create the content, and optimize your online presence — so your pipeline fills itself.</p>
+    <button class="hero-cta">Start Your Free Audit →</button>
+  </div>
+
+  <script>
+  (function() {
+    'use strict';
+
+    function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+    // Each letter: id, translateX offset (px), translateY offset (px) for start position
+    // These are pre-calculated entry directions — not random
+    const letterDefs = [
+      { id: 'l-T1', sx: -200, sy: -250 }, // T  — top-left
+      { id: 'l-I',  sx:    0, sy: -300 }, // I  — from top
+      { id: 'l-T2', sx:  260, sy: -120 }, // T  — from right
+      { id: 'l-L',  sx:  200, sy:  260 }, // L  — from bottom-right
+      { id: 'l-E1', sx:    0, sy:  280 }, // E  — from bottom
+      { id: 'l-E2', sx: -230, sy:  220 }, // E  — from bottom-left
+      { id: 'l-D',  sx:  240, sy: -200 }, // D  — from top-right
+      { id: 'l-G',  sx: -280, sy:   80 }, // G  — from left
+      { id: 'l-E3', sx:   60, sy: -290 }, // E  — from top
+    ];
+
+    const intro = document.getElementById('intro');
+    const heroPg = document.getElementById('hero-page');
+    const logoBar = document.getElementById('logo-bar');
+    const tagline = document.getElementById('logo-tagline');
+
+    // Set starting positions
+    letterDefs.forEach(def => {
+      const el = document.getElementById(def.id);
+      el.style.transform = `translate(${def.sx}px, ${def.sy}px)`;
+    });
+
+    async function buildLogo() {
+      await sleep(300);
+
+      // Fly each letter in with staggered delay + spring overshoot
+      letterDefs.forEach((def, i) => {
+        const el = document.getElementById(def.id);
+        setTimeout(() => {
+          el.style.transition = 'transform 600ms cubic-bezier(0.22, 1.2, 0.36, 1), opacity 250ms ease';
+          el.style.transform = 'translate(0, 0)';
+          el.style.opacity = '1';
+        }, i * 70);
+      });
+
+      // After all letters land (~70*9 + 600 = ~1230ms)
+      await sleep(1280);
+
+      // Bar draws in
+      logoBar.classList.add('in');
+      await sleep(350);
+
+      // Tagline fades in
+      tagline.classList.add('in');
+      await sleep(900);
+
+      // Zoom + fade the whole logo assembly, reveal page
+      const wrap = document.getElementById('logo-wrap');
+      wrap.style.transition = 'transform 700ms cubic-bezier(0.4, 0, 0.6, 1), opacity 600ms ease';
+      wrap.style.transform = 'scale(1.5)';
+      wrap.style.opacity = '0';
+
+      // Reveal hero simultaneously
+      heroPg.classList.add('in');
+
+      await sleep(700);
+      intro.classList.add('fade-out');
+      setTimeout(() => { intro.style.display = 'none'; }, 700);
+    }
+
+    buildLogo();
+
+  })();
+  </script>
+
+</body>
+</html>

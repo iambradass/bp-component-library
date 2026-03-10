@@ -1,0 +1,502 @@
+<!-- COMPONENT: Process Timeline | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Process Timeline — Component Library</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+
+    /* ─────────────────────────────────────────
+       CUSTOMIZE
+    ───────────────────────────────────────── */
+    :root {
+      --bg:              #0D1117;
+      --surface:         #111827;
+      --accent:          #10B981;
+      --accent-dim:      rgba(16, 185, 129, 0.18);
+      --accent-glow:     rgba(16, 185, 129, 0.35);
+      --text:            #F8FAFC;
+      --text-secondary:  #94A3B8;
+      --text-muted:      #475569;
+      --border:          rgba(148, 163, 184, 0.12);
+      --circle-size:     52px;
+      --line-width:      2px;
+      --step-gap:        56px;
+      --font-heading:    'Space Grotesk', system-ui, sans-serif;
+      --font-body:       'Inter', system-ui, sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      padding: 80px 24px 120px;
+    }
+
+    /* ── Section header ── */
+    .section-header {
+      text-align: center;
+      margin-bottom: 72px;
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-body);
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: var(--accent-dim);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 100px;
+      padding: 5px 14px;
+      margin-bottom: 20px;
+    }
+    .eyebrow-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: blink 2s ease-in-out infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    .section-title {
+      font-family: var(--font-heading);
+      font-size: clamp(2rem, 4vw, 2.75rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: var(--text);
+      margin-bottom: 16px;
+    }
+    .section-sub {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    /* ── Timeline wrapper ── */
+    .timeline {
+      max-width: 680px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    /* ── Step ── */
+    .step {
+      display: flex;
+      gap: 28px;
+      align-items: flex-start;
+      position: relative;
+    }
+
+    /* Left column: circle + line */
+    .step-left {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex-shrink: 0;
+      width: var(--circle-size);
+    }
+
+    /* Numbered circle */
+    .step-circle {
+      width: var(--circle-size);
+      height: var(--circle-size);
+      border-radius: 50%;
+      border: 2px solid var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-heading);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      background: var(--bg);
+      position: relative;
+      z-index: 2;
+      transition:
+        border-color 400ms ease,
+        color 400ms ease,
+        background-color 400ms ease,
+        transform 400ms cubic-bezier(0.34, 1.56, 0.64, 1),
+        box-shadow 400ms ease;
+      flex-shrink: 0;
+    }
+
+    .step.active .step-circle {
+      border-color: var(--accent);
+      color: var(--bg);
+      background: var(--accent);
+      box-shadow: 0 0 0 6px var(--accent-dim), 0 0 24px var(--accent-glow);
+      transform: scale(1.08);
+    }
+
+    /* Connector line container */
+    .step-line-wrap {
+      flex: 1;
+      width: var(--line-width);
+      background: var(--border);
+      position: relative;
+      min-height: var(--step-gap);
+      margin-top: 4px;
+    }
+
+    /* The drawing fill */
+    .step-line {
+      position: absolute;
+      inset: 0;
+      background: var(--accent);
+      height: 0;
+      transition: height 500ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .step.line-drawn .step-line {
+      height: 100%;
+    }
+
+    /* Right column: content */
+    .step-content {
+      padding-top: 10px;
+      padding-bottom: var(--step-gap);
+      flex: 1;
+      opacity: 0;
+      transform: translateX(-20px);
+      transition:
+        opacity 450ms ease,
+        transform 450ms cubic-bezier(0.34, 1.2, 0.64, 1);
+    }
+
+    .step.active .step-content {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    .step-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+    .step.active .step-badge { color: var(--accent); }
+
+    .step-label {
+      font-family: var(--font-heading);
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 8px;
+      line-height: 1.3;
+    }
+    .step-body {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    /* Time badge */
+    .step-timing {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 12px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 4px 10px;
+      transition: color 400ms, border-color 400ms, background 400ms;
+    }
+    .step.active .step-timing {
+      color: var(--accent);
+      border-color: rgba(16, 185, 129, 0.3);
+      background: var(--accent-dim);
+    }
+    .timing-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    /* ── Final marker (last step — no line after, "You're here") ── */
+    .step-final-marker {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      margin-top: 6px;
+      opacity: 0;
+      transition: opacity 500ms ease 200ms;
+    }
+
+    .step.active + .step-final-container .step-final-marker,
+    .step-final-container.shown .step-final-marker {
+      opacity: 1;
+    }
+
+    .final-line {
+      height: 2px;
+      width: 0;
+      background: var(--accent);
+      transition: width 600ms cubic-bezier(0.4, 0, 0.2, 1) 400ms;
+    }
+
+    .step-final-container.shown .final-line {
+      width: 48px;
+    }
+
+    .final-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 0 var(--accent-glow);
+      opacity: 0;
+      transition: opacity 300ms ease 900ms;
+      animation: none;
+    }
+
+    .step-final-container.shown .final-dot {
+      opacity: 1;
+      animation: pulse-dot 2s ease-in-out infinite 1.1s;
+    }
+
+    @keyframes pulse-dot {
+      0%,100% { box-shadow: 0 0 0 0 var(--accent-glow); }
+      50%      { box-shadow: 0 0 0 8px transparent; }
+    }
+
+    .final-label {
+      margin-left: 10px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+      opacity: 0;
+      transform: translateX(-6px);
+      transition: opacity 400ms ease 1s, transform 400ms ease 1s;
+    }
+
+    .step-final-container.shown .final-label {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    /* ── Hero placeholder beneath ── */
+    .hero-placeholder {
+      max-width: 680px;
+      margin: 80px auto 0;
+      text-align: center;
+      padding: 48px 32px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: var(--surface);
+    }
+    .hero-placeholder h2 {
+      font-family: var(--font-heading);
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .hero-placeholder p {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      line-height: 1.7;
+      margin-bottom: 24px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--accent);
+      color: #0D1117;
+      font-family: var(--font-heading);
+      font-size: 0.9rem;
+      font-weight: 700;
+      padding: 12px 28px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      transition: transform 200ms, box-shadow 200ms;
+    }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px var(--accent-glow); }
+
+    /* Mobile */
+    @media (max-width: 375px) {
+      body { padding: 48px 16px 80px; }
+      :root { --circle-size: 42px; --step-gap: 44px; }
+      .step-label { font-size: 1rem; }
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="section-header">
+    <div class="eyebrow">
+      <span class="eyebrow-dot"></span>
+      How It Works
+    </div>
+    <h2 class="section-title">From Day One to Deals Done</h2>
+    <p class="section-sub">Here's exactly what happens after you sign up — no guesswork, no "we'll figure it out later."</p>
+  </div>
+
+  <div class="timeline" id="timeline">
+
+    <!-- Step 1 -->
+    <div class="step" data-step="1" id="step-1">
+      <div class="step-left">
+        <div class="step-circle">1</div>
+        <div class="step-line-wrap">
+          <div class="step-line"></div>
+        </div>
+      </div>
+      <div class="step-content">
+        <div class="step-badge"><span class="timing-dot"></span> Week 1</div>
+        <div class="step-label">We Audit Your Digital Footprint</div>
+        <p class="step-body">We review your current online presence: website (if any), Google Business, social, search ranking. You get a plain-English report of exactly where you stand — and where the gaps are.</p>
+        <div class="step-timing"><span class="timing-dot"></span> Completed within 48 hours of signup</div>
+      </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="step" data-step="2" id="step-2">
+      <div class="step-left">
+        <div class="step-circle">2</div>
+        <div class="step-line-wrap">
+          <div class="step-line"></div>
+        </div>
+      </div>
+      <div class="step-content">
+        <div class="step-badge"><span class="timing-dot"></span> Day 3</div>
+        <div class="step-label">You Approve the Strategy</div>
+        <p class="step-body">We present a custom plan built for your market. You see exactly what we'll build and why before a single pixel is created. No surprises — full transparency on every deliverable.</p>
+        <div class="step-timing"><span class="timing-dot"></span> 60-min strategy call included</div>
+      </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="step" data-step="3" id="step-3">
+      <div class="step-left">
+        <div class="step-circle">3</div>
+        <div class="step-line-wrap">
+          <div class="step-line"></div>
+        </div>
+      </div>
+      <div class="step-content">
+        <div class="step-badge"><span class="timing-dot"></span> Days 4–10</div>
+        <div class="step-label">We Build in 7 Days</div>
+        <p class="step-body">Your site goes live in one week. Content, design, SEO framework — all handled. You don't write a word or touch a file. We deliver a finished asset, not a draft.</p>
+        <div class="step-timing"><span class="timing-dot"></span> Live site + domain in 7 business days</div>
+      </div>
+    </div>
+
+    <!-- Step 4 -->
+    <div class="step" data-step="4" id="step-4">
+      <div class="step-left">
+        <div class="step-circle">4</div>
+        <div class="step-line-wrap">
+          <div class="step-line"></div>
+        </div>
+      </div>
+      <div class="step-content">
+        <div class="step-badge"><span class="timing-dot"></span> Day 30+</div>
+        <div class="step-label">Leads Start Finding You</div>
+        <p class="step-body">SEO and content begin working. Your first inbound inquiries typically arrive within 30 days. Realtors, builders, and buyers finding you — not the other way around.</p>
+        <div class="step-timing"><span class="timing-dot"></span> First inbounds avg. 28 days post-launch</div>
+      </div>
+    </div>
+
+    <!-- Step 5 -->
+    <div class="step" data-step="5" id="step-5">
+      <div class="step-left">
+        <div class="step-circle">5</div>
+        <!-- No line after final step -->
+        <div class="step-final-container" id="final-marker">
+          <div class="step-final-marker">
+            <div class="final-line"></div>
+            <div class="final-dot"></div>
+            <div class="final-label">You're here</div>
+          </div>
+        </div>
+      </div>
+      <div class="step-content">
+        <div class="step-badge"><span class="timing-dot"></span> Month 2 onward</div>
+        <div class="step-label">We Optimize Monthly</div>
+        <p class="step-body">Every month we review what's working, improve what isn't, and keep you ahead of your market. Your competitors will wonder what changed. You'll know.</p>
+        <div class="step-timing"><span class="timing-dot"></span> Monthly strategy report + call</div>
+      </div>
+    </div>
+
+  </div><!-- /timeline -->
+
+  <div class="hero-placeholder">
+    <h2>Ready to start your timeline?</h2>
+    <p>Most agents go from zero online presence to consistent inbound leads in under 60 days. The first step takes 5 minutes.</p>
+    <a href="#" class="btn">Get Your Free Audit →</a>
+  </div>
+
+  <script>
+  (function() {
+    'use strict';
+
+    const steps = Array.from(document.querySelectorAll('.step'));
+    const finalContainer = document.getElementById('final-marker');
+
+    function activateStep(stepEl, index) {
+      // Activate the circle and content
+      stepEl.classList.add('active');
+
+      // Draw the connector line to the NEXT step (with a delay after circle animates)
+      setTimeout(function() {
+        stepEl.classList.add('line-drawn');
+      }, 300);
+
+      // If this is the last step, show the "You're here" marker
+      if (index === steps.length - 1) {
+        setTimeout(function() {
+          finalContainer.classList.add('shown');
+        }, 500);
+      }
+    }
+
+    // IntersectionObserver — activate each step when 40% visible
+    const observer = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          const stepEl = entry.target;
+          const index = steps.indexOf(stepEl);
+          activateStep(stepEl, index);
+          observer.unobserve(stepEl);
+        }
+      });
+    }, { threshold: 0.4 });
+
+    steps.forEach(function(step) {
+      observer.observe(step);
+    });
+
+  })();
+  </script>
+
+</body>
+</html>
