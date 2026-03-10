@@ -7,400 +7,531 @@
   <title>Results Showcase</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 
   <style>
+    /* ─────────────────────────────────────────
+       CUSTOMIZE — all editable design tokens
+    ───────────────────────────────────────── */
     :root {
-      --bg:             #0D1117;
-      --surface:        #111827;
-      --elevated:       #1E293B;
-      --accent:         #10B981;
-      --accent-dim:     rgba(16,185,129,0.15);
-      --accent-border:  rgba(16,185,129,0.3);
-      --border:         rgba(148,163,184,0.1);
-      --text:           #F8FAFC;
-      --text-secondary: #94A3B8;
-      --text-muted:     #475569;
-      --radius:         12px;
-      --font-heading:   'Space Grotesk', sans-serif;
-      --font-body:      'Inter', sans-serif;
+      --bg:              #0D1117;
+      --surface:         #111827;
+      --surface-raised:  #14202F;
+      --accent:          #10B981;
+      --accent-dim:      rgba(16, 185, 129, 0.14);
+      --accent-glow:     rgba(16, 185, 129, 0.3);
+      --accent-glow-str: rgba(16, 185, 129, 0.55);
+      --accent-text:     #10B981;
+      --text:            #F8FAFC;
+      --text-secondary:  #94A3B8;
+      --text-muted:      #475569;
+      --border:          rgba(148, 163, 184, 0.08);
+      --border-accent:   rgba(16, 185, 129, 0.38);
+      --radius-card:     18px;
+      --radius-btn:      10px;
+
+      /* Result card stagger */
+      --card-stagger:    150ms;
+
+      --font-heading: 'Space Grotesk', system-ui, sans-serif;
+      --font-body:    'Inter', system-ui, sans-serif;
+      --font-mono:    ui-monospace, 'Cascadia Code', monospace;
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
-      background: var(--bg); color: var(--text);
-      font-family: var(--font-body); min-height: 100vh;
-      padding: 3rem 1rem 5rem;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 5rem 1rem;
     }
 
-    .rs-wrap { max-width: 960px; margin: 0 auto; }
-
-    /* ── Header ── */
-    .rs-eyebrow {
-      display: inline-flex; align-items: center; gap: 8px;
-      font-family: var(--font-heading); font-size: 0.75rem; font-weight: 600;
-      color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em;
-      padding: 4px 14px; background: var(--accent-dim);
-      border: 1px solid var(--accent-border); border-radius: 100px;
-      margin-bottom: 1rem;
-    }
-    .rs-title {
-      font-family: var(--font-heading); font-size: clamp(1.75rem, 4vw, 2.5rem);
-      font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.5rem;
-    }
-    .rs-subtitle {
-      color: var(--text-secondary); font-size: 1rem; line-height: 1.6;
-      max-width: 520px; margin-bottom: 1.75rem;
-    }
-
-    /* ── Scrolling ticker ── */
-    .rs-ticker {
-      overflow: hidden; border-radius: 100px;
-      background: var(--surface); border: 1px solid var(--border);
-      margin-bottom: 2rem; padding: 0.625rem 0;
+    /* ── Section wrapper with atmospheric glow ── */
+    .rs-section {
+      width: 100%;
+      max-width: 1060px;
       position: relative;
     }
-    /* Fade edges */
-    .rs-ticker::before, .rs-ticker::after {
-      content: ''; position: absolute; top: 0; bottom: 0; width: 4rem; z-index: 1;
-    }
-    .rs-ticker::before { left: 0; background: linear-gradient(to right, var(--surface), transparent); }
-    .rs-ticker::after  { right: 0; background: linear-gradient(to left, var(--surface), transparent); }
 
-    .rs-ticker-track {
-      display: flex; white-space: nowrap;
-      animation: tickerScroll 22s linear infinite;
+    /* Radial glow background */
+    .rs-section::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 900px;
+      height: 600px;
+      background: radial-gradient(
+        ellipse at center,
+        rgba(16, 185, 129, 0.06) 0%,
+        rgba(16, 185, 129, 0.02) 40%,
+        transparent 70%
+      );
+      pointer-events: none;
+      z-index: 0;
     }
-    .rs-ticker-track:hover { animation-play-state: paused; }
 
-    @keyframes tickerScroll {
-      from { transform: translateX(0); }
-      to   { transform: translateX(-50%); }
+    .rs-inner {
+      position: relative;
+      z-index: 1;
     }
-    .rs-ticker-item {
-      display: inline-flex; align-items: center; gap: 0.625rem;
-      padding: 0 2rem; font-size: 0.8125rem; color: var(--text-secondary);
-      font-family: var(--font-heading); font-weight: 500;
-    }
-    .rs-ticker-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
 
-    /* ── Results card grid ── */
+    /* ── Eyebrow + heading ── */
+    .rs-eyebrow {
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent-text);
+      margin-bottom: 1rem;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    .rs-eyebrow.visible { opacity: 1; transform: none; }
+
+    .rs-heading {
+      text-align: center;
+      font-family: var(--font-heading);
+      font-size: clamp(1.75rem, 4vw, 2.75rem);
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 3.5rem;
+      opacity: 0;
+      transform: translateY(14px);
+      transition: opacity 0.55s ease 0.12s, transform 0.55s ease 0.12s;
+    }
+    .rs-heading.visible { opacity: 1; transform: none; }
+
+    /* ─────────────────────────────────────────
+       Results Grid — 2x2
+    ───────────────────────────────────────── */
     .rs-grid {
-      display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;
-      margin-bottom: 1.5rem;
-    }
-    @media (max-width: 700px) { .rs-grid { grid-template-columns: 1fr; } }
-
-    /* ── Individual result card ── */
-    .rs-card {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius); overflow: hidden; cursor: pointer;
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-    .rs-card:hover { border-color: var(--accent-border); box-shadow: 0 8px 30px rgba(0,0,0,0.4); }
-
-    .rs-card-top {
-      padding: 1.25rem 1.25rem 1rem;
-    }
-    .rs-client-type {
-      font-family: var(--font-heading); font-size: 0.6875rem; font-weight: 700;
-      text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted);
-      margin-bottom: 0.625rem;
-    }
-    .rs-problem {
-      font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.5;
-      margin-bottom: 0.5rem;
-    }
-    .rs-problem strong { color: var(--text); }
-    .rs-result-text {
-      font-size: 0.875rem; color: var(--text); font-weight: 500; line-height: 1.5;
-    }
-
-    /* 3 stat blocks */
-    .rs-stats {
-      display: grid; grid-template-columns: repeat(3, 1fr);
-      border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
-    }
-    .rs-stat {
-      padding: 0.875rem 0.75rem; text-align: center; border-right: 1px solid var(--border);
-    }
-    .rs-stat:last-child { border-right: none; }
-    .rs-stat-before {
-      font-size: 0.6875rem; color: var(--text-muted); text-decoration: line-through;
-      margin-bottom: 2px;
-    }
-    .rs-stat-after {
-      font-family: var(--font-heading); font-size: 1rem; font-weight: 700; color: var(--accent);
-      margin-bottom: 2px;
-    }
-    .rs-stat-label { font-size: 0.625rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
-
-    /* Stars + quote */
-    .rs-card-bottom { padding: 1rem 1.25rem; }
-    .rs-stars { display: flex; gap: 2px; margin-bottom: 0.5rem; }
-    .rs-star { color: #F59E0B; }
-    .rs-quote {
-      font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.55;
-      font-style: italic;
-    }
-    .rs-quote::before { content: '"'; }
-    .rs-quote::after  { content: '"'; }
-
-    .rs-card-footer {
-      padding: 0.75rem 1.25rem; background: var(--elevated);
-      display: flex; align-items: center; justify-content: space-between;
-    }
-    .rs-tag {
-      font-family: var(--font-heading); font-size: 0.625rem; font-weight: 600;
-      text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent);
-      padding: 2px 9px; border: 1px solid var(--accent-border);
-      border-radius: 100px; background: var(--accent-dim);
-    }
-    .rs-expand-hint {
-      font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center; gap: 4px;
-    }
-
-    /* ── Modal overlay — expanded case study ── */
-    .rs-modal-overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.8);
-      display: flex; align-items: center; justify-content: center;
-      padding: 1rem; z-index: 100; opacity: 0; pointer-events: none;
-      transition: opacity 0.25s;
-    }
-    .rs-modal-overlay.open { opacity: 1; pointer-events: all; }
-
-    .rs-modal {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius); max-width: 640px; width: 100%;
-      max-height: 85vh; overflow-y: auto; padding: 2rem;
-      transform: scale(0.95); transition: transform 0.25s;
-    }
-    .rs-modal-overlay.open .rs-modal { transform: none; }
-
-    .rs-modal-close {
-      float: right; background: none; border: none; cursor: pointer;
-      color: var(--text-muted); padding: 4px;
-      font-size: 1.25rem; line-height: 1; transition: color 0.15s;
-    }
-    .rs-modal-close:hover { color: var(--text); }
-
-    .rs-modal-client {
-      font-family: var(--font-heading); font-size: 0.75rem; font-weight: 700;
-      text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted);
-      margin-bottom: 0.5rem;
-    }
-    .rs-modal-title {
-      font-family: var(--font-heading); font-size: 1.375rem; font-weight: 700;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
       margin-bottom: 1.25rem;
     }
-    .rs-modal-body {
-      font-size: 0.9375rem; color: var(--text-secondary); line-height: 1.7;
+
+    @media (max-width: 640px) {
+      .rs-grid { grid-template-columns: 1fr; }
     }
-    .rs-modal-body p { margin-bottom: 1rem; }
-    .rs-modal-stats {
-      display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem;
-      margin: 1.5rem 0;
+
+    /* ── Result card ── */
+    .rs-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-card);
+      padding: 2rem;
+      position: relative;
+      overflow: hidden;
+      opacity: 0;
+      transition:
+        opacity 0.1s ease,
+        border-color 0.5s ease,
+        box-shadow 0.5s ease;
     }
-    .rs-modal-stat {
-      background: var(--elevated); border-radius: 8px; padding: 1rem;
+
+    /* Flash overlay on new-number slam */
+    .rs-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: rgba(16, 185, 129, 0.12);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s ease;
+    }
+    .rs-card.flash::after { opacity: 1; }
+
+    /* Permanent glow once animation completes */
+    .rs-card.done {
+      border-color: rgba(16, 185, 129, 0.18);
+      box-shadow: 0 0 24px rgba(16, 185, 129, 0.08), inset 0 0 32px rgba(16, 185, 129, 0.03);
+    }
+
+    /* Big result — $47k card */
+    .rs-card--big .rs-new-number {
+      font-size: clamp(1.6rem, 4vw, 2.1rem);
+    }
+    .rs-card--big.done {
+      border-color: rgba(16, 185, 129, 0.32);
+      box-shadow: 0 0 40px rgba(16, 185, 129, 0.14), inset 0 0 40px rgba(16, 185, 129, 0.05);
+    }
+
+    /* ── Old number ── */
+    .rs-old-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1.25rem;
+      opacity: 0;
+      transition: opacity 0.45s ease;
+    }
+    .rs-card.phase-old .rs-old-wrap { opacity: 1; }
+
+    .rs-old-label {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-right: 0.25rem;
+    }
+
+    .rs-old-number {
+      font-family: var(--font-heading);
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      opacity: 0.7;
+      text-decoration: line-through;
+      text-decoration-color: rgba(71, 85, 105, 0.5);
+    }
+
+    /* ── Arrow (SVG stroke-dashoffset draw) ── */
+    .rs-arrow-wrap {
+      display: flex;
+      align-items: center;
+      margin-bottom: 1.25rem;
+    }
+
+    .rs-arrow {
+      width: 44px;
+      height: 20px;
+      overflow: visible;
+    }
+
+    .rs-arrow-path {
+      stroke: var(--accent);
+      stroke-width: 2;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-dasharray: 60;
+      stroke-dashoffset: 60;
+      transition: stroke-dashoffset 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .rs-card.phase-arrow .rs-arrow-path { stroke-dashoffset: 0; }
+
+    /* ── New number (slams in) ── */
+    .rs-new-wrap {
+      opacity: 0;
+      transform: scale(2);
+      transition:
+        opacity 0.45s ease,
+        transform 0.45s cubic-bezier(0.34, 1.35, 0.64, 1);
+    }
+    .rs-card.phase-new .rs-new-wrap {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .rs-new-number {
+      font-family: var(--font-heading);
+      font-size: clamp(1.4rem, 3.5vw, 1.85rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--accent-text);
+      line-height: 1.1;
+    }
+
+    .rs-new-label {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin-top: 0.35rem;
+    }
+
+    /* ── Result label (category) ── */
+    .rs-category {
+      font-family: var(--font-mono);
+      font-size: 0.67rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      display: block;
+    }
+
+    /* ─────────────────────────────────────────
+       Footer
+    ───────────────────────────────────────── */
+    .rs-disclaimer {
       text-align: center;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+      margin-bottom: 3rem;
+      opacity: 0;
+      transition: opacity 0.5s ease;
     }
-    .rs-modal-stat-after { font-family: var(--font-heading); font-size: 1.375rem; font-weight: 700; color: var(--accent); }
-    .rs-modal-stat-label { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
-    .rs-modal-quote {
-      background: var(--elevated); border-left: 3px solid var(--accent);
-      padding: 1rem 1.25rem; border-radius: 0 8px 8px 0;
-      font-style: italic; color: var(--text-secondary); line-height: 1.6;
-      margin-top: 1rem;
+    .rs-disclaimer.visible { opacity: 1; }
+
+    .rs-cta-wrap {
+      display: flex;
+      justify-content: center;
+      opacity: 0;
+      transform: translateY(16px) scale(0.95);
+      transition:
+        opacity 0.5s ease,
+        transform 0.5s cubic-bezier(0.34, 1.35, 0.64, 1);
     }
+    .rs-cta-wrap.visible {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    .rs-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--accent);
+      color: #0D1117;
+      font-family: var(--font-heading);
+      font-size: 0.95rem;
+      font-weight: 700;
+      padding: 0.9rem 2rem;
+      border-radius: var(--radius-btn);
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 4px 20px var(--accent-glow);
+      transition: box-shadow 0.2s ease, transform 0.2s ease;
+    }
+    .rs-cta:hover {
+      box-shadow: 0 6px 28px var(--accent-glow-str);
+      transform: translateY(-1px);
+    }
+    .rs-cta:active { transform: translateY(0); }
   </style>
 </head>
 <body>
 
-<div class="rs-wrap">
+<section class="rs-section" id="rs-root">
+  <div class="rs-inner">
 
-  <div class="rs-eyebrow">
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-    Real Client Results
+    <p class="rs-eyebrow" id="rs-eyebrow">Real clients. Real numbers.</p>
+    <h2 class="rs-heading" id="rs-heading">What actually happens when you<br>show up online.</h2>
+
+    <div class="rs-grid" id="rs-grid">
+
+      <!-- Result 1: Inbound Leads -->
+      <div class="rs-card" data-index="0"
+           data-count-from="0"
+           data-count-to="14"
+           data-category="Inbound Pipeline">
+        <span class="rs-category">Inbound Pipeline</span>
+        <div class="rs-old-wrap">
+          <span class="rs-old-label">Before</span>
+          <span class="rs-old-number">0 inbound leads/month</span>
+        </div>
+        <div class="rs-arrow-wrap">
+          <svg class="rs-arrow" viewBox="0 0 44 20">
+            <path class="rs-arrow-path" d="M2 10 L36 10 M28 3 L36 10 L28 17"/>
+          </svg>
+        </div>
+        <div class="rs-new-wrap">
+          <div class="rs-new-number"><span class="rs-count-el">14</span> qualified inbound leads/month</div>
+          <div class="rs-new-label">After 90 days in market</div>
+        </div>
+      </div>
+
+      <!-- Result 2: Google Ranking -->
+      <div class="rs-card" data-index="1"
+           data-count-from="0"
+           data-count-to="0"
+           data-category="Search Visibility">
+        <span class="rs-category">Search Visibility</span>
+        <div class="rs-old-wrap">
+          <span class="rs-old-label">Before</span>
+          <span class="rs-old-number">Page 4 on Google</span>
+        </div>
+        <div class="rs-arrow-wrap">
+          <svg class="rs-arrow" viewBox="0 0 44 20">
+            <path class="rs-arrow-path" d="M2 10 L36 10 M28 3 L36 10 L28 17"/>
+          </svg>
+        </div>
+        <div class="rs-new-wrap">
+          <div class="rs-new-number">Page 1, position 3</div>
+          <div class="rs-new-label">In 90 days</div>
+        </div>
+      </div>
+
+      <!-- Result 3: Email Open Rate -->
+      <div class="rs-card" data-index="2"
+           data-count-from="12"
+           data-count-to="38"
+           data-suffix="%"
+           data-category="Email Performance">
+        <span class="rs-category">Email Performance</span>
+        <div class="rs-old-wrap">
+          <span class="rs-old-label">Before</span>
+          <span class="rs-old-number">~12% email open rate</span>
+        </div>
+        <div class="rs-arrow-wrap">
+          <svg class="rs-arrow" viewBox="0 0 44 20">
+            <path class="rs-arrow-path" d="M2 10 L36 10 M28 3 L36 10 L28 17"/>
+          </svg>
+        </div>
+        <div class="rs-new-wrap">
+          <div class="rs-new-number"><span class="rs-count-el">38</span>% open rate on nurture sequence</div>
+          <div class="rs-new-label">Vs. 22% industry average</div>
+        </div>
+      </div>
+
+      <!-- Result 4: Revenue — BIG card, lands last, hits hardest -->
+      <div class="rs-card rs-card--big" data-index="3"
+           data-count-from="0"
+           data-count-to="47000"
+           data-prefix="$"
+           data-category="Revenue Generated">
+        <span class="rs-category">Revenue Generated</span>
+        <div class="rs-old-wrap">
+          <span class="rs-old-label">Before</span>
+          <span class="rs-old-number">$0 from digital</span>
+        </div>
+        <div class="rs-arrow-wrap">
+          <svg class="rs-arrow" viewBox="0 0 44 20">
+            <path class="rs-arrow-path" d="M2 10 L36 10 M28 3 L36 10 L28 17"/>
+          </svg>
+        </div>
+        <div class="rs-new-wrap">
+          <div class="rs-new-number">$<span class="rs-count-el">47,000</span> in new business</div>
+          <div class="rs-new-label">First 6 months</div>
+        </div>
+      </div>
+
+    </div>
+
+    <p class="rs-disclaimer" id="rs-disclaimer">Results from real clients. Individual results vary.</p>
+
+    <div class="rs-cta-wrap" id="rs-cta-wrap">
+      <a href="#" class="rs-cta">See if this works for your market &rarr;</a>
+    </div>
+
   </div>
-  <h2 class="rs-title">What Happens After Launch</h2>
-  <p class="rs-subtitle">Numbers from real title reps, 90 days after their site went live. Click any card to read the full story.</p>
-
-  <!-- Scrolling ticker -->
-  <div class="rs-ticker">
-    <div class="rs-ticker-track" id="rsTicker"></div>
-  </div>
-
-  <!-- Results cards — JS renders -->
-  <div class="rs-grid" id="rsGrid"></div>
-
-</div>
-
-<!-- Modal overlay — JS populates content -->
-<div class="rs-modal-overlay" id="rsModal" role="dialog" aria-modal="true">
-  <div class="rs-modal" id="rsModalContent">
-    <button class="rs-modal-close" id="rsModalClose" aria-label="Close">&times;</button>
-    <div id="rsModalBody"></div>
-  </div>
-</div>
+</section>
 
 <script>
-(function() {
-  'use strict';
+  /* ─────────────────────────────────────────
+     Results Showcase — Animation Engine
+  ───────────────────────────────────────── */
 
-  /* ── Ticker stats ── */
-  var tickerItems = [
-    '127 title reps served', '94% renewal rate',
-    'Avg 12 inbound leads/month', '#1 Google ranking for 34 clients',
-    '10-day average build time', '$0 setup fee', 'Mobile-first, every time',
-  ];
+  const CARD_STAGGER    = 150;  /* ms between cards starting their sequence */
+  const PHASE_OLD_DUR   = 400;  /* old number fade-in duration */
+  const PHASE_ARROW_DUR = 550;  /* arrow draw duration */
+  const PHASE_NEW_DUR   = 480;  /* new number slam duration */
+  const FLASH_DUR       = 300;  /* border flash holds this long */
 
-  var tracker = document.getElementById('rsTicker');
-  /* duplicate set for seamless loop */
-  var allItems = tickerItems.concat(tickerItems);
-  allItems.forEach(function(item) {
-    var el = document.createElement('span');
-    el.className = 'rs-ticker-item';
-    el.innerHTML = '<span class="rs-ticker-dot"></span>' + item;
-    tracker.appendChild(el);
-  });
+  /* Ease-out quartic for smooth count-up */
+  function easeOutQuart(t) { return 1 - Math.pow(1 - t, 4); }
 
-  /* ── Case study data ── */
-  var cases = [
-    {
-      client: 'Title Sales Rep, Dallas TX',
-      problem: '<strong>The problem:</strong> 100% referral-dependent, zero web presence, invisible on Google.',
-      result: 'Within 60 days of launch she was receiving 14 inbound lead requests per month and ranked on page one for "title company Dallas TX".',
-      stats: [
-        { before: '0', after: '14/mo', label: 'Inbound Leads' },
-        { before: 'Invisible', after: 'Page 1', label: 'Google Rank' },
-        { before: '100%', after: '62%', label: 'Referral Dependency' },
-      ],
-      stars: 5,
-      quote: 'I had no idea what I was missing. Now my phone rings from people I\'ve never met.',
-      tag: 'Website + SEO',
-      fullStory: [
-        'Sarah had been in the title industry for 6 years — highly respected in her referral network, but effectively nonexistent online. Every lead came through someone she already knew. She worried about what would happen if her top two referring agents retired or switched companies.',
-        'We built her a 5-page custom website focused on her local Dallas market, optimized every page for "title company Dallas" and related searches, and connected her contact form directly to her GoHighLevel CRM.',
-        'The results started showing up in month two. By month three she was receiving an average of 14 contact form submissions per month from people who found her on Google — buyers, agents, and lenders who had never heard her name before.',
-      ],
-    },
-    {
-      client: 'Title Sales Rep, Phoenix AZ',
-      problem: '<strong>The problem:</strong> Broker website wasn\'t working. No way to differentiate from 40+ reps at the same company.',
-      result: 'His personal brand site positioned him as the local specialist, generating qualified agent referrals from LinkedIn and Google.',
-      stats: [
-        { before: 'Shared page', after: 'Own domain', label: 'Web Presence' },
-        { before: '3/mo', after: '11/mo', label: 'Agent Referrals' },
-        { before: '0', after: '4.9★', label: 'Google Rating' },
-      ],
-      stars: 5,
-      quote: 'My personal site gives me credibility the broker page never could. Agents send me business because they can point to a professional.',
-      tag: 'Full Package',
-      fullStory: [
-        'Marcus was one of 43 title reps at his company, all using the same generic broker-provided profile page. When agents searched for a title rep in Phoenix, they found the company name — not Marcus.',
-        'We built Marcus a personal brand site at his own domain, created a local SEO strategy positioning him as the "Phoenix title specialist," and set up a Google Business Profile under his personal brand.',
-        'The compounding effect was significant: agents could now share his personal URL instead of a generic company link, his Google reviews were attributed to him specifically, and within 90 days he was generating 11 new agent referrals per month — up from 3.',
-      ],
-    },
-    {
-      client: 'Title Sales Rep, Nashville TN',
-      problem: '<strong>The problem:</strong> New to the market — no relationships, no reviews, no recognition.',
-      result: 'Launched with a polished web presence that made her look established before she even had her first 10 clients.',
-      stats: [
-        { before: '0 reviews', after: '22 reviews', label: 'Google Reviews' },
-        { before: 'None', after: '8/mo', label: 'Warm Inbound Leads' },
-        { before: 'Unknown', after: 'Top 3', label: 'Local Search Ranking' },
-      ],
-      stars: 5,
-      quote: 'People assume I\'ve been doing this for years when they see my site. That first impression creates trust before the first meeting.',
-      tag: 'Local SEO',
-      fullStory: [
-        'Amanda relocated to Nashville and entered an unfamiliar market. She had zero name recognition, zero Google reviews, and was competing against reps with 5–10 year head starts in the local network.',
-        'We prioritized her Google Business Profile setup and review funnel from day one, alongside a site that communicated deep local knowledge. Her bio featured Nashville-specific language and her services page was optimized for "title insurance Nashville" and "title company Brentwood TN".',
-        'Within 60 days she had 22 Google reviews (collected via the automated review funnel), appeared in the top 3 local results for her primary keyword, and was receiving 8 warm leads per month from people who found her before they found anyone else.',
-      ],
-    },
-  ];
-
-  var grid   = document.getElementById('rsGrid');
-  var modal  = document.getElementById('rsModal');
-  var mBody  = document.getElementById('rsModalBody');
-  var mClose = document.getElementById('rsModalClose');
-
-  /* ── Build cards ── */
-  cases.forEach(function(cs, i) {
-    var card = document.createElement('div');
-    card.className = 'rs-card';
-    card.setAttribute('tabindex', '0');
-    card.setAttribute('role', 'button');
-    card.setAttribute('aria-label', 'View case study: ' + cs.client);
-
-    var stars = Array(cs.stars).fill('<svg class="rs-star" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>').join('');
-
-    var statsHtml = cs.stats.map(function(s) {
-      return '<div class="rs-stat">' +
-        '<div class="rs-stat-before">' + s.before + '</div>' +
-        '<div class="rs-stat-after">' + s.after + '</div>' +
-        '<div class="rs-stat-label">' + s.label + '</div>' +
-      '</div>';
-    }).join('');
-
-    card.innerHTML =
-      '<div class="rs-card-top">' +
-        '<div class="rs-client-type">' + cs.client + '</div>' +
-        '<p class="rs-problem">' + cs.problem + '</p>' +
-        '<p class="rs-result-text">' + cs.result + '</p>' +
-      '</div>' +
-      '<div class="rs-stats">' + statsHtml + '</div>' +
-      '<div class="rs-card-bottom">' +
-        '<div class="rs-stars">' + stars + '</div>' +
-        '<p class="rs-quote">' + cs.quote + '</p>' +
-      '</div>' +
-      '<div class="rs-card-footer">' +
-        '<span class="rs-tag">' + cs.tag + '</span>' +
-        '<span class="rs-expand-hint">' +
-          'Read full story' +
-          '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12h14"/><path d="m12 5 7 7-7 7"/></svg>' +
-        '</span>' +
-      '</div>';
-
-    function openModal() {
-      var statsModal = cs.stats.map(function(s) {
-        return '<div class="rs-modal-stat">' +
-          '<div class="rs-modal-stat-after">' + s.after + '</div>' +
-          '<div class="rs-modal-stat-label">' + s.label + '</div>' +
-        '</div>';
-      }).join('');
-
-      mBody.innerHTML =
-        '<div class="rs-modal-client">' + cs.client + '</div>' +
-        '<div class="rs-modal-title">' + cs.result + '</div>' +
-        '<div class="rs-modal-body">' +
-          cs.fullStory.map(function(p) { return '<p>' + p + '</p>'; }).join('') +
-        '</div>' +
-        '<div class="rs-modal-stats">' + statsModal + '</div>' +
-        '<div class="rs-modal-quote">' + cs.quote + '</div>';
-
-      modal.classList.add('open');
-      document.body.style.overflow = 'hidden';
-    }
-
-    card.addEventListener('click', openModal);
-    card.addEventListener('keydown', function(e) { if (e.key === 'Enter') openModal(); });
-    grid.appendChild(card);
-  });
-
-  /* Close modal */
-  function closeModal() {
-    modal.classList.remove('open');
-    document.body.style.overflow = '';
+  /* Format number with locale commas */
+  function formatNum(n, prefix, suffix) {
+    return (prefix || '') + n.toLocaleString('en-US') + (suffix || '');
   }
-  mClose.addEventListener('click', closeModal);
-  modal.addEventListener('click', function(e) { if (e.target === modal) closeModal(); });
-  document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeModal(); });
 
-})();
+  /* Count-up using requestAnimationFrame */
+  function countUp(el, from, to, duration, prefix, suffix) {
+    if (from === to || to === 0) return;
+    const start = performance.now();
+    function step(now) {
+      const elapsed  = now - start;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased    = easeOutQuart(progress);
+      const current  = Math.round(from + (to - from) * eased);
+      el.textContent = formatNum(current, prefix, suffix);
+      if (progress < 1) requestAnimationFrame(step);
+      else el.textContent = formatNum(to, prefix, suffix);
+    }
+    requestAnimationFrame(step);
+  }
+
+  /* Animate one card through three phases: old → arrow → new */
+  function animateCard(card, baseDelay) {
+    const countEl   = card.querySelector('.rs-count-el');
+    const countFrom = parseInt(card.dataset.countFrom ?? '0', 10);
+    const countTo   = parseInt(card.dataset.countTo   ?? '0', 10);
+    const prefix    = card.dataset.prefix || '';
+    const suffix    = card.dataset.suffix || '';
+
+    /* Reveal card */
+    card.style.opacity = '1';
+
+    /* Phase 1 — old number fades in at reduced opacity */
+    setTimeout(() => card.classList.add('phase-old'), baseDelay);
+
+    /* Phase 2 — arrow SVG draws in */
+    setTimeout(() => card.classList.add('phase-arrow'), baseDelay + PHASE_OLD_DUR);
+
+    /* Phase 3 — new number slams in with spring + count-up + flash */
+    setTimeout(() => {
+      card.classList.add('phase-new');
+
+      /* Green flash on card border */
+      card.classList.add('flash');
+      setTimeout(() => card.classList.remove('flash'), FLASH_DUR);
+
+      /* Count-up from old value to new */
+      if (countEl && countTo > 0) {
+        countUp(countEl, countFrom, countTo, 1200, prefix, suffix);
+      }
+
+      /* Permanent glow state after animation settles */
+      setTimeout(() => card.classList.add('done'), PHASE_NEW_DUR + 250);
+
+    }, baseDelay + PHASE_OLD_DUR + PHASE_ARROW_DUR);
+  }
+
+  /* Main orchestrator */
+  function runShowcase() {
+    const eyebrow    = document.getElementById('rs-eyebrow');
+    const heading    = document.getElementById('rs-heading');
+    const cards      = document.querySelectorAll('.rs-card');
+    const disclaimer = document.getElementById('rs-disclaimer');
+    const ctaWrap    = document.getElementById('rs-cta-wrap');
+
+    /* Header text arrives first */
+    eyebrow.classList.add('visible');
+    setTimeout(() => heading.classList.add('visible'), 120);
+
+    /* Stagger each card — CARD_STAGGER ms between each starting */
+    const ENTRY_OFFSET = 400; /* breathe after heading appears */
+
+    cards.forEach((card, i) => {
+      const baseDelay = ENTRY_OFFSET + i * CARD_STAGGER;
+      animateCard(card, baseDelay);
+    });
+
+    /* Disclaimer + CTA after all cards have finished their sequences */
+    const lastCardSettle = ENTRY_OFFSET
+      + (cards.length - 1) * CARD_STAGGER
+      + PHASE_OLD_DUR + PHASE_ARROW_DUR + PHASE_NEW_DUR
+      + 500;
+
+    setTimeout(() => disclaimer.classList.add('visible'), lastCardSettle);
+    setTimeout(() => ctaWrap.classList.add('visible'),    lastCardSettle + 200);
+  }
+
+  /* IntersectionObserver — trigger once when section enters viewport */
+  let fired = false;
+  const observer = new IntersectionObserver((entries) => {
+    if (!fired && entries[0].isIntersecting) {
+      fired = true;
+      observer.disconnect();
+      runShowcase();
+    }
+  }, { threshold: 0.1 });
+
+  observer.observe(document.getElementById('rs-root'));
 </script>
 </body>
 </html>

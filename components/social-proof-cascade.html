@@ -1,0 +1,555 @@
+<!-- COMPONENT: Social Proof Cascade | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Social Proof Cascade</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ─────────────────────────────────────────
+       CUSTOMIZE — all editable design tokens
+    ───────────────────────────────────────── */
+    :root {
+      --bg:              #0D1117;
+      --surface:         #111827;
+      --surface-raised:  #1A2332;
+      --accent:          #10B981;
+      --accent-dim:      rgba(16, 185, 129, 0.18);
+      --accent-glow:     rgba(16, 185, 129, 0.35);
+      --accent-text:     #10B981;
+      --text:            #F8FAFC;
+      --text-secondary:  #94A3B8;
+      --text-muted:      #475569;
+      --border:          rgba(148, 163, 184, 0.08);
+      --border-accent:   rgba(16, 185, 129, 0.4);
+      --radius-card:     16px;
+      --radius-badge:    100px;
+
+      /* Act delays — adjust pacing here */
+      --act1-stagger:    100ms;          /* logo-to-logo delay */
+      --act2-delay:      1800ms;         /* stats start after logos done */
+      --act3-delay:      3200ms;         /* testimonials start after stats */
+
+      --font-heading: 'Space Grotesk', system-ui, sans-serif;
+      --font-body:    'Inter', system-ui, sans-serif;
+      --font-mono:    ui-monospace, 'Cascadia Code', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4rem 1rem;
+    }
+
+    /* ── Section wrapper ── */
+    .spc-section {
+      width: 100%;
+      max-width: 1100px;
+    }
+
+    .spc-eyebrow {
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent-text);
+      margin-bottom: 1.25rem;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    .spc-eyebrow.visible { opacity: 1; transform: none; }
+
+    .spc-heading {
+      text-align: center;
+      font-family: var(--font-heading);
+      font-size: clamp(1.75rem, 4vw, 2.75rem);
+      font-weight: 700;
+      line-height: 1.15;
+      color: var(--text);
+      margin-bottom: 4rem;
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.6s ease 0.1s, transform 0.6s ease 0.1s;
+    }
+    .spc-heading.visible { opacity: 1; transform: none; }
+
+    /* ─────────────────────────────────────────
+       ACT 1 — Logo Strip
+    ───────────────────────────────────────── */
+    .spc-logos {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 2rem 3.5rem;
+      margin-bottom: 4rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* shimmer overlay — sweeps left→right after logos appear */
+    .spc-logos::after {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%; bottom: 0;
+      width: 60%;
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(16, 185, 129, 0.08) 40%,
+        rgba(248, 250, 252, 0.06) 50%,
+        rgba(16, 185, 129, 0.08) 60%,
+        transparent 100%
+      );
+      pointer-events: none;
+      transition: none;
+    }
+    .spc-logos.shimmer::after {
+      transition: left 1.4s cubic-bezier(0.4, 0, 0.2, 1);
+      left: 160%;
+    }
+
+    .spc-logo {
+      font-family: var(--font-mono);
+      color: var(--text-secondary);
+      white-space: nowrap;
+      user-select: none;
+      opacity: 0;
+      filter: blur(6px);
+      transform: scale(0.8);
+      transition:
+        opacity 0.5s ease,
+        filter 0.5s ease,
+        transform 0.5s cubic-bezier(0.34, 1.3, 0.64, 1);
+    }
+    .spc-logo.visible {
+      opacity: 1;
+      filter: blur(0);
+      transform: scale(1);
+    }
+
+    /* Give each logo a distinct "brand" feel via sizing and weight */
+    .spc-logo:nth-child(1) { font-size: 1.15rem; font-weight: 700; letter-spacing: -0.02em; }
+    .spc-logo:nth-child(2) { font-size: 0.85rem; font-weight: 400; letter-spacing: 0.18em; text-transform: uppercase; }
+    .spc-logo:nth-child(3) { font-size: 1.35rem; font-weight: 800; letter-spacing: -0.04em; font-style: italic; }
+    .spc-logo:nth-child(4) { font-size: 0.95rem; font-weight: 600; letter-spacing: 0.06em; }
+    .spc-logo:nth-child(5) { font-size: 1.2rem; font-weight: 700; letter-spacing: -0.03em; }
+    .spc-logo:nth-child(6) { font-size: 0.8rem; font-weight: 500; letter-spacing: 0.22em; text-transform: uppercase; }
+
+    /* ─────────────────────────────────────────
+       ACT 2 — Stat Counters
+    ───────────────────────────────────────── */
+    .spc-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.25rem;
+      margin-bottom: 4rem;
+    }
+
+    @media (max-width: 640px) {
+      .spc-stats { grid-template-columns: 1fr; }
+    }
+
+    .spc-stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-card);
+      padding: 2rem 1.5rem 1.75rem;
+      text-align: center;
+      opacity: 0;
+      transform: translateY(24px);
+      transition:
+        opacity 0.5s ease,
+        transform 0.5s cubic-bezier(0.34, 1.2, 0.64, 1),
+        border-color 0.3s ease,
+        box-shadow 0.3s ease;
+    }
+    .spc-stat-card.visible {
+      opacity: 1;
+      transform: none;
+    }
+    .spc-stat-card.pulsing {
+      border-color: var(--border-accent);
+      box-shadow: 0 0 24px var(--accent-dim), inset 0 0 24px rgba(16, 185, 129, 0.04);
+    }
+    .spc-stat-card.done {
+      border-color: rgba(16, 185, 129, 0.2);
+      box-shadow: 0 0 16px rgba(16, 185, 129, 0.08);
+    }
+
+    .spc-stat-number {
+      font-family: var(--font-heading);
+      font-size: clamp(2.5rem, 6vw, 3.5rem);
+      font-weight: 800;
+      color: var(--accent-text);
+      line-height: 1;
+      letter-spacing: -0.03em;
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      gap: 0.15em;
+    }
+
+    .spc-stat-suffix {
+      font-size: 0.42em;
+      font-weight: 600;
+      color: var(--text-secondary);
+      letter-spacing: 0;
+    }
+
+    .spc-stat-label {
+      margin-top: 0.75rem;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    /* ─────────────────────────────────────────
+       ACT 3 — Testimonial Stack
+    ───────────────────────────────────────── */
+    .spc-testimonials {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      align-items: start;
+      gap: 1.25rem;
+      margin-bottom: 3rem;
+    }
+
+    @media (max-width: 768px) {
+      .spc-testimonials { grid-template-columns: 1fr; }
+    }
+
+    /* Staggered vertical offsets — masonry feel */
+    .spc-tcard:nth-child(1) { margin-top: 0; }
+    .spc-tcard:nth-child(2) { margin-top: 2.5rem; }
+    .spc-tcard:nth-child(3) { margin-top: 1rem; }
+
+    @media (max-width: 768px) {
+      .spc-tcard:nth-child(1),
+      .spc-tcard:nth-child(2),
+      .spc-tcard:nth-child(3) { margin-top: 0; }
+    }
+
+    .spc-tcard {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-card);
+      padding: 1.75rem;
+      opacity: 0;
+      transform: translateY(40px);
+      transition:
+        opacity 0.55s ease,
+        transform 0.55s cubic-bezier(0.34, 1.25, 0.64, 1),
+        border-color 0.4s ease;
+    }
+    .spc-tcard.visible {
+      opacity: 1;
+      transform: none;
+      border-color: rgba(148, 163, 184, 0.12);
+    }
+
+    /* Stars */
+    .spc-stars {
+      display: flex;
+      gap: 3px;
+      margin-bottom: 1rem;
+    }
+    .spc-star {
+      width: 14px;
+      height: 14px;
+      background: var(--accent);
+      clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+    }
+
+    .spc-tcard-quote {
+      font-size: 0.95rem;
+      line-height: 1.65;
+      color: var(--text-secondary);
+      margin-bottom: 1.25rem;
+    }
+
+    /* Highlighted money quote */
+    .spc-tcard-quote mark {
+      background: none;
+      color: var(--accent-text);
+      font-weight: 600;
+    }
+
+    .spc-tcard-author {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .spc-tcard-name {
+      font-family: var(--font-heading);
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .spc-tcard-role {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    /* ── Final badge ── */
+    .spc-badge-wrap {
+      display: flex;
+      justify-content: center;
+      margin-top: 1rem;
+    }
+
+    .spc-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      background: var(--accent-dim);
+      border: 1px solid var(--border-accent);
+      border-radius: var(--radius-badge);
+      padding: 0.7rem 1.5rem;
+      font-family: var(--font-heading);
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--accent-text);
+      opacity: 0;
+      transform: scale(0.7) translateY(12px);
+      transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.34, 1.6, 0.64, 1);
+    }
+    .spc-badge.visible {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+
+    .spc-badge-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent-glow);
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { box-shadow: 0 0 6px var(--accent-glow); opacity: 1; }
+      50% { box-shadow: 0 0 14px var(--accent-glow); opacity: 0.7; }
+    }
+  </style>
+</head>
+<body>
+
+<section class="spc-section" id="spc-root">
+
+  <p class="spc-eyebrow" id="spc-eyebrow">Trusted by title reps across the country</p>
+  <h2 class="spc-heading" id="spc-heading">You're not the first to wonder if this works.<br>Here's what happened when others found out.</h2>
+
+  <!-- ACT 1: Logos -->
+  <div class="spc-logos" id="spc-logos">
+    <span class="spc-logo" data-logo="1">Fidelity National</span>
+    <span class="spc-logo" data-logo="2">FIRST AMERICAN</span>
+    <span class="spc-logo" data-logo="3">Stewart</span>
+    <span class="spc-logo" data-logo="4">Old Republic Title</span>
+    <span class="spc-logo" data-logo="5">Westcor</span>
+    <span class="spc-logo" data-logo="6">CHICAGO TITLE</span>
+  </div>
+
+  <!-- ACT 2: Stats -->
+  <div class="spc-stats" id="spc-stats">
+    <div class="spc-stat-card" data-target="247" data-prefix="" data-suffix="" data-label="Closings Generated This Quarter">
+      <div class="spc-stat-number">
+        <span class="spc-count">0</span>
+      </div>
+      <p class="spc-stat-label">Closings Generated This Quarter</p>
+    </div>
+    <div class="spc-stat-card" data-target="94" data-prefix="" data-suffix="%" data-label="Client Retention Rate">
+      <div class="spc-stat-number">
+        <span class="spc-count">0</span><span class="spc-stat-suffix">%</span>
+      </div>
+      <p class="spc-stat-label">Client Retention Rate</p>
+    </div>
+    <div class="spc-stat-card" data-target="11" data-prefix="" data-suffix=" Days" data-label="Average Time to First Inbound Lead">
+      <div class="spc-stat-number">
+        <span class="spc-count">0</span><span class="spc-stat-suffix">Days</span>
+      </div>
+      <p class="spc-stat-label">Average Time to First Inbound Lead</p>
+    </div>
+  </div>
+
+  <!-- ACT 3: Testimonials -->
+  <div class="spc-testimonials" id="spc-testimonials">
+
+    <div class="spc-tcard">
+      <div class="spc-stars">
+        <div class="spc-star"></div>
+        <div class="spc-star"></div>
+        <div class="spc-star"></div>
+        <div class="spc-star"></div>
+        <div class="spc-star"></div>
+      </div>
+      <p class="spc-tcard-quote">"Before this, I was invisible online. Now I'm the first name agents call when they need a title rep. The ROI paid for itself in <mark>week three</mark>."</p>
+      <div class="spc-tcard-author">
+        <span class="spc-tcard-name">Sarah M.</span>
+        <span class="spc-tcard-role">Senior Title Rep, DFW Metro</span>
+      </div>
+    </div>
+
+    <div class="spc-tcard">
+      <div class="spc-stars">
+        <div class="spc-star"></div>
+        <div class="spc-star"></div>
+        <div class="spc-star"></div>
+        <div class="spc-star"></div>
+        <div class="spc-star"></div>
+      </div>
+      <p class="spc-tcard-quote">"I was skeptical. I've tried SEO before. This was completely different — <mark>my phone actually rings</mark> now from people who found me online."</p>
+      <div class="spc-tcard-author">
+        <span class="spc-tcard-name">James T.</span>
+        <span class="spc-tcard-role">Title Sales, Austin</span>
+      </div>
+    </div>
+
+    <div class="spc-tcard">
+      <div class="spc-stars">
+        <div class="spc-star"></div>
+        <div class="spc-star"></div>
+        <div class="spc-star"></div>
+        <div class="spc-star"></div>
+        <div class="spc-star"></div>
+      </div>
+      <p class="spc-tcard-quote">"The website looks more professional than companies 10x my size. Clients tell me it's the reason they <mark>trusted us before we even spoke</mark>."</p>
+      <div class="spc-tcard-author">
+        <span class="spc-tcard-name">Renee K.</span>
+        <span class="spc-tcard-role">Independent Title Rep</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Final badge -->
+  <div class="spc-badge-wrap">
+    <div class="spc-badge" id="spc-badge">
+      <span class="spc-badge-dot"></span>
+      Join 200+ title reps already showing up online
+    </div>
+  </div>
+
+</section>
+
+<script>
+  /* ─────────────────────────────────────────
+     Social Proof Cascade — Animation Engine
+  ───────────────────────────────────────── */
+
+  const ACT2_DELAY = 1800;   // ms after last logo appears
+  const ACT3_DELAY = 3200;   // ms after stats start
+  const LOGO_STAGGER = 120;  // ms between each logo
+  const STAT_STAGGER = 160;  // ms between stat cards
+  const TCARD_STAGGER = 200; // ms between testimonial cards
+
+  /* Count-up with ease-out quartic */
+  function easeOutQuart(t) {
+    return 1 - Math.pow(1 - t, 4);
+  }
+
+  function countUp(el, from, to, duration, onComplete) {
+    const start = performance.now();
+    function step(now) {
+      const elapsed = now - start;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = easeOutQuart(progress);
+      const current = Math.round(from + (to - from) * eased);
+      el.textContent = current;
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      } else {
+        el.textContent = to;
+        if (onComplete) onComplete();
+      }
+    }
+    requestAnimationFrame(step);
+  }
+
+  /* Main orchestrator — fires once section enters viewport */
+  function runCascade() {
+    const logos = document.querySelectorAll('.spc-logo');
+    const statCards = document.querySelectorAll('.spc-stat-card');
+    const tCards = document.querySelectorAll('.spc-tcard');
+    const badge = document.getElementById('spc-badge');
+    const logoStrip = document.getElementById('spc-logos');
+
+    /* — Eyebrow + heading — */
+    document.getElementById('spc-eyebrow').classList.add('visible');
+    setTimeout(() => document.getElementById('spc-heading').classList.add('visible'), 120);
+
+    /* — ACT 1: Logos — */
+    logos.forEach((logo, i) => {
+      setTimeout(() => logo.classList.add('visible'), 400 + i * LOGO_STAGGER);
+    });
+
+    /* shimmer sweep after last logo */
+    const shimmerDelay = 400 + logos.length * LOGO_STAGGER + 300;
+    setTimeout(() => logoStrip.classList.add('shimmer'), shimmerDelay);
+
+    /* — ACT 2: Stats — */
+    const act2Start = shimmerDelay + ACT2_DELAY;
+
+    statCards.forEach((card, i) => {
+      const delay = act2Start + i * STAT_STAGGER;
+
+      setTimeout(() => {
+        card.classList.add('visible', 'pulsing');
+
+        const countEl = card.querySelector('.spc-count');
+        const target = parseInt(card.dataset.target, 10);
+        const duration = 1400 - i * 100; // slightly faster each card
+
+        countUp(countEl, 0, target, duration, () => {
+          card.classList.remove('pulsing');
+          card.classList.add('done');
+        });
+      }, delay);
+    });
+
+    /* — ACT 3: Testimonials — */
+    const act3Start = act2Start + ACT3_DELAY;
+
+    tCards.forEach((card, i) => {
+      setTimeout(() => card.classList.add('visible'), act3Start + i * TCARD_STAGGER);
+    });
+
+    /* Badge springs in after last testimonial */
+    const badgeDelay = act3Start + tCards.length * TCARD_STAGGER + 400;
+    setTimeout(() => badge.classList.add('visible'), badgeDelay);
+  }
+
+  /* IntersectionObserver — trigger once */
+  const root = document.getElementById('spc-root');
+  let fired = false;
+  const observer = new IntersectionObserver((entries) => {
+    if (!fired && entries[0].isIntersecting) {
+      fired = true;
+      observer.disconnect();
+      runCascade();
+    }
+  }, { threshold: 0.15 });
+
+  observer.observe(root);
+</script>
+</body>
+</html>
