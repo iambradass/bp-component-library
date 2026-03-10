@@ -1,0 +1,282 @@
+<!-- COMPONENT: Homepage FAQ Section | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Homepage FAQ Section — Marketing Context</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font-body); min-height: 100vh; }
+
+    /* ── Section ── */
+    .section {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 5rem 1.5rem;
+    }
+
+    /* ── Header ── */
+    .section-header { text-align: center; margin-bottom: 3.5rem; }
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: var(--font-mono); font-size: 0.75rem; font-weight: 600;
+      color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em;
+      padding: 5px 14px; background: var(--accent-dim);
+      border: 1px solid var(--accent-border); border-radius: 100px; margin-bottom: 1.25rem;
+    }
+    .section-title {
+      font-family: var(--font-heading);
+      font-size: clamp(1.75rem, 4vw, 2.75rem);
+      font-weight: 700; letter-spacing: -0.025em; line-height: 1.2;
+      margin-bottom: 0.75rem;
+    }
+    .section-sub { font-size: 1rem; color: var(--text-secondary); line-height: 1.6; }
+
+    /* ── FAQ Grid: 2 columns on desktop ── */
+    .faq-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0 3rem;
+      column-gap: 4rem;
+    }
+    @media (max-width: 700px) {
+      .faq-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ── Individual Q&A item ── */
+    .faq-item {
+      padding: 1.75rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .faq-item:last-child { border-bottom: none; }
+
+    /* Desktop: all answers visible — no accordion needed */
+    .faq-question {
+      font-family: var(--font-heading);
+      font-size: 1rem; font-weight: 700;
+      color: var(--text); margin-bottom: 0.75rem;
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+      cursor: pointer;
+    }
+    /* Toggle icon — only visible on mobile where answers collapse */
+    .faq-toggle {
+      width: 20px; height: 20px; flex-shrink: 0;
+      color: var(--text-muted); transition: transform 0.3s ease;
+      display: none; /* hidden on desktop */
+    }
+    .faq-item.is-open .faq-toggle { transform: rotate(45deg); color: var(--accent); }
+
+    .faq-answer {
+      font-size: 0.9375rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    /* Mobile accordion behavior */
+    @media (max-width: 700px) {
+      .faq-toggle { display: flex; align-items: center; justify-content: center; }
+      .faq-answer {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .faq-item.is-open .faq-answer { max-height: 400px; }
+      .faq-question { margin-bottom: 0; }
+      .faq-item.is-open .faq-question { margin-bottom: 0.75rem; }
+    }
+
+    /* Highlight key phrase in answers */
+    .faq-highlight { color: var(--accent); font-weight: 600; }
+
+    /* ── Bottom CTA row ── */
+    .faq-footer {
+      margin-top: 3rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .faq-footer-text {
+      font-size: 0.9375rem; color: var(--text-secondary);
+    }
+    .faq-footer-links { display: flex; gap: 12px; flex-wrap: wrap; }
+    .faq-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 10px 20px; border-radius: 8px;
+      font-family: var(--font-heading); font-size: 0.875rem; font-weight: 600;
+      text-decoration: none; transition: all 0.2s;
+    }
+    .faq-link.primary {
+      background: var(--accent); color: #0D1117;
+    }
+    .faq-link.primary:hover { box-shadow: 0 8px 24px rgba(16,185,129,0.3); transform: translateY(-1px); }
+    .faq-link.secondary {
+      background: var(--surface); color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
+    .faq-link.secondary:hover { border-color: rgba(148,163,184,0.25); color: var(--text); }
+
+  </style>
+</head>
+<body>
+
+  <div class="section">
+
+    <div class="section-header">
+      <div class="eyebrow">Let's be transparent</div>
+      <h2 class="section-title">Questions you're probably asking</h2>
+      <p class="section-sub">The questions we hear on every sales call — answered honestly.</p>
+    </div>
+
+    <!-- 2-column FAQ grid -->
+    <!-- Left column: Q1, Q2, Q3 — Right column: Q4, Q5, Q6 -->
+    <div class="faq-grid">
+
+      <!-- Q1 -->
+      <div class="faq-item is-open">
+        <div class="faq-question" role="button" tabindex="0">
+          Do I have to sign a long-term contract?
+          <svg class="faq-toggle" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </div>
+        <div class="faq-answer">
+          No contracts, ever. We're month-to-month. If you want to cancel, you give us 30 days notice and you're done. We keep clients by delivering results, not by locking them in. <span class="faq-highlight">94% of clients renew</span> — that's the only number that matters to us.
+        </div>
+      </div>
+
+      <!-- Q2 -->
+      <div class="faq-item is-open">
+        <div class="faq-question" role="button" tabindex="0">
+          How long until my site is live?
+          <svg class="faq-toggle" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </div>
+        <div class="faq-answer">
+          <span class="faq-highlight">10 days on average</span>, from your kickoff call to a fully live, Google-indexed website. We've done it in 7. The main bottleneck is usually getting your headshot and a 15-minute call with you to nail down the messaging.
+        </div>
+      </div>
+
+      <!-- Q3 -->
+      <div class="faq-item is-open">
+        <div class="faq-question" role="button" tabindex="0">
+          What happens to my site if I cancel?
+          <svg class="faq-toggle" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </div>
+        <div class="faq-answer">
+          If you cancel, we take the site down at the end of your final billing period. You keep your domain name if you purchased one. If you want to keep the site and host it yourself, we can export it for a one-time fee. Either way, you're never left in a bad spot.
+        </div>
+      </div>
+
+      <!-- Q4 -->
+      <div class="faq-item is-open">
+        <div class="faq-question" role="button" tabindex="0">
+          Who writes the content for my site?
+          <svg class="faq-toggle" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </div>
+        <div class="faq-answer">
+          We do. Our team writes all the copy based on a short intake form you fill out. <span class="faq-highlight">You don't write a single word</span>. We'll send you the draft for approval before anything goes live — most clients request only minor tweaks.
+        </div>
+      </div>
+
+      <!-- Q5 -->
+      <div class="faq-item is-open">
+        <div class="faq-question" role="button" tabindex="0">
+          What if my broker objects to me having a personal site?
+          <svg class="faq-toggle" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </div>
+        <div class="faq-answer">
+          Most brokers are fine with it — it makes them look good too. If there are compliance concerns, we've navigated this before. We can adjust how the site is branded or positioned. We've never had a client have to take a site down because of broker policy.
+        </div>
+      </div>
+
+      <!-- Q6 -->
+      <div class="faq-item is-open">
+        <div class="faq-question" role="button" tabindex="0">
+          How is this different from a template site?
+          <svg class="faq-toggle" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </div>
+        <div class="faq-answer">
+          Template sites use generic copy and shared domain patterns that Google doesn't rank well. We build custom sites with SEO-optimized content written for <span class="faq-highlight">your specific market and name</span>. There's a difference between a website that exists and one that gets found.
+        </div>
+      </div>
+
+    </div><!-- /faq-grid -->
+
+    <!-- Bottom CTA -->
+    <div class="faq-footer">
+      <div class="faq-footer-text">Have a question we didn't answer?</div>
+      <div class="faq-footer-links">
+        <a href="#" class="faq-link primary">
+          Chat with us
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </a>
+        <a href="#" class="faq-link secondary">See all FAQs</a>
+      </div>
+    </div>
+
+  </div><!-- /section -->
+
+  <script>
+    // Mobile accordion — only activates below 700px
+    // On desktop all items are open and the toggle is hidden via CSS
+    const items = document.querySelectorAll('.faq-item');
+
+    function isMobile() { return window.innerWidth <= 700; }
+
+    // On mobile, close all by default except the first
+    function initMobile() {
+      if (!isMobile()) return;
+      items.forEach((item, i) => {
+        if (i > 0) item.classList.remove('is-open');
+      });
+    }
+
+    items.forEach(item => {
+      const question = item.querySelector('.faq-question');
+      question.addEventListener('click', () => {
+        if (!isMobile()) return; // No toggle on desktop
+        const isOpen = item.classList.contains('is-open');
+        // Close all
+        items.forEach(i => i.classList.remove('is-open'));
+        // Open clicked if it was closed
+        if (!isOpen) item.classList.add('is-open');
+      });
+
+      // Keyboard support
+      question.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          question.click();
+        }
+      });
+    });
+
+    initMobile();
+    window.addEventListener('resize', initMobile);
+  </script>
+
+</body>
+</html>

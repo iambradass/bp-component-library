@@ -1,0 +1,477 @@
+<!-- COMPONENT: Problem Section | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Problem Section — Pain Dramatization</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+
+    /* ── Customize ── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+      --red:            #EF4444;
+      --amber:          #F59E0B;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font-body); min-height: 100vh; }
+
+    /* ── Demo tabs ── */
+    .demo-tabs {
+      display: flex; gap: 6px; padding: 1.25rem 1.5rem;
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 100; flex-wrap: wrap;
+    }
+    .demo-tab {
+      padding: 6px 16px; border-radius: 6px; border: 1px solid var(--border);
+      background: transparent; color: var(--text-muted);
+      font-family: var(--font-mono); font-size: 0.75rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.06em; cursor: pointer; transition: all 0.2s;
+    }
+    .demo-tab.is-active { background: var(--accent-dim); border-color: var(--accent-border); color: var(--accent); }
+    .variant { display: none; }
+    .variant.is-active { display: block; }
+
+    /* ── Shared atoms ── */
+    .section-wrap { max-width: 900px; margin: 0 auto; padding: 5rem 1.5rem; }
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: var(--font-mono); font-size: 0.75rem; font-weight: 600;
+      color: var(--red); text-transform: uppercase; letter-spacing: 0.1em;
+      padding: 5px 14px; background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.3); border-radius: 100px;
+    }
+    .section-title {
+      font-family: var(--font-heading);
+      font-size: clamp(1.75rem, 4vw, 2.75rem);
+      font-weight: 700; letter-spacing: -0.025em; line-height: 1.2;
+      margin: 1.25rem 0 0.75rem;
+    }
+    .section-sub { font-size: 1rem; color: var(--text-secondary); line-height: 1.7; max-width: 580px; }
+
+    /* ── Variant A: Day in the Life ── */
+    .timeline { margin-top: 3rem; display: flex; flex-direction: column; gap: 0; }
+    .timeline-item {
+      display: grid;
+      grid-template-columns: 100px 1fr;
+      gap: 1.5rem;
+      position: relative;
+      padding-bottom: 2.5rem;
+      opacity: 0;
+      transform: translateX(-20px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    .timeline-item.visible { opacity: 1; transform: none; }
+
+    /* Vertical connector line */
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: 50px; /* center of 100px time col */
+      top: 36px;
+      bottom: 0;
+      width: 1px;
+      background: linear-gradient(to bottom, rgba(239,68,68,0.3), transparent);
+    }
+    .timeline-item:last-child::before { display: none; }
+
+    .timeline-time {
+      font-family: var(--font-mono); font-size: 0.75rem; font-weight: 600;
+      color: var(--text-muted); text-align: right; padding-top: 0.25rem;
+      white-space: nowrap;
+    }
+    .timeline-content {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.25rem 1.5rem;
+      position: relative;
+    }
+    /* Progressive fatigue: later items get red-tinted */
+    .timeline-item:nth-child(4) .timeline-content { border-color: rgba(239,68,68,0.15); }
+    .timeline-item:nth-child(5) .timeline-content { border-color: rgba(239,68,68,0.25); }
+    .timeline-item:nth-child(6) .timeline-content { border-color: rgba(239,68,68,0.4); background: rgba(239,68,68,0.04); }
+
+    .timeline-icon {
+      width: 36px; height: 36px; border-radius: 8px;
+      background: var(--elevated); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 0.75rem; color: var(--text-muted);
+    }
+    .timeline-item:nth-child(5) .timeline-icon,
+    .timeline-item:nth-child(6) .timeline-icon { color: var(--red); border-color: rgba(239,68,68,0.3); }
+
+    .timeline-situation {
+      font-size: 0.9375rem; color: var(--text-secondary); line-height: 1.6;
+    }
+    .timeline-item:nth-child(6) .timeline-situation { color: var(--text-muted); font-style: italic; }
+
+    .timeline-cta {
+      margin-top: 3rem; text-align: center;
+    }
+    .link-cta {
+      display: inline-flex; align-items: center; gap: 8px;
+      color: var(--accent); font-family: var(--font-heading); font-weight: 600;
+      font-size: 1rem; text-decoration: none; transition: gap 0.2s;
+    }
+    .link-cta:hover { gap: 14px; }
+
+    @media (max-width: 520px) {
+      .timeline-item { grid-template-columns: 70px 1fr; gap: 1rem; }
+      .timeline-item::before { left: 35px; }
+    }
+
+    /* ── Variant B: Cost of Inaction ── */
+    .inaction-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 2rem; margin-top: 3rem;
+    }
+    @media (max-width: 640px) { .inaction-grid { grid-template-columns: 1fr; } }
+
+    .inaction-left h3 {
+      font-family: var(--font-heading); font-size: 1.0625rem; font-weight: 700;
+      color: var(--red); margin-bottom: 1.5rem;
+    }
+    .inaction-stat {
+      background: var(--surface); border: 1px solid rgba(239,68,68,0.2);
+      border-radius: var(--radius); padding: 1.25rem 1.5rem; margin-bottom: 1rem;
+    }
+    .inaction-stat-num {
+      font-family: var(--font-heading); font-size: 2.25rem; font-weight: 700;
+      color: var(--red); line-height: 1; display: block;
+    }
+    .inaction-stat-label { font-size: 0.875rem; color: var(--text-muted); margin-top: 4px; }
+
+    .inaction-right {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 2rem;
+      display: flex; flex-direction: column; justify-content: center;
+    }
+    .quote-mark { font-size: 4rem; color: var(--red); line-height: 1; opacity: 0.4; margin-bottom: 0.5rem; font-family: Georgia, serif; }
+    .quote-text {
+      font-family: var(--font-heading); font-size: 1.125rem; font-weight: 500;
+      line-height: 1.6; color: var(--text); font-style: italic; margin-bottom: 1.25rem;
+    }
+    .quote-attribution { font-size: 0.875rem; color: var(--text-muted); }
+    .quote-attribution strong { color: var(--text-secondary); display: block; }
+
+    /* ── Variant C: Before State Checklist ── */
+    .checklist { margin-top: 2.5rem; display: flex; flex-direction: column; gap: 0; }
+    .check-item {
+      display: flex; align-items: flex-start; gap: 1rem;
+      padding: 1.25rem 0; border-bottom: 1px solid var(--border);
+      opacity: 0; transform: translateY(10px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+    .check-item.visible { opacity: 1; transform: none; }
+
+    .check-box {
+      width: 22px; height: 22px; border: 2px solid rgba(239,68,68,0.4);
+      border-radius: 4px; flex-shrink: 0; margin-top: 1px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(239,68,68,0.06);
+    }
+    .check-box svg { display: none; }
+    .check-item.checked .check-box svg { display: block; }
+
+    .check-text { font-size: 1rem; color: var(--text-secondary); line-height: 1.6; }
+    .check-item.checked .check-text { color: var(--text-muted); text-decoration: line-through; text-decoration-color: rgba(239,68,68,0.4); }
+
+    /* The transition bridge paragraph */
+    .checklist-bridge {
+      margin-top: 2rem; padding: 1.5rem 2rem;
+      background: var(--surface); border-left: 3px solid var(--accent);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      font-size: 1rem; color: var(--text-secondary); line-height: 1.7;
+      opacity: 0; transform: translateY(10px);
+      transition: opacity 0.5s ease 0.3s, transform 0.5s ease 0.3s;
+    }
+    .checklist-bridge.visible { opacity: 1; transform: none; }
+    .checklist-bridge strong { color: var(--text); }
+
+  </style>
+</head>
+<body>
+
+  <div class="demo-tabs">
+    <button class="demo-tab is-active" data-variant="a">A — Day in the Life</button>
+    <button class="demo-tab" data-variant="b">B — Cost of Inaction</button>
+    <button class="demo-tab" data-variant="c">C — Before Checklist</button>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- VARIANT A — Day in the Life                 -->
+  <!-- ═══════════════════════════════════════════ -->
+  <section class="variant is-active" id="variant-a">
+    <div class="section-wrap">
+      <div class="eyebrow">Sound familiar?</div>
+      <h2 class="section-title">A typical day without digital presence</h2>
+      <p class="section-sub">This is what life looks like when your only marketing strategy is hoping the phone rings.</p>
+
+      <div class="timeline">
+
+        <div class="timeline-item">
+          <div class="timeline-time">8:00 AM</div>
+          <div class="timeline-content">
+            <div class="timeline-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9a16 16 0 0 0 6 6l.92-.92a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            </div>
+            <div class="timeline-situation">Calling cold leads with no response. Left 4 voicemails. Waiting to hear back from the 3 agents you met at last month's networking event.</div>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-time">10:30 AM</div>
+          <div class="timeline-content">
+            <div class="timeline-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+            </div>
+            <div class="timeline-situation">Sending follow-up emails to 12 agents from your spreadsheet. Trying to remember who you already emailed last week. Updating the spreadsheet manually.</div>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-time">12:00 PM</div>
+          <div class="timeline-content">
+            <div class="timeline-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+            </div>
+            <div class="timeline-situation">Lunch with a referral contact. They seem interested, but their agent just started using a competitor. You have nothing to send them to look you up.</div>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-time">2:00 PM</div>
+          <div class="timeline-content">
+            <div class="timeline-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18v18H3z"/></svg>
+            </div>
+            <div class="timeline-situation">Manually following up on 3-week-old referrals. One already signed with someone else. You didn't know because there's no way to track it.</div>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-time">4:45 PM</div>
+          <div class="timeline-content">
+            <div class="timeline-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+            </div>
+            <div class="timeline-situation">Colleague mentions they got 3 inbound website leads this week. You ask what website. They name your competitor. You're still not even sure Google has you listed correctly.</div>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-time">6:30 PM</div>
+          <div class="timeline-content">
+            <div class="timeline-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+            <div class="timeline-situation">Wondering why competitors keep getting the calls you should be getting. Thinking maybe you should finally get a real website. But where do you even start?</div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="timeline-cta">
+        <a href="#" class="link-cta">
+          There's a better way
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- VARIANT B — Cost of Inaction                -->
+  <!-- ═══════════════════════════════════════════ -->
+  <section class="variant" id="variant-b">
+    <div class="section-wrap">
+      <div class="eyebrow">The math is uncomfortable</div>
+      <h2 class="section-title">What you're losing every month you wait</h2>
+      <p class="section-sub">These aren't hypothetical numbers. They're what title reps leave on the table when they have no online presence.</p>
+
+      <div class="inaction-grid">
+        <!-- Left: animated counts -->
+        <div class="inaction-left">
+          <h3>Monthly losses while you're invisible online:</h3>
+
+          <div class="inaction-stat">
+            <span class="inaction-stat-num" data-count="47" data-suffix="">47</span>
+            <span class="inaction-stat-label">local Google searches for "title rep near me" you're missing</span>
+          </div>
+
+          <div class="inaction-stat">
+            <span class="inaction-stat-num" data-count="8" data-suffix="">8</span>
+            <span class="inaction-stat-label">leads that chose a competitor because they found them online</span>
+          </div>
+
+          <div class="inaction-stat">
+            <span class="inaction-stat-num" data-count="14200" data-prefix="$">$14,200</span>
+            <span class="inaction-stat-label">in estimated referral commissions gone to a more visible rep</span>
+          </div>
+
+          <div class="inaction-stat">
+            <span class="inaction-stat-num" data-count="3" data-suffix="mo">3mo</span>
+            <span class="inaction-stat-label">behind your closest competitor in search visibility this quarter</span>
+          </div>
+        </div>
+
+        <!-- Right: client quote -->
+        <div class="inaction-right">
+          <div class="quote-mark">&ldquo;</div>
+          <p class="quote-text">
+            I kept telling myself I'd deal with the website thing next month. That was two years ago. By the time I finally launched, two other reps in my zip code had already taken the top Google spots. I had to work three times as hard to catch up.
+          </p>
+          <div class="quote-attribution">
+            <strong>Rachel T., Title Rep</strong>
+            Dallas–Fort Worth metro
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- VARIANT C — Before State Checklist          -->
+  <!-- ═══════════════════════════════════════════ -->
+  <section class="variant" id="variant-c">
+    <div class="section-wrap">
+      <div class="eyebrow">Honest question</div>
+      <h2 class="section-title">How many of these describe you right now?</h2>
+      <p class="section-sub">Check the ones that hit a little too close to home.</p>
+
+      <div class="checklist">
+
+        <div class="check-item">
+          <div class="check-box">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <p class="check-text">My only website is the one my broker gave me — and I have zero control over it.</p>
+        </div>
+
+        <div class="check-item">
+          <div class="check-box">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <p class="check-text">I'm 100% dependent on referrals, and I lie awake wondering what happens when that network dries up.</p>
+        </div>
+
+        <div class="check-item">
+          <div class="check-box">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <p class="check-text">I have no idea if anyone is finding me online, or what they see when they Google my name.</p>
+        </div>
+
+        <div class="check-item">
+          <div class="check-box">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <p class="check-text">When I meet a new contact and they say "I'll look you up," I panic a little inside.</p>
+        </div>
+
+        <div class="check-item">
+          <div class="check-box">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <p class="check-text">My competitors are showing up in Google with reviews, photos, and a professional site. I don't know how they got there.</p>
+        </div>
+
+        <div class="check-item">
+          <div class="check-box">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <p class="check-text">I've thought about building a website for over a year, but I don't know where to start, and I don't have time to figure it out.</p>
+        </div>
+
+      </div>
+
+      <!-- Bridge: appears after a moment -->
+      <div class="checklist-bridge">
+        <strong>If any of these sound familiar, keep reading.</strong> You're not alone — and more importantly, this is fixable. Faster and more affordably than you think.
+      </div>
+
+    </div>
+  </section>
+
+  <script>
+    // ── Tab switcher ──
+    document.querySelectorAll('.demo-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.demo-tab').forEach(t => t.classList.remove('is-active'));
+        document.querySelectorAll('.variant').forEach(v => v.classList.remove('is-active'));
+        tab.classList.add('is-active');
+        const v = document.getElementById('variant-' + tab.dataset.variant);
+        v.classList.add('is-active');
+        // Re-trigger animations when switching
+        if (tab.dataset.variant === 'a') initTimeline();
+        if (tab.dataset.variant === 'b') initCounts();
+        if (tab.dataset.variant === 'c') initChecklist();
+      });
+    });
+
+    // ── Variant A: staggered timeline entrance ──
+    function initTimeline() {
+      const items = document.querySelectorAll('.timeline-item');
+      items.forEach(el => el.classList.remove('visible'));
+      items.forEach((el, i) => setTimeout(() => el.classList.add('visible'), i * 120));
+    }
+    initTimeline();
+
+    // ── Variant B: count-up numbers ──
+    function countUp(el, target, prefix, suffix) {
+      const start = 0;
+      const duration = 1800;
+      const startTime = performance.now();
+      function tick(now) {
+        const progress = Math.min((now - startTime) / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 4);
+        const current = Math.round(start + (target - start) * eased);
+        el.textContent = (prefix || '') + current.toLocaleString() + (suffix || '');
+        if (progress < 1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    }
+    function initCounts() {
+      document.querySelectorAll('[data-count]').forEach(el => {
+        const target = parseInt(el.dataset.count);
+        const prefix = el.dataset.prefix || '';
+        const suffix = el.dataset.suffix !== undefined ? el.dataset.suffix : '';
+        if (suffix === 'mo') { el.textContent = prefix + target + 'mo'; return; }
+        countUp(el, target, prefix, '');
+      });
+    }
+
+    // ── Variant C: staggered checklist + bridge ──
+    function initChecklist() {
+      const items = document.querySelectorAll('.check-item');
+      const bridge = document.querySelector('.checklist-bridge');
+      items.forEach(el => el.classList.remove('visible'));
+      bridge && bridge.classList.remove('visible');
+      items.forEach((el, i) => setTimeout(() => el.classList.add('visible'), i * 150));
+      setTimeout(() => bridge && bridge.classList.add('visible'), items.length * 150 + 400);
+    }
+
+    // Auto-init variant C bridge on page load
+    setTimeout(() => {
+      if (document.getElementById('variant-c').classList.contains('is-active')) initChecklist();
+    }, 200);
+  </script>
+
+</body>
+</html>

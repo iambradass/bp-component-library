@@ -1,0 +1,427 @@
+<!-- COMPONENT: Sparkline Data Table | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sparkline Table</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --red:            #EF4444;
+      --amber:          #F59E0B;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 13px;
+      padding: 24px;
+      min-height: 100vh;
+    }
+    .wrap { max-width: 1100px; margin: 0 auto; }
+
+    /* ── Toolbar ── */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .toolbar-title {
+      font-family: var(--font-heading);
+      font-size: 1rem;
+      font-weight: 600;
+    }
+    .live-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+    }
+    .toggle-switch {
+      position: relative;
+      width: 36px; height: 20px;
+      cursor: pointer;
+    }
+    .toggle-switch input { display: none; }
+    .toggle-track {
+      position: absolute;
+      inset: 0;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      transition: background 0.2s;
+    }
+    .toggle-switch input:checked + .toggle-track { background: var(--accent); border-color: var(--accent); }
+    .toggle-thumb {
+      position: absolute;
+      top: 2px; left: 2px;
+      width: 14px; height: 14px;
+      background: #fff;
+      border-radius: 50%;
+      transition: left 0.2s;
+    }
+    .toggle-switch input:checked ~ .toggle-thumb { left: 18px; }
+    .live-dot {
+      width: 7px; height: 7px;
+      background: var(--accent);
+      border-radius: 50%;
+      animation: pulse 1.5s infinite;
+      display: none;
+    }
+    .live-dot.on { display: block; }
+    @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
+
+    /* ── Table ── */
+    .table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    table { width: 100%; border-collapse: collapse; min-width: 780px; }
+    .scroll-x { overflow-x: auto; }
+
+    th {
+      padding: 10px 14px;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--text-muted);
+      text-align: left;
+      cursor: pointer;
+      user-select: none;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    th:hover { color: var(--text); }
+    th.sorted { color: var(--accent); }
+
+    tr.data-row { transition: background 0.1s; cursor: default; }
+    tr.data-row:hover { background: var(--elevated); }
+
+    td {
+      padding: 10px 14px;
+      border-top: 1px solid var(--border);
+      white-space: nowrap;
+      vertical-align: middle;
+    }
+
+    /* Flash animation for live update */
+    @keyframes flashGreen { 0%{background:rgba(16,185,129,0.25)} 100%{background:transparent} }
+    @keyframes flashRed   { 0%{background:rgba(239,68,68,0.25)}  100%{background:transparent} }
+    td.flash-up   { animation: flashGreen 0.6s ease-out forwards; }
+    td.flash-down { animation: flashRed   0.6s ease-out forwards; }
+
+    /* Category dot */
+    .cat-dot {
+      display: inline-block;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+
+    /* Change badge */
+    .change-badge {
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .change-up   { color: var(--accent); background: var(--accent-dim); }
+    .change-down { color: var(--red);    background: rgba(239,68,68,0.12); }
+
+    /* Score bar */
+    .score-bar { display:flex; align-items:center; gap:7px; }
+    .score-bg   { width:60px; height:5px; background:var(--elevated); border-radius:3px; overflow:hidden; }
+    .score-fill { height:100%; border-radius:3px; }
+
+    /* Status dot */
+    .status-dot { display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:5px; }
+
+    /* 7d mini bars */
+    .mini-bars { display:flex; gap:2px; align-items:flex-end; height:24px; }
+    .mini-bar { width:5px; border-radius:2px 2px 0 0; }
+
+    /* Expanded sparkline tooltip */
+    .spark-tooltip {
+      position: fixed;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      z-index: 200;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.1s;
+      min-width: 220px;
+    }
+    .spark-tooltip.visible { opacity: 1; }
+    .spark-tooltip-title { font-weight: 600; margin-bottom: 8px; font-family:var(--font-heading); }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="toolbar">
+    <h2 class="toolbar-title">Product Metrics — Live Dashboard</h2>
+    <div class="live-toggle">
+      <div class="live-dot" id="liveDot"></div>
+      Live
+      <label class="toggle-switch">
+        <input type="checkbox" id="liveToggle">
+        <div class="toggle-track"></div>
+        <div class="toggle-thumb"></div>
+      </label>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <div class="scroll-x">
+      <table>
+        <thead>
+          <tr id="headerRow">
+            <th data-col="name">Metric</th>
+            <th data-col="current">Current</th>
+            <th data-col="spark" style="width:80px">Trend</th>
+            <th data-col="change">Change</th>
+            <th data-col="bars" style="width:60px">7 Days</th>
+            <th data-col="status">Status</th>
+            <th data-col="score">Score</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Sparkline expanded tooltip -->
+<div class="spark-tooltip" id="sparkTooltip">
+  <div class="spark-tooltip-title" id="stTitle"></div>
+  <canvas id="stCanvas" width="200" height="60"></canvas>
+</div>
+
+<script>
+  // ── Data ─────────────────────────────────────────────────────────
+  const categories = [
+    { color:'#10B981', label:'Revenue'   },
+    { color:'#3B82F6', label:'Users'     },
+    { color:'#8B5CF6', label:'Infra'     },
+    { color:'#F59E0B', label:'Support'   },
+    { color:'#EF4444', label:'System'    },
+  ];
+
+  const METRICS = [
+    { name:'MRR',           cat:0, fmt:v=>'$'+Math.round(v).toLocaleString(), base:48000, noise:3000 },
+    { name:'New Signups',   cat:1, fmt:v=>Math.round(v).toLocaleString(),    base:342,   noise:80   },
+    { name:'Active Users',  cat:1, fmt:v=>Math.round(v).toLocaleString()+'k', base:12.4,  noise:1.2, scale:1000 },
+    { name:'Churn Rate',    cat:0, fmt:v=>v.toFixed(2)+'%',                   base:2.1,   noise:0.4  },
+    { name:'Avg Rev/User',  cat:0, fmt:v=>'$'+v.toFixed(2),                   base:138,   noise:12   },
+    { name:'API Calls',     cat:2, fmt:v=>(v/1e6).toFixed(1)+'M',             base:8.4e6, noise:1.2e6},
+    { name:'Error Rate',    cat:4, fmt:v=>v.toFixed(3)+'%',                   base:0.12,  noise:0.06 },
+    { name:'P95 Latency',   cat:2, fmt:v=>Math.round(v)+'ms',                 base:145,   noise:40   },
+    { name:'Support Tickets',cat:3,fmt:v=>Math.round(v).toString(),            base:84,    noise:22   },
+    { name:'NPS Score',     cat:1, fmt:v=>Math.round(v).toString(),            base:52,    noise:8    },
+    { name:'Conversion',    cat:0, fmt:v=>v.toFixed(2)+'%',                   base:3.4,   noise:0.6  },
+    { name:'Uptime',        cat:4, fmt:v=>v.toFixed(3)+'%',                   base:99.92, noise:0.04 },
+  ];
+
+  const statuses = [
+    {label:'Healthy',  color:'#10B981'},
+    {label:'Nominal',  color:'#3B82F6'},
+    {label:'Warning',  color:'#F59E0B'},
+    {label:'Critical', color:'#EF4444'},
+  ];
+
+  function rnd(base, noise) { return base + (Math.random()-0.5)*2*noise; }
+
+  // Build initial row data
+  let rows = METRICS.map((m, i) => {
+    const pts = Array.from({length:20}, () => rnd(m.base, m.noise));
+    const days7 = Array.from({length:7}, () => rnd(m.base, m.noise));
+    const current = pts[pts.length-1];
+    const prev    = pts[pts.length-8] || pts[0];
+    const change  = ((current-prev)/Math.abs(prev||1))*100;
+    const score   = Math.min(100, Math.max(0, Math.round(50 + change*3 + (Math.random()-0.5)*20)));
+    const statusIdx = score > 75 ? 0 : score > 50 ? 1 : score > 25 ? 2 : 3;
+    return { ...m, pts, days7, current, change, score, statusIdx };
+  });
+
+  let sortCol = null, sortDir = 1;
+
+  // ── Sparkline drawing ─────────────────────────────────────────────
+  function drawSparkline(canvas, pts, color, W=60, H=24) {
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0,0,W,H);
+    const min = Math.min(...pts), max = Math.max(...pts);
+    const range = max-min || 1;
+    const coords = pts.map((v,i) => [i/(pts.length-1)*W, H-(v-min)/range*(H*0.8)-H*0.1]);
+    ctx.beginPath();
+    coords.forEach(([x,y],i) => i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y));
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    // fill gradient
+    ctx.lineTo(W,H); ctx.lineTo(0,H); ctx.closePath();
+    const g = ctx.createLinearGradient(0,0,0,H);
+    g.addColorStop(0, color.replace('#','rgba(').replace(/(.{2})(.{2})(.{2})/,'$1,$2,$3')); // rough
+    ctx.fillStyle = color + '22';
+    ctx.fill();
+  }
+
+  // ── Mini bar chart ────────────────────────────────────────────────
+  function miniBarHTML(vals, color) {
+    const max = Math.max(...vals) || 1;
+    return `<div class="mini-bars">${vals.map(v => {
+      const h = Math.max(3, Math.round((v/max)*22));
+      return `<div class="mini-bar" style="height:${h}px;background:${color}80"></div>`;
+    }).join('')}</div>`;
+  }
+
+  // ── Render ────────────────────────────────────────────────────────
+  function getSorted() {
+    if (!sortCol) return rows;
+    return [...rows].sort((a,b) => {
+      const av = a[sortCol], bv = b[sortCol];
+      return (av < bv ? -1 : av > bv ? 1 : 0) * sortDir;
+    });
+  }
+
+  function render() {
+    const sorted = getSorted();
+    const tbody = document.getElementById('tbody');
+    tbody.innerHTML = sorted.map((r, ri) => {
+      const cat = categories[r.cat];
+      const up  = r.change >= 0;
+      const st  = statuses[r.statusIdx];
+      const sc  = r.score;
+      const scCol = sc >= 75 ? '#10B981' : sc >= 50 ? '#F59E0B' : '#EF4444';
+      return `<tr class="data-row" data-idx="${ri}">
+        <td><span class="cat-dot" style="background:${cat.color}"></span><strong>${r.name}</strong></td>
+        <td class="cur-val" style="font-family:var(--font-heading);font-weight:700;font-size:1rem">${r.fmt(r.current)}</td>
+        <td><canvas class="spark" data-idx="${ri}" width="60" height="24" style="display:block"></canvas></td>
+        <td class="chg-val"><span class="change-badge ${up?'change-up':'change-down'}">${up?'▲':'▼'}${Math.abs(r.change).toFixed(1)}%</span></td>
+        <td>${miniBarHTML(r.days7, cat.color)}</td>
+        <td><span class="status-dot" style="background:${st.color}"></span>${st.label}</td>
+        <td>
+          <div class="score-bar">
+            <div class="score-bg"><div class="score-fill" style="width:${sc}%;background:${scCol}"></div></div>
+            <span style="font-size:.75rem;color:var(--text-secondary)">${sc}</span>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+
+    // Draw sparklines after render
+    tbody.querySelectorAll('.spark').forEach(canvas => {
+      const idx = parseInt(canvas.dataset.idx);
+      const row = sorted[idx];
+      const cat = categories[row.cat];
+      drawSparkline(canvas, row.pts, cat.color);
+
+      // Hover → expanded tooltip
+      canvas.addEventListener('mouseenter', e => {
+        const tip = document.getElementById('sparkTooltip');
+        document.getElementById('stTitle').textContent = row.name + ' — 20 day trend';
+        const stc = document.getElementById('stCanvas');
+        drawSparkline(stc, row.pts, cat.color, 200, 60);
+        tip.classList.add('visible');
+        tip.style.left=(e.clientX+12)+'px';
+        tip.style.top=(e.clientY+12)+'px';
+      });
+      canvas.addEventListener('mousemove', e => {
+        const tip = document.getElementById('sparkTooltip');
+        tip.style.left=(e.clientX+12)+'px';
+        tip.style.top=(e.clientY+12)+'px';
+      });
+      canvas.addEventListener('mouseleave', () => {
+        document.getElementById('sparkTooltip').classList.remove('visible');
+      });
+    });
+
+    // Update sort header styling
+    document.querySelectorAll('#headerRow th').forEach(th => {
+      th.classList.toggle('sorted', th.dataset.col === sortCol);
+    });
+  }
+
+  // ── Sort headers ──────────────────────────────────────────────────
+  document.getElementById('headerRow').addEventListener('click', e => {
+    const th = e.target.closest('th[data-col]');
+    if (!th || ['spark','bars'].includes(th.dataset.col)) return;
+    const col = th.dataset.col;
+    sortDir = sortCol === col ? -sortDir : 1;
+    sortCol = col;
+    render();
+  });
+
+  // ── Live updates ──────────────────────────────────────────────────
+  let liveInterval = null;
+
+  document.getElementById('liveToggle').addEventListener('change', function() {
+    if (this.checked) {
+      document.getElementById('liveDot').classList.add('on');
+      liveInterval = setInterval(updateOneRow, 2000);
+    } else {
+      document.getElementById('liveDot').classList.remove('on');
+      clearInterval(liveInterval);
+    }
+  });
+
+  function updateOneRow() {
+    const idx = Math.floor(Math.random() * rows.length);
+    const r   = rows[idx];
+    const newVal = rnd(r.base, r.noise);
+    const up = newVal > r.current;
+    r.pts.push(newVal);
+    r.pts.shift();
+    r.days7.push(newVal);
+    r.days7.shift();
+    const prev = r.current;
+    r.current = newVal;
+    r.change = ((newVal - prev)/Math.abs(prev||1))*100;
+    r.score = Math.min(100, Math.max(0, Math.round(r.score + (up?2:-2) + (Math.random()-0.5)*6)));
+    r.statusIdx = r.score > 75 ? 0 : r.score > 50 ? 1 : r.score > 25 ? 2 : 3;
+
+    render();
+
+    // Flash the updated row
+    const sorted = getSorted();
+    const tableIdx = sorted.findIndex(row => row.name === r.name);
+    const tbody = document.getElementById('tbody');
+    const row = tbody.querySelectorAll('tr')[tableIdx];
+    if (row) {
+      const curTd = row.querySelector('.cur-val');
+      const chgTd = row.querySelector('.chg-val');
+      if (curTd) { curTd.classList.remove('flash-up','flash-down'); void curTd.offsetWidth; curTd.classList.add(up?'flash-up':'flash-down'); }
+      if (chgTd) { chgTd.classList.remove('flash-up','flash-down'); void chgTd.offsetWidth; chgTd.classList.add(up?'flash-up':'flash-down'); }
+    }
+  }
+
+  render();
+</script>
+</body>
+</html>

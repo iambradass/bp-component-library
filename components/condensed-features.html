@@ -1,0 +1,633 @@
+<!-- COMPONENT: Condensed Feature Browser | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Condensed Feature Browser</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: var(--font-body); min-height: 100vh;
+      padding: 3rem 1rem 5rem;
+    }
+
+    .cf-wrap { max-width: 960px; margin: 0 auto; }
+
+    /* ── Header ── */
+    .cf-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: var(--font-heading); font-size: 0.75rem; font-weight: 600;
+      color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em;
+      padding: 4px 14px; background: var(--accent-dim);
+      border: 1px solid var(--accent-border); border-radius: 100px;
+      margin-bottom: 1rem;
+    }
+    .cf-title {
+      font-family: var(--font-heading); font-size: clamp(1.75rem, 4vw, 2.5rem);
+      font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.5rem;
+    }
+    .cf-subtitle {
+      color: var(--text-secondary); font-size: 1rem; line-height: 1.6;
+      max-width: 540px; margin-bottom: 2rem;
+    }
+
+    /* ── Search bar ── */
+    .cf-search-wrap {
+      position: relative; margin-bottom: 1.25rem;
+    }
+    .cf-search-icon {
+      position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+      color: var(--text-muted); pointer-events: none;
+    }
+    .cf-search {
+      width: 100%; height: 46px; background: var(--surface);
+      border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 0 14px 0 46px; font-family: var(--font-body); font-size: 0.9375rem;
+      color: var(--text); outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .cf-search::placeholder { color: var(--text-muted); }
+    .cf-search:focus {
+      border-color: var(--accent-border);
+      box-shadow: 0 0 0 3px var(--accent-dim);
+    }
+    .cf-search-clear {
+      position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; color: var(--text-muted); cursor: pointer;
+      display: none; padding: 4px;
+    }
+    .cf-search-clear:hover { color: var(--text); }
+    .cf-search-clear.visible { display: block; }
+
+    /* ── Tab bar ── */
+    .cf-tabs {
+      display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none;
+      margin-bottom: 1.5rem; padding-bottom: 2px;
+    }
+    .cf-tabs::-webkit-scrollbar { display: none; }
+
+    .cf-tab {
+      flex-shrink: 0; height: 36px; padding: 0 16px; border-radius: 8px;
+      background: var(--surface); border: 1px solid var(--border);
+      font-family: var(--font-heading); font-size: 0.8125rem; font-weight: 600;
+      color: var(--text-muted); cursor: pointer; transition: all 0.18s;
+      white-space: nowrap;
+    }
+    .cf-tab:hover { color: var(--text-secondary); border-color: rgba(148,163,184,0.25); }
+    .cf-tab.active {
+      background: var(--accent-dim); border-color: var(--accent-border); color: var(--accent);
+    }
+
+    /* ── Tab panels ── */
+    .cf-panel { display: none; }
+    .cf-panel.active { display: block; }
+
+    /* 3-column feature list */
+    .cf-columns {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem;
+    }
+    @media (max-width: 700px) { .cf-columns { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 480px) { .cf-columns { grid-template-columns: 1fr; } }
+
+    /* Sub-group within a column */
+    .cf-group { display: flex; flex-direction: column; gap: 4px; }
+    .cf-group-name {
+      font-family: var(--font-heading); font-size: 0.6875rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted);
+      padding-bottom: 6px; margin-bottom: 4px; border-bottom: 1px solid var(--border);
+    }
+
+    /* Feature item — checkbox + name + tooltip trigger */
+    .cf-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 5px 6px; border-radius: 6px; cursor: pointer;
+      transition: background 0.15s; position: relative;
+    }
+    .cf-item:hover { background: var(--elevated); }
+    .cf-item.cf-selected { background: var(--accent-dim); }
+    .cf-item.cf-hidden { display: none; }
+
+    /* Selection checkbox */
+    .cf-item-check {
+      width: 16px; height: 16px; border-radius: 4px; flex-shrink: 0;
+      border: 1.5px solid var(--border); background: transparent;
+      display: flex; align-items: center; justify-content: center;
+      color: transparent; transition: all 0.15s;
+    }
+    .cf-item.cf-selected .cf-item-check {
+      background: var(--accent); border-color: var(--accent); color: var(--bg);
+    }
+
+    /* Feature name */
+    .cf-item-name {
+      font-size: 0.8125rem; color: var(--text-secondary); flex: 1; line-height: 1.3;
+    }
+    .cf-item.cf-selected .cf-item-name { color: var(--text); }
+
+    /* Tooltip trigger icon */
+    .cf-item-info {
+      flex-shrink: 0; color: var(--text-muted); opacity: 0;
+      transition: opacity 0.15s;
+    }
+    .cf-item:hover .cf-item-info { opacity: 1; }
+
+    /* Tooltip bubble */
+    .cf-tooltip {
+      position: absolute; bottom: calc(100% + 6px); left: 0; right: 0;
+      background: var(--elevated); border: 1px solid var(--border);
+      border-radius: 8px; padding: 0.625rem 0.75rem;
+      font-size: 0.75rem; color: var(--text-secondary); line-height: 1.5;
+      z-index: 50; pointer-events: none; opacity: 0; transform: translateY(4px);
+      transition: opacity 0.15s, transform 0.15s;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+      min-width: 200px;
+    }
+    .cf-item:hover .cf-tooltip { opacity: 1; transform: none; }
+
+    /* Search result context badge */
+    .cf-item-tab-badge {
+      font-family: var(--font-heading); font-size: 0.5625rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      padding: 1px 6px; border-radius: 4px;
+      background: var(--elevated); color: var(--text-muted); border: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    /* "Not sure" expandable */
+    .cf-explainer { margin-top: 1.5rem; }
+    .cf-explainer-toggle {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 0.8125rem; color: var(--text-muted); cursor: pointer;
+      background: none; border: none; padding: 0;
+    }
+    .cf-explainer-toggle:hover { color: var(--text-secondary); }
+    .cf-explainer-body {
+      max-height: 0; overflow: hidden; transition: max-height 0.3s;
+    }
+    .cf-explainer-body.open { max-height: 400px; }
+    .cf-explainer-text {
+      margin-top: 0.75rem; font-size: 0.875rem; color: var(--text-secondary);
+      line-height: 1.6; background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; padding: 1rem;
+    }
+
+    /* ── Floating selection summary ── */
+    .cf-summary {
+      position: fixed; bottom: 1.5rem; right: 1.5rem;
+      background: var(--accent); color: var(--bg);
+      border-radius: 100px; padding: 0.75rem 1.25rem;
+      font-family: var(--font-heading); font-size: 0.875rem; font-weight: 700;
+      cursor: pointer; box-shadow: 0 8px 32px rgba(16,185,129,0.4);
+      display: none; align-items: center; gap: 0.5rem; z-index: 60;
+      transition: transform 0.18s, opacity 0.18s;
+    }
+    .cf-summary.visible { display: flex; }
+    .cf-summary:hover { transform: translateY(-2px); }
+
+    /* Selection modal */
+    .cf-sel-modal {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.8);
+      display: flex; align-items: center; justify-content: center;
+      padding: 1rem; z-index: 100; opacity: 0; pointer-events: none;
+      transition: opacity 0.25s;
+    }
+    .cf-sel-modal.open { opacity: 1; pointer-events: all; }
+    .cf-sel-panel {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); max-width: 500px; width: 100%;
+      max-height: 70vh; overflow-y: auto; padding: 1.5rem;
+      transform: scale(0.96); transition: transform 0.25s;
+    }
+    .cf-sel-modal.open .cf-sel-panel { transform: none; }
+    .cf-sel-title {
+      font-family: var(--font-heading); font-size: 1.125rem; font-weight: 700;
+      margin-bottom: 1rem;
+    }
+    .cf-sel-list { list-style: none; display: flex; flex-direction: column; gap: 6px; margin-bottom: 1.25rem; }
+    .cf-sel-item {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 0.875rem; color: var(--text-secondary); padding: 6px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .cf-sel-item:last-child { border-bottom: none; }
+    .cf-sel-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+    .cf-sel-close {
+      display: block; width: 100%; padding: 0.75rem;
+      background: var(--elevated); border: 1px solid var(--border);
+      border-radius: 8px; font-family: var(--font-heading); font-size: 0.875rem;
+      font-weight: 600; color: var(--text); cursor: pointer; text-align: center;
+    }
+    .cf-sel-close:hover { border-color: var(--accent-border); }
+
+    /* Search empty state */
+    .cf-search-empty {
+      display: none; text-align: center; padding: 3rem 1rem;
+      color: var(--text-muted);
+    }
+    .cf-search-empty.visible { display: block; }
+    /* Search results panel */
+    .cf-search-results { display: none; }
+    .cf-search-results.visible { display: block; }
+    .cf-search-results .cf-item { margin-bottom: 2px; }
+  </style>
+</head>
+<body>
+
+<div class="cf-wrap">
+
+  <div class="cf-eyebrow">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    Full Feature Set
+  </div>
+  <h2 class="cf-title">Everything We Handle So You Don't Have To</h2>
+  <p class="cf-subtitle">Browse by category or search for a specific feature. Check any feature to add it to your custom quote list.</p>
+
+  <!-- Search -->
+  <div class="cf-search-wrap">
+    <svg class="cf-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+    <input class="cf-search" id="cfSearch" type="search" placeholder="Search features..." autocomplete="off">
+    <button class="cf-search-clear" id="cfSearchClear" aria-label="Clear search">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+
+  <!-- Tab bar -->
+  <div class="cf-tabs" id="cfTabs"></div>
+
+  <!-- Search results panel (cross-tab) -->
+  <div class="cf-search-results" id="cfSearchResults"></div>
+  <div class="cf-search-empty" id="cfSearchEmpty">No features match that search.</div>
+
+  <!-- Tab panels -->
+  <div id="cfPanels"></div>
+
+</div>
+
+<!-- Floating selection summary -->
+<div class="cf-summary" id="cfSummary">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+  <span id="cfSummaryLabel">Your features (0)</span>
+</div>
+
+<!-- Selection modal -->
+<div class="cf-sel-modal" id="cfSelModal">
+  <div class="cf-sel-panel">
+    <div class="cf-sel-title">Your Selected Features</div>
+    <ul class="cf-sel-list" id="cfSelList"></ul>
+    <button class="cf-sel-close" id="cfSelClose">Close</button>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  /* ── Feature data — 6 tabs, ~6 features each = 36 features ── */
+  var tabs = [
+    {
+      name: 'Website',
+      explainer: 'These are the core components of your actual website — design, pages, performance, and the technical foundation that makes everything work.',
+      groups: [
+        { name: 'Design', items: [
+          { name: 'Custom Homepage Design',     tip: 'A unique homepage designed around your brand — not a template.' },
+          { name: 'Mobile-First Responsive',    tip: 'Designed for phones first, then scaled up for desktop.' },
+          { name: '5 Inner Pages',              tip: 'About, Services, Testimonials, Contact, and one custom page of your choice.' },
+          { name: 'Brand Color Integration',    tip: 'Your brand colors, fonts, and visual identity applied consistently.' },
+          { name: 'Professional Photography',   tip: 'Curated stock imagery that matches your market and tone.' },
+        ]},
+        { name: 'Performance', items: [
+          { name: 'Sub-2 Second Load Time',     tip: 'Optimized images, clean code, and CDN delivery for fast page loads.' },
+          { name: 'Image Compression',          tip: 'All photos compressed for web without visible quality loss.' },
+        ]},
+        { name: 'Technical', items: [
+          { name: 'SSL Certificate (HTTPS)',    tip: 'Required for Google trust signals and browser security warnings.' },
+          { name: 'Semantic HTML5 Structure',   tip: 'Proper heading hierarchy and code structure for accessibility and SEO.' },
+          { name: 'Cross-Browser Compatibility', tip: 'Tested in Chrome, Safari, Firefox, and Edge.' },
+        ]},
+      ]
+    },
+    {
+      name: 'SEO',
+      explainer: 'Search Engine Optimization determines whether people find you on Google. Without these elements in place, even a beautiful website won\'t appear in search results.',
+      groups: [
+        { name: 'On-Page SEO', items: [
+          { name: 'Title Tag Optimization',     tip: 'The clickable headline that appears in Google search results — most important on-page SEO element.' },
+          { name: 'Meta Descriptions',          tip: 'The description snippet under your search result — affects click-through rate.' },
+          { name: 'H1–H3 Heading Structure',   tip: 'Proper heading hierarchy helps Google understand what each page is about.' },
+          { name: 'Local Keyword Strategy',     tip: 'Your city and service area woven naturally into page content.' },
+        ]},
+        { name: 'Technical SEO', items: [
+          { name: 'XML Sitemap',                tip: 'A map of your site submitted to Google so every page gets indexed.' },
+          { name: 'LocalBusiness Schema',       tip: 'Structured data that tells Google your business name, location, and services.' },
+          { name: 'Image Alt Text',             tip: 'Text descriptions for every image — used by screen readers and Google.' },
+          { name: 'Canonical Tags',             tip: 'Prevents duplicate content issues that hurt rankings.' },
+        ]},
+        { name: 'Tracking', items: [
+          { name: 'Google Analytics 4',         tip: 'Full traffic tracking including where visitors come from and what they do.' },
+          { name: 'Google Search Console',      tip: 'See exactly which search terms bring people to your site.' },
+        ]},
+      ]
+    },
+    {
+      name: 'Local Presence',
+      explainer: 'Local presence features help you show up when people search for services near them. This is especially important for title reps working a specific city or metro area.',
+      groups: [
+        { name: 'Google Business', items: [
+          { name: 'GBP Claim & Optimization',   tip: 'Your Google Business Profile set up, verified, and filled out completely.' },
+          { name: 'Category Selection',         tip: 'The right business categories so Google shows you for the right searches.' },
+          { name: 'Service Area Setup',         tip: 'Tells Google exactly which zip codes and cities you serve.' },
+          { name: 'Photo Upload',               tip: 'Professional photos added to your GBP for credibility and click-through rate.' },
+        ]},
+        { name: 'Reviews', items: [
+          { name: 'Review Funnel Setup',        tip: 'Automated follow-up sequence that asks satisfied clients for a Google review.' },
+          { name: 'Review Response Templates',  tip: 'Pre-written responses to both positive and negative reviews.' },
+        ]},
+        { name: 'Citations', items: [
+          { name: 'NAP Consistency Audit',      tip: 'Name, Address, Phone identical across the web — a local ranking factor.' },
+          { name: 'Bing Places Setup',          tip: 'Microsoft\'s equivalent of Google Business Profile — often overlooked.' },
+        ]},
+      ]
+    },
+    {
+      name: 'Marketing',
+      explainer: 'Marketing features help you attract new people to your site and convert them into leads. These layer on top of the website foundation.',
+      groups: [
+        { name: 'Lead Capture', items: [
+          { name: 'Homepage CTA Sections',      tip: 'Strategic calls-to-action positioned above the fold and throughout the page.' },
+          { name: 'Lead Magnet Landing Page',   tip: 'A dedicated page to offer a free resource in exchange for an email address.' },
+          { name: 'Exit-Intent Popup',          tip: 'A soft prompt that appears when a visitor is about to leave — captures last-minute leads.' },
+        ]},
+        { name: 'Social Proof', items: [
+          { name: 'Testimonials Section',       tip: 'Client quotes displayed prominently on your homepage and services pages.' },
+          { name: 'Star Rating Display',        tip: 'Your Google review rating shown on your website to build instant trust.' },
+          { name: 'Client Logo Strip',          tip: 'Logos of companies or agents you work with — signals legitimacy.' },
+        ]},
+      ]
+    },
+    {
+      name: 'Support',
+      explainer: 'Support features cover everything that happens after your site launches — keeping it updated, running, and improving over time.',
+      groups: [
+        { name: 'Ongoing Management', items: [
+          { name: 'Monthly Performance Report', tip: 'Traffic, leads, and keyword rankings delivered to your inbox every month.' },
+          { name: 'Content Updates on Request', tip: 'Text and photo changes handled within 24 hours — just email us.' },
+          { name: 'Uptime Monitoring 24/7',     tip: 'Automated alerts if your site ever goes down — we\'re notified before you are.' },
+          { name: 'Security Monitoring',        tip: 'Malware scans and software updates to keep your site safe.' },
+        ]},
+        { name: 'Access & Training', items: [
+          { name: 'Launch Training Video',      tip: 'A recorded walkthrough of your site and how to request changes.' },
+          { name: 'Priority 24hr Support',      tip: 'Direct access to your web team — response within one business day, guaranteed.' },
+        ]},
+      ]
+    },
+    {
+      name: 'Integrations',
+      explainer: 'Integrations connect your website to the tools you already use — your CRM, calendar, email platform, and more. Most require a one-time setup that we handle completely.',
+      groups: [
+        { name: 'CRM & Lead Flow', items: [
+          { name: 'GoHighLevel CRM Connect',    tip: 'Form submissions auto-create contacts in your GHL pipeline.' },
+          { name: 'Lead Notification Emails',   tip: 'Instant email alert every time someone fills out a form.' },
+          { name: 'Follow-Up Automation',       tip: 'Automated email/SMS sequence triggered when a lead comes in.' },
+        ]},
+        { name: 'Scheduling', items: [
+          { name: 'Calendly / Cal.com Embed',  tip: 'Embed your booking link so prospects can schedule a call directly from your site.' },
+        ]},
+        { name: 'Email & Social', items: [
+          { name: 'Email Signature HTML',       tip: 'Branded HTML email signature that links to your website.' },
+          { name: 'Social Profile Links',       tip: 'LinkedIn, Facebook, and Instagram linked and displayed on your site.' },
+          { name: 'Mailchimp / ActiveCampaign', tip: 'Connect your email list so form sign-ups go directly to your email platform.' },
+        ]},
+      ]
+    },
+  ];
+
+  var tabsEl         = document.getElementById('cfTabs');
+  var panelsEl       = document.getElementById('cfPanels');
+  var searchEl       = document.getElementById('cfSearch');
+  var searchClear    = document.getElementById('cfSearchClear');
+  var searchResults  = document.getElementById('cfSearchResults');
+  var searchEmpty    = document.getElementById('cfSearchEmpty');
+  var summaryEl      = document.getElementById('cfSummary');
+  var summaryLabel   = document.getElementById('cfSummaryLabel');
+  var selModal       = document.getElementById('cfSelModal');
+  var selList        = document.getElementById('cfSelList');
+  var selClose       = document.getElementById('cfSelClose');
+
+  var selectedItems = new Set(); /* stores feature name strings */
+  var allItems = []; /* flat array of { name, tip, tabName } */
+  var activeTab = 0;
+
+  /* ── Build icon SVG for checkmark ── */
+  var checkSvg = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+  var infoSvg  = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
+
+  /* ── Build a single feature item element ── */
+  function makeItem(item, tabName, showBadge) {
+    var el = document.createElement('div');
+    el.className = 'cf-item' + (selectedItems.has(item.name) ? ' cf-selected' : '');
+    el.dataset.name = item.name;
+
+    el.innerHTML =
+      '<div class="cf-item-check">' + checkSvg + '</div>' +
+      '<span class="cf-item-name">' + item.name + '</span>' +
+      (showBadge ? '<span class="cf-item-tab-badge">' + tabName + '</span>' : '') +
+      '<span class="cf-item-info">' + infoSvg + '</span>' +
+      '<div class="cf-tooltip">' + item.tip + '</div>';
+
+    el.addEventListener('click', function() { toggleItem(item.name, el); });
+    return el;
+  }
+
+  /* ── Toggle selection ── */
+  function toggleItem(name, el) {
+    if (selectedItems.has(name)) {
+      selectedItems.delete(name);
+      el.classList.remove('cf-selected');
+    } else {
+      selectedItems.add(name);
+      el.classList.add('cf-selected');
+    }
+    /* Also update any other instances of the same item (search results) */
+    document.querySelectorAll('.cf-item[data-name="' + name + '"]').forEach(function(e) {
+      e.classList.toggle('cf-selected', selectedItems.has(name));
+    });
+    updateSummary();
+  }
+
+  /* ── Update floating summary button ── */
+  function updateSummary() {
+    var count = selectedItems.size;
+    if (count > 0) {
+      summaryLabel.textContent = 'Your features (' + count + ')';
+      summaryEl.classList.add('visible');
+    } else {
+      summaryEl.classList.remove('visible');
+    }
+  }
+
+  /* ── Build tabs and panels ── */
+  tabs.forEach(function(tab, ti) {
+    /* Tab button */
+    var btn = document.createElement('button');
+    btn.className = 'cf-tab' + (ti === 0 ? ' active' : '');
+    btn.textContent = tab.name;
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.cf-tab').forEach(function(b) { b.classList.remove('active'); });
+      document.querySelectorAll('.cf-panel').forEach(function(p) { p.classList.remove('active'); });
+      btn.classList.add('active');
+      document.getElementById('cfPanel-' + ti).classList.add('active');
+      activeTab = ti;
+      /* Exit search mode */
+      if (searchEl.value) {
+        searchEl.value = '';
+        runSearch('');
+      }
+    });
+    tabsEl.appendChild(btn);
+
+    /* Panel */
+    var panel = document.createElement('div');
+    panel.className = 'cf-panel' + (ti === 0 ? ' active' : '');
+    panel.id = 'cfPanel-' + ti;
+
+    var colsEl = document.createElement('div');
+    colsEl.className = 'cf-columns';
+
+    tab.groups.forEach(function(group) {
+      var groupEl = document.createElement('div');
+      groupEl.className = 'cf-group';
+      groupEl.innerHTML = '<div class="cf-group-name">' + group.name + '</div>';
+      group.items.forEach(function(item) {
+        allItems.push({ name: item.name, tip: item.tip, tabName: tab.name });
+        groupEl.appendChild(makeItem(item, tab.name, false));
+      });
+      colsEl.appendChild(groupEl);
+    });
+
+    panel.appendChild(colsEl);
+
+    /* Expandable explainer */
+    var expander = document.createElement('div');
+    expander.className = 'cf-explainer';
+    expander.innerHTML =
+      '<button class="cf-explainer-toggle">' +
+        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>' +
+        'Not sure what some of these mean?' +
+      '</button>' +
+      '<div class="cf-explainer-body"><p class="cf-explainer-text">' + tab.explainer + '</p></div>';
+
+    expander.querySelector('.cf-explainer-toggle').addEventListener('click', function() {
+      var body = expander.querySelector('.cf-explainer-body');
+      body.classList.toggle('open');
+    });
+
+    panel.appendChild(expander);
+    panelsEl.appendChild(panel);
+  });
+
+  /* ── Real-time search ── */
+  function runSearch(query) {
+    var q = query.trim().toLowerCase();
+    searchClear.classList.toggle('visible', q.length > 0);
+
+    if (!q) {
+      /* Show normal tabs */
+      tabsEl.style.display = '';
+      panelsEl.style.display = '';
+      searchResults.classList.remove('visible');
+      searchEmpty.classList.remove('visible');
+      return;
+    }
+
+    /* Hide tabs and panels; show search results */
+    tabsEl.style.display = 'none';
+    panelsEl.style.display = 'none';
+    searchResults.innerHTML = '';
+
+    var matches = allItems.filter(function(item) {
+      return item.name.toLowerCase().includes(q) || item.tip.toLowerCase().includes(q);
+    });
+
+    if (matches.length === 0) {
+      searchResults.classList.remove('visible');
+      searchEmpty.classList.add('visible');
+      return;
+    }
+
+    searchEmpty.classList.remove('visible');
+
+    var colsEl = document.createElement('div');
+    colsEl.className = 'cf-columns';
+
+    /* Group search results by tab */
+    var byTab = {};
+    matches.forEach(function(item) {
+      if (!byTab[item.tabName]) byTab[item.tabName] = [];
+      byTab[item.tabName].push(item);
+    });
+
+    Object.keys(byTab).forEach(function(tabName) {
+      var groupEl = document.createElement('div');
+      groupEl.className = 'cf-group';
+      groupEl.innerHTML = '<div class="cf-group-name">' + tabName + '</div>';
+      byTab[tabName].forEach(function(item) {
+        groupEl.appendChild(makeItem(item, item.tabName, false));
+      });
+      colsEl.appendChild(groupEl);
+    });
+
+    searchResults.appendChild(colsEl);
+    searchResults.classList.add('visible');
+  }
+
+  searchEl.addEventListener('input', function() { runSearch(this.value); });
+  searchClear.addEventListener('click', function() {
+    searchEl.value = '';
+    runSearch('');
+    searchEl.focus();
+  });
+
+  /* ── Selection modal ── */
+  summaryEl.addEventListener('click', function() {
+    selList.innerHTML = '';
+    Array.from(selectedItems).forEach(function(name) {
+      var li = document.createElement('li');
+      li.className = 'cf-sel-item';
+      li.innerHTML = '<span class="cf-sel-dot"></span>' + name;
+      selList.appendChild(li);
+    });
+    if (selectedItems.size === 0) {
+      selList.innerHTML = '<li class="cf-sel-item" style="color:var(--text-muted)">No features selected yet.</li>';
+    }
+    selModal.classList.add('open');
+  });
+
+  selClose.addEventListener('click', function() { selModal.classList.remove('open'); });
+  selModal.addEventListener('click', function(e) { if (e.target === selModal) selModal.classList.remove('open'); });
+  document.addEventListener('keydown', function(e) { if (e.key === 'Escape') selModal.classList.remove('open'); });
+
+})();
+</script>
+</body>
+</html>

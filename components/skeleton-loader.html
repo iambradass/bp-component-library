@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Skeleton Loader — Component Library</title>
+
+  <!--
+  /* COMPONENT: Skeleton Loader | COPY: style + html + script */
+  Three skeleton layout patterns with shimmer animation:
+  1. Card skeletons (image + text lines + author row) — 3 cards
+  2. Profile/article skeleton (avatar, name, body lines, stats)
+  3. Table skeleton (header + 5 rows, 4 columns)
+  "Load Content" button fades skeletons out and real content in.
+  -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+
+    /* ============================================================
+       CUSTOMIZE — adjust these to match your project
+       ============================================================ */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --glow:           rgba(16,185,129,0.15);
+      --glow-strong:    rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --border-accent:  rgba(16,185,129,0.3);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+    }
+    /* ============================================================ */
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Page wrapper ── */
+    .sk-page {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 5rem 1.5rem;
+    }
+
+    /* ── Page header ── */
+    .sk-header {
+      text-align: center;
+      margin-bottom: 4rem;
+    }
+    .sk-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 5px 14px;
+      background: rgba(16,185,129,0.08);
+      border: 1px solid var(--border-accent);
+      border-radius: 100px;
+      margin-bottom: 1.25rem;
+    }
+    .sk-title {
+      font-family: var(--font-heading);
+      font-size: clamp(1.75rem, 4vw, 2.5rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.75rem;
+    }
+    .sk-subtitle {
+      color: var(--text-secondary);
+      font-size: 0.9375rem;
+      line-height: 1.6;
+      max-width: 460px;
+      margin: 0 auto 2rem;
+    }
+
+    /* Load Content button */
+    .sk-load-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0.75rem 1.75rem;
+      min-height: 48px;
+      background: var(--accent);
+      color: #0D1117;
+      font-family: var(--font-heading);
+      font-size: 0.9375rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .sk-load-btn:hover { opacity: 0.85; }
+    .sk-load-btn:disabled { opacity: 0.5; cursor: default; }
+
+    /* Reset button (shown after load) */
+    .sk-reset-btn {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      padding: 0.75rem 1.75rem;
+      min-height: 48px;
+      background: transparent;
+      color: var(--text-secondary);
+      font-family: var(--font-heading);
+      font-size: 0.875rem;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+      margin-left: 0.75rem;
+    }
+    .sk-reset-btn:hover { border-color: var(--border-accent); color: var(--text); }
+    .sk-reset-btn.sk-visible { display: inline-flex; }
+
+    .sk-btn-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0;
+    }
+
+
+    /* ── Section divider ── */
+    .sk-section {
+      margin-bottom: 3rem;
+    }
+    .sk-section-label {
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .sk-section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ── Fade containers ──
+       .sk-skeleton is shown by default, .sk-content is hidden.
+       After "Load Content", they swap with a cross-fade. */
+    .sk-skeleton,
+    .sk-content {
+      transition: opacity 0.5s ease;
+    }
+    .sk-skeleton { opacity: 1; }
+    .sk-content  { opacity: 0; pointer-events: none; height: 0; overflow: hidden; }
+
+    /* After load */
+    .sk-page.--loaded .sk-skeleton {
+      opacity: 0;
+      pointer-events: none;
+      height: 0;
+      overflow: hidden;
+    }
+    .sk-page.--loaded .sk-content {
+      opacity: 1;
+      pointer-events: all;
+      height: auto;
+      overflow: visible;
+    }
+
+
+    /* ══════════════════════════════════════════════
+       THE SHIMMER — this is the core skeleton style.
+       Apply .sk-bone to any placeholder element.
+       ══════════════════════════════════════════════ */
+    .sk-bone {
+      background: linear-gradient(
+        90deg,
+        var(--surface)  25%,
+        var(--elevated) 50%,
+        var(--surface)  75%
+      );
+      background-size: 200% 100%;
+      animation: sk-shimmer 1.5s infinite linear;
+      border-radius: 6px;
+    }
+    @keyframes sk-shimmer {
+      from { background-position:  200% 0; }
+      to   { background-position: -200% 0; }
+    }
+
+    /* Full-circle (avatars) */
+    .sk-bone--circle { border-radius: 50%; }
+
+    /* Large radius (image areas) */
+    .sk-bone--image { border-radius: var(--radius); }
+
+
+    /* ══════════════════════════════
+       PATTERN 1 — Card Skeletons
+       ══════════════════════════════ */
+    .sk-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+    }
+    @media (max-width: 700px) {
+      .sk-cards-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 440px) {
+      .sk-cards-grid { grid-template-columns: 1fr; }
+    }
+
+    .sk-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    /* Image area placeholder */
+    .sk-card-img {
+      aspect-ratio: 16 / 9;
+      width: 100%;
+    }
+    .sk-card-body { padding: 1rem; display: flex; flex-direction: column; gap: 0.625rem; }
+    .sk-card-title-bone { height: 16px; width: 75%; }
+    .sk-card-line       { height: 12px; }
+    .sk-card-line--short { height: 12px; width: 60%; }
+
+    /* Author row */
+    .sk-card-author { display: flex; align-items: center; gap: 0.625rem; margin-top: 0.25rem; }
+    .sk-avatar-sm   { width: 28px; height: 28px; flex-shrink: 0; }
+    .sk-author-name { height: 11px; width: 80px; }
+
+
+    /* ══════════════════════════════
+       PATTERN 2 — Profile Skeleton
+       ══════════════════════════════ */
+    .sk-profile {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.75rem;
+      max-width: 560px;
+    }
+
+    .sk-profile-head { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem; }
+    .sk-avatar-lg    { width: 56px; height: 56px; flex-shrink: 0; }
+    .sk-profile-meta { flex: 1; display: flex; flex-direction: column; gap: 0.5rem; }
+    .sk-meta-name    { height: 16px; width: 55%; }
+    .sk-meta-role    { height: 12px; width: 40%; }
+
+    .sk-profile-lines { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.25rem; }
+    .sk-p-line        { height: 12px; }
+    .sk-p-line--80    { width: 80%; }
+    .sk-p-line--95    { width: 95%; }
+    .sk-p-line--65    { width: 65%; }
+    .sk-p-line--88    { width: 88%; }
+    .sk-p-line--50    { width: 50%; }
+
+    .sk-stats-row { display: flex; gap: 1.5rem; }
+    .sk-stat-bone { display: flex; flex-direction: column; gap: 0.375rem; }
+    .sk-stat-num  { height: 20px; width: 48px; }
+    .sk-stat-lbl  { height: 10px; width: 60px; }
+
+
+    /* ══════════════════════════════
+       PATTERN 3 — Table Skeleton
+       ══════════════════════════════ */
+    .sk-table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .sk-table { width: 100%; border-collapse: collapse; }
+    .sk-table td { padding: 0.875rem 1rem; border-bottom: 1px solid var(--border); }
+    .sk-table tr:last-child td { border-bottom: none; }
+
+    /* Header row cells — slightly taller */
+    .sk-table .sk-thead td { padding: 1rem; background: var(--elevated); }
+
+    /* Column width classes for varied widths */
+    .sk-tc-1 { height: 13px; width: 30%; }
+    .sk-tc-2 { height: 13px; width: 50%; }
+    .sk-tc-3 { height: 13px; width: 20%; }
+    .sk-tc-4 { height: 13px; width: 40%; }
+
+    /* Row alternation widths to avoid uniform appearance */
+    .sk-table tr:nth-child(2) .sk-tc-2 { width: 60%; }
+    .sk-table tr:nth-child(3) .sk-tc-1 { width: 25%; }
+    .sk-table tr:nth-child(4) .sk-tc-4 { width: 30%; }
+    .sk-table tr:nth-child(5) .sk-tc-2 { width: 45%; }
+
+    /* Header bones — same shimmer, slightly taller */
+    .sk-thead .sk-bone { height: 14px; }
+
+
+    /* ══════════════════════════════
+       REAL CONTENT (after load)
+       ══════════════════════════════ */
+
+    /* Card content */
+    .sk-real-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .sk-real-card-img {
+      aspect-ratio: 16/9;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(255,255,255,0.4);
+      font-family: var(--font-heading);
+      font-size: 0.875rem;
+    }
+    .sk-real-card:nth-child(2) .sk-real-card-img { background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460); }
+    .sk-real-card:nth-child(3) .sk-real-card-img { background: linear-gradient(135deg, #0d1b2a, #1b4332, #2d6a4f); }
+    .sk-real-card-body { padding: 1rem; }
+    .sk-real-card-title {
+      font-family: var(--font-heading);
+      font-size: 0.9375rem;
+      font-weight: 700;
+      margin-bottom: 0.375rem;
+    }
+    .sk-real-card-desc {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      margin-bottom: 0.75rem;
+    }
+    .sk-real-author {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+    .sk-real-avatar {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: rgba(16,185,129,0.15);
+      border: 1px solid rgba(16,185,129,0.2);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-heading);
+      font-size: 0.625rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    /* Real profile */
+    .sk-real-profile {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.75rem;
+      max-width: 560px;
+    }
+    .sk-real-profile-head { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem; }
+    .sk-real-profile-avatar {
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      background: rgba(16,185,129,0.12);
+      border: 2px solid var(--border-accent);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-heading);
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+    .sk-real-profile-name {
+      font-family: var(--font-heading);
+      font-size: 1.0625rem;
+      font-weight: 700;
+    }
+    .sk-real-profile-role {
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .sk-real-profile-bio {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      line-height: 1.65;
+      margin-bottom: 1.25rem;
+    }
+    .sk-real-stats {
+      display: flex;
+      gap: 1.5rem;
+    }
+    .sk-real-stat-num {
+      font-family: var(--font-heading);
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .sk-real-stat-lbl {
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    /* Real table */
+    .sk-real-table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .sk-real-table { width: 100%; border-collapse: collapse; }
+    .sk-real-table th {
+      padding: 0.875rem 1rem;
+      background: var(--elevated);
+      font-family: var(--font-heading);
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-align: left;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border);
+    }
+    .sk-real-table td {
+      padding: 0.75rem 1rem;
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border);
+    }
+    .sk-real-table tr:last-child td { border-bottom: none; }
+    .sk-real-table td:first-child { color: var(--text); font-weight: 600; }
+    .sk-real-table .sk-real-td-accent { color: var(--accent); font-family: var(--font-heading); font-weight: 700; }
+    .sk-real-table tbody tr:hover td { background: rgba(148,163,184,0.03); }
+
+  </style>
+</head>
+<body>
+
+  <div class="sk-page" id="sk-page">
+
+    <!-- Header -->
+    <div class="sk-header">
+      <div class="sk-eyebrow">UI Pattern</div>
+      <h1 class="sk-title">Skeleton Loading States</h1>
+      <p class="sk-subtitle">Three patterns with shimmer animation. Click the button to simulate data loading — skeletons fade out as real content fades in.</p>
+      <div class="sk-btn-row">
+        <button class="sk-load-btn" id="sk-load-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Load Content
+        </button>
+        <button class="sk-reset-btn" id="sk-reset-btn">Reset</button>
+      </div>
+    </div>
+
+
+    <!-- ════ PATTERN 1: Card Skeletons ════ -->
+    <div class="sk-section">
+      <div class="sk-section-label">Pattern 1 — Cards</div>
+
+      <!-- Skeleton state -->
+      <div class="sk-skeleton" id="sk-cards-skel">
+        <div class="sk-cards-grid">
+          <!-- Card skeleton × 3 -->
+          <div class="sk-card" aria-hidden="true">
+            <div class="sk-bone sk-bone--image sk-card-img"></div>
+            <div class="sk-card-body">
+              <div class="sk-bone sk-card-title-bone"></div>
+              <div class="sk-bone sk-card-line"></div>
+              <div class="sk-bone sk-card-line--short"></div>
+              <div class="sk-card-author">
+                <div class="sk-bone sk-bone--circle sk-avatar-sm"></div>
+                <div class="sk-bone sk-author-name"></div>
+              </div>
+            </div>
+          </div>
+          <div class="sk-card" aria-hidden="true">
+            <div class="sk-bone sk-bone--image sk-card-img"></div>
+            <div class="sk-card-body">
+              <div class="sk-bone sk-card-title-bone" style="width:65%"></div>
+              <div class="sk-bone sk-card-line"></div>
+              <div class="sk-bone sk-card-line--short" style="width:45%"></div>
+              <div class="sk-card-author">
+                <div class="sk-bone sk-bone--circle sk-avatar-sm"></div>
+                <div class="sk-bone sk-author-name" style="width:70px"></div>
+              </div>
+            </div>
+          </div>
+          <div class="sk-card" aria-hidden="true">
+            <div class="sk-bone sk-bone--image sk-card-img"></div>
+            <div class="sk-card-body">
+              <div class="sk-bone sk-card-title-bone" style="width:80%"></div>
+              <div class="sk-bone sk-card-line"></div>
+              <div class="sk-bone sk-card-line--short" style="width:55%"></div>
+              <div class="sk-card-author">
+                <div class="sk-bone sk-bone--circle sk-avatar-sm"></div>
+                <div class="sk-bone sk-author-name" style="width:90px"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Real content state -->
+      <div class="sk-content" id="sk-cards-real">
+        <div class="sk-cards-grid">
+          <div class="sk-real-card">
+            <div class="sk-real-card-img">Design Preview</div>
+            <div class="sk-real-card-body">
+              <div class="sk-real-card-title">Homepage Redesign</div>
+              <div class="sk-real-card-desc">Complete visual overhaul with mobile-first approach and faster load times.</div>
+              <div class="sk-real-author">
+                <div class="sk-real-avatar">JD</div>
+                Jake Dubois · 2 days ago
+              </div>
+            </div>
+          </div>
+          <div class="sk-real-card">
+            <div class="sk-real-card-img">Product Shot</div>
+            <div class="sk-real-card-body">
+              <div class="sk-real-card-title">Product Launch</div>
+              <div class="sk-real-card-desc">Campaign page for Q1 product launch — targeting 3,000 signups in week one.</div>
+              <div class="sk-real-author">
+                <div class="sk-real-avatar">SR</div>
+                Sarah R. · 5 days ago
+              </div>
+            </div>
+          </div>
+          <div class="sk-real-card">
+            <div class="sk-real-card-img">Dashboard View</div>
+            <div class="sk-real-card-body">
+              <div class="sk-real-card-title">Analytics Dashboard</div>
+              <div class="sk-real-card-desc">Internal reporting interface with real-time data and export capabilities.</div>
+              <div class="sk-real-author">
+                <div class="sk-real-avatar">TK</div>
+                Tom K. · 1 week ago
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ════ PATTERN 2: Profile Skeleton ════ -->
+    <div class="sk-section">
+      <div class="sk-section-label">Pattern 2 — Profile / Article</div>
+
+      <!-- Skeleton -->
+      <div class="sk-skeleton" id="sk-profile-skel">
+        <div class="sk-profile" aria-hidden="true">
+          <div class="sk-profile-head">
+            <div class="sk-bone sk-bone--circle sk-avatar-lg"></div>
+            <div class="sk-profile-meta">
+              <div class="sk-bone sk-meta-name"></div>
+              <div class="sk-bone sk-meta-role"></div>
+            </div>
+          </div>
+          <div class="sk-profile-lines">
+            <div class="sk-bone sk-p-line sk-p-line--95"></div>
+            <div class="sk-bone sk-p-line sk-p-line--80"></div>
+            <div class="sk-bone sk-p-line sk-p-line--88"></div>
+            <div class="sk-bone sk-p-line sk-p-line--65"></div>
+            <div class="sk-bone sk-p-line sk-p-line--50"></div>
+          </div>
+          <div class="sk-stats-row">
+            <div class="sk-stat-bone">
+              <div class="sk-bone sk-stat-num"></div>
+              <div class="sk-bone sk-stat-lbl"></div>
+            </div>
+            <div class="sk-stat-bone">
+              <div class="sk-bone sk-stat-num"></div>
+              <div class="sk-bone sk-stat-lbl"></div>
+            </div>
+            <div class="sk-stat-bone">
+              <div class="sk-bone sk-stat-num"></div>
+              <div class="sk-bone sk-stat-lbl"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Real content -->
+      <div class="sk-content" id="sk-profile-real">
+        <div class="sk-real-profile">
+          <div class="sk-real-profile-head">
+            <div class="sk-real-profile-avatar">MR</div>
+            <div>
+              <div class="sk-real-profile-name">Marcus Reid</div>
+              <div class="sk-real-profile-role">Senior Web Developer &amp; Designer</div>
+            </div>
+          </div>
+          <p class="sk-real-profile-bio">
+            Full-stack developer with 8 years building high-conversion web products for clients across real estate, SaaS, and e-commerce. Specialist in performance-first frontend and CRM automation.
+          </p>
+          <div class="sk-real-stats">
+            <div>
+              <div class="sk-real-stat-num">147</div>
+              <div class="sk-real-stat-lbl">Projects</div>
+            </div>
+            <div>
+              <div class="sk-real-stat-num">4.9</div>
+              <div class="sk-real-stat-lbl">Avg rating</div>
+            </div>
+            <div>
+              <div class="sk-real-stat-num">8 yrs</div>
+              <div class="sk-real-stat-lbl">Experience</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ════ PATTERN 3: Table Skeleton ════ -->
+    <div class="sk-section">
+      <div class="sk-section-label">Pattern 3 — Table</div>
+
+      <!-- Skeleton -->
+      <div class="sk-skeleton" id="sk-table-skel">
+        <div class="sk-table-wrap" aria-hidden="true">
+          <table class="sk-table">
+            <tr class="sk-thead">
+              <td><div class="sk-bone sk-tc-1"></div></td>
+              <td><div class="sk-bone sk-tc-2"></div></td>
+              <td><div class="sk-bone sk-tc-3"></div></td>
+              <td><div class="sk-bone sk-tc-4"></div></td>
+            </tr>
+            <tr><td><div class="sk-bone sk-tc-1"></div></td><td><div class="sk-bone sk-tc-2"></div></td><td><div class="sk-bone sk-tc-3"></div></td><td><div class="sk-bone sk-tc-4"></div></td></tr>
+            <tr><td><div class="sk-bone sk-tc-1"></div></td><td><div class="sk-bone sk-tc-2"></div></td><td><div class="sk-bone sk-tc-3"></div></td><td><div class="sk-bone sk-tc-4"></div></td></tr>
+            <tr><td><div class="sk-bone sk-tc-1"></div></td><td><div class="sk-bone sk-tc-2"></div></td><td><div class="sk-bone sk-tc-3"></div></td><td><div class="sk-bone sk-tc-4"></div></td></tr>
+            <tr><td><div class="sk-bone sk-tc-1"></div></td><td><div class="sk-bone sk-tc-2"></div></td><td><div class="sk-bone sk-tc-3"></div></td><td><div class="sk-bone sk-tc-4"></div></td></tr>
+            <tr><td><div class="sk-bone sk-tc-1"></div></td><td><div class="sk-bone sk-tc-2"></div></td><td><div class="sk-bone sk-tc-3"></div></td><td><div class="sk-bone sk-tc-4"></div></td></tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- Real content -->
+      <div class="sk-content" id="sk-table-real">
+        <div class="sk-real-table-wrap">
+          <table class="sk-real-table">
+            <thead>
+              <tr>
+                <th>Project</th>
+                <th>Client</th>
+                <th>Status</th>
+                <th>Revenue</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Homepage Redesign</td>
+                <td>Meridian Finance</td>
+                <td>Completed</td>
+                <td class="sk-real-td-accent">$4,997</td>
+              </tr>
+              <tr>
+                <td>Lead Funnel Build</td>
+                <td>Harmon Realty</td>
+                <td>In Progress</td>
+                <td class="sk-real-td-accent">$2,497</td>
+              </tr>
+              <tr>
+                <td>E-Commerce Store</td>
+                <td>Coastal Supply</td>
+                <td>Completed</td>
+                <td class="sk-real-td-accent">$6,500</td>
+              </tr>
+              <tr>
+                <td>CRM Integration</td>
+                <td>Webb Dental Group</td>
+                <td>Review</td>
+                <td class="sk-real-td-accent">$1,800</td>
+              </tr>
+              <tr>
+                <td>Brand Identity</td>
+                <td>Orbit Analytics</td>
+                <td>Completed</td>
+                <td class="sk-real-td-accent">$3,200</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /sk-page -->
+
+
+  <script>
+  /* ── Load / Reset toggle ──
+     Adds .--loaded to the page, which triggers the CSS transitions
+     swapping skeleton visibility with content visibility. */
+
+  const page     = document.getElementById('sk-page');
+  const loadBtn  = document.getElementById('sk-load-btn');
+  const resetBtn = document.getElementById('sk-reset-btn');
+
+  loadBtn.addEventListener('click', () => {
+    loadBtn.disabled = true;
+
+    // Simulate a brief network delay — feels authentic
+    setTimeout(() => {
+      page.classList.add('--loaded');
+      resetBtn.classList.add('sk-visible');
+    }, 800);
+  });
+
+  resetBtn.addEventListener('click', () => {
+    page.classList.remove('--loaded');
+    loadBtn.disabled = false;
+    resetBtn.classList.remove('sk-visible');
+  });
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,596 @@
+<!-- COMPONENT: Pricing Estimator | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pricing Estimator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      /* ── CUSTOMIZE ── */
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      padding: 3rem 1.5rem 5rem;
+    }
+
+    .wrap { max-width: 720px; margin: 0 auto; }
+
+    /* ── Header ── */
+    .page-header { text-align: center; margin-bottom: 2.5rem; }
+    .page-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 0.7rem; font-weight: 600; color: var(--accent);
+      text-transform: uppercase; letter-spacing: 0.1em;
+      padding: 4px 12px; background: var(--accent-dim);
+      border: 1px solid var(--accent-border); border-radius: 100px; margin-bottom: 1.25rem;
+    }
+    h1 { font-family: var(--font-heading); font-size: clamp(1.75rem,4vw,2.5rem); font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.75rem; }
+    .page-sub { color: var(--text-secondary); font-size: 0.95rem; line-height: 1.6; }
+
+    /* ── Progress bar ── */
+    .progress-bar {
+      background: var(--elevated);
+      border-radius: 100px;
+      height: 4px;
+      margin-bottom: 2rem;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 100px;
+      transition: width 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .step-indicators {
+      display: flex; justify-content: space-between;
+      margin-bottom: 0.5rem;
+    }
+    .step-dot {
+      display: flex; flex-direction: column; align-items: center; gap: 0.375rem;
+      font-size: 0.7rem; color: var(--text-muted); font-weight: 500;
+    }
+    .step-dot span:first-child {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      background: var(--surface);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-heading); font-size: 0.75rem; font-weight: 700;
+      transition: border-color 0.3s, background 0.3s, color 0.3s;
+    }
+    .step-dot.active span:first-child { border-color: var(--accent); color: var(--accent); }
+    .step-dot.done span:first-child   { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+
+    /* ── Step panel ── */
+    .estimator-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .step-panel {
+      display: none;
+      padding: 2.5rem;
+      animation: fadeSlideIn 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .step-panel.active { display: block; }
+
+    @keyframes fadeSlideIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .step-title { font-family: var(--font-heading); font-size: 1.2rem; font-weight: 700; margin-bottom: 0.375rem; }
+    .step-sub   { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.75rem; }
+
+    /* ── Step 1: Type cards ── */
+    .type-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.875rem;
+      margin-bottom: 1.5rem;
+    }
+    @media (max-width: 480px) { .type-grid { grid-template-columns: 1fr; } }
+
+    .type-card {
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      display: flex; flex-direction: column; gap: 0.5rem;
+    }
+    .type-card:hover   { border-color: var(--accent-border); background: var(--elevated); }
+    .type-card.selected { border-color: var(--accent); background: var(--accent-dim); }
+
+    .type-icon { font-size: 1.75rem; }
+    .type-name { font-family: var(--font-heading); font-weight: 700; font-size: 0.95rem; }
+    .type-desc { font-size: 0.8rem; color: var(--text-secondary); line-height: 1.5; }
+    .type-range { font-size: 0.75rem; color: var(--accent); font-weight: 600; margin-top: 0.25rem; }
+
+    /* ── Step 2: Feature checkboxes ── */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+    @media (max-width: 480px) { .feature-grid { grid-template-columns: 1fr; } }
+
+    .feature-item {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.875rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      user-select: none;
+    }
+    .feature-item:hover   { border-color: var(--accent-border); background: var(--elevated); }
+    .feature-item.checked { border-color: var(--accent-border); background: var(--accent-dim); }
+
+    .feature-checkbox {
+      width: 20px; height: 20px;
+      border: 2px solid var(--border);
+      border-radius: 5px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .feature-item.checked .feature-checkbox { background: var(--accent); border-color: var(--accent); }
+    .feature-icon { font-size: 1.1rem; }
+    .feature-label { flex: 1; }
+    .feature-name { font-size: 0.85rem; font-weight: 600; color: var(--text); }
+    .feature-price { font-size: 0.75rem; color: var(--text-muted); }
+
+    /* ── Step 3: Timeline options ── */
+    .timeline-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.875rem;
+      margin-bottom: 1rem;
+    }
+    @media (max-width: 480px) { .timeline-grid { grid-template-columns: 1fr; } }
+
+    .timeline-card {
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem;
+      cursor: pointer;
+      text-align: center;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .timeline-card:hover    { border-color: var(--accent-border); background: var(--elevated); }
+    .timeline-card.selected { border-color: var(--accent); background: var(--accent-dim); }
+    .timeline-card.rush     { border-color: rgba(251,191,36,0.3); }
+
+    .timeline-duration { font-family: var(--font-heading); font-size: 1.4rem; font-weight: 700; color: var(--accent); }
+    .timeline-label    { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem; }
+    .timeline-note     { font-size: 0.7rem; color: #FBBF24; margin-top: 0.5rem; font-weight: 500; }
+
+    .timeline-info {
+      background: var(--elevated);
+      border-radius: 8px;
+      padding: 0.875rem 1rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.55;
+      margin-bottom: 1.5rem;
+    }
+
+    /* ── Step 4: Summary ── */
+    .summary-list { margin-bottom: 1.5rem; }
+    .summary-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.875rem;
+    }
+    .summary-row:last-child { border-bottom: none; }
+    .summary-key   { color: var(--text-secondary); }
+    .summary-val   { font-weight: 600; color: var(--text); }
+    .summary-total {
+      background: var(--elevated);
+      border: 1px solid var(--accent-border);
+      border-radius: 10px;
+      padding: 1.5rem;
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    .summary-total-label { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem; }
+    .summary-total-range {
+      font-family: var(--font-heading);
+      font-size: 2rem; font-weight: 700;
+      color: var(--accent); letter-spacing: -0.02em;
+    }
+    .summary-total-note { font-size: 0.775rem; color: var(--text-muted); margin-top: 0.5rem; }
+
+    .summary-cta {
+      display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+      background: var(--accent); color: var(--bg);
+      font-family: var(--font-heading); font-size: 0.95rem; font-weight: 700;
+      padding: 0.875rem 2rem; border-radius: 10px; border: none;
+      cursor: pointer; text-decoration: none; width: 100%;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .summary-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(16,185,129,0.35); }
+
+    /* ── Navigation buttons ── */
+    .step-nav {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 1.5rem 2.5rem;
+      border-top: 1px solid var(--border);
+      background: var(--elevated);
+    }
+    .nav-btn {
+      padding: 0.625rem 1.375rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-family: var(--font-body); font-size: 0.875rem; font-weight: 500;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .nav-btn:hover { border-color: var(--accent-border); background: var(--accent-dim); color: var(--accent); }
+    .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    .nav-btn.primary {
+      background: var(--accent); border-color: var(--accent); color: var(--bg); font-weight: 700;
+    }
+    .nav-btn.primary:hover { box-shadow: 0 4px 16px rgba(16,185,129,0.4); transform: translateY(-1px); }
+
+    .step-of { font-size: 0.8rem; color: var(--text-muted); }
+  </style>
+</head>
+<body>
+
+  <div class="wrap">
+    <header class="page-header">
+      <div class="page-eyebrow">Tools</div>
+      <h1>Project Price Estimator</h1>
+      <p class="page-sub">4 quick questions — get an instant ballpark estimate for your project.</p>
+    </header>
+
+    <!-- Step indicators -->
+    <div class="step-indicators">
+      <div class="step-dot active" data-step="1"><span>1</span><span>Type</span></div>
+      <div class="step-dot" data-step="2"><span>2</span><span>Features</span></div>
+      <div class="step-dot" data-step="3"><span>3</span><span>Timeline</span></div>
+      <div class="step-dot" data-step="4"><span>4</span><span>Summary</span></div>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:25%"></div></div>
+
+    <!-- Estimator card -->
+    <div class="estimator-card">
+
+      <!-- Step 1: Project type -->
+      <div class="step-panel active" id="step1">
+        <div class="step-title">What are you building?</div>
+        <div class="step-sub">Select the project type that best fits your goals.</div>
+        <div class="type-grid">
+          <div class="type-card" data-type="new" data-base-low="3000" data-base-high="5500" onclick="selectType(this)">
+            <div class="type-icon">🌐</div>
+            <div class="type-name">New Website</div>
+            <div class="type-desc">Build from scratch — strategy, design, and development.</div>
+            <div class="type-range">From $3,000</div>
+          </div>
+          <div class="type-card" data-type="redesign" data-base-low="2000" data-base-high="4000" onclick="selectType(this)">
+            <div class="type-icon">✏️</div>
+            <div class="type-name">Redesign</div>
+            <div class="type-desc">Modernize an existing site with a fresh look and structure.</div>
+            <div class="type-range">From $2,000</div>
+          </div>
+          <div class="type-card" data-type="landing" data-base-low="800" data-base-high="1800" onclick="selectType(this)">
+            <div class="type-icon">🎯</div>
+            <div class="type-name">Landing Page</div>
+            <div class="type-desc">High-converting single page for a campaign or offer.</div>
+            <div class="type-range">From $800</div>
+          </div>
+          <div class="type-card" data-type="webapp" data-base-low="6000" data-base-high="14000" onclick="selectType(this)">
+            <div class="type-icon">⚙️</div>
+            <div class="type-name">Web App</div>
+            <div class="type-desc">Custom tool, dashboard, or interactive application.</div>
+            <div class="type-range">From $6,000</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Features -->
+      <div class="step-panel" id="step2">
+        <div class="step-title">Which features do you need?</div>
+        <div class="step-sub">Toggle everything that applies — prices are added to your estimate.</div>
+        <div class="feature-grid">
+          <div class="feature-item" data-price-low="400" data-price-high="800" data-label="CMS" onclick="toggleFeature(this)">
+            <div class="feature-checkbox">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div class="feature-icon">📝</div>
+            <div class="feature-label">
+              <div class="feature-name">CMS</div>
+              <div class="feature-price">+ $400–800</div>
+            </div>
+          </div>
+          <div class="feature-item" data-price-low="1200" data-price-high="2500" data-label="E-Commerce" onclick="toggleFeature(this)">
+            <div class="feature-checkbox">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div class="feature-icon">🛒</div>
+            <div class="feature-label">
+              <div class="feature-name">E-Commerce</div>
+              <div class="feature-price">+ $1,200–2,500</div>
+            </div>
+          </div>
+          <div class="feature-item" data-price-low="600" data-price-high="1200" data-label="Animations" onclick="toggleFeature(this)">
+            <div class="feature-checkbox">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div class="feature-icon">✨</div>
+            <div class="feature-label">
+              <div class="feature-name">Animations</div>
+              <div class="feature-price">+ $600–1,200</div>
+            </div>
+          </div>
+          <div class="feature-item" data-price-low="500" data-price-high="900" data-label="SEO Package" onclick="toggleFeature(this)">
+            <div class="feature-checkbox">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div class="feature-icon">🔍</div>
+            <div class="feature-label">
+              <div class="feature-name">SEO Package</div>
+              <div class="feature-price">+ $500–900</div>
+            </div>
+          </div>
+          <div class="feature-item" data-price-low="200" data-price-high="400" data-label="Analytics Setup" onclick="toggleFeature(this)">
+            <div class="feature-checkbox">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div class="feature-icon">📊</div>
+            <div class="feature-label">
+              <div class="feature-name">Analytics</div>
+              <div class="feature-price">+ $200–400</div>
+            </div>
+          </div>
+          <div class="feature-item" data-price-low="300" data-price-high="700" data-label="Custom Forms" onclick="toggleFeature(this)">
+            <div class="feature-checkbox">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div class="feature-icon">📋</div>
+            <div class="feature-label">
+              <div class="feature-name">Custom Forms</div>
+              <div class="feature-price">+ $300–700</div>
+            </div>
+          </div>
+          <div class="feature-item" data-price-low="400" data-price-high="900" data-label="CRM Integration" onclick="toggleFeature(this)">
+            <div class="feature-checkbox">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div class="feature-icon">🔗</div>
+            <div class="feature-label">
+              <div class="feature-name">CRM Integration</div>
+              <div class="feature-price">+ $400–900</div>
+            </div>
+          </div>
+          <div class="feature-item" data-price-low="150" data-price-high="350" data-label="Hosting Setup" onclick="toggleFeature(this)">
+            <div class="feature-checkbox">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div class="feature-icon">🖥️</div>
+            <div class="feature-label">
+              <div class="feature-name">Hosting Setup</div>
+              <div class="feature-price">+ $150–350</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Timeline -->
+      <div class="step-panel" id="step3">
+        <div class="step-title">When do you need it?</div>
+        <div class="step-sub">Faster timelines require dedicated resourcing. Rush fees apply.</div>
+        <div class="timeline-grid">
+          <div class="timeline-card rush" data-multiplier="1.35" data-label="2 weeks" onclick="selectTimeline(this)">
+            <div class="timeline-duration">2 wks</div>
+            <div class="timeline-label">Rush delivery</div>
+            <div class="timeline-note">+35% rush fee</div>
+          </div>
+          <div class="timeline-card" data-multiplier="1.0" data-label="4 weeks" onclick="selectTimeline(this)">
+            <div class="timeline-duration">4 wks</div>
+            <div class="timeline-label">Standard timeline</div>
+          </div>
+          <div class="timeline-card" data-multiplier="0.9" data-label="8 weeks" onclick="selectTimeline(this)">
+            <div class="timeline-duration">8 wks</div>
+            <div class="timeline-label">Relaxed timeline</div>
+            <div class="timeline-note" style="color:var(--accent);">-10% discount</div>
+          </div>
+        </div>
+        <p class="timeline-info">Rush timelines clear our schedule for your project — other clients get pushed. That's why there's a premium. The relaxed rate reflects the scheduling flexibility you're giving us.</p>
+      </div>
+
+      <!-- Step 4: Summary -->
+      <div class="step-panel" id="step4">
+        <div class="step-title">Your Estimate</div>
+        <div class="step-sub">Based on your selections. Final scoping call will refine this.</div>
+
+        <div class="summary-list" id="summaryList">
+          <!-- Populated by JS -->
+        </div>
+
+        <div class="summary-total">
+          <div class="summary-total-label">Estimated Project Investment</div>
+          <div class="summary-total-range" id="totalRange">$4,500 – $6,200</div>
+          <div class="summary-total-note">Actual quote delivered after a free 30-min discovery call</div>
+        </div>
+
+        <a href="#" class="summary-cta">
+          Book a Discovery Call — It's Free
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </a>
+      </div>
+
+      <!-- Navigation -->
+      <div class="step-nav">
+        <button class="nav-btn" id="btnBack" onclick="prevStep()" disabled>← Back</button>
+        <span class="step-of" id="stepOf">Step 1 of 4</span>
+        <button class="nav-btn primary" id="btnNext" onclick="nextStep()">Next →</button>
+      </div>
+
+    </div><!-- /estimator-card -->
+  </div>
+
+  <script>
+    /* ─────────────────────────────────────────────
+       PRICING ESTIMATOR — 4-step multi-step form
+       State is kept in a plain JS object.
+    ───────────────────────────────────────────── */
+
+    let currentStep = 1;
+    const totalSteps = 4;
+
+    const state = {
+      type:       null,  // { label, baseLow, baseHigh }
+      features:   [],    // [{ label, priceLow, priceHigh }]
+      timeline:   null,  // { label, multiplier }
+    };
+
+    /* ── Select project type (Step 1) ── */
+    function selectType(card) {
+      document.querySelectorAll('.type-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      state.type = {
+        label:    card.querySelector('.type-name').textContent,
+        baseLow:  parseFloat(card.dataset.baseLow),
+        baseHigh: parseFloat(card.dataset.baseHigh),
+      };
+    }
+
+    /* ── Toggle feature (Step 2) ── */
+    function toggleFeature(item) {
+      item.classList.toggle('checked');
+      const label    = item.dataset.label;
+      const priceLow = parseFloat(item.dataset.priceLow);
+      const priceHigh= parseFloat(item.dataset.priceHigh);
+
+      if (item.classList.contains('checked')) {
+        state.features.push({ label, priceLow, priceHigh });
+      } else {
+        state.features = state.features.filter(f => f.label !== label);
+      }
+    }
+
+    /* ── Select timeline (Step 3) ── */
+    function selectTimeline(card) {
+      document.querySelectorAll('.timeline-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      state.timeline = {
+        label:      card.dataset.label,
+        multiplier: parseFloat(card.dataset.multiplier),
+      };
+    }
+
+    /* ── Build summary (Step 4) ── */
+    function buildSummary() {
+      const list = document.getElementById('summaryList');
+      list.innerHTML = '';
+
+      if (!state.type) return;
+
+      let totalLow  = state.type.baseLow;
+      let totalHigh = state.type.baseHigh;
+
+      const rows = [{ label: 'Project Type', val: state.type.label }];
+
+      state.features.forEach(f => {
+        rows.push({ label: f.label, val: `+$${f.priceLow.toLocaleString()} – $${f.priceHigh.toLocaleString()}` });
+        totalLow  += f.priceLow;
+        totalHigh += f.priceHigh;
+      });
+
+      if (state.timeline) {
+        totalLow  = Math.round(totalLow  * state.timeline.multiplier / 100) * 100;
+        totalHigh = Math.round(totalHigh * state.timeline.multiplier / 100) * 100;
+        rows.push({ label: 'Timeline', val: state.timeline.label });
+      }
+
+      rows.forEach(r => {
+        const row = document.createElement('div');
+        row.className = 'summary-row';
+        row.innerHTML = `<span class="summary-key">${r.label}</span><span class="summary-val">${r.val}</span>`;
+        list.appendChild(row);
+      });
+
+      document.getElementById('totalRange').textContent =
+        `$${totalLow.toLocaleString()} – $${totalHigh.toLocaleString()}`;
+    }
+
+    /* ── Navigation ── */
+    function goToStep(n) {
+      document.getElementById(`step${currentStep}`).classList.remove('active');
+      currentStep = n;
+      document.getElementById(`step${currentStep}`).classList.add('active');
+
+      // Update progress
+      document.getElementById('progressFill').style.width = (currentStep / totalSteps * 100) + '%';
+      document.getElementById('stepOf').textContent = `Step ${currentStep} of ${totalSteps}`;
+      document.getElementById('btnBack').disabled = currentStep === 1;
+      document.getElementById('btnNext').textContent = currentStep === totalSteps - 1 ? 'See Estimate →' : 'Next →';
+      if (currentStep === totalSteps) document.getElementById('btnNext').style.display = 'none';
+      else document.getElementById('btnNext').style.display = '';
+
+      // Update step dots
+      document.querySelectorAll('.step-dot').forEach(dot => {
+        const s = parseInt(dot.dataset.step);
+        dot.classList.toggle('active', s === currentStep);
+        dot.classList.toggle('done',   s < currentStep);
+      });
+
+      // Build summary on step 4
+      if (currentStep === 4) buildSummary();
+    }
+
+    function nextStep() {
+      // Validation
+      if (currentStep === 1 && !state.type)     return shakeBtn('btnNext');
+      if (currentStep === 3 && !state.timeline) return shakeBtn('btnNext');
+      if (currentStep < totalSteps) goToStep(currentStep + 1);
+    }
+    function prevStep() { if (currentStep > 1) goToStep(currentStep - 1); }
+
+    function shakeBtn(id) {
+      const btn = document.getElementById(id);
+      btn.style.animation = 'none';
+      void btn.offsetWidth;
+      btn.style.animation = 'shake 0.4s ease';
+    }
+
+    // Add shake keyframe dynamically
+    const shakeStyle = document.createElement('style');
+    shakeStyle.textContent = `@keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }`;
+    document.head.appendChild(shakeStyle);
+  </script>
+</body>
+</html>

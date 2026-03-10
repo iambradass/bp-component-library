@@ -1,0 +1,493 @@
+<!-- COMPONENT: Interactive Data Grid | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interactive Data Grid</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --red:            #EF4444;
+      --amber:          #F59E0B;
+      --blue:           #3B82F6;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 13px;
+      padding: 24px;
+      min-height: 100vh;
+    }
+
+    .grid-wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    /* ── Toolbar ── */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .toolbar-title {
+      font-family: var(--font-heading);
+      font-size: 1rem;
+      font-weight: 600;
+    }
+    .toolbar-right {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .btn {
+      padding: 7px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-secondary);
+      font-family: var(--font-body);
+      font-size: 0.8125rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn:hover { border-color: var(--accent-border); color: var(--accent); }
+    .btn.accent { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
+    .btn.accent:hover { opacity: 0.85; }
+    .selected-info {
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+    }
+
+    /* ── Table container ── */
+    .table-outer {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .table-scroll {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 860px;
+    }
+
+    /* ── Frozen first column ── */
+    th:first-child,
+    td:first-child {
+      position: sticky;
+      left: 0;
+      background: var(--surface);
+      z-index: 2;
+    }
+    tr:hover td:first-child { background: var(--elevated); }
+
+    /* ── Headers ── */
+    thead { border-bottom: 1px solid var(--border); }
+    th {
+      padding: 0;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--text-muted);
+      user-select: none;
+      white-space: nowrap;
+    }
+    .th-inner {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 10px 12px;
+      cursor: pointer;
+    }
+    .th-inner:hover { color: var(--text); }
+    th.sorted .th-inner { color: var(--accent); }
+    .sort-icon { font-size: 10px; opacity: 0.4; }
+    th.sorted .sort-icon { opacity: 1; }
+
+    /* ── Filter row ── */
+    .filter-row th { padding: 4px 8px; }
+    .filter-row input,
+    .filter-row select {
+      width: 100%;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 0.75rem;
+      padding: 5px 8px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .filter-row input:focus,
+    .filter-row select:focus { border-color: var(--accent-border); }
+    .filter-row select option { background: var(--elevated); }
+
+    /* ── Body rows ── */
+    td {
+      padding: 9px 12px;
+      border-top: 1px solid var(--border);
+      white-space: nowrap;
+      color: var(--text-secondary);
+    }
+    tr:hover td { background: var(--elevated); color: var(--text); }
+
+    /* Checkbox column */
+    .col-check { width: 36px; }
+    input[type=checkbox] {
+      accent-color: var(--accent);
+      width: 14px; height: 14px;
+      cursor: pointer;
+    }
+
+    /* Status badges */
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 0.6875rem;
+      font-weight: 600;
+    }
+    .badge-active   { background: rgba(16,185,129,0.15); color: #10B981; }
+    .badge-inactive { background: rgba(148,163,184,0.1); color: #94A3B8; }
+    .badge-pending  { background: rgba(245,158,11,0.15); color: #F59E0B; }
+    .badge-churned  { background: rgba(239,68,68,0.15);  color: #EF4444; }
+
+    /* Score bar */
+    .score-bar {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .score-bg {
+      width: 52px; height: 6px;
+      background: var(--elevated);
+      border-radius: 3px;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .score-fill { height: 100%; border-radius: 3px; }
+    .score-num { font-size: 0.75rem; color: var(--text-secondary); }
+
+    /* Revenue */
+    .revenue { font-family: var(--font-heading); font-weight: 600; color: var(--text); }
+
+    /* ── Pagination ── */
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .pag-info { font-size: 0.8125rem; color: var(--text-muted); }
+    .pag-controls { display: flex; gap: 4px; }
+    .pag-btn {
+      padding: 5px 10px;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .pag-btn:hover:not(:disabled) { color: var(--text); border-color: var(--accent-border); }
+    .pag-btn.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
+    .pag-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+<div class="grid-wrap">
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="toolbar-title">CRM Contacts</div>
+    <div class="toolbar-right">
+      <span class="selected-info" id="selectedInfo">0 selected</span>
+      <button class="btn" id="exportBtn">Export CSV</button>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-outer">
+    <div class="table-scroll">
+      <table id="dataTable">
+        <thead>
+          <!-- Sort headers -->
+          <tr id="headerRow">
+            <th class="col-check"><div class="th-inner"><input type="checkbox" id="selectAll"></div></th>
+            <th data-col="id"><div class="th-inner">ID <span class="sort-icon">↕</span></div></th>
+            <th data-col="company"><div class="th-inner">Company <span class="sort-icon">↕</span></div></th>
+            <th data-col="contact"><div class="th-inner">Contact <span class="sort-icon">↕</span></div></th>
+            <th data-col="revenue"><div class="th-inner">Revenue <span class="sort-icon">↕</span></div></th>
+            <th data-col="status"><div class="th-inner">Status <span class="sort-icon">↕</span></div></th>
+            <th data-col="region"><div class="th-inner">Region <span class="sort-icon">↕</span></div></th>
+            <th data-col="lastActivity"><div class="th-inner">Last Activity <span class="sort-icon">↕</span></div></th>
+            <th data-col="score"><div class="th-inner">Score <span class="sort-icon">↕</span></div></th>
+          </tr>
+          <!-- Filter row -->
+          <tr class="filter-row">
+            <th></th>
+            <th><input type="text" placeholder="ID..." id="f-id"></th>
+            <th><input type="text" placeholder="Company..." id="f-company"></th>
+            <th><input type="text" placeholder="Contact..." id="f-contact"></th>
+            <th><input type="text" placeholder="Revenue..." id="f-revenue"></th>
+            <th>
+              <select id="f-status">
+                <option value="">All</option>
+                <option>Active</option>
+                <option>Inactive</option>
+                <option>Pending</option>
+                <option>Churned</option>
+              </select>
+            </th>
+            <th>
+              <select id="f-region">
+                <option value="">All</option>
+                <option>North America</option>
+                <option>Europe</option>
+                <option>Asia Pacific</option>
+                <option>LATAM</option>
+              </select>
+            </th>
+            <th><input type="text" placeholder="Activity..." id="f-activity"></th>
+            <th><input type="text" placeholder="Score..." id="f-score"></th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination">
+      <div class="pag-info" id="pagInfo">Showing 1–10 of 50</div>
+      <div class="pag-controls" id="pagControls"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ── Generate 50 rows of CRM data ────────────────────────────────
+  const companies = ['Acme Corp','Globex','Initech','Umbrella Ltd','Cyberdyne','Soylent Co','Vandelay Ind','Hooli','Pied Piper','Dunder Mifflin','Stark Industries','Wayne Enterprises','Oscorp','Dharma Initiative','Weyland Corp','Massive Dynamic','Tyrell Corp','E Corp','Oceanic Airlines','InGen Technologies','Aperture Science','Black Mesa','Momcorp','Planet Express','Bluth Company','Pendant Publishing','Kramerica','Vandelay Industries','Praxis Corp','Rekall Inc'];
+  const firstNames = ['James','Sarah','Michael','Emma','David','Jessica','Robert','Ashley','William','Emily','Daniel','Madison','Christopher','Abigail','Matthew','Olivia','Anthony','Sofia','Mark','Avery'];
+  const lastNames = ['Smith','Johnson','Williams','Brown','Jones','Miller','Davis','Garcia','Rodriguez','Wilson','Martinez','Anderson','Taylor','Thomas','Hernandez','Moore','Martin','Jackson','Thompson','White'];
+  const regions = ['North America','Europe','Asia Pacific','LATAM'];
+  const statuses = ['Active','Active','Active','Inactive','Pending','Churned'];
+
+  function rnd(min,max){return Math.floor(Math.random()*(max-min+1))+min;}
+  function relTime(daysAgo) {
+    if (daysAgo === 0) return 'Today';
+    if (daysAgo === 1) return 'Yesterday';
+    if (daysAgo < 7)  return daysAgo + ' days ago';
+    if (daysAgo < 30) return Math.floor(daysAgo/7) + ' wk ago';
+    return Math.floor(daysAgo/30) + ' mo ago';
+  }
+
+  const rows = Array.from({length:50}, (_,i) => ({
+    id:   `CRM-${String(i+1001).padStart(4,'0')}`,
+    company: companies[i % companies.length],
+    contact: firstNames[rnd(0,firstNames.length-1)] + ' ' + lastNames[rnd(0,lastNames.length-1)],
+    revenue: rnd(5000, 280000),
+    status:  statuses[rnd(0,statuses.length-1)],
+    region:  regions[rnd(0,regions.length-1)],
+    lastActivity: rnd(0, 90),
+    score: rnd(10, 98),
+  }));
+
+  // State
+  let sortCol = 'id', sortDir = 1;
+  let filters = { id:'', company:'', contact:'', revenue:'', status:'', region:'', activity:'', score:'' };
+  let currentPage = 1;
+  const PAGE_SIZE = 10;
+  let selected = new Set();
+
+  // ── Filter + sort pipeline ───────────────────────────────────────
+  function getFiltered() {
+    return rows.filter(r =>
+      (!filters.id || r.id.toLowerCase().includes(filters.id.toLowerCase())) &&
+      (!filters.company || r.company.toLowerCase().includes(filters.company.toLowerCase())) &&
+      (!filters.contact || r.contact.toLowerCase().includes(filters.contact.toLowerCase())) &&
+      (!filters.revenue || r.revenue.toString().includes(filters.revenue)) &&
+      (!filters.status || r.status === filters.status) &&
+      (!filters.region || r.region === filters.region) &&
+      (!filters.score || r.score.toString().includes(filters.score))
+    );
+  }
+
+  function getSorted(arr) {
+    return [...arr].sort((a,b) => {
+      const av = a[sortCol], bv = b[sortCol];
+      return av < bv ? -sortDir : av > bv ? sortDir : 0;
+    });
+  }
+
+  function scoreColor(s) {
+    if (s >= 75) return '#10B981';
+    if (s >= 50) return '#F59E0B';
+    return '#EF4444';
+  }
+
+  function statusBadge(s) {
+    const cls = {Active:'active',Inactive:'inactive',Pending:'pending',Churned:'churned'}[s] || 'inactive';
+    return `<span class="badge badge-${cls}">${s}</span>`;
+  }
+
+  // ── Render ───────────────────────────────────────────────────────
+  function render() {
+    const filtered = getFiltered();
+    const sorted = getSorted(filtered);
+    const total = sorted.length;
+    const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+    currentPage = Math.min(currentPage, pages);
+    const start = (currentPage-1)*PAGE_SIZE;
+    const pageRows = sorted.slice(start, start+PAGE_SIZE);
+
+    // Update sort headers
+    document.querySelectorAll('th[data-col]').forEach(th => {
+      const col = th.dataset.col;
+      th.classList.toggle('sorted', col === sortCol);
+      const icon = th.querySelector('.sort-icon');
+      if (icon) icon.textContent = col === sortCol ? (sortDir === 1 ? '↑' : '↓') : '↕';
+    });
+
+    // Render rows
+    const tbody = document.getElementById('tbody');
+    tbody.innerHTML = pageRows.map(r => `<tr>
+      <td class="col-check"><input type="checkbox" class="row-check" data-id="${r.id}" ${selected.has(r.id)?'checked':''}></td>
+      <td style="color:var(--text-muted);font-family:ui-monospace,monospace;font-size:11px">${r.id}</td>
+      <td style="color:var(--text);font-weight:500">${r.company}</td>
+      <td>${r.contact}</td>
+      <td class="revenue">$${r.revenue.toLocaleString()}</td>
+      <td>${statusBadge(r.status)}</td>
+      <td>${r.region}</td>
+      <td>${relTime(r.lastActivity)}</td>
+      <td>
+        <div class="score-bar">
+          <div class="score-bg"><div class="score-fill" style="width:${r.score}%;background:${scoreColor(r.score)}"></div></div>
+          <span class="score-num">${r.score}</span>
+        </div>
+      </td>
+    </tr>`).join('');
+
+    // Pagination info
+    const showing = total === 0 ? '0' : `${start+1}–${Math.min(start+PAGE_SIZE, total)}`;
+    document.getElementById('pagInfo').textContent = `Showing ${showing} of ${total} results`;
+
+    // Pagination buttons
+    const ctrl = document.getElementById('pagControls');
+    ctrl.innerHTML = '';
+    const addBtn = (label, page, disabled, isActive) => {
+      const b = document.createElement('button');
+      b.className = 'pag-btn' + (isActive ? ' active' : '');
+      b.textContent = label;
+      b.disabled = disabled;
+      b.addEventListener('click', () => { currentPage = page; render(); });
+      ctrl.appendChild(b);
+    };
+    addBtn('←', currentPage-1, currentPage === 1, false);
+    for (let p=1; p<=pages; p++) {
+      if (pages > 7 && Math.abs(p-currentPage) > 2 && p !== 1 && p !== pages) continue;
+      addBtn(p, p, false, p === currentPage);
+    }
+    addBtn('→', currentPage+1, currentPage === pages, false);
+
+    // Selected info
+    document.getElementById('selectedInfo').textContent = selected.size > 0
+      ? `${selected.size} selected` : `${total} rows`;
+    document.getElementById('selectAll').checked = pageRows.length > 0 && pageRows.every(r => selected.has(r.id));
+
+    // Attach checkbox events
+    tbody.querySelectorAll('.row-check').forEach(cb => {
+      cb.addEventListener('change', () => {
+        cb.checked ? selected.add(cb.dataset.id) : selected.delete(cb.dataset.id);
+        document.getElementById('selectedInfo').textContent = selected.size > 0 ? `${selected.size} selected` : `${total} rows`;
+        document.getElementById('selectAll').checked = pageRows.every(r => selected.has(r.id));
+      });
+    });
+  }
+
+  // ── Sort click ───────────────────────────────────────────────────
+  document.getElementById('headerRow').addEventListener('click', e => {
+    const th = e.target.closest('th[data-col]');
+    if (!th) return;
+    const col = th.dataset.col;
+    sortDir = col === sortCol ? -sortDir : 1;
+    sortCol = col;
+    currentPage = 1;
+    render();
+  });
+
+  // ── Filter inputs ────────────────────────────────────────────────
+  const filterMap = {
+    'f-id':'id','f-company':'company','f-contact':'contact','f-revenue':'revenue',
+    'f-status':'status','f-region':'region','f-activity':'activity','f-score':'score'
+  };
+  Object.entries(filterMap).forEach(([id, key]) => {
+    document.getElementById(id).addEventListener('input', e => {
+      filters[key] = e.target.value;
+      currentPage = 1;
+      render();
+    });
+  });
+
+  // ── Select all ───────────────────────────────────────────────────
+  document.getElementById('selectAll').addEventListener('change', e => {
+    const filtered = getFiltered(), sorted = getSorted(filtered);
+    const page = sorted.slice((currentPage-1)*PAGE_SIZE, currentPage*PAGE_SIZE);
+    page.forEach(r => e.target.checked ? selected.add(r.id) : selected.delete(r.id));
+    render();
+  });
+
+  // ── Export CSV ───────────────────────────────────────────────────
+  document.getElementById('exportBtn').addEventListener('click', () => {
+    const toExport = selected.size > 0
+      ? rows.filter(r => selected.has(r.id))
+      : getSorted(getFiltered());
+    const headers = ['ID','Company','Contact','Revenue','Status','Region','Last Activity','Score'];
+    const csv = [headers.join(','), ...toExport.map(r =>
+      [r.id, `"${r.company}"`, `"${r.contact}"`, r.revenue, r.status, r.region, relTime(r.lastActivity), r.score].join(',')
+    )].join('\n');
+    const blob = new Blob([csv], {type:'text/csv'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'crm-export.csv';
+    a.click();
+  });
+
+  render();
+</script>
+</body>
+</html>

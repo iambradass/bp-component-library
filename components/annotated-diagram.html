@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Annotated Diagram</title>
+  <!-- COMPONENT: Annotated Diagram | COPY: style + html + script -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── CUSTOMIZE ── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --glow:           rgba(16,185,129,0.15);
+      --glow-strong:    rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --border-accent:  rgba(16,185,129,0.3);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      padding: 2rem 1.5rem 4rem;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+    .page-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.75rem;
+    }
+    .page-title {
+      font-family: var(--font-heading);
+      font-size: clamp(1.75rem, 4vw, 2.5rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+    }
+    .page-desc {
+      color: var(--text-secondary);
+      font-size: 0.9375rem;
+      max-width: 560px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    /* ── Outer wrapper ── */
+    .diagram-outer {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    /* ── Browser frame mockup ── */
+    .browser-frame {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 32px 80px rgba(0,0,0,0.5);
+    }
+
+    /* Browser chrome bar */
+    .browser-chrome {
+      background: var(--elevated);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .browser-dots {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .browser-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    .browser-dot:nth-child(1) { background: #FF5F57; }
+    .browser-dot:nth-child(2) { background: #FFBD2E; }
+    .browser-dot:nth-child(3) { background: #28CA41; }
+    .browser-url {
+      flex: 1;
+      background: rgba(0,0,0,0.3);
+      border-radius: 6px;
+      padding: 4px 12px;
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--text-muted);
+    }
+
+    /* ── Mockup page content inside browser ── */
+    .mockup-page {
+      position: relative;  /* pins are absolutely positioned here */
+      background: var(--bg);
+    }
+
+    /* Mockup sections — CSS-drawn layout */
+    .mock-nav {
+      background: var(--elevated);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .mock-logo { width: 60px; height: 10px; background: var(--accent); border-radius: 3px; opacity: 0.7; }
+    .mock-nav-links {
+      display: flex;
+      gap: 12px;
+    }
+    .mock-nav-link { width: 36px; height: 8px; background: var(--border); border-radius: 3px; }
+    .mock-nav-cta  { width: 52px; height: 24px; background: var(--accent); border-radius: 5px; opacity: 0.6; }
+
+    .mock-hero {
+      padding: 36px 24px;
+      background: linear-gradient(135deg, var(--surface), var(--bg));
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .mock-h1 { width: 60%; height: 18px; background: var(--text-muted); border-radius: 4px; opacity: 0.4; }
+    .mock-h2 { width: 45%; height: 12px; background: var(--text-muted); border-radius: 4px; opacity: 0.25; }
+    .mock-cta-btn { width: 120px; height: 36px; background: var(--accent); border-radius: 8px; opacity: 0.5; margin-top: 8px; }
+
+    .mock-social {
+      padding: 20px 24px;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: center;
+    }
+    .mock-logo-pill {
+      width: 50px;
+      height: 16px;
+      border-radius: 4px;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+    }
+
+    .mock-features {
+      padding: 24px 24px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+    .mock-feature-card {
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .mock-feat-icon { width: 20px; height: 20px; background: var(--glow-strong); border-radius: 5px; }
+    .mock-feat-h { width: 70%; height: 8px; background: var(--text-muted); border-radius: 3px; opacity: 0.5; }
+    .mock-feat-p { width: 90%; height: 6px; background: var(--text-muted); border-radius: 3px; opacity: 0.2; }
+
+    .mock-cta-section {
+      padding: 28px 24px;
+      background: var(--surface);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    .mock-cta-h { width: 50%; height: 14px; background: var(--text-muted); border-radius: 4px; opacity: 0.4; }
+    .mock-cta-btn2 { width: 140px; height: 38px; background: var(--accent); border-radius: 8px; opacity: 0.45; }
+
+    .mock-footer {
+      background: var(--elevated);
+      border-top: 1px solid var(--border);
+      padding: 16px 24px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+    .mock-footer-col { display: flex; flex-direction: column; gap: 4px; }
+    .mock-footer-h { width: 60%; height: 7px; background: var(--text-muted); border-radius: 3px; opacity: 0.4; }
+    .mock-footer-l { width: 80%; height: 5px; background: var(--text-muted); border-radius: 3px; opacity: 0.15; }
+
+    /* ── Annotation pins ── */
+    .pin {
+      position: absolute;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-family: var(--font-heading);
+      font-size: 0.75rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 20;
+      border: 2px solid rgba(255,255,255,0.2);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      /* Pulsing ring */
+      box-shadow: 0 0 0 0 var(--glow-strong);
+    }
+    .pin:hover,
+    .pin.active {
+      transform: scale(1.25);
+      box-shadow: 0 0 0 6px var(--glow-strong), 0 4px 16px rgba(16,185,129,0.4);
+    }
+    .pin:focus {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+    }
+    /* Pulsing animation on idle pins */
+    @keyframes pinPulse {
+      0%, 100% { box-shadow: 0 0 0 0 var(--glow-strong); }
+      50%       { box-shadow: 0 0 0 7px rgba(16,185,129,0); }
+    }
+    .pin:not(.active):not(:hover) {
+      animation: pinPulse 2.5s ease-in-out infinite;
+      animation-delay: var(--delay, 0s);
+    }
+
+    /* ── Explanation panel (appears near pin) ── */
+    .pin-panel {
+      position: absolute;
+      z-index: 30;
+      background: var(--elevated);
+      border: 1px solid var(--border-accent);
+      border-radius: var(--radius);
+      padding: 1rem 1.125rem;
+      width: 240px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(0.96) translateY(4px);
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+    .pin-panel.visible {
+      opacity: 1;
+      pointer-events: auto;
+      transform: scale(1) translateY(0);
+    }
+    .pin-panel-num {
+      font-family: var(--font-heading);
+      font-size: 0.625rem;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.375rem;
+    }
+    .pin-panel-title {
+      font-family: var(--font-heading);
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 0.375rem;
+    }
+    .pin-panel-desc {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+    .pin-panel-close {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 1rem;
+      line-height: 1;
+      padding: 2px 4px;
+      border-radius: 4px;
+    }
+    .pin-panel-close:hover { color: var(--text); }
+
+    /* ── Mobile: panels stack below the diagram ── */
+    .mobile-annotations {
+      display: none;
+    }
+    @media (max-width: 600px) {
+      .pin-panel { display: none !important; }
+      .mobile-annotations {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+      }
+      .mob-ann {
+        display: flex;
+        gap: 0.75rem;
+        align-items: flex-start;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 0.875rem;
+        transition: border-color 0.2s;
+      }
+      .mob-ann.active { border-color: var(--border-accent); }
+      .mob-ann-num {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: var(--accent);
+        color: #fff;
+        font-family: var(--font-heading);
+        font-size: 0.75rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .mob-ann-title { font-weight: 600; font-size: 0.875rem; margin-bottom: 0.25rem; }
+      .mob-ann-desc  { font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.5; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="page-header">
+    <div class="page-eyebrow">Annotated Diagram</div>
+    <h1 class="page-title">Annotated Diagram with Callout Pins</h1>
+    <p class="page-desc">Numbered hotspot pins on a diagram. Click or hover any pin to reveal its explanation. Smart positioning — panels flip side if near the edge.</p>
+  </header>
+
+  <div class="diagram-outer">
+    <div class="browser-frame">
+      <!-- Browser chrome -->
+      <div class="browser-chrome">
+        <div class="browser-dots">
+          <div class="browser-dot"></div>
+          <div class="browser-dot"></div>
+          <div class="browser-dot"></div>
+        </div>
+        <div class="browser-url">yourwebsite.com</div>
+      </div>
+
+      <!-- Mockup page — pins are placed here absolutely -->
+      <div class="mockup-page" id="mockup-page">
+
+        <!-- 1. Navigation -->
+        <div class="mock-nav">
+          <div class="mock-logo"></div>
+          <div class="mock-nav-links">
+            <div class="mock-nav-link"></div>
+            <div class="mock-nav-link"></div>
+            <div class="mock-nav-link"></div>
+          </div>
+          <div class="mock-nav-cta"></div>
+        </div>
+
+        <!-- 2. Hero -->
+        <div class="mock-hero">
+          <div class="mock-h1"></div>
+          <div class="mock-h2"></div>
+          <div class="mock-cta-btn"></div>
+        </div>
+
+        <!-- 3. Social proof -->
+        <div class="mock-social">
+          <div class="mock-logo-pill"></div>
+          <div class="mock-logo-pill"></div>
+          <div class="mock-logo-pill"></div>
+          <div class="mock-logo-pill"></div>
+          <div class="mock-logo-pill"></div>
+        </div>
+
+        <!-- 4. Features -->
+        <div class="mock-features">
+          <div class="mock-feature-card">
+            <div class="mock-feat-icon"></div>
+            <div class="mock-feat-h"></div>
+            <div class="mock-feat-p"></div>
+            <div class="mock-feat-p" style="width:70%"></div>
+          </div>
+          <div class="mock-feature-card">
+            <div class="mock-feat-icon"></div>
+            <div class="mock-feat-h"></div>
+            <div class="mock-feat-p"></div>
+            <div class="mock-feat-p" style="width:70%"></div>
+          </div>
+          <div class="mock-feature-card">
+            <div class="mock-feat-icon"></div>
+            <div class="mock-feat-h"></div>
+            <div class="mock-feat-p"></div>
+            <div class="mock-feat-p" style="width:70%"></div>
+          </div>
+        </div>
+
+        <!-- 5. CTA section -->
+        <div class="mock-cta-section">
+          <div class="mock-cta-h"></div>
+          <div class="mock-cta-btn2"></div>
+        </div>
+
+        <!-- 6. Footer -->
+        <div class="mock-footer">
+          <div class="mock-footer-col">
+            <div class="mock-footer-h"></div>
+            <div class="mock-footer-l"></div>
+            <div class="mock-footer-l"></div>
+            <div class="mock-footer-l"></div>
+          </div>
+          <div class="mock-footer-col">
+            <div class="mock-footer-h"></div>
+            <div class="mock-footer-l"></div>
+            <div class="mock-footer-l"></div>
+          </div>
+          <div class="mock-footer-col">
+            <div class="mock-footer-h"></div>
+            <div class="mock-footer-l"></div>
+            <div class="mock-footer-l"></div>
+          </div>
+          <div class="mock-footer-col">
+            <div class="mock-footer-h"></div>
+            <div class="mock-footer-l"></div>
+          </div>
+        </div>
+
+        <!-- ── Annotation Pins (% positions from top/left of mockup-page) ── -->
+        <!-- Positions are approximate for each mockup section -->
+        <button class="pin" id="pin-1" data-pin="1" style="top:8px; left:50%; transform:translateX(-50%); --delay:0s" tabindex="0" aria-label="Pin 1: Navigation" aria-expanded="false">1</button>
+        <button class="pin" id="pin-2" data-pin="2" style="top:100px; right:20px; --delay:0.4s" tabindex="0" aria-label="Pin 2: Hero section" aria-expanded="false">2</button>
+        <button class="pin" id="pin-3" data-pin="3" style="top:198px; left:20px; --delay:0.8s" tabindex="0" aria-label="Pin 3: Social proof" aria-expanded="false">3</button>
+        <button class="pin" id="pin-4" data-pin="4" style="top:290px; right:20px; --delay:1.2s" tabindex="0" aria-label="Pin 4: Feature grid" aria-expanded="false">4</button>
+        <button class="pin" id="pin-5" data-pin="5" style="top:394px; left:20px; --delay:1.6s" tabindex="0" aria-label="Pin 5: CTA section" aria-expanded="false">5</button>
+        <button class="pin" id="pin-6" data-pin="6" style="bottom:8px; right:20px; --delay:2s" tabindex="0" aria-label="Pin 6: Footer" aria-expanded="false">6</button>
+
+        <!-- ── Explanation Panels (initially hidden) ── -->
+        <div class="pin-panel" id="panel-1" role="tooltip">
+          <button class="pin-panel-close" data-close="1" aria-label="Close">×</button>
+          <div class="pin-panel-num">Pin 1 — Navigation</div>
+          <div class="pin-panel-title">Sticky Navigation Bar</div>
+          <div class="pin-panel-desc">Stays fixed at the top as users scroll. Includes logo, 3 nav links, and a CTA button. Mobile: collapses to a hamburger menu. Reduces bounce by 18% on average.</div>
+        </div>
+        <div class="pin-panel" id="panel-2" role="tooltip">
+          <button class="pin-panel-close" data-close="2" aria-label="Close">×</button>
+          <div class="pin-panel-num">Pin 2 — Hero Section</div>
+          <div class="pin-panel-title">Above-the-Fold CTA</div>
+          <div class="pin-panel-desc">First thing visitors see. Loaded in under 1 second. Headline answers "what you do + who for." One primary CTA button only — no decision paralysis. Critical for conversions.</div>
+        </div>
+        <div class="pin-panel" id="panel-3" role="tooltip">
+          <button class="pin-panel-close" data-close="3" aria-label="Close">×</button>
+          <div class="pin-panel-num">Pin 3 — Social Proof</div>
+          <div class="pin-panel-title">Trust-Building Logo Bar</div>
+          <div class="pin-panel-desc">Client/partner logos immediately below the hero section. "As seen in" style logos. Even 3 logos here increase conversion rate by an average of 12-15% in A/B tests.</div>
+        </div>
+        <div class="pin-panel" id="panel-4" role="tooltip">
+          <button class="pin-panel-close" data-close="4" aria-label="Close">×</button>
+          <div class="pin-panel-num">Pin 4 — Feature Grid</div>
+          <div class="pin-panel-title">Benefits Grid</div>
+          <div class="pin-panel-desc">3-column grid answering "why choose us." Each card: icon, benefit headline, 1–2 sentences. Addresses objections before they form. Use benefits (what they get), not features (what it does).</div>
+        </div>
+        <div class="pin-panel" id="panel-5" role="tooltip">
+          <button class="pin-panel-close" data-close="5" aria-label="Close">×</button>
+          <div class="pin-panel-num">Pin 5 — CTA Section</div>
+          <div class="pin-panel-title">Mid-Page Conversion Point</div>
+          <div class="pin-panel-desc">A second CTA for visitors who scrolled past the hero. Usually a softer ask: "Get a free audit" vs "Buy now." Catches the 35% of visitors who need more persuasion before converting.</div>
+        </div>
+        <div class="pin-panel" id="panel-6" role="tooltip">
+          <button class="pin-panel-close" data-close="6" aria-label="Close">×</button>
+          <div class="pin-panel-num">Pin 6 — Footer</div>
+          <div class="pin-panel-title">SEO Links & Contact Info</div>
+          <div class="pin-panel-desc">Footer links pass PageRank to important pages. NAP (Name, Address, Phone) helps local SEO. Privacy policy and terms links are legally required in most countries. Sitemap link helps crawlers.</div>
+        </div>
+
+      </div><!-- /mockup-page -->
+    </div><!-- /browser-frame -->
+
+    <!-- Mobile: annotations list below diagram -->
+    <div class="mobile-annotations">
+      <div class="mob-ann" id="mob-1">
+        <div class="mob-ann-num">1</div>
+        <div>
+          <div class="mob-ann-title">Sticky Navigation Bar</div>
+          <div class="mob-ann-desc">Stays fixed at the top as users scroll. Mobile: hamburger menu. Reduces bounce by 18% on average.</div>
+        </div>
+      </div>
+      <div class="mob-ann" id="mob-2">
+        <div class="mob-ann-num">2</div>
+        <div>
+          <div class="mob-ann-title">Above-the-Fold CTA</div>
+          <div class="mob-ann-desc">Loaded under 1 second. Headline answers "what you do + who for." One primary CTA only.</div>
+        </div>
+      </div>
+      <div class="mob-ann" id="mob-3">
+        <div class="mob-ann-num">3</div>
+        <div>
+          <div class="mob-ann-title">Trust-Building Logo Bar</div>
+          <div class="mob-ann-desc">Client logos immediately below hero. Increases conversion by 12–15% in A/B tests.</div>
+        </div>
+      </div>
+      <div class="mob-ann" id="mob-4">
+        <div class="mob-ann-num">4</div>
+        <div>
+          <div class="mob-ann-title">Benefits Grid</div>
+          <div class="mob-ann-desc">3-column grid answering "why choose us." Use benefits (what they get), not features.</div>
+        </div>
+      </div>
+      <div class="mob-ann" id="mob-5">
+        <div class="mob-ann-num">5</div>
+        <div>
+          <div class="mob-ann-title">Mid-Page Conversion Point</div>
+          <div class="mob-ann-desc">Second CTA for visitors who scrolled past the hero. Softer ask — catches 35% who need more persuasion.</div>
+        </div>
+      </div>
+      <div class="mob-ann" id="mob-6">
+        <div class="mob-ann-num">6</div>
+        <div>
+          <div class="mob-ann-title">SEO Links & Contact Info</div>
+          <div class="mob-ann-desc">Footer links pass PageRank. NAP helps local SEO. Legally required: privacy policy and terms.</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /diagram-outer -->
+
+
+  <script>
+  /* ──────────────────────────────────────────
+     ANNOTATED DIAGRAM — Script
+     - Click/hover a pin → show its panel
+     - Smart positioning: flip if near edge
+     - Close button and outside-click dismiss
+  ────────────────────────────────────────── */
+
+  var activePinId = null;
+
+  function openPanel(pinNum) {
+    var pin   = document.getElementById('pin-' + pinNum);
+    var panel = document.getElementById('panel-' + pinNum);
+    if (!pin || !panel) return;
+
+    /* Close any open panel first */
+    closeAllPanels();
+    activePinId = pinNum;
+    pin.classList.add('active');
+    pin.setAttribute('aria-expanded', 'true');
+
+    /* Position panel relative to the mockup container */
+    var mockup   = document.getElementById('mockup-page');
+    var pinRect  = pin.getBoundingClientRect();
+    var mockRect = mockup.getBoundingClientRect();
+
+    /* Default: place to the right of the pin */
+    var top  = pinRect.top  - mockRect.top  + 28 + 4;
+    var left = pinRect.left - mockRect.left + 28 + 8;
+
+    /* Show panel briefly to get its width, then reposition if needed */
+    panel.style.top  = top  + 'px';
+    panel.style.left = left + 'px';
+    panel.style.right = 'auto';
+    panel.classList.add('visible');
+
+    /* Flip left if panel would go off-screen right */
+    var panelRect = panel.getBoundingClientRect();
+    if (panelRect.right > window.innerWidth - 16) {
+      panel.style.left  = 'auto';
+      panel.style.right = (mockRect.right - pinRect.left + 8) + 'px';
+    }
+
+    /* Highlight corresponding mobile annotation */
+    document.querySelectorAll('.mob-ann').forEach(function(m) { m.classList.remove('active'); });
+    var mob = document.getElementById('mob-' + pinNum);
+    if (mob) mob.classList.add('active');
+  }
+
+  function closeAllPanels() {
+    document.querySelectorAll('.pin-panel.visible').forEach(function(p) {
+      p.classList.remove('visible');
+    });
+    document.querySelectorAll('.pin.active').forEach(function(p) {
+      p.classList.remove('active');
+      p.setAttribute('aria-expanded', 'false');
+    });
+    document.querySelectorAll('.mob-ann.active').forEach(function(m) { m.classList.remove('active'); });
+    activePinId = null;
+  }
+
+  /* Pin click / hover */
+  document.querySelectorAll('.pin').forEach(function(pin) {
+    var num = pin.dataset.pin;
+
+    /* Hover (desktop) */
+    pin.addEventListener('mouseenter', function() { openPanel(num); });
+    pin.addEventListener('mouseleave', function() {
+      /* Small delay so cursor can move to panel */
+      setTimeout(function() {
+        var panel = document.getElementById('panel-' + num);
+        if (panel && !panel.matches(':hover')) closeAllPanels();
+      }, 200);
+    });
+
+    /* Click (mobile & keyboard) */
+    pin.addEventListener('click', function(e) {
+      e.stopPropagation();
+      if (activePinId === num) { closeAllPanels(); }
+      else { openPanel(num); }
+    });
+  });
+
+  /* Keep panel open while hovering it */
+  document.querySelectorAll('.pin-panel').forEach(function(panel) {
+    panel.addEventListener('mouseleave', function() {
+      setTimeout(function() { closeAllPanels(); }, 200);
+    });
+  });
+
+  /* Close buttons */
+  document.querySelectorAll('.pin-panel-close').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      closeAllPanels();
+    });
+  });
+
+  /* Outside click closes */
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.pin') && !e.target.closest('.pin-panel')) {
+      closeAllPanels();
+    }
+  });
+
+  /* Keyboard: Escape closes */
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeAllPanels();
+  });
+  </script>
+
+</body>
+</html>

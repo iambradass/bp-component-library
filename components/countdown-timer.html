@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Countdown Timer — Component Library</title>
+
+  <!--
+  /* COMPONENT: Countdown Timer | COPY: style + html + script */
+  Flip-card countdown with 3D CSS animation on each tick.
+  Top half folds down as current number reveals, bottom half unfolds for next.
+  On completion: confetti burst from pure CSS/JS (no library).
+  Set TARGET_DATE in the CUSTOMIZE block below.
+  -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+
+    /* ============================================================
+       CUSTOMIZE
+       ============================================================ */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --glow:           rgba(16,185,129,0.15);
+      --glow-strong:    rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --border-accent:  rgba(16,185,129,0.3);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+    }
+    /* ============================================================ */
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    /* ── Page header ── */
+    .ct-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+    .ct-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 0.75rem;
+    }
+    .ct-title {
+      font-family: var(--font-heading);
+      font-size: clamp(1.75rem, 5vw, 2.75rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+    }
+    .ct-subtitle {
+      color: var(--text-secondary);
+      font-size: 0.9375rem;
+      line-height: 1.6;
+    }
+
+    /* ── Flip clock row ── */
+    .ct-clock {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    /* Separator colon */
+    .ct-sep {
+      font-family: var(--font-heading);
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 1.75rem; /* aligns with digit blocks, not labels */
+      flex-shrink: 0;
+    }
+
+    /* Each unit (Days / Hrs / Min / Sec) */
+    .ct-unit {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* The flip card container — sets up 3D perspective */
+    .ct-flip {
+      position: relative;
+      width: 100px;
+      height: 110px;
+      perspective: 300px;
+      /* Accent top border on the card surface */
+    }
+
+    /* Top half of card (shows CURRENT number top portion) */
+    .ct-top {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      height: 50%;
+      background: var(--elevated);
+      border-radius: 10px 10px 0 0;
+      border: 1px solid var(--border);
+      border-bottom: 1px solid rgba(0,0,0,0.3);
+      /* Gradient to darken the fold crease */
+      overflow: hidden;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding-bottom: 0;
+      /* Accent line across the top */
+      box-shadow: inset 0 3px 0 var(--accent);
+    }
+    .ct-top-text {
+      font-family: var(--font-heading);
+      font-size: 3.5rem;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1;
+      transform: translateY(50%); /* sits in center of full card */
+      letter-spacing: -0.02em;
+    }
+
+    /* Bottom half (shows CURRENT number bottom portion) */
+    .ct-bottom {
+      position: absolute;
+      bottom: 0; left: 0;
+      width: 100%;
+      height: 50%;
+      background: var(--surface);
+      border-radius: 0 0 10px 10px;
+      border: 1px solid var(--border);
+      border-top: none;
+      overflow: hidden;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+    }
+    .ct-bottom-text {
+      font-family: var(--font-heading);
+      font-size: 3.5rem;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1;
+      transform: translateY(-50%);
+      letter-spacing: -0.02em;
+    }
+
+    /* ── The animated flap ──
+       Covers top half; rotates -90deg (fold down) on tick.
+       Shows current number while folding, reveals next underneath. */
+    .ct-flap {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      height: 50%;
+      background: var(--elevated);
+      border-radius: 10px 10px 0 0;
+      border: 1px solid var(--border);
+      border-bottom: none;
+      overflow: hidden;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      transform-origin: bottom center;
+      transform-style: preserve-3d;
+      /* z-index above static halves so it shows while animating */
+      z-index: 2;
+      box-shadow: inset 0 3px 0 var(--accent);
+    }
+    .ct-flap-text {
+      font-family: var(--font-heading);
+      font-size: 3.5rem;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1;
+      transform: translateY(50%);
+      letter-spacing: -0.02em;
+    }
+    /* Animation: flap rotates from 0 to -90deg in first half, then disappears */
+    .ct-flap.is-flipping {
+      animation: flip-top 0.35s ease-in forwards;
+    }
+    @keyframes flip-top {
+      0%   { transform: rotateX(0deg);   }
+      100% { transform: rotateX(-90deg); }
+    }
+
+    /* Bottom flap — reveals NEXT number's bottom half */
+    .ct-flap-bottom {
+      position: absolute;
+      bottom: 0; left: 0;
+      width: 100%;
+      height: 50%;
+      background: var(--elevated);
+      border-radius: 0 0 10px 10px;
+      border: 1px solid var(--border);
+      border-top: none;
+      overflow: hidden;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      transform-origin: top center;
+      transform-style: preserve-3d;
+      z-index: 2;
+      transform: rotateX(90deg); /* hidden initially */
+    }
+    .ct-flap-bottom-text {
+      font-family: var(--font-heading);
+      font-size: 3.5rem;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1;
+      transform: translateY(-50%);
+      letter-spacing: -0.02em;
+    }
+    /* Reveals bottom half of new number */
+    .ct-flap-bottom.is-flipping {
+      animation: flip-bottom 0.35s ease-out 0.17s forwards;
+    }
+    @keyframes flip-bottom {
+      0%   { transform: rotateX(90deg); }
+      100% { transform: rotateX(0deg); }
+    }
+
+    /* Label below each unit */
+    .ct-label {
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    /* ── Confetti canvas (overlays whole screen on completion) ── */
+    #ct-confetti {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* ── "Event has started" state ── */
+    .ct-complete {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      text-align: center;
+    }
+    .ct-complete.is-visible { display: flex; }
+    .ct-complete-icon {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: var(--glow);
+      border: 2px solid var(--border-accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+      animation: pop-in 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+    @keyframes pop-in {
+      0%   { transform: scale(0.3); opacity: 0; }
+      100% { transform: scale(1);   opacity: 1; }
+    }
+    .ct-complete-title {
+      font-family: var(--font-heading);
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .ct-complete-sub {
+      color: var(--text-secondary);
+      font-size: 0.9375rem;
+    }
+
+    /* ── Mobile responsive ── */
+    @media (max-width: 520px) {
+      .ct-flip { width: 70px; height: 80px; }
+      .ct-top-text, .ct-bottom-text,
+      .ct-flap-text, .ct-flap-bottom-text {
+        font-size: 2.5rem;
+      }
+      .ct-sep { font-size: 1.75rem; }
+      .ct-clock { gap: 6px; }
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- Page header -->
+  <div class="ct-header">
+    <p class="ct-eyebrow">Product Launch</p>
+    <h1 class="ct-title">Nexus 2.0 drops in</h1>
+    <p class="ct-subtitle">The biggest platform update we've ever shipped.</p>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       COUNTDOWN CLOCK — copy this block
+       ═══════════════════════════════════════════════════════════ -->
+  <div class="ct-clock" id="ct-clock" role="timer" aria-live="polite" aria-label="Countdown timer">
+
+    <!-- Days -->
+    <div class="ct-unit">
+      <div class="ct-flip" id="ct-days">
+        <div class="ct-top"><span class="ct-top-text">00</span></div>
+        <div class="ct-bottom"><span class="ct-bottom-text">00</span></div>
+        <div class="ct-flap"><span class="ct-flap-text">00</span></div>
+        <div class="ct-flap-bottom"><span class="ct-flap-bottom-text">00</span></div>
+      </div>
+      <span class="ct-label">Days</span>
+    </div>
+
+    <span class="ct-sep" aria-hidden="true">:</span>
+
+    <!-- Hours -->
+    <div class="ct-unit">
+      <div class="ct-flip" id="ct-hours">
+        <div class="ct-top"><span class="ct-top-text">00</span></div>
+        <div class="ct-bottom"><span class="ct-bottom-text">00</span></div>
+        <div class="ct-flap"><span class="ct-flap-text">00</span></div>
+        <div class="ct-flap-bottom"><span class="ct-flap-bottom-text">00</span></div>
+      </div>
+      <span class="ct-label">Hrs</span>
+    </div>
+
+    <span class="ct-sep" aria-hidden="true">:</span>
+
+    <!-- Minutes -->
+    <div class="ct-unit">
+      <div class="ct-flip" id="ct-mins">
+        <div class="ct-top"><span class="ct-top-text">00</span></div>
+        <div class="ct-bottom"><span class="ct-bottom-text">00</span></div>
+        <div class="ct-flap"><span class="ct-flap-text">00</span></div>
+        <div class="ct-flap-bottom"><span class="ct-flap-bottom-text">00</span></div>
+      </div>
+      <span class="ct-label">Min</span>
+    </div>
+
+    <span class="ct-sep" aria-hidden="true">:</span>
+
+    <!-- Seconds -->
+    <div class="ct-unit">
+      <div class="ct-flip" id="ct-secs">
+        <div class="ct-top"><span class="ct-top-text">00</span></div>
+        <div class="ct-bottom"><span class="ct-bottom-text">00</span></div>
+        <div class="ct-flap"><span class="ct-flap-text">00</span></div>
+        <div class="ct-flap-bottom"><span class="ct-flap-bottom-text">00</span></div>
+      </div>
+      <span class="ct-label">Sec</span>
+    </div>
+
+  </div>
+
+  <!-- Shown when timer hits zero -->
+  <div class="ct-complete" id="ct-complete">
+    <div class="ct-complete-icon">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <div class="ct-complete-title">It's live!</div>
+    <p class="ct-complete-sub">Nexus 2.0 has officially launched. Welcome to the future.</p>
+  </div>
+
+  <!-- Confetti canvas -->
+  <canvas id="ct-confetti"></canvas>
+
+
+  <script>
+  /* ============================================================
+     CUSTOMIZE: Change this date to your target
+     ============================================================ */
+  var TARGET_DATE = new Date();
+  TARGET_DATE.setDate(TARGET_DATE.getDate() + 30); // 30 days from now
+  /* ============================================================ */
+
+  (function() {
+    var clock    = document.getElementById('ct-clock');
+    var complete = document.getElementById('ct-complete');
+    var canvas   = document.getElementById('ct-confetti');
+
+    /* Helper: pad number to 2 digits */
+    function pad(n) { return String(n).padStart(2, '0'); }
+
+    /* Returns { days, hours, mins, secs } remaining */
+    function getTimeLeft() {
+      var diff = Math.max(0, TARGET_DATE - Date.now());
+      return {
+        days:  Math.floor(diff / 864e5),
+        hours: Math.floor((diff % 864e5) / 36e5),
+        mins:  Math.floor((diff % 36e5)  / 6e4),
+        secs:  Math.floor((diff % 6e4)   / 1e3)
+      };
+    }
+
+    /* Current displayed values (for change detection) */
+    var displayed = { days: -1, hours: -1, mins: -1, secs: -1 };
+
+    /* Animates a single flip unit when the value changes */
+    function flipUnit(id, nextVal) {
+      var wrap   = document.getElementById(id);
+      var top    = wrap.querySelector('.ct-top .ct-top-text');
+      var bottom = wrap.querySelector('.ct-bottom .ct-bottom-text');
+      var flap   = wrap.querySelector('.ct-flap');
+      var flapTx = wrap.querySelector('.ct-flap .ct-flap-text');
+      var flapB  = wrap.querySelector('.ct-flap-bottom');
+      var flapBx = wrap.querySelector('.ct-flap-bottom .ct-flap-bottom-text');
+
+      var currentVal = top.textContent;
+
+      /* The flap shows the CURRENT number while folding down */
+      flapTx.textContent = currentVal;
+      /* The static bottom-half of new number is set immediately */
+      bottom.textContent = nextVal;
+      /* The flap-bottom shows the NEW number's bottom half unfolding */
+      flapBx.textContent = nextVal;
+
+      /* Trigger flip animation by removing and re-adding class */
+      flap.classList.remove('is-flipping');
+      flapB.classList.remove('is-flipping');
+      void flap.offsetWidth; /* force reflow to restart animation */
+      flap.classList.add('is-flipping');
+      flapB.classList.add('is-flipping');
+
+      /* After animation completes, update the static top half */
+      setTimeout(function() {
+        top.textContent = nextVal;
+        flap.classList.remove('is-flipping');
+        flapB.classList.remove('is-flipping');
+        /* Reset flap-bottom so it's ready for next flip */
+        flapBx.textContent = nextVal;
+      }, 400);
+    }
+
+    /* Updates all 4 units, only animating ones that changed */
+    function tick() {
+      var t = getTimeLeft();
+      var vals = {
+        'ct-days':  pad(t.days),
+        'ct-hours': pad(t.hours),
+        'ct-mins':  pad(t.mins),
+        'ct-secs':  pad(t.secs)
+      };
+      var keys = Object.keys(vals);
+      var prevArr = [displayed.days, displayed.hours, displayed.mins, displayed.secs];
+
+      ['days','hours','mins','secs'].forEach(function(key, i) {
+        var newVal = pad(t[key]);
+        if (prevArr[i] !== newVal) {
+          flipUnit('ct-' + key, newVal);
+        }
+      });
+
+      displayed = { days: pad(t.days), hours: pad(t.hours), mins: pad(t.mins), secs: pad(t.secs) };
+
+      if (t.days === 0 && t.hours === 0 && t.mins === 0 && t.secs === 0) {
+        clearInterval(timer);
+        clock.style.display = 'none';
+        complete.classList.add('is-visible');
+        launchConfetti();
+      }
+    }
+
+    /* Initial display without animation */
+    var t0 = getTimeLeft();
+    ['ct-days','ct-hours','ct-mins','ct-secs'].forEach(function(id, i) {
+      var key = ['days','hours','mins','secs'][i];
+      var val = pad(t0[key]);
+      var wrap = document.getElementById(id);
+      wrap.querySelectorAll('span').forEach(function(s) { s.textContent = val; });
+    });
+    displayed = { days: pad(t0.days), hours: pad(t0.hours), mins: pad(t0.mins), secs: pad(t0.secs) };
+
+    var timer = setInterval(tick, 1000);
+
+
+    /* ── Confetti burst ──
+       Pure CSS/JS particles: colored squares rain down from the top.
+       Each particle is a canvas-drawn rectangle with random color, size,
+       position, and fall speed. */
+    function launchConfetti() {
+      var ctx = canvas.getContext('2d');
+      canvas.width  = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      var COLORS = ['#10B981','#34D399','#6EE7B7','#3B82F6','#8B5CF6','#F59E0B','#EF4444','#F8FAFC'];
+      var particles = [];
+
+      /* Create 150 particles */
+      for (var i = 0; i < 150; i++) {
+        particles.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * -canvas.height, /* start above viewport */
+          w: 6 + Math.random() * 10,
+          h: 8 + Math.random() * 6,
+          color: COLORS[Math.floor(Math.random() * COLORS.length)],
+          vy: 2 + Math.random() * 4,   /* fall speed */
+          vx: (Math.random() - 0.5) * 2, /* horizontal drift */
+          rot: Math.random() * Math.PI * 2,
+          rotV: (Math.random() - 0.5) * 0.15,
+          opacity: 0.8 + Math.random() * 0.2
+        });
+      }
+
+      var startTime = performance.now();
+      var duration  = 4000; /* ms to show confetti */
+
+      function drawConfetti(now) {
+        var elapsed = now - startTime;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        particles.forEach(function(p) {
+          p.y   += p.vy;
+          p.x   += p.vx;
+          p.rot += p.rotV;
+          /* Fade out in last second */
+          var fade = elapsed > duration - 1000 ? 1 - (elapsed - (duration - 1000)) / 1000 : 1;
+
+          ctx.save();
+          ctx.translate(p.x + p.w / 2, p.y + p.h / 2);
+          ctx.rotate(p.rot);
+          ctx.globalAlpha = p.opacity * fade;
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+          ctx.restore();
+        });
+
+        if (elapsed < duration) {
+          requestAnimationFrame(drawConfetti);
+        } else {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+      }
+
+      requestAnimationFrame(drawConfetti);
+    }
+
+  })();
+  </script>
+
+</body>
+</html>

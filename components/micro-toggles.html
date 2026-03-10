@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Micro Toggles — Component Library</title>
+  <!-- COMPONENT: Micro Toggles | COPY: style + html + script -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── CUSTOMIZE ─────────────────────────────────────────────── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --danger:         #EF4444;
+      --warn:           #F59E0B;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+    }
+    /* ── END CUSTOMIZE ─────────────────────────────────────────── */
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font-body); padding: 2rem 1.5rem 5rem; }
+
+    .page-title { font-family: var(--font-heading); font-size: clamp(1.5rem,4vw,2.25rem); font-weight:700; letter-spacing:-0.02em; margin-bottom:0.4rem; }
+    .page-sub { color: var(--text-secondary); font-size:0.9375rem; margin-bottom:3rem; }
+    .max-wrap { max-width: 900px; margin: 0 auto; }
+
+    .section-title {
+      font-family: var(--font-heading); font-size:1rem; font-weight:600;
+      color: var(--accent); margin-bottom:1.25rem;
+      padding-bottom:0.75rem; border-bottom:1px solid var(--border);
+    }
+
+    .demo-block {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 2rem; margin-bottom: 2rem;
+    }
+
+    .demo-row {
+      display: flex; align-items: center; gap: 1.5rem; padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border); flex-wrap: wrap;
+    }
+    .demo-row:last-child { border-bottom: none; }
+
+    .demo-desc {
+      font-size: 0.875rem; color: var(--text-secondary);
+      flex: 1; min-width: 200px;
+    }
+    .demo-sub {
+      font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;
+    }
+
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       TOGGLE SWITCHES
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+    /* Hide native checkbox, show custom toggle */
+    .toggle-wrap { position: relative; display: inline-block; }
+    .toggle-wrap input[type="checkbox"] {
+      opacity: 0; width: 0; height: 0; position: absolute;
+    }
+
+    /* ── Toggle 1 — Standard ──────────────────────────────── */
+    .toggle-std { display: inline-block; width: 50px; height: 28px; cursor: pointer; }
+    .toggle-std .track {
+      width: 100%; height: 100%; border-radius: 100px;
+      background: var(--elevated); border: 1.5px solid var(--border);
+      position: relative; transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    .toggle-std .thumb {
+      position: absolute; top: 3px; left: 3px;
+      width: 20px; height: 20px; border-radius: 50%;
+      background: var(--text-muted);
+      transition: transform 0.3s ease, background 0.3s ease;
+    }
+    input:checked ~ .toggle-std .track {
+      background: var(--accent); border-color: var(--accent);
+      box-shadow: 0 0 10px rgba(16,185,129,0.3);
+    }
+    input:checked ~ .toggle-std .thumb {
+      transform: translateX(22px); background: #0D1117;
+    }
+
+    /* ── Toggle 2 — Springy ───────────────────────────────── */
+    .toggle-spring .track {
+      width: 50px; height: 28px; border-radius: 100px;
+      background: var(--elevated); border: 1.5px solid var(--border);
+      position: relative; cursor: pointer;
+      transition: background 0.3s ease, border-color 0.3s ease;
+    }
+    .toggle-spring .thumb {
+      position: absolute; top: 3px; left: 3px;
+      width: 20px; height: 20px; border-radius: 50%;
+      background: var(--text-muted);
+      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.3s ease;
+    }
+    input:checked ~ .toggle-spring .track { background: var(--accent); border-color: var(--accent); }
+    input:checked ~ .toggle-spring .thumb { transform: translateX(22px); background: #0D1117; }
+
+    /* ── Toggle 3 — Emoji mode ────────────────────────────── */
+    .toggle-emoji .track {
+      width: 54px; height: 30px; border-radius: 100px;
+      background: #1a2744; border: 1.5px solid rgba(99,130,201,0.3);
+      position: relative; cursor: pointer;
+      transition: background 0.4s ease, border-color 0.3s ease;
+    }
+    .toggle-emoji .thumb {
+      position: absolute; top: 3px; left: 3px;
+      width: 22px; height: 22px; border-radius: 50%;
+      background: var(--elevated); font-size: 14px;
+      display: flex; align-items: center; justify-content: center;
+      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      user-select: none;
+    }
+    input:checked ~ .toggle-emoji .track { background: #FFF3CD; border-color: rgba(251,191,36,0.4); }
+    input:checked ~ .toggle-emoji .thumb { transform: translateX(22px); }
+
+    /* ── Toggle 4 — Labeled ───────────────────────────────── */
+    .toggle-labeled .track {
+      width: 70px; height: 30px; border-radius: 100px;
+      background: var(--elevated); border: 1.5px solid var(--border);
+      position: relative; cursor: pointer; overflow: hidden;
+      transition: border-color 0.3s ease;
+    }
+    .toggle-labeled .label-on,
+    .toggle-labeled .label-off {
+      position: absolute; top: 50%; font-size: 10px; font-weight: 700;
+      font-family: var(--font-heading); transform: translateY(-50%);
+      transition: opacity 0.25s ease;
+    }
+    .toggle-labeled .label-on  { left: 10px;  color: #0D1117; opacity: 0; }
+    .toggle-labeled .label-off { right: 10px; color: var(--text-muted); opacity: 1; }
+    .toggle-labeled .thumb {
+      position: absolute; top: 3px; left: 3px;
+      width: 22px; height: 22px; border-radius: 50%;
+      background: var(--text-muted);
+      transition: transform 0.35s ease, background 0.3s ease;
+      z-index: 2;
+    }
+    input:checked ~ .toggle-labeled .track { background: var(--accent); border-color: var(--accent); }
+    input:checked ~ .toggle-labeled .thumb { transform: translateX(38px); background: #0D1117; }
+    input:checked ~ .toggle-labeled .label-on  { opacity: 1; }
+    input:checked ~ .toggle-labeled .label-off { opacity: 0; }
+
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       CHECKBOXES
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+    .cb-wrap {
+      display: inline-flex; align-items: center; gap: 10px; cursor: pointer;
+    }
+    .cb-wrap input { opacity: 0; position: absolute; width: 0; height: 0; }
+
+    /* CB1 — SVG draw checkmark */
+    .cb-draw .box {
+      width: 22px; height: 22px; border-radius: 6px;
+      border: 2px solid var(--border); background: transparent;
+      position: relative; transition: background 0.2s ease, border-color 0.2s ease;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .cb-draw .box svg { overflow: visible; }
+    .cb-draw .check-path {
+      fill: none; stroke: #0D1117; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
+      stroke-dasharray: 18; stroke-dashoffset: 18;
+      transition: stroke-dashoffset 0.25s ease;
+    }
+    .cb-draw input:checked ~ .box { background: var(--accent); border-color: var(--accent); }
+    .cb-draw input:checked ~ .box .check-path { stroke-dashoffset: 0; }
+
+    /* CB2 — Scale burst */
+    .cb-burst .box {
+      width: 22px; height: 22px; border-radius: 6px;
+      border: 2px solid var(--border); background: transparent;
+      position: relative; transition: background 0.2s ease, border-color 0.2s ease;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .cb-burst .burst-ring {
+      position: absolute; inset: -6px; border-radius: 50%;
+      border: 2px solid var(--accent);
+      transform: scale(0); opacity: 0;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+    }
+    .cb-burst input:checked ~ .box { background: var(--accent); border-color: var(--accent); }
+    .cb-burst input:checked ~ .box .burst-ring {
+      transform: scale(1.4); opacity: 0;
+      animation: burst-out 0.4s ease forwards;
+    }
+    @keyframes burst-out {
+      0%   { transform: scale(0); opacity: 0.8; }
+      100% { transform: scale(1.8); opacity: 0; }
+    }
+    .cb-burst input:checked ~ .box .check-icon { display: block; }
+    .cb-burst .check-icon { display: none; color: #0D1117; font-size: 13px; }
+
+    /* CB3 — Indeterminate state machine */
+    .cb-states .box {
+      width: 22px; height: 22px; border-radius: 6px;
+      border: 2px solid var(--accent-border); background: var(--accent-dim);
+      position: relative;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+    }
+    .cb-states .dash-icon {
+      width: 10px; height: 2px; background: var(--accent); border-radius: 2px;
+      transition: all 0.25s ease;
+    }
+
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       RADIO GROUP
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+    /* R1 — Spring dot */
+    .radio-group { display: flex; flex-direction: column; gap: 10px; }
+    .radio-item { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+    .radio-item input { opacity: 0; position: absolute; width: 0; height: 0; }
+    .radio-circle {
+      width: 20px; height: 20px; border-radius: 50%;
+      border: 2px solid var(--border); background: transparent;
+      position: relative; transition: border-color 0.2s ease;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .radio-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--accent);
+      transform: scale(0);
+      transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .radio-item input:checked ~ .radio-circle { border-color: var(--accent); }
+    .radio-item input:checked ~ .radio-circle .radio-dot { transform: scale(1); }
+    .radio-item span { font-size: 0.875rem; }
+
+    /* R2 — Sliding pill select */
+    .pill-select { display: flex; background: var(--elevated); border-radius: 100px; padding: 3px; gap: 0; position: relative; width: fit-content; }
+    .pill-option {
+      position: relative; z-index: 1;
+      padding: 6px 16px;
+      font-family: var(--font-heading); font-size: 0.8125rem; font-weight: 600;
+      color: var(--text-muted); cursor: pointer;
+      border-radius: 100px;
+      transition: color 0.25s ease;
+      user-select: none; white-space: nowrap;
+    }
+    .pill-option.active { color: #0D1117; }
+    .pill-indicator {
+      position: absolute; top: 3px; height: calc(100% - 6px);
+      background: var(--accent); border-radius: 100px;
+      transition: left 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), width 0.3s ease;
+      z-index: 0;
+    }
+
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       REACTION BUTTONS
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+    .reaction-row { display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap; }
+
+    /* RB1 — Heart like */
+    .reaction-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--elevated); border: 1px solid var(--border);
+      border-radius: 100px; padding: 8px 16px; cursor: pointer;
+      font-family: var(--font-heading); font-size: 0.875rem; font-weight: 600;
+      color: var(--text-secondary);
+      transition: border-color 0.2s ease, color 0.2s ease;
+      user-select: none;
+    }
+    .reaction-btn:hover { border-color: var(--accent-border); }
+
+    .heart-icon { font-size: 1.1rem; transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    .reaction-btn.liked { color: #EF4444; border-color: rgba(239,68,68,0.4); background: rgba(239,68,68,0.08); }
+    .reaction-btn.liked .heart-icon { transform: scale(1.3); }
+
+    /* RB2 — Star bookmark */
+    .star-icon { font-size: 1.1rem; transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    .reaction-btn.starred { color: var(--warn); border-color: rgba(245,158,11,0.4); background: rgba(245,158,11,0.08); }
+    .reaction-btn.starred .star-icon { transform: scale(0.8); animation: stamp 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+    @keyframes stamp {
+      0%   { transform: scale(1.5); }
+      100% { transform: scale(1); }
+    }
+
+    /* RB3 — Upvote with flip number */
+    .upvote-num-wrap {
+      overflow: hidden; height: 1.2em; position: relative;
+      display: inline-block;
+    }
+    .upvote-num {
+      display: block;
+      transition: transform 0.3s ease, opacity 0.2s ease;
+    }
+    .upvote-num.flip-out { transform: translateY(-100%); opacity: 0; }
+    .upvote-num.flip-in  { transform: translateY(100%); }
+    .reaction-btn.upvoted { color: var(--accent); border-color: var(--accent-border); background: var(--accent-dim); }
+  </style>
+</head>
+<body>
+
+<div class="max-wrap">
+  <h1 class="page-title">Micro Toggles</h1>
+  <p class="page-sub">Toggle switches, checkboxes, radio groups, and reaction buttons — all with physics and personality.</p>
+
+  <!-- TOGGLES -->
+  <div class="section-title">Toggle Switches</div>
+  <div class="demo-block">
+
+    <div class="demo-row">
+      <label class="toggle-wrap">
+        <input type="checkbox" id="t1">
+        <label for="t1" class="toggle-std">
+          <div class="track"><div class="thumb"></div></div>
+        </label>
+      </label>
+      <div>
+        <div class="demo-desc">Standard toggle</div>
+        <div class="demo-sub">Smooth slide with accent glow on active</div>
+      </div>
+    </div>
+
+    <div class="demo-row">
+      <label class="toggle-wrap">
+        <input type="checkbox" id="t2">
+        <label for="t2" class="toggle-spring">
+          <div class="track"><div class="thumb"></div></div>
+        </label>
+      </label>
+      <div>
+        <div class="demo-desc">Springy toggle</div>
+        <div class="demo-sub">Thumb overshoots then settles — cubic-bezier(0.34, 1.56, 0.64, 1)</div>
+      </div>
+    </div>
+
+    <div class="demo-row">
+      <label class="toggle-wrap">
+        <input type="checkbox" id="t3">
+        <label for="t3" class="toggle-emoji">
+          <div class="track">
+            <div class="thumb" id="emoji-thumb">🌙</div>
+          </div>
+        </label>
+      </label>
+      <div>
+        <div class="demo-desc">Emoji mode toggle</div>
+        <div class="demo-sub">🌙 / ☀️ dark-light mode toggle</div>
+      </div>
+    </div>
+
+    <div class="demo-row">
+      <label class="toggle-wrap">
+        <input type="checkbox" id="t4">
+        <label for="t4" class="toggle-labeled">
+          <div class="track">
+            <span class="label-on">ON</span>
+            <span class="label-off">OFF</span>
+            <div class="thumb"></div>
+          </div>
+        </label>
+      </label>
+      <div>
+        <div class="demo-desc">Labeled toggle</div>
+        <div class="demo-sub">ON/OFF text slides inside the track</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- CHECKBOXES -->
+  <div class="section-title">Checkbox Variants</div>
+  <div class="demo-block">
+
+    <div class="demo-row">
+      <label class="cb-wrap cb-draw">
+        <input type="checkbox">
+        <div class="box">
+          <svg width="12" height="10" viewBox="0 0 12 10">
+            <polyline class="check-path" points="1 5 4.5 8.5 11 1"/>
+          </svg>
+        </div>
+        <span>Draw checkmark (SVG stroke-dashoffset)</span>
+      </label>
+    </div>
+
+    <div class="demo-row">
+      <label class="cb-wrap cb-burst">
+        <input type="checkbox">
+        <div class="box">
+          <div class="burst-ring"></div>
+          <span class="check-icon">✓</span>
+        </div>
+        <span>Scale burst (ring radiates on check)</span>
+      </label>
+    </div>
+
+    <div class="demo-row" id="cb-state-row">
+      <div class="cb-states" id="cb-states">
+        <div class="box" onclick="cycleCheckState()" style="cursor:pointer;">
+          <div class="dash-icon" id="state-icon"></div>
+        </div>
+      </div>
+      <span style="font-size:0.875rem; margin-left:10px;">Indeterminate state cycle (click to cycle: unchecked → indeterminate → checked)</span>
+    </div>
+
+  </div>
+
+  <!-- RADIO -->
+  <div class="section-title">Radio Groups</div>
+  <div class="demo-block" style="display:grid; grid-template-columns:1fr 1fr; gap:2rem;">
+
+    <div>
+      <div style="font-size:0.6875rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.07em; margin-bottom:1rem;">Spring dot</div>
+      <div class="radio-group">
+        <label class="radio-item">
+          <input type="radio" name="plan" value="starter" checked>
+          <div class="radio-circle"><div class="radio-dot"></div></div>
+          <span>Starter Plan</span>
+        </label>
+        <label class="radio-item">
+          <input type="radio" name="plan" value="pro">
+          <div class="radio-circle"><div class="radio-dot"></div></div>
+          <span>Professional</span>
+        </label>
+        <label class="radio-item">
+          <input type="radio" name="plan" value="agency">
+          <div class="radio-circle"><div class="radio-dot"></div></div>
+          <span>Agency</span>
+        </label>
+      </div>
+    </div>
+
+    <div>
+      <div style="font-size:0.6875rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.07em; margin-bottom:1rem;">Sliding pill select</div>
+      <div class="pill-select" id="pill-select">
+        <div class="pill-indicator" id="pill-indicator"></div>
+        <div class="pill-option active" onclick="selectPill(this)">Monthly</div>
+        <div class="pill-option" onclick="selectPill(this)">Annual</div>
+        <div class="pill-option" onclick="selectPill(this)">Lifetime</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REACTIONS -->
+  <div class="section-title">Reaction Buttons</div>
+  <div class="demo-block">
+    <div class="reaction-row">
+
+      <div>
+        <button class="reaction-btn" id="heart-btn" onclick="toggleHeart()">
+          <span class="heart-icon">🤍</span>
+          <span id="heart-count">248</span>
+        </button>
+        <div style="font-size:0.6875rem; color:var(--text-muted); margin-top:6px; text-transform:uppercase; letter-spacing:0.07em;">Heart like</div>
+      </div>
+
+      <div>
+        <button class="reaction-btn" id="star-btn" onclick="toggleStar()">
+          <span class="star-icon">☆</span>
+          <span>Bookmark</span>
+        </button>
+        <div style="font-size:0.6875rem; color:var(--text-muted); margin-top:6px; text-transform:uppercase; letter-spacing:0.07em;">Star stamp</div>
+      </div>
+
+      <div>
+        <button class="reaction-btn" id="upvote-btn" onclick="toggleUpvote()">
+          <span>▲</span>
+          <span class="upvote-num-wrap"><span class="upvote-num" id="upvote-num">42</span></span>
+        </button>
+        <div style="font-size:0.6875rem; color:var(--text-muted); margin-top:6px; text-transform:uppercase; letter-spacing:0.07em;">Upvote flip</div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ── Emoji toggle — swap emoji on change ─────────────────────── */
+document.getElementById('t3').addEventListener('change', function() {
+  document.getElementById('emoji-thumb').textContent = this.checked ? '☀️' : '🌙';
+});
+
+/* ── Pill select — sliding indicator ─────────────────────────── */
+(function() {
+  var container = document.getElementById('pill-select');
+  var indicator = document.getElementById('pill-indicator');
+
+  function updateIndicator(el) {
+    indicator.style.left  = el.offsetLeft + 'px';
+    indicator.style.width = el.offsetWidth + 'px';
+  }
+
+  // Initialize on first active option
+  var active = container.querySelector('.pill-option.active');
+  if (active) {
+    // Wait for layout
+    setTimeout(function() { updateIndicator(active); }, 0);
+  }
+
+  window.selectPill = function(el) {
+    container.querySelectorAll('.pill-option').forEach(function(o) { o.classList.remove('active'); });
+    el.classList.add('active');
+    updateIndicator(el);
+  };
+})();
+
+/* ── Indeterminate checkbox state machine ─────────────────────── */
+var cbState = 0; // 0=unchecked, 1=indeterminate, 2=checked
+var stateIcon = document.getElementById('state-icon');
+var stateBox  = document.querySelector('#cb-states .box');
+
+window.cycleCheckState = function() {
+  cbState = (cbState + 1) % 3;
+  if (cbState === 0) {
+    // Unchecked
+    stateIcon.style.cssText = 'width:10px; height:2px; background:var(--accent); opacity:0; transform:none;';
+    stateBox.style.background = 'transparent';
+    stateBox.style.borderColor = 'var(--border)';
+  } else if (cbState === 1) {
+    // Indeterminate
+    stateIcon.style.cssText = 'width:10px; height:2px; background:var(--accent); border-radius:2px; opacity:1;';
+    stateBox.style.background = 'var(--accent-dim)';
+    stateBox.style.borderColor = 'var(--accent-border)';
+  } else {
+    // Checked
+    stateIcon.style.cssText = 'width:12px; height:12px; border-radius:2px; background:transparent;';
+    stateIcon.innerHTML = '✓';
+    stateIcon.style.cssText += 'color:var(--accent); font-weight:700; font-size:14px; display:flex; align:center;';
+    stateBox.style.background = 'var(--accent-dim)';
+    stateBox.style.borderColor = 'var(--accent-border)';
+  }
+};
+
+/* ── Heart toggle ─────────────────────────────────────────────── */
+var heartActive = false;
+var heartCount  = 248;
+window.toggleHeart = function() {
+  var btn  = document.getElementById('heart-btn');
+  var icon = btn.querySelector('.heart-icon');
+  var num  = document.getElementById('heart-count');
+
+  heartActive = !heartActive;
+  btn.classList.toggle('liked', heartActive);
+  icon.textContent = heartActive ? '❤️' : '🤍';
+  heartCount += heartActive ? 1 : -1;
+  num.textContent = heartCount;
+};
+
+/* ── Star toggle ──────────────────────────────────────────────── */
+var starActive = false;
+window.toggleStar = function() {
+  var btn  = document.getElementById('star-btn');
+  var icon = btn.querySelector('.star-icon');
+
+  starActive = !starActive;
+  btn.classList.toggle('starred', starActive);
+  icon.textContent = starActive ? '★' : '☆';
+  btn.querySelector('span:last-child').textContent = starActive ? 'Saved!' : 'Bookmark';
+};
+
+/* ── Upvote with flip-number animation ───────────────────────── */
+var upvoteActive = false;
+var upvoteCount  = 42;
+window.toggleUpvote = function() {
+  var btn    = document.getElementById('upvote-btn');
+  var numEl  = document.getElementById('upvote-num');
+
+  upvoteActive = !upvoteActive;
+  upvoteCount += upvoteActive ? 1 : -1;
+  btn.classList.toggle('upvoted', upvoteActive);
+
+  // Flip animation: slide out, swap, slide in
+  numEl.classList.add('flip-out');
+  setTimeout(function() {
+    numEl.textContent = upvoteCount;
+    numEl.classList.remove('flip-out');
+    numEl.classList.add('flip-in');
+    // Force reflow
+    numEl.getBoundingClientRect();
+    numEl.classList.remove('flip-in');
+  }, 200);
+};
+</script>
+</body>
+</html>

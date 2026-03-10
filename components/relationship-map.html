@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Relationship Map</title>
+  <!-- COMPONENT: Relationship Map | COPY: style + html + script -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── CUSTOMIZE ── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --glow:           rgba(16,185,129,0.15);
+      --glow-strong:    rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --border-accent:  rgba(16,185,129,0.3);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      padding: 2rem 1.5rem 4rem;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+    .page-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.75rem;
+    }
+    .page-title {
+      font-family: var(--font-heading);
+      font-size: clamp(1.75rem, 4vw, 2.5rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+    }
+    .page-desc {
+      color: var(--text-secondary);
+      font-size: 0.9375rem;
+      max-width: 560px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    /* Mode tabs */
+    .mode-tabs {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+      margin-bottom: 2rem;
+    }
+    .mode-tab {
+      padding: 0.5rem 1.25rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-muted);
+      font-family: var(--font-heading);
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s, background 0.2s;
+    }
+    .mode-tab:hover { border-color: var(--border-accent); color: var(--text-secondary); }
+    .mode-tab.active { background: var(--glow); border-color: var(--border-accent); color: var(--accent); }
+
+    /* ── Diagram panels ── */
+    .diagram-panel {
+      display: none;
+    }
+    .diagram-panel.active { display: block; }
+
+    /* Scrollable SVG container */
+    .svg-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .svg-wrap svg {
+      display: block;
+    }
+
+    /* ── Node tooltip ── */
+    .node-tooltip {
+      position: fixed;
+      background: var(--elevated);
+      border: 1px solid var(--border-accent);
+      border-radius: 10px;
+      padding: 0.875rem 1rem;
+      max-width: 250px;
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(4px);
+      transition: opacity 0.18s ease, transform 0.18s ease;
+      z-index: 100;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+    }
+    .node-tooltip.visible { opacity: 1; transform: translateY(0); }
+    .node-tooltip-title {
+      font-family: var(--font-heading);
+      font-size: 0.9375rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 0.25rem;
+    }
+    .node-tooltip-desc {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      line-height: 1.55;
+    }
+
+    /* ── Mode B: Org chart ── */
+    .org-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    .org-tree {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 600px;
+    }
+
+    .org-node-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* Vertical connector line coming DOWN from parent */
+    .org-connector-v {
+      width: 2px;
+      background: var(--border);
+      height: 24px;
+      flex-shrink: 0;
+    }
+
+    /* Horizontal bar connecting siblings */
+    .org-children-row {
+      display: flex;
+      gap: 0;
+      align-items: flex-start;
+      position: relative;
+    }
+
+    /* The horizontal line drawn across the top of all children */
+    .org-h-line {
+      position: absolute;
+      top: 0;
+      height: 2px;
+      background: var(--border);
+      pointer-events: none;
+    }
+
+    .org-child-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex: 1;
+    }
+
+    /* Short connector drop from the h-line to the node */
+    .org-child-v {
+      width: 2px;
+      background: var(--border);
+      height: 20px;
+      flex-shrink: 0;
+    }
+
+    /* Org node box */
+    .org-node {
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      font-family: var(--font-heading);
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      white-space: nowrap;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      position: relative;
+    }
+    .org-node:hover { border-color: var(--border-accent); background: var(--glow); }
+    .org-node.root {
+      background: var(--glow);
+      border-color: var(--border-accent);
+      color: var(--accent);
+      font-size: 0.9375rem;
+      padding: 10px 18px;
+    }
+    .org-node.level-2 { border-color: rgba(59,130,246,0.3); }
+    .org-node.level-2:hover { background: rgba(59,130,246,0.08); }
+    .org-node.level-3 { font-size: 0.75rem; padding: 6px 10px; color: var(--text-secondary); }
+
+    /* Collapse indicator */
+    .org-toggle {
+      font-size: 0.625rem;
+      color: var(--text-muted);
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 1px 4px;
+      transition: color 0.2s;
+    }
+    .org-node:hover .org-toggle { color: var(--accent); }
+
+    /* When a branch is collapsed, hide the children below */
+    .org-branch.collapsed > .org-connector-v,
+    .org-branch.collapsed > .org-children-row {
+      display: none;
+    }
+
+    /* Grandchildren row — nested under level-2 nodes */
+    .org-grandchildren {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="page-header">
+    <div class="page-eyebrow">Relationship Map</div>
+    <h1 class="page-title">Relationship & Connection Map</h1>
+    <p class="page-desc">Two modes: a force-positioned node diagram showing how digital marketing channels connect, and a collapsible org chart for hierarchical structures.</p>
+  </header>
+
+  <!-- Mode tabs -->
+  <div class="mode-tabs">
+    <button class="mode-tab active" data-mode="node">Mode A — Connection Map</button>
+    <button class="mode-tab" data-mode="org">Mode B — Org Chart</button>
+  </div>
+
+  <!-- MODE A: Node connection map (SVG) -->
+  <div class="diagram-panel active" id="panel-node">
+    <div class="svg-wrap">
+      <svg id="node-svg" viewBox="0 0 760 480" width="760" height="480"
+           role="img" aria-label="Digital marketing channel relationship map">
+        <defs>
+          <marker id="arr" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="rgba(148,163,184,0.35)"/>
+          </marker>
+          <marker id="arr-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="rgba(16,185,129,0.7)"/>
+          </marker>
+        </defs>
+
+        <!-- EDGES (drawn first so nodes appear on top) -->
+        <!-- Strong connections — solid lines -->
+        <!-- Website ↔ SEO -->
+        <line class="map-edge" data-from="website" data-to="seo" x1="380" y1="240" x2="190" y2="120" stroke="rgba(16,185,129,0.5)" stroke-width="2.5" marker-end="url(#arr-accent)"/>
+        <!-- Website ↔ Google Ads -->
+        <line class="map-edge" data-from="website" data-to="ads" x1="380" y1="240" x2="570" y2="120" stroke="rgba(16,185,129,0.5)" stroke-width="2.5" marker-end="url(#arr-accent)"/>
+        <!-- Website ↔ Email -->
+        <line class="map-edge" data-from="website" data-to="email" x1="380" y1="240" x2="190" y2="360" stroke="rgba(16,185,129,0.5)" stroke-width="2.5" marker-end="url(#arr-accent)"/>
+        <!-- Website ↔ Social -->
+        <line class="map-edge" data-from="website" data-to="social" x1="380" y1="240" x2="570" y2="360" stroke="rgba(16,185,129,0.5)" stroke-width="2.5" marker-end="url(#arr-accent)"/>
+        <!-- Website ↔ Content -->
+        <line class="map-edge" data-from="website" data-to="content" x1="380" y1="240" x2="380" y2="100" stroke="rgba(16,185,129,0.5)" stroke-width="2.5" marker-end="url(#arr-accent)"/>
+        <!-- Website ↔ Analytics -->
+        <line class="map-edge" data-from="website" data-to="analytics" x1="380" y1="240" x2="380" y2="380" stroke="rgba(16,185,129,0.5)" stroke-width="2.5" marker-end="url(#arr-accent)"/>
+
+        <!-- Weak connections — dashed lines between satellites -->
+        <!-- SEO ↔ Content -->
+        <line class="map-edge" data-from="seo" data-to="content" x1="190" y1="120" x2="380" y2="100" stroke="rgba(148,163,184,0.25)" stroke-width="1" stroke-dasharray="5,4"/>
+        <!-- Content ↔ Social -->
+        <line class="map-edge" data-from="content" data-to="social" x1="380" y1="100" x2="570" y2="360" stroke="rgba(148,163,184,0.25)" stroke-width="1" stroke-dasharray="5,4"/>
+        <!-- Google Ads ↔ Analytics -->
+        <line class="map-edge" data-from="ads" data-to="analytics" x1="570" y1="120" x2="380" y2="380" stroke="rgba(148,163,184,0.25)" stroke-width="1" stroke-dasharray="5,4"/>
+        <!-- Email ↔ Social -->
+        <line class="map-edge" data-from="email" data-to="social" x1="190" y1="360" x2="570" y2="360" stroke="rgba(148,163,184,0.25)" stroke-width="1" stroke-dasharray="5,4"/>
+        <!-- SEO ↔ Email -->
+        <line class="map-edge" data-from="seo" data-to="email" x1="190" y1="120" x2="190" y2="360" stroke="rgba(148,163,184,0.2)" stroke-width="1" stroke-dasharray="5,4"/>
+
+        <!-- NODES (drawn on top of edges) -->
+        <!-- Central: Website -->
+        <g class="map-node" id="node-website" data-id="website"
+           data-title="Website" data-desc="The hub of every digital channel. All roads lead here — SEO, Ads, Social, and Email all drive traffic to your website, which must then convert that traffic into leads.">
+          <circle cx="380" cy="240" r="42" fill="rgba(16,185,129,0.12)" stroke="rgba(16,185,129,0.6)" stroke-width="2"/>
+          <text x="380" y="234" text-anchor="middle" font-size="22" fill="#10B981">🌐</text>
+          <text x="380" y="254" text-anchor="middle" font-family="'Space Grotesk',sans-serif" font-size="12" font-weight="700" fill="#F8FAFC">Website</text>
+          <text x="380" y="267" text-anchor="middle" font-family="'Inter',sans-serif" font-size="9" fill="#475569">Hub</text>
+        </g>
+
+        <!-- SEO -->
+        <g class="map-node" id="node-seo" data-id="seo"
+           data-title="SEO" data-desc="Organic search creates long-term, compounding visibility. SEO and Content are tightly linked — content gives SEO the pages to rank. SEO drives traffic that Email then retargets.">
+          <circle cx="190" cy="120" r="32" fill="rgba(16,185,129,0.08)" stroke="rgba(148,163,184,0.3)" stroke-width="1.5"/>
+          <text x="190" y="113" text-anchor="middle" font-size="18">🔍</text>
+          <text x="190" y="129" text-anchor="middle" font-family="'Space Grotesk',sans-serif" font-size="11" font-weight="600" fill="#F8FAFC">SEO</text>
+          <text x="190" y="141" text-anchor="middle" font-family="'Inter',sans-serif" font-size="8" fill="#475569">Organic</text>
+        </g>
+
+        <!-- Content -->
+        <g class="map-node" id="node-content" data-id="content"
+           data-title="Content" data-desc="Blog posts, guides, and resources. Content fuels SEO by giving Google pages to rank. It fuels Social by giving you things to share. It fuels Email with valuable material to send.">
+          <circle cx="380" cy="100" r="30" fill="rgba(16,185,129,0.08)" stroke="rgba(148,163,184,0.3)" stroke-width="1.5"/>
+          <text x="380" y="94" text-anchor="middle" font-size="17">✍️</text>
+          <text x="380" y="109" text-anchor="middle" font-family="'Space Grotesk',sans-serif" font-size="11" font-weight="600" fill="#F8FAFC">Content</text>
+          <text x="380" y="121" text-anchor="middle" font-family="'Inter',sans-serif" font-size="8" fill="#475569">Blog / Guides</text>
+        </g>
+
+        <!-- Google Ads -->
+        <g class="map-node" id="node-ads" data-id="ads"
+           data-title="Google Ads" data-desc="Paid search drives immediate, targeted traffic. Unlike SEO, it starts working on day one but stops when budget stops. Analytics data from Ads informs SEO keyword strategy.">
+          <circle cx="570" cy="120" r="32" fill="rgba(16,185,129,0.08)" stroke="rgba(148,163,184,0.3)" stroke-width="1.5"/>
+          <text x="570" y="113" text-anchor="middle" font-size="18">📢</text>
+          <text x="570" y="128" text-anchor="middle" font-family="'Space Grotesk',sans-serif" font-size="10" font-weight="600" fill="#F8FAFC">Google Ads</text>
+          <text x="570" y="140" text-anchor="middle" font-family="'Inter',sans-serif" font-size="8" fill="#475569">Paid</text>
+        </g>
+
+        <!-- Email -->
+        <g class="map-node" id="node-email" data-id="email"
+           data-title="Email Marketing" data-desc="The highest-ROI channel when you already have a list. Email retargets website visitors, nurtures leads that didn't convert, and re-engages past customers — at near-zero cost.">
+          <circle cx="190" cy="360" r="32" fill="rgba(16,185,129,0.08)" stroke="rgba(148,163,184,0.3)" stroke-width="1.5"/>
+          <text x="190" y="352" text-anchor="middle" font-size="18">📧</text>
+          <text x="190" y="368" text-anchor="middle" font-family="'Space Grotesk',sans-serif" font-size="11" font-weight="600" fill="#F8FAFC">Email</text>
+          <text x="190" y="380" text-anchor="middle" font-family="'Inter',sans-serif" font-size="8" fill="#475569">Nurture</text>
+        </g>
+
+        <!-- Social -->
+        <g class="map-node" id="node-social" data-id="social"
+           data-title="Social Media" data-desc="Discovery and trust-building. Social amplifies content, drives word-of-mouth, and feeds retargeting audiences. Visitors from social are warm — they've seen you before arriving at your site.">
+          <circle cx="570" cy="360" r="32" fill="rgba(16,185,129,0.08)" stroke="rgba(148,163,184,0.3)" stroke-width="1.5"/>
+          <text x="570" y="352" text-anchor="middle" font-size="18">📱</text>
+          <text x="570" y="368" text-anchor="middle" font-family="'Space Grotesk',sans-serif" font-size="10" font-weight="600" fill="#F8FAFC">Social Media</text>
+          <text x="570" y="380" text-anchor="middle" font-family="'Inter',sans-serif" font-size="8" fill="#475569">Amplify</text>
+        </g>
+
+        <!-- Analytics -->
+        <g class="map-node" id="node-analytics" data-id="analytics"
+           data-title="Analytics" data-desc="The feedback loop that makes every other channel smarter. Analytics tells you which channels drive conversions (not just traffic), which pages leak visitors, and where to double down.">
+          <circle cx="380" cy="380" r="30" fill="rgba(16,185,129,0.08)" stroke="rgba(148,163,184,0.3)" stroke-width="1.5"/>
+          <text x="380" y="373" text-anchor="middle" font-size="17">📊</text>
+          <text x="380" y="388" text-anchor="middle" font-family="'Space Grotesk',sans-serif" font-size="11" font-weight="600" fill="#F8FAFC">Analytics</text>
+          <text x="380" y="400" text-anchor="middle" font-family="'Inter',sans-serif" font-size="8" fill="#475569">Insights</text>
+        </g>
+
+      </svg>
+    </div>
+
+    <p style="text-align:center;font-size:0.8125rem;color:var(--text-muted);margin-top:0.875rem">
+      Hover any node to see how it relates to the others. Solid lines = strong relationships. Dashed = secondary.
+    </p>
+  </div>
+
+  <!-- MODE B: Org Chart -->
+  <div class="diagram-panel" id="panel-org">
+    <div class="org-wrap">
+      <div class="org-tree" id="org-tree">
+        <!-- JS builds the org chart -->
+      </div>
+    </div>
+    <p style="text-align:center;font-size:0.8125rem;color:var(--text-muted);margin-top:0.875rem">
+      Click any node with a triangle to collapse or expand that branch.
+    </p>
+  </div>
+
+  <!-- Tooltip -->
+  <div class="node-tooltip" id="node-tooltip">
+    <div class="node-tooltip-title" id="nt-title"></div>
+    <div class="node-tooltip-desc" id="nt-desc"></div>
+  </div>
+
+
+  <script>
+  /* ──────────────────────────────────────────
+     RELATIONSHIP MAP — Script
+     1. Mode tabs (A/B)
+     2. Mode A: node hover — highlight/dim edges
+     3. Mode B: org chart builder + collapse
+  ────────────────────────────────────────── */
+
+  /* 1 — Mode tabs */
+  document.querySelectorAll('.mode-tab').forEach(function(tab) {
+    tab.addEventListener('click', function() {
+      document.querySelectorAll('.mode-tab').forEach(function(t) { t.classList.remove('active'); });
+      document.querySelectorAll('.diagram-panel').forEach(function(p) { p.classList.remove('active'); });
+      tab.classList.add('active');
+      document.getElementById('panel-' + tab.dataset.mode).classList.add('active');
+    });
+  });
+
+  /* 2 — Mode A: Node hover */
+  var tooltip   = document.getElementById('node-tooltip');
+  var ttTitle   = document.getElementById('nt-title');
+  var ttDesc    = document.getElementById('nt-desc');
+  var allEdges  = document.querySelectorAll('.map-edge');
+  var allNodes  = document.querySelectorAll('.map-node');
+
+  function positionTT(e) {
+    var x = e.clientX + 14, y = e.clientY + 14;
+    if (x + 260 > window.innerWidth)  x = e.clientX - 260;
+    if (y + 120 > window.innerHeight) y = e.clientY - 120;
+    tooltip.style.left = x + 'px';
+    tooltip.style.top  = y + 'px';
+  }
+
+  allNodes.forEach(function(node) {
+    var id = node.dataset.id;
+
+    node.addEventListener('mouseenter', function(e) {
+      /* Show tooltip */
+      ttTitle.textContent = node.dataset.title;
+      ttDesc.textContent  = node.dataset.desc;
+      tooltip.classList.add('visible');
+      positionTT(e);
+
+      /* Highlight edges connected to this node, dim others */
+      allEdges.forEach(function(edge) {
+        var connected = edge.dataset.from === id || edge.dataset.to === id;
+        edge.style.opacity = connected ? '1' : '0.08';
+        edge.style.strokeWidth = connected ? '2.5' : '1';
+      });
+
+      /* Dim unrelated nodes */
+      allNodes.forEach(function(n) {
+        if (n === node) { n.style.opacity = '1'; return; }
+        var related = false;
+        allEdges.forEach(function(edge) {
+          if ((edge.dataset.from === id && edge.dataset.to === n.dataset.id) ||
+              (edge.dataset.to   === id && edge.dataset.from === n.dataset.id)) {
+            related = true;
+          }
+        });
+        n.style.opacity = related ? '1' : '0.25';
+      });
+    });
+
+    node.addEventListener('mousemove', positionTT);
+
+    node.addEventListener('mouseleave', function() {
+      tooltip.classList.remove('visible');
+      allEdges.forEach(function(edge) { edge.style.opacity = '1'; edge.style.strokeWidth = ''; });
+      allNodes.forEach(function(n) { n.style.opacity = '1'; });
+    });
+  });
+
+  /* 3 — Mode B: Org Chart */
+  /* Org data: a nested structure */
+  var orgData = {
+    label: '🌐 Website Project',
+    type: 'root',
+    children: [
+      {
+        label: '🎨 Design',
+        type: 'level-2',
+        children: [
+          { label: '🖼️ Mockups', type: 'level-3' },
+          { label: '📐 Wireframes', type: 'level-3' },
+          { label: '🎨 Style Guide', type: 'level-3' }
+        ]
+      },
+      {
+        label: '💻 Development',
+        type: 'level-2',
+        children: [
+          { label: '🔨 HTML / CSS', type: 'level-3' },
+          { label: '⚙️ JavaScript', type: 'level-3' },
+          { label: '🔌 Integrations', type: 'level-3' }
+        ]
+      },
+      {
+        label: '🔍 SEO',
+        type: 'level-2',
+        children: [
+          { label: '🗺️ Site Architecture', type: 'level-3' },
+          { label: '📝 On-Page Copy', type: 'level-3' },
+          { label: '🔗 Schema Markup', type: 'level-3' }
+        ]
+      }
+    ]
+  };
+
+  function buildOrgNode(data, isRoot) {
+    /* Returns a wrapper div containing node + connector + children */
+    var branch = document.createElement('div');
+    branch.className = 'org-branch org-node-wrap';
+
+    var hasChildren = data.children && data.children.length > 0;
+    var collapsed = false;
+
+    /* The node box itself */
+    var nodeEl = document.createElement('div');
+    nodeEl.className = 'org-node ' + (data.type || '');
+    nodeEl.textContent = data.label;
+
+    if (hasChildren) {
+      var toggle = document.createElement('span');
+      toggle.className = 'org-toggle';
+      toggle.textContent = '▾';
+      nodeEl.appendChild(toggle);
+
+      nodeEl.addEventListener('click', function() {
+        collapsed = !collapsed;
+        branch.classList.toggle('collapsed', collapsed);
+        toggle.textContent = collapsed ? '▸' : '▾';
+      });
+    }
+
+    branch.appendChild(nodeEl);
+
+    if (hasChildren) {
+      /* Vertical line from parent to the horizontal bar */
+      var connV = document.createElement('div');
+      connV.className = 'org-connector-v';
+      branch.appendChild(connV);
+
+      /* Row of children */
+      var childRow = document.createElement('div');
+      childRow.className = 'org-children-row';
+      childRow.style.position = 'relative';
+
+      data.children.forEach(function(child, ci) {
+        var childCol = document.createElement('div');
+        childCol.className = 'org-child-col';
+        childCol.style.padding = '0 12px';
+
+        /* Short drop line from h-bar to child node */
+        var dropV = document.createElement('div');
+        dropV.className = 'org-child-v';
+        childCol.appendChild(dropV);
+
+        /* Recurse */
+        childCol.appendChild(buildOrgNode(child, false));
+
+        childRow.appendChild(childCol);
+      });
+
+      /* Horizontal line across the top of all children — drawn after layout */
+      /* We use a CSS trick: pseudo element won't work dynamically, so use position absolute */
+      /* We'll set the h-line width via JS after the row is in the DOM */
+
+      branch.appendChild(childRow);
+
+      /* Draw the horizontal line after children exist */
+      requestAnimationFrame(function() {
+        /* Only draw the horizontal segment connecting first child to last */
+        var cols = childRow.querySelectorAll(':scope > .org-child-col');
+        if (cols.length > 1) {
+          var firstRect = cols[0].getBoundingClientRect();
+          var lastRect  = cols[cols.length - 1].getBoundingClientRect();
+          var rowRect   = childRow.getBoundingClientRect();
+
+          var hLine = document.createElement('div');
+          hLine.className = 'org-h-line';
+          hLine.style.left  = (firstRect.left + firstRect.width / 2 - rowRect.left) + 'px';
+          hLine.style.width = (lastRect.left  + lastRect.width  / 2 - firstRect.left - firstRect.width / 2) + 'px';
+          childRow.appendChild(hLine);
+        }
+      });
+    }
+
+    return branch;
+  }
+
+  var orgTree = document.getElementById('org-tree');
+  orgTree.appendChild(buildOrgNode(orgData, true));
+
+  /* Re-draw h-lines after a short delay (fonts/layout settle) */
+  setTimeout(function() {
+    document.querySelectorAll('.org-children-row').forEach(function(row) {
+      var existing = row.querySelector('.org-h-line');
+      if (existing) existing.remove();
+
+      var cols = row.querySelectorAll(':scope > .org-child-col');
+      if (cols.length > 1) {
+        var firstRect = cols[0].getBoundingClientRect();
+        var lastRect  = cols[cols.length - 1].getBoundingClientRect();
+        var rowRect   = row.getBoundingClientRect();
+
+        var hLine = document.createElement('div');
+        hLine.className = 'org-h-line';
+        hLine.style.left  = (firstRect.left + firstRect.width / 2 - rowRect.left) + 'px';
+        hLine.style.width = (lastRect.left  + lastRect.width  / 2 - firstRect.left - firstRect.width / 2) + 'px';
+        row.appendChild(hLine);
+      }
+    });
+  }, 80);
+  </script>
+
+</body>
+</html>

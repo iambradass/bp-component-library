@@ -1,0 +1,591 @@
+<!-- COMPONENT: Notification Center | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notification Bell</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ── Customize ── */
+    :root {
+      --bg:            #0D1117;
+      --surface:       #111827;
+      --elevated:      #1E293B;
+      --accent:        #10B981;
+      --accent-dim:    rgba(16,185,129,0.15);
+      --accent-border: rgba(16,185,129,0.3);
+      --border:        rgba(148,163,184,0.1);
+      --text:          #F8FAFC;
+      --text-secondary:#94A3B8;
+      --text-muted:    #475569;
+      --radius:        12px;
+      --font-heading:  'Space Grotesk', sans-serif;
+      --font-body:     'Inter', sans-serif;
+
+      /* Notification type colors */
+      --c-info:    #3B82F6;
+      --c-success: #10B981;
+      --c-warning: #FBBF24;
+      --c-action:  #EF4444;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+    }
+
+    /* ── Fake navbar ── */
+    .navbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 1.5rem;
+      height: 56px;
+      gap: 1rem;
+    }
+
+    .navbar-brand {
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--accent);
+    }
+
+    .navbar-links {
+      display: flex;
+      gap: 0.25rem;
+      flex: 1;
+    }
+
+    .navbar-link {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      padding: 0.4rem 0.75rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.12s, color 0.12s;
+    }
+    .navbar-link:hover { background: var(--elevated); color: var(--text); }
+    .navbar-link.active { color: var(--accent); background: var(--accent-dim); }
+
+    .navbar-right {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    /* ── Bell button ── */
+    .bell-wrap {
+      position: relative;
+    }
+
+    .bell-btn {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 0.45rem;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s, color 0.15s;
+      position: relative;
+    }
+    .bell-btn:hover { background: var(--elevated); color: var(--text); }
+
+    /* Bell shake animation — plays when unread count > 0 */
+    @keyframes bellShake {
+      0%, 100% { transform: rotate(0deg); }
+      10%, 30%, 50%, 70%, 90% { transform: rotate(-15deg); }
+      20%, 40%, 60%, 80% { transform: rotate(15deg); }
+    }
+
+    .bell-btn.shaking svg { animation: bellShake 1.2s ease-in-out 0s 1; }
+
+    /* Count badge */
+    .bell-badge {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      background: #EF4444;
+      color: #fff;
+      border-radius: 999px;
+      font-size: 0.6rem;
+      font-weight: 700;
+      line-height: 1;
+      padding: 1px 4px;
+      min-width: 16px;
+      text-align: center;
+      border: 1.5px solid var(--surface);
+      transition: opacity 0.2s;
+    }
+
+    .bell-badge.hidden { opacity: 0; }
+
+    /* ── Notification dropdown ── */
+    .notif-panel {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      z-index: 100;
+      width: 380px;
+      max-width: calc(100vw - 2rem);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+      display: none;
+      flex-direction: column;
+      max-height: 520px;
+      overflow: hidden;
+    }
+
+    .notif-panel.open { display: flex; }
+
+    /* Panel header */
+    .panel-header {
+      padding: 1rem 1.25rem 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .panel-title {
+      font-family: var(--font-heading);
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+
+    .mark-all-btn {
+      background: none;
+      border: none;
+      color: var(--accent);
+      font-size: 0.78rem;
+      font-weight: 500;
+      cursor: pointer;
+      padding: 0;
+    }
+    .mark-all-btn:hover { text-decoration: underline; }
+
+    /* Tabs */
+    .notif-tabs {
+      display: flex;
+      gap: 0.25rem;
+      padding: 0.5rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .notif-tab {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      background: none;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      padding: 0.35rem 0.75rem;
+      font-family: var(--font-body);
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: background 0.12s, color 0.12s, border-color 0.12s;
+    }
+
+    .notif-tab:hover { background: var(--elevated); color: var(--text); }
+
+    .notif-tab.active {
+      background: var(--accent-dim);
+      border-color: var(--accent-border);
+      color: var(--accent);
+    }
+
+    .tab-count {
+      background: var(--elevated);
+      border-radius: 999px;
+      font-size: 0.65rem;
+      padding: 1px 5px;
+      font-weight: 700;
+    }
+
+    .notif-tab.active .tab-count {
+      background: rgba(16,185,129,0.2);
+    }
+
+    /* Notification list — scrollable */
+    .notif-list {
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    /* Individual notification item */
+    .notif-item {
+      display: flex;
+      gap: 0.75rem;
+      padding: 0.875rem 1.25rem;
+      cursor: pointer;
+      transition: background 0.12s;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+    }
+
+    .notif-item:last-child { border-bottom: none; }
+    .notif-item:hover { background: var(--elevated); }
+
+    /* Unread left border accent */
+    .notif-item.unread::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      border-radius: 0 3px 3px 0;
+      background: var(--type-color, var(--accent));
+    }
+
+    .notif-item.unread { background: rgba(30,41,59,0.4); }
+
+    /* Icon circle */
+    .notif-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .notif-body { flex: 1; min-width: 0; }
+
+    .notif-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 0.2rem;
+      line-height: 1.3;
+    }
+
+    .notif-desc {
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      line-height: 1.4;
+      margin-bottom: 0.3rem;
+    }
+
+    .notif-time {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+
+    /* Unread dot on item */
+    .notif-unread-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--type-color, var(--accent));
+      flex-shrink: 0;
+      margin-top: 5px;
+    }
+
+    .notif-item:not(.unread) .notif-unread-dot { display: none; }
+
+    /* Hidden by tab filter */
+    .notif-item.tab-hidden { display: none; }
+
+    /* Empty state in panel */
+    .panel-empty {
+      padding: 2.5rem 1.25rem;
+      text-align: center;
+      color: var(--text-muted);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .panel-empty.visible { display: flex; }
+
+    .panel-empty svg { color: var(--text-muted); opacity: 0.5; }
+
+    .panel-empty p { font-size: 0.875rem; }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed;
+      bottom: 1.5rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      z-index: 300;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 0.55rem 1.25rem;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s, transform 0.25s;
+      white-space: nowrap;
+    }
+
+    .toast.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* Avatar for actions page content */
+    .navbar-av {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), #065F46);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #000;
+    }
+
+    /* Page content */
+    .page-content {
+      max-width: 640px;
+      margin: 3rem auto;
+      padding: 0 1.5rem;
+      text-align: center;
+    }
+
+    .page-content h1 {
+      font-family: var(--font-heading);
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+
+    .page-content p {
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Fake navbar ── -->
+  <nav class="navbar">
+    <span class="navbar-brand">Dashify</span>
+    <div class="navbar-links">
+      <div class="navbar-link active">Dashboard</div>
+      <div class="navbar-link">Projects</div>
+      <div class="navbar-link">Team</div>
+    </div>
+    <div class="navbar-right">
+      <!-- Bell button with dropdown -->
+      <div class="bell-wrap" id="bellWrap">
+        <button class="bell-btn shaking" id="bellBtn" aria-label="Notifications" aria-haspopup="true">
+          <svg id="bellSvg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </button>
+        <span class="bell-badge" id="bellBadge">5</span>
+
+        <!-- Notification panel -->
+        <div class="notif-panel" id="notifPanel" role="dialog" aria-label="Notifications">
+          <div class="panel-header">
+            <span class="panel-title">Notifications</span>
+            <button class="mark-all-btn" id="markAllBtn">Mark all read</button>
+          </div>
+          <div class="notif-tabs">
+            <button class="notif-tab active" data-tab="all">All <span class="tab-count" id="tabAllCount">12</span></button>
+            <button class="notif-tab" data-tab="unread">Unread <span class="tab-count" id="tabUnreadCount">5</span></button>
+            <button class="notif-tab" data-tab="mention">Mentions <span class="tab-count" id="tabMentionCount">2</span></button>
+          </div>
+          <div class="notif-list" id="notifList"></div>
+          <div class="panel-empty" id="panelEmpty">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/><line x1="12" y1="2" x2="12" y2="4"/></svg>
+            <p>Nothing here — you're all caught up!</p>
+          </div>
+        </div>
+      </div>
+      <div class="navbar-av">JD</div>
+    </div>
+  </nav>
+
+  <!-- Page content -->
+  <div class="page-content">
+    <h1>Notification Center</h1>
+    <p>Click the bell icon in the top-right to open the notification panel. Four notification types, tab filters, mark-all-read, and an empty state when switching to "Unread" after reading everything.</p>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"><span id="toastMsg"></span></div>
+
+  <script>
+    // ── Notification data ──
+    const NOTIFS = [
+      { id: 1, type: 'action',  title: 'Action required',    desc: 'Your subscription renewal is overdue. Update payment method to avoid service interruption.', time: '2 min ago',  unread: true, mention: false },
+      { id: 2, type: 'success', title: 'Deployment complete', desc: 'Production release v2.4.1 deployed successfully to all regions with zero downtime.',          time: '14 min ago', unread: true, mention: false },
+      { id: 3, type: 'info',    title: 'New team member',     desc: 'Harley Simmons joined the Design team. You can now collaborate on shared projects.',           time: '1 hr ago',   unread: true, mention: true  },
+      { id: 4, type: 'warning', title: 'Storage at 82%',      desc: "You're approaching your storage limit. Upgrade your plan or remove unused assets.",            time: '3 hr ago',   unread: true, mention: false },
+      { id: 5, type: 'info',    title: 'Report ready',        desc: 'Your monthly analytics report for February 2026 is ready to download.',                         time: '5 hr ago',   unread: true, mention: false },
+      { id: 6, type: 'success', title: 'Payment received',    desc: 'Invoice #INV-2841 for $1,200.00 has been paid successfully.',                                   time: 'Yesterday',  unread: false, mention: false },
+      { id: 7, type: 'info',    title: '@mention in thread',  desc: '@JD Great point! I think we should also consider the mobile breakpoints here.',                 time: 'Yesterday',  unread: false, mention: true  },
+      { id: 8, type: 'warning', title: 'Slow API response',   desc: 'The data ingestion API returned >3s response times between 14:00–14:30 UTC.',                  time: '2 days ago', unread: false, mention: false },
+      { id: 9, type: 'action',  title: 'Review requested',    desc: 'Sasha Okafor requested your review on the Q1 roadmap document.',                               time: '2 days ago', unread: false, mention: false },
+      { id:10, type: 'success', title: 'Goal achieved!',      desc: 'Your team hit the 500 active users milestone for March 2026 — 3 days early.',                  time: '3 days ago', unread: false, mention: false },
+      { id:11, type: 'info',    title: 'System update',       desc: 'Dashify will perform routine maintenance on March 15, 2:00–4:00 AM UTC.',                      time: '4 days ago', unread: false, mention: false },
+      { id:12, type: 'warning', title: 'Failed login attempt','desc': '3 failed login attempts from IP 192.168.1.42. Enable 2FA if this wasn\'t you.',              time: '5 days ago', unread: false, mention: false },
+    ];
+
+    const TYPE_COLORS = {
+      info:    'var(--c-info)',
+      success: 'var(--c-success)',
+      warning: 'var(--c-warning)',
+      action:  'var(--c-action)',
+    };
+
+    const TYPE_ICONS = {
+      info:    `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
+      success: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`,
+      warning: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+      action:  `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
+    };
+
+    // ── State ──
+    let notifs     = NOTIFS.map(n => ({ ...n }));
+    let activeTab  = 'all';
+
+    // ── Helpers ──
+    let toastTimer;
+    function showToast(msg) {
+      clearTimeout(toastTimer);
+      document.getElementById('toastMsg').textContent = msg;
+      document.getElementById('toast').classList.add('visible');
+      toastTimer = setTimeout(() => document.getElementById('toast').classList.remove('visible'), 2000);
+    }
+
+    function unreadCount()  { return notifs.filter(n => n.unread).length; }
+    function mentionCount() { return notifs.filter(n => n.mention).length; }
+
+    function updateBadge() {
+      const count   = unreadCount();
+      const badge   = document.getElementById('bellBadge');
+      const bellBtn = document.getElementById('bellBtn');
+      badge.textContent = count > 9 ? '9+' : String(count);
+      badge.classList.toggle('hidden', count === 0);
+      // Only shake if there are unread
+      if (count > 0) {
+        bellBtn.classList.remove('shaking');
+        void bellBtn.offsetWidth; // force reflow to restart animation
+        bellBtn.classList.add('shaking');
+      } else {
+        bellBtn.classList.remove('shaking');
+      }
+      // Update tab counts
+      document.getElementById('tabAllCount').textContent    = notifs.length;
+      document.getElementById('tabUnreadCount').textContent = count;
+      document.getElementById('tabMentionCount').textContent = mentionCount();
+    }
+
+    // ── Render notification list ──
+    function renderList() {
+      const list = document.getElementById('notifList');
+      list.innerHTML = '';
+
+      let visibleCount = 0;
+
+      notifs.forEach(n => {
+        const isVisible =
+          activeTab === 'all'     ? true :
+          activeTab === 'unread'  ? n.unread :
+          activeTab === 'mention' ? n.mention : false;
+
+        const item = document.createElement('div');
+        item.className = 'notif-item' + (n.unread ? ' unread' : '') + (!isVisible ? ' tab-hidden' : '');
+        item.style.setProperty('--type-color', TYPE_COLORS[n.type]);
+        item.dataset.id = n.id;
+
+        // Icon circle background
+        const iconBg = `rgba(${TYPE_COLORS[n.type].includes('blue') ? '59,130,246' : n.type === 'success' ? '16,185,129' : n.type === 'warning' ? '251,191,36' : '239,68,68'}, 0.12)`;
+
+        item.innerHTML = `
+          <div class="notif-icon" style="background:${iconBg};color:${TYPE_COLORS[n.type]}">${TYPE_ICONS[n.type]}</div>
+          <div class="notif-body">
+            <div class="notif-title">${n.title}</div>
+            <div class="notif-desc">${n.desc}</div>
+            <div class="notif-time">${n.time}</div>
+          </div>
+          <div class="notif-unread-dot"></div>
+        `;
+
+        item.addEventListener('click', () => markRead(n.id));
+        list.appendChild(item);
+        if (isVisible) visibleCount++;
+      });
+
+      // Show/hide empty state
+      const empty = document.getElementById('panelEmpty');
+      empty.classList.toggle('visible', visibleCount === 0);
+      list.style.display = visibleCount === 0 ? 'none' : '';
+
+      updateBadge();
+    }
+
+    function markRead(id) {
+      const n = notifs.find(n => n.id === id);
+      if (n && n.unread) {
+        n.unread = false;
+        renderList();
+        showToast('Marked as read');
+      }
+    }
+
+    function markAllRead() {
+      notifs.forEach(n => n.unread = false);
+      renderList();
+      showToast('All notifications marked as read');
+    }
+
+    // ── Panel toggle ──
+    const bellBtn   = document.getElementById('bellBtn');
+    const notifPanel = document.getElementById('notifPanel');
+
+    bellBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      notifPanel.classList.toggle('open');
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!document.getElementById('bellWrap').contains(e.target)) {
+        notifPanel.classList.remove('open');
+      }
+    });
+
+    // ── Tabs ──
+    document.querySelectorAll('.notif-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.notif-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        activeTab = tab.dataset.tab;
+        renderList();
+      });
+    });
+
+    // ── Mark all read ──
+    document.getElementById('markAllBtn').addEventListener('click', markAllRead);
+
+    // ── Init ──
+    renderList();
+  </script>
+</body>
+</html>

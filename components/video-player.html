@@ -1,0 +1,861 @@
+<!-- COMPONENT: Custom Video Player UI | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Custom Video Player</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ── Customize ── */
+    :root {
+      --bg:            #0D1117;
+      --surface:       #111827;
+      --elevated:      #1E293B;
+      --accent:        #10B981;
+      --accent-dim:    rgba(16,185,129,0.15);
+      --accent-border: rgba(16,185,129,0.3);
+      --border:        rgba(148,163,184,0.1);
+      --text:          #F8FAFC;
+      --text-secondary:#94A3B8;
+      --text-muted:    #475569;
+      --radius:        12px;
+      --font-heading:  'Space Grotesk', sans-serif;
+      --font-body:     'Inter', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      padding: 2rem 1rem 4rem;
+    }
+
+    .page-wrap {
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    .page-title {
+      font-family: var(--font-heading);
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 1.25rem;
+    }
+
+    /* ── Video Container ── */
+    .video-container {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #000;
+      border-radius: 16px;
+      overflow: hidden;
+      cursor: pointer;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+      margin-bottom: 1.5rem;
+    }
+
+    /* Simulated video — an animated gradient background */
+    .video-bg {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, #0A1628 0%, #102240 30%, #0A2810 60%, #0A1628 100%);
+      background-size: 400% 400%;
+      animation: videoBg 8s ease infinite;
+    }
+
+    @keyframes videoBg {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* Simulated video content — subtle grid + text overlay */
+    .video-content {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 1rem;
+      pointer-events: none;
+    }
+
+    .video-content-icon {
+      width: 80px;
+      height: 80px;
+      background: rgba(16,185,129,0.15);
+      border: 1px solid rgba(16,185,129,0.3);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+    }
+
+    .video-title-overlay {
+      font-family: var(--font-heading);
+      font-size: clamp(1rem, 2.5vw, 1.4rem);
+      font-weight: 600;
+      color: rgba(255,255,255,0.8);
+      text-align: center;
+    }
+
+    /* ── Controls overlay ── */
+    .controls-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      /* Gradient fade from transparent to dark at bottom */
+      background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.3) 40%, transparent 70%);
+      transition: opacity 0.3s ease;
+    }
+
+    .controls-overlay.hidden { opacity: 0; pointer-events: none; }
+
+    /* Chapter tooltip — shown on hover over chapter markers */
+    .chapter-tooltip {
+      position: absolute;
+      bottom: 72px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.85);
+      color: #fff;
+      font-size: 0.78rem;
+      font-weight: 500;
+      padding: 0.3rem 0.7rem;
+      border-radius: 6px;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .chapter-tooltip.visible { opacity: 1; }
+
+    /* ── Progress bar row ── */
+    .progress-row {
+      position: relative;
+      padding: 0 1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .progress-track {
+      position: relative;
+      height: 4px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.2);
+      cursor: pointer;
+    }
+
+    .progress-track:hover { height: 6px; }
+
+    /* Buffered region */
+    .progress-buffer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.3);
+      width: 70%; /* static demo */
+      pointer-events: none;
+    }
+
+    /* Played region */
+    .progress-fill {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      border-radius: 999px;
+      background: var(--accent);
+      pointer-events: none;
+      width: 0%;
+      transition: width 0.25s linear;
+    }
+
+    /* Scrubber thumb */
+    .progress-thumb {
+      position: absolute;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--accent);
+      pointer-events: none;
+      left: 0%;
+      box-shadow: 0 0 8px rgba(16,185,129,0.6);
+    }
+
+    /* Chapter markers on the progress bar */
+    .chapter-marker {
+      position: absolute;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #fff;
+      border: 2px solid rgba(0,0,0,0.4);
+      cursor: pointer;
+      z-index: 2;
+      transition: transform 0.15s;
+    }
+
+    .chapter-marker:hover { transform: translate(-50%, -50%) scale(1.4); }
+
+    /* ── Bottom controls row ── */
+    .bottom-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0 1rem 0.85rem;
+    }
+
+    .vbtn {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.9);
+      cursor: pointer;
+      padding: 0.35rem;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+      min-width: 36px;
+      min-height: 36px;
+    }
+    .vbtn:hover { background: rgba(255,255,255,0.1); }
+
+    .time-display {
+      font-size: 0.8rem;
+      font-family: ui-monospace, monospace;
+      color: rgba(255,255,255,0.8);
+      white-space: nowrap;
+    }
+
+    .spacer { flex: 1; }
+
+    /* Volume mini-slider */
+    .vol-group {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .vol-mini {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 70px;
+      height: 3px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.3);
+      cursor: pointer;
+      outline: none;
+    }
+
+    .vol-mini::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #fff;
+      cursor: pointer;
+    }
+
+    /* Settings popup */
+    .settings-popup {
+      position: absolute;
+      bottom: 60px;
+      right: 1rem;
+      background: rgba(17,24,39,0.96);
+      border: 1px solid rgba(148,163,184,0.15);
+      border-radius: 10px;
+      padding: 0.75rem;
+      min-width: 160px;
+      display: none;
+      z-index: 10;
+    }
+
+    .settings-popup.open { display: block; }
+
+    .settings-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.4rem 0;
+      font-size: 0.82rem;
+      color: rgba(255,255,255,0.8);
+    }
+
+    .settings-row + .settings-row {
+      border-top: 1px solid rgba(148,163,184,0.1);
+    }
+
+    .settings-select {
+      background: rgba(30,41,59,0.8);
+      border: 1px solid rgba(148,163,184,0.15);
+      border-radius: 6px;
+      color: #fff;
+      font-size: 0.78rem;
+      padding: 0.2rem 0.4rem;
+      cursor: pointer;
+    }
+
+    /* ── Shortcut cheatsheet modal ── */
+    .shortcut-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.7);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+
+    .shortcut-modal.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .shortcut-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      max-width: 480px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .shortcut-box h3 {
+      font-family: var(--font-heading);
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 1.25rem;
+    }
+
+    .shortcut-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.6rem 2rem;
+    }
+
+    .shortcut-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    kbd {
+      background: var(--elevated);
+      border: 1px solid rgba(148,163,184,0.2);
+      border-bottom: 2px solid rgba(148,163,184,0.35);
+      border-radius: 5px;
+      font-family: ui-monospace, monospace;
+      font-size: 0.72rem;
+      padding: 0.15rem 0.45rem;
+      color: var(--text);
+      white-space: nowrap;
+    }
+
+    .shortcut-close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 1.2rem;
+    }
+
+    /* ── End screen ── */
+    .end-screen {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1.5rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s;
+    }
+
+    .end-screen.visible {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .btn-replay {
+      background: var(--accent);
+      color: #000;
+      border: none;
+      border-radius: 999px;
+      padding: 0.65rem 1.5rem;
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .up-next-row {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .up-next-card {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 10px;
+      padding: 0.75rem;
+      width: 140px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .up-next-card:hover { background: rgba(255,255,255,0.14); }
+
+    .up-next-thumb {
+      width: 100%;
+      aspect-ratio: 16/9;
+      border-radius: 6px;
+      margin-bottom: 0.5rem;
+    }
+
+    .up-next-title {
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: #fff;
+      line-height: 1.3;
+    }
+
+    /* ── Below player ── */
+    .video-meta {
+      margin-bottom: 1.5rem;
+    }
+
+    .video-meta h2 {
+      font-family: var(--font-heading);
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin-bottom: 0.4rem;
+    }
+
+    .video-meta p {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+
+    .shortcuts-hint {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 0.75rem;
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Keyboard shortcut modal -->
+  <div class="shortcut-modal" id="shortcutModal" role="dialog" aria-label="Keyboard shortcuts">
+    <div class="shortcut-box">
+      <button class="shortcut-close" id="closeShortcuts" aria-label="Close">✕</button>
+      <h3>Keyboard Shortcuts</h3>
+      <div class="shortcut-grid">
+        <div class="shortcut-item"><span>Play / Pause</span><kbd>Space</kbd></div>
+        <div class="shortcut-item"><span>Seek back 10s</span><kbd>←</kbd></div>
+        <div class="shortcut-item"><span>Seek forward 10s</span><kbd>→</kbd></div>
+        <div class="shortcut-item"><span>Mute</span><kbd>M</kbd></div>
+        <div class="shortcut-item"><span>Fullscreen</span><kbd>F</kbd></div>
+        <div class="shortcut-item"><span>Jump to 0%</span><kbd>0</kbd></div>
+        <div class="shortcut-item"><span>Jump to 50%</span><kbd>5</kbd></div>
+        <div class="shortcut-item"><span>Jump to 90%</span><kbd>9</kbd></div>
+        <div class="shortcut-item"><span>Show shortcuts</span><kbd>?</kbd></div>
+        <div class="shortcut-item"><span>Volume up</span><kbd>↑</kbd></div>
+        <div class="shortcut-item"><span>Volume down</span><kbd>↓</kbd></div>
+        <div class="shortcut-item"><span>Speed +</span><kbd>Shift →</kbd></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-wrap">
+    <div class="page-title">Custom Video Player</div>
+
+    <!-- ── Video Player ── -->
+    <div class="video-container" id="videoContainer">
+
+      <!-- Simulated video background -->
+      <div class="video-bg"></div>
+
+      <!-- Video content placeholder -->
+      <div class="video-content" id="videoContent">
+        <div class="video-content-icon">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </div>
+        <div class="video-title-overlay">Design Systems Deep Dive — Episode 4</div>
+      </div>
+
+      <!-- Chapter tooltip -->
+      <div class="chapter-tooltip" id="chapterTooltip"></div>
+
+      <!-- End screen -->
+      <div class="end-screen" id="endScreen">
+        <button class="btn-replay" id="btnReplay">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.5"/></svg>
+          Replay
+        </button>
+        <div class="up-next-row">
+          <div class="up-next-card">
+            <div class="up-next-thumb" style="background:linear-gradient(135deg,#1E293B,#0F172A)"></div>
+            <div class="up-next-title">Component Tokens — Episode 5</div>
+          </div>
+          <div class="up-next-card">
+            <div class="up-next-thumb" style="background:linear-gradient(135deg,#1A2010,#0A1628)"></div>
+            <div class="up-next-title">Motion Design Principles</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Controls overlay — auto-hides after 2.5s of no interaction -->
+      <div class="controls-overlay" id="controlsOverlay">
+
+        <!-- Progress bar -->
+        <div class="progress-row">
+          <div class="progress-track" id="progressTrack">
+            <div class="progress-buffer"></div>
+            <div class="progress-fill"  id="progressFill"></div>
+            <div class="progress-thumb" id="progressThumb"></div>
+            <!-- Chapter markers (positioned by JS) -->
+          </div>
+        </div>
+
+        <!-- Bottom controls -->
+        <div class="bottom-controls">
+          <!-- Play/Pause -->
+          <button class="vbtn" id="vBtnPlay" aria-label="Play">
+            <svg id="vIconPlay" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <svg id="vIconPause" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="display:none"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+          </button>
+
+          <!-- Volume -->
+          <div class="vol-group">
+            <button class="vbtn" id="vBtnMute" aria-label="Mute">
+              <svg id="vIconVol" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+              <svg id="vIconMuted" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+            </button>
+            <input type="range" class="vol-mini" id="vVolSlider" min="0" max="100" value="80" aria-label="Volume">
+          </div>
+
+          <!-- Time -->
+          <span class="time-display" id="vTimeCurr">0:00</span>
+          <span class="time-display" style="opacity:0.5">/</span>
+          <span class="time-display" id="vTimeTotal">12:34</span>
+
+          <div class="spacer"></div>
+
+          <!-- PiP -->
+          <button class="vbtn" aria-label="Picture in picture">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2"/><rect x="12" y="12" width="8" height="7" rx="1"/></svg>
+          </button>
+
+          <!-- Settings -->
+          <button class="vbtn" id="vBtnSettings" aria-label="Settings">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          </button>
+
+          <!-- Settings popup -->
+          <div class="settings-popup" id="settingsPopup">
+            <div class="settings-row">
+              <span>Speed</span>
+              <select class="settings-select" id="vSpeedSelect">
+                <option>0.5×</option>
+                <option selected>1×</option>
+                <option>1.5×</option>
+                <option>2×</option>
+              </select>
+            </div>
+            <div class="settings-row">
+              <span>Quality</span>
+              <select class="settings-select">
+                <option>Auto</option>
+                <option>1080p</option>
+                <option>720p</option>
+                <option>480p</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Fullscreen -->
+          <button class="vbtn" id="vBtnFS" aria-label="Fullscreen">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+          </button>
+        </div>
+
+      </div><!-- /controls-overlay -->
+
+    </div><!-- /video-container -->
+
+    <!-- Video metadata below player -->
+    <div class="video-meta">
+      <h2>Design Systems Deep Dive — Episode 4</h2>
+      <p>42K views &middot; 3 days ago &middot; Design Systems Series</p>
+      <span class="shortcuts-hint" id="showShortcuts">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.001M10 8h.001M14 8h.001M18 8h.001M8 12h.001M12 12h.001M16 12h.001M7 16h10"/></svg>
+        Press ? to see keyboard shortcuts
+      </span>
+    </div>
+
+  </div><!-- /page-wrap -->
+
+  <script>
+    // ── Player State ──
+    const TOTAL_DURATION = 754; // 12:34 in seconds
+    let currentTime = 0;
+    let isPlaying   = false;
+    let isMuted     = false;
+    let timer       = null;
+    let hideTimer   = null;
+
+    // Chapter markers: { label, position (0–1) }
+    const CHAPTERS = [
+      { label: 'Intro',           pos: 0.0  },
+      { label: 'Token Architecture', pos: 0.18 },
+      { label: 'Component Mapping',  pos: 0.52 },
+      { label: 'Theming System',     pos: 0.78 },
+    ];
+
+    // ── DOM refs ──
+    const vContainer    = document.getElementById('videoContainer');
+    const vOverlay      = document.getElementById('controlsOverlay');
+    const vBtnPlay      = document.getElementById('vBtnPlay');
+    const vIconPlay     = document.getElementById('vIconPlay');
+    const vIconPause    = document.getElementById('vIconPause');
+    const vBtnMute      = document.getElementById('vBtnMute');
+    const vIconVol      = document.getElementById('vIconVol');
+    const vIconMuted    = document.getElementById('vIconMuted');
+    const vBtnSettings  = document.getElementById('vBtnSettings');
+    const settingsPopup = document.getElementById('settingsPopup');
+    const vBtnFS        = document.getElementById('vBtnFS');
+    const progressTrack = document.getElementById('progressTrack');
+    const progressFill  = document.getElementById('progressFill');
+    const progressThumb = document.getElementById('progressThumb');
+    const vTimeCurr     = document.getElementById('vTimeCurr');
+    const chapterTip    = document.getElementById('chapterTooltip');
+    const endScreen     = document.getElementById('endScreen');
+    const btnReplay     = document.getElementById('btnReplay');
+    const shortcutModal = document.getElementById('shortcutModal');
+
+    function fmtTime(s) {
+      const m = Math.floor(s / 60);
+      const sec = Math.floor(s % 60).toString().padStart(2, '0');
+      return `${m}:${sec}`;
+    }
+
+    // ── Progress update ──
+    function updateProgress() {
+      const pct = (currentTime / TOTAL_DURATION) * 100;
+      progressFill.style.width  = pct + '%';
+      progressThumb.style.left  = pct + '%';
+      vTimeCurr.textContent = fmtTime(currentTime);
+    }
+
+    // ── Play / Pause ──
+    function setPlaying(state) {
+      isPlaying = state;
+      vIconPlay.style.display  = isPlaying ? 'none' : '';
+      vIconPause.style.display = isPlaying ? '' : 'none';
+      document.getElementById('videoContent').style.opacity = isPlaying ? '0' : '1';
+      if (isPlaying) {
+        timer = setInterval(() => {
+          currentTime++;
+          if (currentTime >= TOTAL_DURATION) {
+            clearInterval(timer);
+            isPlaying = false;
+            vIconPlay.style.display = '';
+            vIconPause.style.display = 'none';
+            endScreen.classList.add('visible');
+          }
+          updateProgress();
+        }, 1000);
+      } else {
+        clearInterval(timer);
+      }
+    }
+
+    vBtnPlay.addEventListener('click', (e) => {
+      e.stopPropagation();
+      endScreen.classList.remove('visible');
+      setPlaying(!isPlaying);
+    });
+
+    // Click on video area also toggles play
+    vContainer.addEventListener('click', (e) => {
+      if (e.target.closest('.vbtn') || e.target.closest('.settings-popup') || e.target.closest('.progress-row') || e.target.closest('.end-screen')) return;
+      endScreen.classList.remove('visible');
+      setPlaying(!isPlaying);
+      showControls();
+    });
+
+    btnReplay.addEventListener('click', () => {
+      currentTime = 0;
+      updateProgress();
+      endScreen.classList.remove('visible');
+      setPlaying(true);
+    });
+
+    // ── Controls auto-hide ──
+    function showControls() {
+      vOverlay.classList.remove('hidden');
+      clearTimeout(hideTimer);
+      if (isPlaying) {
+        hideTimer = setTimeout(() => vOverlay.classList.add('hidden'), 2500);
+      }
+    }
+
+    vContainer.addEventListener('mousemove', showControls);
+    vContainer.addEventListener('touchstart', showControls, { passive: true });
+
+    // ── Progress seek ──
+    progressTrack.addEventListener('click', (e) => {
+      const rect = progressTrack.getBoundingClientRect();
+      const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+      currentTime = ratio * TOTAL_DURATION;
+      updateProgress();
+    });
+
+    // ── Mute ──
+    vBtnMute.addEventListener('click', (e) => {
+      e.stopPropagation();
+      isMuted = !isMuted;
+      vIconVol.style.display   = isMuted ? 'none' : '';
+      vIconMuted.style.display = isMuted ? '' : 'none';
+    });
+
+    // ── Settings popup ──
+    vBtnSettings.addEventListener('click', (e) => {
+      e.stopPropagation();
+      settingsPopup.classList.toggle('open');
+    });
+
+    document.addEventListener('click', () => settingsPopup.classList.remove('open'));
+
+    // ── Fullscreen ──
+    vBtnFS.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (document.fullscreenElement) {
+        document.exitFullscreen();
+      } else {
+        vContainer.requestFullscreen().catch(() => {});
+      }
+    });
+
+    // ── Chapter markers ──
+    CHAPTERS.forEach(ch => {
+      const marker = document.createElement('div');
+      marker.className = 'chapter-marker';
+      marker.style.left = (ch.pos * 100) + '%';
+      marker.title = ch.label;
+      progressTrack.appendChild(marker);
+
+      marker.addEventListener('mouseenter', (e) => {
+        chapterTip.textContent = ch.label;
+        chapterTip.style.left = (ch.pos * 100) + '%';
+        chapterTip.classList.add('visible');
+      });
+      marker.addEventListener('mouseleave', () => chapterTip.classList.remove('visible'));
+    });
+
+    // ── Keyboard shortcuts ──
+    document.addEventListener('keydown', (e) => {
+      // Ignore if focus is on an input/select
+      if (['INPUT','SELECT','TEXTAREA'].includes(document.activeElement.tagName)) return;
+
+      switch (e.key) {
+        case ' ':
+        case 'k':
+          e.preventDefault();
+          setPlaying(!isPlaying);
+          showControls();
+          break;
+        case 'ArrowLeft':
+          currentTime = Math.max(0, currentTime - 10);
+          updateProgress();
+          showControls();
+          break;
+        case 'ArrowRight':
+          currentTime = Math.min(TOTAL_DURATION, currentTime + 10);
+          updateProgress();
+          showControls();
+          break;
+        case 'm':
+        case 'M':
+          isMuted = !isMuted;
+          vIconVol.style.display   = isMuted ? 'none' : '';
+          vIconMuted.style.display = isMuted ? '' : 'none';
+          break;
+        case 'f':
+        case 'F':
+          vBtnFS.click();
+          break;
+        case '?':
+          shortcutModal.classList.toggle('open');
+          break;
+        default:
+          // Number keys 0–9 jump to 0%–90%
+          if (e.key >= '0' && e.key <= '9') {
+            const pct = parseInt(e.key) / 10;
+            currentTime = TOTAL_DURATION * pct;
+            updateProgress();
+            showControls();
+          }
+      }
+    });
+
+    // ── Shortcut modal controls ──
+    document.getElementById('showShortcuts').addEventListener('click', () => shortcutModal.classList.add('open'));
+    document.getElementById('closeShortcuts').addEventListener('click', () => shortcutModal.classList.remove('open'));
+    shortcutModal.addEventListener('click', (e) => {
+      if (e.target === shortcutModal) shortcutModal.classList.remove('open');
+    });
+
+    // ── Init ──
+    updateProgress();
+    showControls();
+  </script>
+</body>
+</html>

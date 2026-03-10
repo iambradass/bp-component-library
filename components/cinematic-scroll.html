@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cinematic Scroll — Component Library</title>
+  <!-- COMPONENT: Cinematic Scroll | COPY: style + html + script -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── CUSTOMIZE ─────────────────────────────────────────────── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.12);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+    }
+    /* ── END CUSTOMIZE ─────────────────────────────────────────── */
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: auto; } /* manual scroll, no CSS smoothing needed */
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      overflow-x: hidden;
+    }
+
+    /* ── Cinematic section base ──────────────────────────────── */
+    .cs-section {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      padding: 5rem 2rem;
+    }
+
+    .cs-inner {
+      max-width: 800px;
+      width: 100%;
+      text-align: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Section counter badge */
+    .cs-counter {
+      font-family: ui-monospace, monospace;
+      font-size: 0.6875rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 2rem;
+    }
+
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       SECTION 1 — TEXT FOCUS
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+    #s1 { background: var(--bg); }
+    #s1 .blur-bg {
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at center, rgba(16,185,129,0.06) 0%, transparent 70%);
+      filter: blur(40px);
+    }
+    #s1 .s1-headline {
+      font-family: var(--font-heading);
+      font-size: clamp(2.5rem, 7vw, 5rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+    }
+    #s1 .s1-sub {
+      font-size: 1.125rem;
+      color: var(--text-secondary);
+      margin-top: 1.5rem;
+      line-height: 1.7;
+    }
+
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       SECTION 2 — COUNTER REVEAL
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+    #s2 { background: var(--surface); }
+    #s2 .big-num {
+      font-family: var(--font-heading);
+      font-size: clamp(5rem, 18vw, 12rem);
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      color: var(--accent);
+      line-height: 1;
+    }
+    #s2 .s2-label {
+      font-size: 1.5rem;
+      font-family: var(--font-heading);
+      font-weight: 600;
+      margin-top: 1rem;
+    }
+    #s2 .s2-context {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      margin-top: 1rem;
+      max-width: 480px;
+      margin-inline: auto;
+    }
+
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       SECTION 3 — SPLIT REVEAL
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+    #s3 { background: var(--bg); }
+    .split-headline {
+      font-family: var(--font-heading);
+      font-size: clamp(2rem, 6vw, 4rem);
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      overflow: hidden;
+    }
+    .split-half { display: inline-block; }
+    .split-left  { transform: translateX(-120px); opacity: 0; transition: transform 0.8s cubic-bezier(0.4,0,0.2,1), opacity 0.8s ease; }
+    .split-right { transform: translateX(120px);  opacity: 0; transition: transform 0.8s cubic-bezier(0.4,0,0.2,1), opacity 0.8s ease; }
+
+    .s3-features {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-top: 2rem;
+      text-align: left;
+      max-width: 480px;
+      margin-inline: auto;
+    }
+    .s3-feat {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 0.9375rem; color: var(--text-secondary);
+      opacity: 0; transform: translateY(16px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    .s3-feat::before { content: '→'; color: var(--accent); font-weight: 700; }
+
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       SECTION 4 — STACKING CARDS PEEL
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+    /* The outer wrapper has to be tall enough for scrolling */
+    #s4-outer {
+      position: relative;
+      height: 400vh; /* 3 cards × ~100vh each, plus entry */
+    }
+    #s4-sticky {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .stack-card {
+      position: absolute;
+      width: min(560px, 90vw);
+      border-radius: 16px;
+      padding: 3rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+    }
+    .stack-card:nth-child(3) {
+      background: var(--elevated);
+      box-shadow: 0 4px 40px rgba(0,0,0,0.4);
+      z-index: 3;
+    }
+    .stack-card:nth-child(2) {
+      transform: translateY(12px) scale(0.96);
+      z-index: 2;
+    }
+    .stack-card:nth-child(1) {
+      transform: translateY(24px) scale(0.92);
+      z-index: 1;
+    }
+    .stack-title {
+      font-family: var(--font-heading); font-size: 1.5rem; font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+    .stack-body { font-size: 0.9375rem; color: var(--text-secondary); line-height: 1.7; }
+    .stack-num {
+      font-family: ui-monospace, monospace; font-size: 0.75rem;
+      color: var(--accent); margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.1em;
+    }
+
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       SECTION 5 — EXIT TO BLACK + CTA
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+    #s5 { background: var(--bg); }
+    .s5-overlay {
+      position: absolute; inset: 0;
+      background: rgba(0,0,0,0);
+      transition: background 0.1s linear;
+    }
+    .s5-cta-wrap {
+      position: relative; z-index: 2;
+      display: flex; flex-direction: column; align-items: center; gap: 1.5rem;
+    }
+    .s5-label {
+      font-family: ui-monospace, monospace; font-size: 0.6875rem;
+      color: var(--accent); text-transform: uppercase; letter-spacing: 0.12em;
+    }
+    .s5-headline {
+      font-family: var(--font-heading);
+      font-size: clamp(2rem, 6vw, 4rem);
+      font-weight: 700; letter-spacing: -0.025em;
+    }
+    .s5-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--accent); color: #0D1117;
+      font-family: var(--font-heading); font-size: 1rem; font-weight: 700;
+      padding: 14px 32px; border-radius: 8px; text-decoration: none;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .s5-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px rgba(16,185,129,0.3);
+    }
+
+    /* Animated elements — initial state controlled by scroll JS */
+    .anim-ready {
+      will-change: opacity, transform, filter;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Section 1 — Text focus -->
+  <section class="cs-section" id="s1">
+    <div class="blur-bg" id="s1-blur"></div>
+    <div class="cs-inner anim-ready" id="s1-content">
+      <div class="cs-counter">01 / 05 — Text Focus</div>
+      <h2 class="s1-headline" id="s1-headline">The way you tell<br>your story matters.</h2>
+      <p class="s1-sub" id="s1-sub">Scroll through to see five cinematic sequences — each animating in response to your scroll position, frame by frame.</p>
+    </div>
+  </section>
+
+  <!-- Section 2 — Counter reveal -->
+  <section class="cs-section" id="s2">
+    <div class="cs-inner">
+      <div class="cs-counter">02 / 05 — Counter Reveal</div>
+      <div class="big-num" id="counter-num">0</div>
+      <div class="s2-label" id="s2-label">Businesses reached last year</div>
+      <p class="s2-context" id="s2-context">Every one of them had a story worth telling. Most of them weren't telling it well.</p>
+    </div>
+  </section>
+
+  <!-- Section 3 — Split reveal -->
+  <section class="cs-section" id="s3">
+    <div class="cs-inner">
+      <div class="cs-counter">03 / 05 — Split Reveal</div>
+      <div class="split-headline">
+        <span class="split-half split-left">Your brand</span>
+        <span class="split-half split-right">deserves better.</span>
+      </div>
+      <div class="s3-features" id="s3-features">
+        <div class="s3-feat" style="transition-delay: 0ms">Messaging that cuts through noise</div>
+        <div class="s3-feat" style="transition-delay: 120ms">Design that earns attention</div>
+        <div class="s3-feat" style="transition-delay: 240ms">Strategy built on real data</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 4 — Stacking cards -->
+  <div id="s4-outer">
+    <div id="s4-sticky">
+      <div class="cs-counter" style="position:absolute; top:2rem; left:50%; transform:translateX(-50%); z-index:10;">04 / 05 — Stacking Cards</div>
+
+      <!-- Card 1 (bottom of stack, shows last) -->
+      <div class="stack-card" id="card-a">
+        <div class="stack-num">Card 01 — Discovery</div>
+        <div class="stack-title">We start with your story</div>
+        <p class="stack-body">A deep-dive into who you are, who you serve, and what makes you the obvious choice. No templates, no shortcuts.</p>
+      </div>
+
+      <!-- Card 2 (middle) -->
+      <div class="stack-card" id="card-b">
+        <div class="stack-num">Card 02 — Strategy</div>
+        <div class="stack-title">Then we build the plan</div>
+        <p class="stack-body">Every channel, every message, every touchpoint mapped to a specific audience moment. A strategy people actually follow.</p>
+      </div>
+
+      <!-- Card 3 (top, visible first) -->
+      <div class="stack-card" id="card-c">
+        <div class="stack-num">Card 03 — Execution</div>
+        <div class="stack-title">Then we ship</div>
+        <p class="stack-body">Fast, precise, and relentless. We don't wait for perfect — we build, measure, and improve in cycles that actually move the needle.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 5 — Exit to black + CTA -->
+  <section class="cs-section" id="s5">
+    <div class="s5-overlay" id="s5-overlay"></div>
+    <div class="cs-inner s5-cta-wrap" id="s5-inner">
+      <div class="s5-label">05 / 05 — The Call</div>
+      <h2 class="s5-headline">Ready to build something real?</h2>
+      <a href="#" class="s5-btn">Let's talk →</a>
+    </div>
+  </section>
+
+<script>
+(function() {
+  /* ── Utility: clamp a value between min and max ─────────────── */
+  function clamp(val, min, max) { return Math.min(Math.max(val, min), max); }
+
+  /* ── Get a section's scroll progress 0→1 as it enters viewport ─ */
+  function getSectionProgress(el) {
+    var rect = el.getBoundingClientRect();
+    var vh   = window.innerHeight;
+    // Progress: 0 = section just entered from bottom, 1 = section fully in view / at top
+    var progress = 1 - (rect.top / vh);
+    return clamp(progress, 0, 1);
+  }
+
+  /* ── Section 1 — Text focus (sharpens + scales up on entry) ─── */
+  var s1Content = document.getElementById('s1-content');
+  var s1Blur    = document.getElementById('s1-blur');
+
+  /* ── Section 2 — Counter reveal ─────────────────────────────── */
+  var s2El        = document.getElementById('s2');
+  var counterEl   = document.getElementById('counter-num');
+  var s2Label     = document.getElementById('s2-label');
+  var s2Context   = document.getElementById('s2-context');
+  var counterFired = false;
+  var TARGET = 10000;
+
+  function runCounter() {
+    if (counterFired) return;
+    counterFired = true;
+    var start = performance.now();
+    var dur   = 2000;
+    function step(ts) {
+      var p = clamp((ts - start) / dur, 0, 1);
+      var ease = 1 - Math.pow(1 - p, 4);
+      counterEl.textContent = Math.floor(ease * TARGET).toLocaleString() + '+';
+      if (p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  /* ── Section 3 — Split reveal ────────────────────────────────── */
+  var s3El    = document.getElementById('s3');
+  var splitL  = document.querySelector('.split-left');
+  var splitR  = document.querySelector('.split-right');
+  var s3Feats = document.querySelectorAll('.s3-feat');
+  var s3Fired = false;
+
+  /* ── Section 4 — Stacking cards peel ────────────────────────── */
+  var s4Outer  = document.getElementById('s4-outer');
+  var cardA    = document.getElementById('card-a'); // bottom
+  var cardB    = document.getElementById('card-b');
+  var cardC    = document.getElementById('card-c'); // top (visible first)
+
+  /* ── Section 5 — Exit to black ──────────────────────────────── */
+  var s5El      = document.getElementById('s5');
+  var s5Overlay = document.getElementById('s5-overlay');
+  var s5Inner   = document.getElementById('s5-inner');
+
+  /* ── RAF scroll loop ─────────────────────────────────────────── */
+  var ticking = false;
+
+  function onScroll() {
+    if (!ticking) {
+      requestAnimationFrame(update);
+      ticking = true;
+    }
+  }
+
+  function update() {
+    ticking = false;
+
+    // --- S1: text sharpens as it enters ---
+    var p1 = getSectionProgress(s1Content);
+    var s1opacity = clamp(p1 * 3, 0, 1);
+    var s1scale   = 0.93 + (0.07 * clamp(p1 * 2, 0, 1));
+    s1Content.style.opacity   = s1opacity;
+    s1Content.style.transform = 'scale(' + s1scale + ')';
+    s1Content.style.filter    = 'blur(' + (8 * (1 - clamp(p1 * 2, 0, 1))) + 'px)';
+
+    // --- S2: counter when section is ~half in view ---
+    var p2 = getSectionProgress(s2El);
+    if (p2 > 0.4) runCounter();
+    s2Label.style.opacity   = clamp((p2 - 0.4) * 5, 0, 1);
+    s2Context.style.opacity = clamp((p2 - 0.55) * 6, 0, 1);
+    s2Context.style.transform = 'translateY(' + (20 * (1 - clamp((p2 - 0.55) * 6, 0, 1))) + 'px)';
+
+    // --- S3: split halves meet from sides ---
+    var p3 = getSectionProgress(s3El);
+    var s3in = clamp((p3 - 0.2) * 2.5, 0, 1);
+    splitL.style.transform = 'translateX(' + (-120 * (1 - s3in)) + 'px)';
+    splitL.style.opacity   = s3in;
+    splitR.style.transform = 'translateX(' + (120 * (1 - s3in)) + 'px)';
+    splitR.style.opacity   = s3in;
+
+    if (p3 > 0.5 && !s3Fired) {
+      s3Fired = true;
+      s3Feats.forEach(function(f) { f.style.opacity = '1'; f.style.transform = 'none'; });
+    }
+
+    // --- S4: stacking card peel ---
+    // The outer div is 4× taller than viewport; use its scroll progress
+    var s4rect = s4Outer.getBoundingClientRect();
+    var totalScroll = s4Outer.offsetHeight - window.innerHeight;
+    var scrolled = -s4rect.top; // how far we've scrolled into s4
+    var s4p = clamp(scrolled / totalScroll, 0, 1);
+
+    // Phase 0–0.4: Card C (top) is static; cards B and A peek behind
+    // Phase 0.4–0.65: Card C slides away upward
+    // Phase 0.65–0.85: Card B is top; slides away
+    // Phase 0.85–1.0: Card A is final reveal
+
+    var cFly = clamp((s4p - 0.35) / 0.25, 0, 1);
+    var bFly = clamp((s4p - 0.62) / 0.25, 0, 1);
+    var bRise = clamp((s4p - 0.35) / 0.3, 0, 1);
+    var aRise = clamp((s4p - 0.62) / 0.3, 0, 1);
+
+    // Card C: flies up off screen
+    cardC.style.transform = 'translateY(' + (-120 * cFly) + 'px) scale(' + (1 - 0.05 * cFly) + ')';
+    cardC.style.opacity   = 1 - cFly;
+
+    // Card B: rises from back to front, then flies away
+    var bScale = 0.96 + (0.04 * bRise) - (0.05 * bFly);
+    var bTransY = 12 - (12 * bRise) - (120 * bFly);
+    cardB.style.transform = 'translateY(' + bTransY + 'px) scale(' + bScale + ')';
+    cardB.style.opacity   = bRise - bFly;
+    cardB.style.zIndex    = cFly > 0.5 ? 3 : 2;
+
+    // Card A: rises from deep back to top
+    var aScale  = 0.92 + (0.08 * aRise);
+    var aTransY = 24 - (24 * aRise);
+    cardA.style.transform = 'translateY(' + aTransY + 'px) scale(' + aScale + ')';
+    cardA.style.opacity   = aRise;
+    cardA.style.zIndex    = bFly > 0.5 ? 3 : 1;
+
+    // --- S5: overlay darkens on scroll-in ---
+    var p5 = getSectionProgress(s5El);
+    var overlayOpacity = clamp((p5 - 0.1) * 2, 0, 0.85);
+    s5Overlay.style.background = 'rgba(0,0,0,' + overlayOpacity + ')';
+    s5Inner.style.opacity       = clamp((p5 - 0.4) * 4, 0, 1);
+    s5Inner.style.transform     = 'translateY(' + (30 * (1 - clamp((p5 - 0.4) * 4, 0, 1))) + 'px)';
+  }
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+  update(); // initial render
+})();
+</script>
+</body>
+</html>

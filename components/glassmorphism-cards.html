@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Glassmorphism Cards — Component Library</title>
+
+  <!--
+  /* COMPONENT: Glassmorphism Cards | COPY: style + html + script */
+  Frosted glass cards floating over an animated gradient mesh.
+  Three feature cards with glass treatment, hover lift effect,
+  and a living dark gradient background made from drifting radial blobs.
+  -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+
+    /* ============================================================
+       CUSTOMIZE — adjust these to match your project
+       ============================================================ */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --glow:           rgba(16,185,129,0.15);
+      --glow-strong:    rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --border-accent:  rgba(16,185,129,0.3);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+
+      /* Glass card treatment — customize the frosted look here */
+      --glass-bg:       rgba(30, 41, 59, 0.5);
+      --glass-blur:     blur(20px) saturate(180%);
+      --glass-border:   rgba(255,255,255,0.08);
+      --glass-shadow:   0 8px 32px rgba(0,0,0,0.4);
+    }
+    /* ============================================================ */
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+
+    /* ── Animated gradient mesh background ──
+       Three large radial blobs drift slowly using CSS animations.
+       They're oversized and soft — creating a deep, premium gradient field. */
+    .glass-scene {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 4rem 1.5rem;
+      overflow: hidden;
+    }
+
+    /* The mesh container — fills the scene behind everything */
+    .glass-mesh {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      background: #080e1a; /* deep dark base */
+    }
+
+    /* Each blob is a pseudo-element + div combo since we need 3+ blobs */
+    .glass-blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.55;
+    }
+
+    /* Blob 1 — deep teal, top-left drift */
+    .glass-blob--1 {
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, #0d4f4a 0%, transparent 70%);
+      top: -120px;
+      left: -100px;
+      animation: blob-drift-1 18s ease-in-out infinite alternate;
+    }
+
+    /* Blob 2 — deep navy/indigo, top-right drift */
+    .glass-blob--2 {
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, #1a1060 0%, transparent 70%);
+      top: -80px;
+      right: -80px;
+      animation: blob-drift-2 22s ease-in-out infinite alternate;
+    }
+
+    /* Blob 3 — deep purple, bottom-center drift */
+    .glass-blob--3 {
+      width: 700px;
+      height: 700px;
+      background: radial-gradient(circle, #2d0b3e 0%, transparent 70%);
+      bottom: -200px;
+      left: 50%;
+      transform: translateX(-50%);
+      animation: blob-drift-3 26s ease-in-out infinite alternate;
+    }
+
+    /* Blob 4 — subtle teal accent bottom-right */
+    .glass-blob--4 {
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, #063326 0%, transparent 70%);
+      bottom: -60px;
+      right: -60px;
+      animation: blob-drift-4 20s ease-in-out infinite alternate;
+    }
+
+    @keyframes blob-drift-1 {
+      from { transform: translate(0, 0) scale(1); }
+      to   { transform: translate(60px, 80px) scale(1.15); }
+    }
+    @keyframes blob-drift-2 {
+      from { transform: translate(0, 0) scale(1); }
+      to   { transform: translate(-80px, 60px) scale(1.1); }
+    }
+    @keyframes blob-drift-3 {
+      from { transform: translateX(-50%) scale(1); }
+      to   { transform: translateX(calc(-50% + 40px)) scale(1.2); }
+    }
+    @keyframes blob-drift-4 {
+      from { transform: translate(0, 0) scale(1); }
+      to   { transform: translate(-50px, -40px) scale(1.1); }
+    }
+
+    /* Subtle noise texture overlay to break up the gradient banding */
+    .glass-mesh::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+
+    /* ── Header copy ── */
+    .glass-header {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+    .glass-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 5px 14px;
+      background: rgba(16,185,129,0.08);
+      border: 1px solid var(--border-accent);
+      border-radius: 100px;
+      margin-bottom: 1.25rem;
+    }
+    .glass-title {
+      font-family: var(--font-heading);
+      font-size: clamp(2rem, 5vw, 3rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.75rem;
+    }
+    .glass-subtitle {
+      color: var(--text-secondary);
+      font-size: 1rem;
+      line-height: 1.6;
+      max-width: 520px;
+    }
+
+
+    /* ── Card grid — 3 col desktop, 1 col mobile ── */
+    .glass-grid {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+      width: 100%;
+      max-width: 1000px;
+    }
+    @media (max-width: 900px) {
+      .glass-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 580px) {
+      .glass-grid { grid-template-columns: 1fr; }
+    }
+
+
+    /* ── The glass card itself ──
+       Key properties:
+       - background: semi-transparent dark
+       - backdrop-filter: frosted glass effect (blurs what's behind)
+       - border: barely-visible white edge for the glass rim
+       - box-shadow: deep shadow to ground it */
+    .glass-card {
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur); /* Safari */
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      box-shadow: var(--glass-shadow);
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+      cursor: default;
+    }
+
+    /* Hover: card lifts, border brightens, glow intensifies */
+    .glass-card:hover {
+      transform: translateY(-8px);
+      border-color: rgba(255,255,255,0.15);
+      box-shadow:
+        var(--glass-shadow),
+        0 0 60px rgba(16,185,129,0.08),
+        0 20px 60px rgba(0,0,0,0.5);
+    }
+
+
+    /* Icon circle — accent-tinted background */
+    .glass-card-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      background: rgba(16,185,129,0.1);
+      border: 1px solid rgba(16,185,129,0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .glass-card-title {
+      font-family: var(--font-heading);
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .glass-card-body {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      line-height: 1.65;
+      flex: 1;
+    }
+
+    /* Subtle divider between body and stat */
+    .glass-card-divider {
+      height: 1px;
+      background: rgba(255,255,255,0.06);
+      margin: 0.25rem 0;
+    }
+
+    /* Bottom stat/tag row */
+    .glass-card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+    .glass-card-stat {
+      font-family: var(--font-heading);
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .glass-card-stat-label {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .glass-card-tag {
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 3px 10px;
+      background: rgba(16,185,129,0.08);
+      border: 1px solid rgba(16,185,129,0.2);
+      border-radius: 100px;
+    }
+
+
+    /* ── Demo label (production note) ── */
+    .glass-note {
+      position: relative;
+      z-index: 1;
+      margin-top: 3rem;
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      text-align: center;
+    }
+
+  </style>
+</head>
+<body>
+
+  <section class="glass-scene">
+
+    <!-- Animated gradient mesh — 4 drifting blobs -->
+    <div class="glass-mesh" aria-hidden="true">
+      <div class="glass-blob glass-blob--1"></div>
+      <div class="glass-blob glass-blob--2"></div>
+      <div class="glass-blob glass-blob--3"></div>
+      <div class="glass-blob glass-blob--4"></div>
+    </div>
+
+    <!-- Header copy -->
+    <div class="glass-header">
+      <div class="glass-eyebrow">Platform Features</div>
+      <h2 class="glass-title">Built for scale.<br>Designed for trust.</h2>
+      <p class="glass-subtitle">Everything your team needs to ship faster, collaborate better, and sleep soundly at night.</p>
+    </div>
+
+    <!-- 3 glass feature cards -->
+    <div class="glass-grid">
+
+      <!-- Card 1: Real-time Sync -->
+      <div class="glass-card">
+        <div class="glass-card-icon">
+          <!-- Sync/refresh icon -->
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 2v6h-6"/>
+            <path d="M3 12a9 9 0 0 1 15-6.7L21 8"/>
+            <path d="M3 22v-6h6"/>
+            <path d="M21 12a9 9 0 0 1-15 6.7L3 16"/>
+          </svg>
+        </div>
+        <div class="glass-card-title">Real-time Sync</div>
+        <p class="glass-card-body">Changes propagate to every connected client in under 50ms. No polling, no stale data — your team always sees the same truth, whether they're in the same room or across the globe.</p>
+        <div class="glass-card-divider"></div>
+        <div class="glass-card-footer">
+          <div>
+            <div class="glass-card-stat">&lt; 50ms</div>
+            <div class="glass-card-stat-label">Avg. latency</div>
+          </div>
+          <span class="glass-card-tag">WebSockets</span>
+        </div>
+      </div>
+
+      <!-- Card 2: End-to-End Encryption -->
+      <div class="glass-card">
+        <div class="glass-card-icon">
+          <!-- Lock icon -->
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+        </div>
+        <div class="glass-card-title">End-to-End Encryption</div>
+        <p class="glass-card-body">Every byte is encrypted before it leaves your device. AES-256 at rest, TLS 1.3 in transit. Your data is yours — we have zero knowledge of its contents, by design.</p>
+        <div class="glass-card-divider"></div>
+        <div class="glass-card-footer">
+          <div>
+            <div class="glass-card-stat">AES-256</div>
+            <div class="glass-card-stat-label">Encryption standard</div>
+          </div>
+          <span class="glass-card-tag">SOC 2 Type II</span>
+        </div>
+      </div>
+
+      <!-- Card 3: Global CDN -->
+      <div class="glass-card">
+        <div class="glass-card-icon">
+          <!-- Globe icon -->
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="2" y1="12" x2="22" y2="12"/>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+          </svg>
+        </div>
+        <div class="glass-card-title">Global CDN</div>
+        <p class="glass-card-body">Assets served from 47 edge locations worldwide. Your users load from the nearest node — not a server on the other side of the planet. Fast everywhere, not just in California.</p>
+        <div class="glass-card-divider"></div>
+        <div class="glass-card-footer">
+          <div>
+            <div class="glass-card-stat">47</div>
+            <div class="glass-card-stat-label">Edge locations</div>
+          </div>
+          <span class="glass-card-tag">99.99% uptime</span>
+        </div>
+      </div>
+
+    </div><!-- /glass-grid -->
+
+    <p class="glass-note">Glassmorphism Cards — backdrop-filter: blur(20px) — works in all modern browsers</p>
+
+  </section>
+
+</body>
+</html>

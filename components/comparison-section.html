@@ -1,0 +1,392 @@
+<!-- COMPONENT: Comparison Section | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Comparison Section — Old Way vs Our Way</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+      --red:            #EF4444;
+      --red-dim:        rgba(239,68,68,0.12);
+      --red-border:     rgba(239,68,68,0.25);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font-body); min-height: 100vh; }
+
+    /* ── Section wrapper ── */
+    .section {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 5rem 1.5rem;
+    }
+
+    /* ── Section header ── */
+    .section-header { text-align: center; margin-bottom: 4rem; }
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: var(--font-mono); font-size: 0.75rem; font-weight: 600;
+      color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em;
+      padding: 5px 14px; background: var(--accent-dim);
+      border: 1px solid var(--accent-border); border-radius: 100px; margin-bottom: 1.25rem;
+    }
+    .section-title {
+      font-family: var(--font-heading);
+      font-size: clamp(1.75rem, 5vw, 3rem);
+      font-weight: 700; letter-spacing: -0.025em; line-height: 1.15;
+    }
+    .section-title em { font-style: normal; color: var(--red); }
+    .section-title strong { color: var(--accent); }
+
+    /* ── Column header labels ── */
+    .comp-col-headers {
+      display: grid;
+      grid-template-columns: 1fr 140px 1fr;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    @media (max-width: 640px) {
+      .comp-col-headers { display: none; }
+    }
+    .comp-col-label {
+      font-family: var(--font-mono); font-size: 0.6875rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.1em; text-align: center;
+      padding: 8px; border-radius: 6px;
+    }
+    .comp-col-label.old { color: var(--red); background: var(--red-dim); border: 1px solid var(--red-border); }
+    .comp-col-label.dim { color: var(--text-muted); background: transparent; }
+    .comp-col-label.new { color: var(--accent); background: var(--accent-dim); border: 1px solid var(--accent-border); }
+
+    /* ── Comparison rows ── */
+    .comp-row {
+      display: grid;
+      grid-template-columns: 1fr 140px 1fr;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      align-items: stretch;
+    }
+    @media (max-width: 640px) {
+      .comp-row { grid-template-columns: 1fr; }
+    }
+
+    /* Old way card */
+    .comp-card {
+      border-radius: var(--radius);
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      /* Start off-screen for animation */
+      opacity: 0;
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    .comp-card.old {
+      background: var(--red-dim);
+      border: 1px solid var(--red-border);
+      transform: translateX(-30px);
+    }
+    .comp-card.new {
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-border);
+      transform: translateX(30px);
+    }
+    .comp-card.visible {
+      opacity: 1;
+      transform: none;
+    }
+
+    .comp-card-icon {
+      width: 28px; height: 28px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .comp-card.old .comp-card-icon { background: rgba(239,68,68,0.15); color: var(--red); }
+    .comp-card.new .comp-card-icon { background: rgba(16,185,129,0.15); color: var(--accent); }
+    .comp-card-header { display: flex; align-items: center; gap: 10px; }
+    .comp-card-text { font-size: 0.9375rem; color: var(--text-secondary); line-height: 1.6; }
+    .comp-card.old .comp-card-text { color: rgba(239,68,68,0.8); }
+    .comp-card.new .comp-card-text { color: rgba(16,185,129,0.9); }
+
+    /* Center dimension label */
+    .comp-dimension {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      opacity: 0;
+      transition: opacity 0.4s ease 0.25s;
+    }
+    .comp-dimension.visible { opacity: 1; }
+    @media (max-width: 640px) {
+      .comp-dimension {
+        border-top: 1px solid var(--border);
+        padding-top: 0.75rem;
+        margin-top: 0.75rem;
+        order: -1;
+      }
+    }
+    .comp-dimension-inner {
+      font-family: var(--font-heading); font-size: 0.75rem; font-weight: 700;
+      color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em;
+      padding: 6px 12px; border: 1px solid var(--border);
+      border-radius: 100px; white-space: nowrap;
+    }
+    @media (max-width: 640px) {
+      .comp-dimension-inner { font-size: 0.875rem; }
+    }
+
+    /* ── Summary row ── */
+    .comp-summary {
+      margin-top: 2rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    .comp-summary.visible { opacity: 1; transform: none; }
+    @media (max-width: 640px) { .comp-summary { grid-template-columns: 1fr; } }
+
+    .comp-summary-card {
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      text-align: center;
+    }
+    .comp-summary-card.old { background: rgba(239,68,68,0.06); border: 1px solid var(--red-border); }
+    .comp-summary-card.new { background: var(--accent-dim); border: 1px solid var(--accent-border); }
+    .comp-summary-label { font-family: var(--font-mono); font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+    .comp-summary-card.old .comp-summary-label { color: var(--red); }
+    .comp-summary-card.new .comp-summary-label { color: var(--accent); }
+    .comp-summary-text { font-family: var(--font-heading); font-size: 1.0625rem; font-weight: 700; }
+    .comp-summary-card.old .comp-summary-text { color: rgba(239,68,68,0.9); }
+    .comp-summary-card.new .comp-summary-text { color: var(--accent); }
+
+  </style>
+</head>
+<body>
+
+  <div class="section">
+
+    <div class="section-header">
+      <div class="eyebrow">Let's be honest</div>
+      <h2 class="section-title">
+        <em>The Old Way</em> vs.
+        <strong>The Right Way</strong>
+      </h2>
+    </div>
+
+    <!-- Column headers — desktop only -->
+    <div class="comp-col-headers">
+      <div class="comp-col-label old">The Old Way</div>
+      <div class="comp-col-label dim"></div>
+      <div class="comp-col-label new">Our Way</div>
+    </div>
+
+    <!-- 6 comparison rows -->
+
+    <div class="comp-row">
+      <div class="comp-card old">
+        <div class="comp-card-header">
+          <div class="comp-card-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </div>
+        </div>
+        <p class="comp-card-text">Invisible online — competitors show up on Google, you don't. Clients who find you are the ones you already know.</p>
+      </div>
+      <div class="comp-dimension">
+        <div class="comp-dimension-inner">Getting Found</div>
+      </div>
+      <div class="comp-card new">
+        <div class="comp-card-header">
+          <div class="comp-card-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+        </div>
+        <p class="comp-card-text">Optimized for local search from day one. Your site shows up when people in your market search for a title rep.</p>
+      </div>
+    </div>
+
+    <div class="comp-row">
+      <div class="comp-card old">
+        <div class="comp-card-header">
+          <div class="comp-card-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </div>
+        </div>
+        <p class="comp-card-text">100% referral dependent. One dry quarter, one relationship gone cold, and the whole pipeline dries up.</p>
+      </div>
+      <div class="comp-dimension">
+        <div class="comp-dimension-inner">Lead Generation</div>
+      </div>
+      <div class="comp-card new">
+        <div class="comp-card-header">
+          <div class="comp-card-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+        </div>
+        <p class="comp-card-text">Automated lead capture running 24/7. New contacts arrive in your inbox — even while you're at closings.</p>
+      </div>
+    </div>
+
+    <div class="comp-row">
+      <div class="comp-card old">
+        <div class="comp-card-header">
+          <div class="comp-card-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </div>
+        </div>
+        <p class="comp-card-text">Manual follow-up from a spreadsheet. Leads fall through the cracks. You don't know who's been contacted.</p>
+      </div>
+      <div class="comp-dimension">
+        <div class="comp-dimension-inner">Following Up</div>
+      </div>
+      <div class="comp-card new">
+        <div class="comp-card-header">
+          <div class="comp-card-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+        </div>
+        <p class="comp-card-text">Leads feed directly into your CRM. Automated follow-up sequences run in the background. Nothing slips.</p>
+      </div>
+    </div>
+
+    <div class="comp-row">
+      <div class="comp-card old">
+        <div class="comp-card-header">
+          <div class="comp-card-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </div>
+        </div>
+        <p class="comp-card-text">Broker-provided profile page or no web presence at all. Nothing that shows who you are or builds trust at a glance.</p>
+      </div>
+      <div class="comp-dimension">
+        <div class="comp-dimension-inner">Professionalism</div>
+      </div>
+      <div class="comp-card new">
+        <div class="comp-card-header">
+          <div class="comp-card-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+        </div>
+        <p class="comp-card-text">A custom-built website with your story, credentials, and reviews. First impressions that win business before you pick up the phone.</p>
+      </div>
+    </div>
+
+    <div class="comp-row">
+      <div class="comp-card old">
+        <div class="comp-card-header">
+          <div class="comp-card-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </div>
+        </div>
+        <p class="comp-card-text">No way to know how many people found you, if anyone did, or what's working. You're flying blind on marketing.</p>
+      </div>
+      <div class="comp-dimension">
+        <div class="comp-dimension-inner">Tracking Results</div>
+      </div>
+      <div class="comp-card new">
+        <div class="comp-card-header">
+          <div class="comp-card-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+        </div>
+        <p class="comp-card-text">Monthly reports showing visitors, leads, and ranking improvements. Clear ROI, plain English, no dashboard required.</p>
+      </div>
+    </div>
+
+    <div class="comp-row">
+      <div class="comp-card old">
+        <div class="comp-card-header">
+          <div class="comp-card-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </div>
+        </div>
+        <p class="comp-card-text">Hours each week on cold outreach, manual follow-up, and chasing leads that should have found you on their own.</p>
+      </div>
+      <div class="comp-dimension">
+        <div class="comp-dimension-inner">Time Investment</div>
+      </div>
+      <div class="comp-card new">
+        <div class="comp-card-header">
+          <div class="comp-card-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+        </div>
+        <p class="comp-card-text">Near-zero ongoing time investment. We handle everything. Your job is to answer the phone when qualified leads call.</p>
+      </div>
+    </div>
+
+    <!-- Summary row -->
+    <div class="comp-summary">
+      <div class="comp-summary-card old">
+        <div class="comp-summary-label">Old Way</div>
+        <div class="comp-summary-text">Inconsistent. Manual. Invisible.</div>
+      </div>
+      <div class="comp-summary-card new">
+        <div class="comp-summary-label">Our Way</div>
+        <div class="comp-summary-text">Systematic. Automated. Searchable.</div>
+      </div>
+    </div>
+
+  </div><!-- /section -->
+
+  <script>
+    // Staggered scroll-triggered animation
+    // Left cards slide in from left, right cards from right, center label fades last
+    const rows = document.querySelectorAll('.comp-row');
+    const summary = document.querySelector('.comp-summary');
+
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        const row = entry.target;
+        const oldCard  = row.querySelector('.comp-card.old');
+        const newCard  = row.querySelector('.comp-card.new');
+        const dimLabel = row.querySelector('.comp-dimension');
+
+        // Old card slides in from left immediately
+        if (oldCard) oldCard.classList.add('visible');
+        // New card slides in from right with slight delay
+        if (newCard) setTimeout(() => newCard.classList.add('visible'), 80);
+        // Dimension label fades in last
+        if (dimLabel) setTimeout(() => dimLabel.classList.add('visible'), 200);
+
+        io.unobserve(row);
+      });
+    }, { threshold: 0.25 });
+
+    rows.forEach(r => io.observe(r));
+
+    // Summary row
+    const ioSum = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          ioSum.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.3 });
+    if (summary) ioSum.observe(summary);
+  </script>
+
+</body>
+</html>

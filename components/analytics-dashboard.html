@@ -1,0 +1,658 @@
+<!-- COMPONENT: Analytics Dashboard | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analytics Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ── Customize ── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --red:            #EF4444;
+      --amber:          #F59E0B;
+      --blue:           #3B82F6;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 14px;
+      line-height: 1.5;
+      padding: 24px;
+      min-height: 100vh;
+    }
+
+    /* ── Layout ── */
+    .dashboard {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* ── Header ── */
+    .dash-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .dash-title {
+      font-family: var(--font-heading);
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    .dash-range-tabs {
+      display: flex;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .dash-range-tabs button {
+      padding: 6px 14px;
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-family: var(--font-body);
+      font-size: 0.8125rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .dash-range-tabs button.active {
+      background: var(--accent);
+      color: #000;
+      font-weight: 600;
+    }
+    .dash-range-tabs button:hover:not(.active) { color: var(--text); background: var(--elevated); }
+
+    /* ── KPI Tiles ── */
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+    }
+    @media (max-width: 768px) { .kpi-row { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 480px) { .kpi-row { grid-template-columns: 1fr; } }
+
+    .kpi-tile {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .kpi-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .kpi-value-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+    }
+    .kpi-value {
+      font-family: var(--font-heading);
+      font-size: 1.5rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .kpi-change {
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 2px 5px;
+      border-radius: 4px;
+      line-height: 1.4;
+      margin-bottom: 2px;
+    }
+    .kpi-change.up   { color: var(--accent); background: var(--accent-dim); }
+    .kpi-change.down { color: var(--red);    background: rgba(239,68,68,0.12); }
+    .kpi-spark { display: block; }
+
+    /* ── Main Chart ── */
+    .main-chart-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      position: relative;
+    }
+    .main-chart-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .chart-legend {
+      display: flex;
+      gap: 16px;
+      font-size: 0.8125rem;
+    }
+    .legend-dot {
+      display: inline-block;
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      margin-right: 5px;
+    }
+    .chart-wrap {
+      position: relative;
+      cursor: crosshair;
+    }
+    #mainChart { display: block; width: 100%; }
+    .chart-tooltip {
+      position: absolute;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 0.8125rem;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.1s;
+      white-space: nowrap;
+      z-index: 10;
+    }
+    .chart-tooltip.visible { opacity: 1; }
+
+    /* ── Tables Row ── */
+    .tables-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 640px) { .tables-row { grid-template-columns: 1fr; } }
+
+    .table-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .table-card-header {
+      padding: 12px 16px;
+      font-family: var(--font-heading);
+      font-size: 0.875rem;
+      font-weight: 600;
+      border-bottom: 1px solid var(--border);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th {
+      padding: 8px 12px;
+      text-align: left;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--text-muted);
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+    }
+    th:hover { color: var(--text); }
+    th .sort-arrow { opacity: 0.4; margin-left: 3px; }
+    th.sorted .sort-arrow { opacity: 1; color: var(--accent); }
+    td {
+      padding: 8px 12px;
+      font-size: 0.8125rem;
+      border-top: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+    .trend-bar-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .trend-bar-bg {
+      width: 60px;
+      height: 6px;
+      background: var(--elevated);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .trend-bar-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 3px;
+    }
+    .pct-text { color: var(--text-secondary); font-size: 0.75rem; }
+  </style>
+</head>
+<body>
+<div class="dashboard">
+
+  <!-- Header with time range tabs -->
+  <div class="dash-header">
+    <h1 class="dash-title">Analytics Overview</h1>
+    <div class="dash-range-tabs" id="rangeTabs">
+      <button data-range="7" class="active">Last 7d</button>
+      <button data-range="30">30d</button>
+      <button data-range="90">90d</button>
+    </div>
+  </div>
+
+  <!-- 5 KPI Tiles -->
+  <div class="kpi-row" id="kpiRow"></div>
+
+  <!-- Main Line Chart -->
+  <div class="main-chart-card">
+    <div class="main-chart-header">
+      <span style="font-family:var(--font-heading);font-weight:600;font-size:.875rem;">Daily Visitors</span>
+      <div class="chart-legend">
+        <span><span class="legend-dot" style="background:var(--accent)"></span>This period</span>
+        <span><span class="legend-dot" style="background:var(--blue)"></span>Last period</span>
+      </div>
+    </div>
+    <div class="chart-wrap" id="chartWrap">
+      <canvas id="mainChart" height="200"></canvas>
+      <div class="chart-tooltip" id="chartTooltip"></div>
+    </div>
+  </div>
+
+  <!-- Sources + Pages tables -->
+  <div class="tables-row">
+    <!-- Traffic Sources -->
+    <div class="table-card">
+      <div class="table-card-header">Traffic Sources</div>
+      <table id="sourcesTable">
+        <thead><tr>
+          <th data-col="0">Source <span class="sort-arrow">↕</span></th>
+          <th data-col="1">Visitors <span class="sort-arrow">↕</span></th>
+          <th data-col="2">% <span class="sort-arrow">↕</span></th>
+          <th data-col="3">Trend</th>
+        </tr></thead>
+        <tbody id="sourcesTbody"></tbody>
+      </table>
+    </div>
+
+    <!-- Top Pages -->
+    <div class="table-card">
+      <div class="table-card-header">Top Pages</div>
+      <table id="pagesTable">
+        <thead><tr>
+          <th data-col="0">Page <span class="sort-arrow">↕</span></th>
+          <th data-col="1">Visits <span class="sort-arrow">↕</span></th>
+          <th data-col="2">Bounce <span class="sort-arrow">↕</span></th>
+          <th data-col="3">Avg Time <span class="sort-arrow">↕</span></th>
+        </tr></thead>
+        <tbody id="pagesTbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ── Data generation ──────────────────────────────────────────────
+  let currentRange = 7;
+
+  function rnd(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+  function fmt(n) { return n >= 1000 ? (n/1000).toFixed(1)+'k' : n.toString(); }
+
+  function genDailyData(days) {
+    const base = 2400;
+    const result = [];
+    let v = base;
+    for (let i = 0; i < days; i++) {
+      v = Math.max(800, v + rnd(-300, 350));
+      result.push(v);
+    }
+    return result;
+  }
+
+  // KPI definitions
+  const kpiDefs = [
+    { label: 'Visitors',       fmt: v => fmt(v),           base: [18000,35000] },
+    { label: 'Pageviews',      fmt: v => fmt(v),           base: [52000,90000] },
+    { label: 'Bounce Rate',    fmt: v => v.toFixed(1)+'%', base: [38,62] },
+    { label: 'Session Duration',fmt: v => Math.floor(v/60)+'m '+Math.floor(v%60)+'s', base: [90,280] },
+    { label: 'Conv. Rate',     fmt: v => v.toFixed(2)+'%', base: [2,8] },
+  ];
+
+  function genKPIData() {
+    return kpiDefs.map(k => {
+      const val = rnd(k.base[0], k.base[1]);
+      const change = (Math.random() * 30 - 12).toFixed(1);
+      const spark = Array.from({length:10}, (_,i) => {
+        const t = i / 9;
+        return k.base[0] + (k.base[1]-k.base[0]) * (0.3 + 0.7*Math.random());
+      });
+      return { ...k, val, change: parseFloat(change), spark };
+    });
+  }
+
+  const sources = ['Google Organic','Direct','Twitter / X','Email Campaign','LinkedIn','Referral','GitHub','Product Hunt'];
+  function genSourceData(total) {
+    let remaining = total;
+    return sources.map((name, i) => {
+      const v = i === sources.length-1 ? remaining : rnd(Math.floor(remaining*0.05), Math.floor(remaining*0.35));
+      remaining -= v;
+      return { name, visitors: v };
+    }).sort((a,b) => b.visitors - a.visitors);
+  }
+
+  const pages = ['/','blog/getting-started','pricing','docs/api','about','changelog','blog/advanced-guide','contact'];
+  function genPageData() {
+    return pages.map(p => ({
+      page: p,
+      visits: rnd(300, 8000),
+      bounce: rnd(28,72) + '%',
+      avgTime: Math.floor(rnd(45,340)/60)+'m '+rnd(0,59)+'s'
+    })).sort((a,b) => b.visits - a.visits);
+  }
+
+  // ── KPI Tiles ────────────────────────────────────────────────────
+  function drawSparkline(canvas, data, color) {
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0,0,W,H);
+    const min = Math.min(...data), max = Math.max(...data);
+    const range = max - min || 1;
+    const pts = data.map((v,i) => [
+      (i/(data.length-1)) * W,
+      H - ((v-min)/range) * (H*0.8) - H*0.1
+    ]);
+    ctx.beginPath();
+    pts.forEach(([x,y],i) => i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y));
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    // fill
+    ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath();
+    ctx.fillStyle = color.replace('rgb','rgba').replace(')',',0.12)');
+    ctx.fill();
+  }
+
+  function renderKPIs(kpiData) {
+    const row = document.getElementById('kpiRow');
+    row.innerHTML = '';
+    kpiData.forEach(k => {
+      const tile = document.createElement('div');
+      tile.className = 'kpi-tile';
+      const up = k.change >= 0;
+      tile.innerHTML = `
+        <div class="kpi-label">${k.label}</div>
+        <div class="kpi-value-row">
+          <div class="kpi-value">${k.fmt(k.val)}</div>
+          <div class="kpi-change ${up?'up':'down'}">${up?'▲':'▼'} ${Math.abs(k.change)}%</div>
+        </div>
+        <canvas class="kpi-spark" width="120" height="28"></canvas>
+      `;
+      row.appendChild(tile);
+      const canvas = tile.querySelector('canvas');
+      drawSparkline(canvas, k.spark, up ? '#10B981' : '#EF4444');
+    });
+  }
+
+  // ── Main Chart ───────────────────────────────────────────────────
+  let mainData = [], lastData = [], chartRange = 30;
+
+  function renderMainChart() {
+    const canvas = document.getElementById('mainChart');
+    const wrap = document.getElementById('chartWrap');
+    const W = wrap.clientWidth || 1000;
+    canvas.width = W;
+    canvas.height = 200;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0,0,W,200);
+
+    const days = currentRange;
+    mainData = genDailyData(days);
+    lastData = genDailyData(days);
+    const allVals = [...mainData, ...lastData];
+    const min = Math.min(...allVals) * 0.9;
+    const max = Math.max(...allVals) * 1.1;
+    const range = max - min;
+    const pad = { l:40, r:12, t:10, b:28 };
+    const cw = W - pad.l - pad.r;
+    const ch = 200 - pad.t - pad.b;
+
+    function ptX(i) { return pad.l + (i/(days-1)) * cw; }
+    function ptY(v) { return pad.t + ch - ((v-min)/range)*ch; }
+
+    // Grid lines
+    ctx.strokeStyle = 'rgba(148,163,184,0.07)';
+    ctx.lineWidth = 1;
+    for (let i=0; i<=4; i++) {
+      const y = pad.t + (i/4)*ch;
+      ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l+cw, y); ctx.stroke();
+      const label = fmt(Math.round(max - (i/4)*range));
+      ctx.fillStyle = '#475569';
+      ctx.font = '10px Inter, sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillText(label, pad.l-6, y+4);
+    }
+
+    // Day labels at bottom
+    ctx.fillStyle = '#475569';
+    ctx.font = '10px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    const step = Math.ceil(days/6);
+    for (let i=0; i<days; i+=step) {
+      ctx.fillText('d'+(i+1), ptX(i), 200-8);
+    }
+
+    // Last period line (dashed, blue)
+    ctx.beginPath();
+    lastData.forEach((v,i) => i===0 ? ctx.moveTo(ptX(i),ptY(v)) : ctx.lineTo(ptX(i),ptY(v)));
+    ctx.strokeStyle = '#3B82F6';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([4,3]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // This period (solid accent + fill)
+    ctx.beginPath();
+    mainData.forEach((v,i) => i===0 ? ctx.moveTo(ptX(i),ptY(v)) : ctx.lineTo(ptX(i),ptY(v)));
+    ctx.strokeStyle = '#10B981';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Fill under this period
+    const grad = ctx.createLinearGradient(0, pad.t, 0, pad.t+ch);
+    grad.addColorStop(0, 'rgba(16,185,129,0.2)');
+    grad.addColorStop(1, 'rgba(16,185,129,0)');
+    ctx.beginPath();
+    mainData.forEach((v,i) => i===0 ? ctx.moveTo(ptX(i),ptY(v)) : ctx.lineTo(ptX(i),ptY(v)));
+    ctx.lineTo(ptX(days-1), pad.t+ch);
+    ctx.lineTo(ptX(0), pad.t+ch);
+    ctx.closePath();
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // Store for hover
+    canvas._ptX = ptX;
+    canvas._ptY = ptY;
+    canvas._pad = pad;
+    canvas._cw = cw;
+    canvas._ch = ch;
+    canvas._min = min;
+    canvas._max = max;
+    canvas._range = range;
+    canvas._days = days;
+  }
+
+  // Hover crosshair
+  document.getElementById('mainChart').addEventListener('mousemove', function(e) {
+    const rect = this.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const pad = this._pad;
+    if (!pad) return;
+    const idx = Math.round((mx - pad.l) / (this._cw/(this._days-1)));
+    if (idx < 0 || idx >= this._days) { document.getElementById('chartTooltip').classList.remove('visible'); return; }
+
+    // Redraw with crosshair
+    renderMainChartWithCrosshair(idx);
+    const tip = document.getElementById('chartTooltip');
+    tip.innerHTML = `<strong>Day ${idx+1}</strong><br>
+      <span style="color:#10B981">This: ${fmt(mainData[idx])}</span> &nbsp;
+      <span style="color:#3B82F6">Last: ${fmt(lastData[idx])}</span>`;
+    tip.classList.add('visible');
+    // Position tooltip
+    const x = this._ptX(idx);
+    tip.style.left = (x + 10) + 'px';
+    tip.style.top = '10px';
+  });
+
+  document.getElementById('mainChart').addEventListener('mouseleave', function() {
+    document.getElementById('chartTooltip').classList.remove('visible');
+    renderMainChart();
+  });
+
+  function renderMainChartWithCrosshair(idx) {
+    renderMainChart();
+    const canvas = document.getElementById('mainChart');
+    const ctx = canvas.getContext('2d');
+    const x = canvas._ptX(idx);
+    const pad = canvas._pad;
+    ctx.beginPath();
+    ctx.moveTo(x, pad.t);
+    ctx.lineTo(x, pad.t + canvas._ch);
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4,3]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Dot on each line
+    [[mainData,'#10B981'],[lastData,'#3B82F6']].forEach(([data,col]) => {
+      const y = canvas._ptY(data[idx]);
+      ctx.beginPath();
+      ctx.arc(x, y, 4, 0, Math.PI*2);
+      ctx.fillStyle = col;
+      ctx.fill();
+    });
+  }
+
+  // ── Sources Table ────────────────────────────────────────────────
+  let sourcesData = [], sourcesSort = {col:1,dir:-1};
+
+  function renderSources() {
+    const total = sourcesData.reduce((a,s) => a+s.visitors, 0);
+    const maxV = Math.max(...sourcesData.map(s=>s.visitors));
+    const sorted = [...sourcesData].sort((a,b) => {
+      const aV = sourcesSort.col===0 ? a.name : a.visitors;
+      const bV = sourcesSort.col===0 ? b.name : b.visitors;
+      return aV < bV ? sourcesSort.dir : aV > bV ? -sourcesSort.dir : 0;
+    });
+    const tbody = document.getElementById('sourcesTbody');
+    tbody.innerHTML = sorted.map(s => {
+      const pct = ((s.visitors/total)*100).toFixed(1);
+      return `<tr>
+        <td>${s.name}</td>
+        <td><strong>${fmt(s.visitors)}</strong></td>
+        <td class="pct-text">${pct}%</td>
+        <td>
+          <div class="trend-bar-wrap">
+            <div class="trend-bar-bg"><div class="trend-bar-fill" style="width:${(s.visitors/maxV)*100}%"></div></div>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+    updateSortHeaders('sourcesTable', sourcesSort);
+  }
+
+  // ── Pages Table ──────────────────────────────────────────────────
+  let pagesData = [], pagesSort = {col:1,dir:-1};
+
+  function renderPages() {
+    const sorted = [...pagesData].sort((a,b) => {
+      const vals = [a.page, a.visits, a.bounce, a.avgTime];
+      const vala = pagesSort.col===0?a.page:pagesSort.col===1?a.visits:a.bounce;
+      const valb = pagesSort.col===0?b.page:pagesSort.col===1?b.visits:b.bounce;
+      return vala < valb ? pagesSort.dir : vala > valb ? -pagesSort.dir : 0;
+    });
+    const tbody = document.getElementById('pagesTbody');
+    tbody.innerHTML = sorted.map(p => `<tr>
+      <td>/${p.page}</td>
+      <td><strong>${fmt(p.visits)}</strong></td>
+      <td>${p.bounce}</td>
+      <td>${p.avgTime}</td>
+    </tr>`).join('');
+    updateSortHeaders('pagesTable', pagesSort);
+  }
+
+  function updateSortHeaders(tableId, sortState) {
+    const table = document.getElementById(tableId);
+    table.querySelectorAll('th').forEach((th, i) => {
+      th.classList.toggle('sorted', i === sortState.col);
+      const arrow = th.querySelector('.sort-arrow');
+      if (arrow && i === sortState.col) arrow.textContent = sortState.dir === -1 ? '↓' : '↑';
+      else if (arrow) arrow.textContent = '↕';
+    });
+  }
+
+  // ── Sort handlers ────────────────────────────────────────────────
+  document.getElementById('sourcesTable').addEventListener('click', e => {
+    const th = e.target.closest('th[data-col]');
+    if (!th) return;
+    const col = parseInt(th.dataset.col);
+    if (col === 3) return; // trend bar not sortable
+    sourcesSort.dir = sourcesSort.col === col ? -sourcesSort.dir : -1;
+    sourcesSort.col = col;
+    renderSources();
+  });
+
+  document.getElementById('pagesTable').addEventListener('click', e => {
+    const th = e.target.closest('th[data-col]');
+    if (!th) return;
+    const col = parseInt(th.dataset.col);
+    pagesSort.dir = pagesSort.col === col ? -pagesSort.dir : -1;
+    pagesSort.col = col;
+    renderPages();
+  });
+
+  // ── Range tabs ───────────────────────────────────────────────────
+  document.getElementById('rangeTabs').addEventListener('click', e => {
+    const btn = e.target.closest('button[data-range]');
+    if (!btn) return;
+    document.querySelectorAll('#rangeTabs button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentRange = parseInt(btn.dataset.range);
+    refreshAll();
+  });
+
+  // ── Init ─────────────────────────────────────────────────────────
+  function refreshAll() {
+    const kpiData = genKPIData();
+    renderKPIs(kpiData);
+    sourcesData = genSourceData(rnd(12000, 40000));
+    pagesData = genPageData();
+    renderMainChart();
+    renderSources();
+    renderPages();
+  }
+
+  refreshAll();
+  window.addEventListener('resize', renderMainChart);
+</script>
+</body>
+</html>

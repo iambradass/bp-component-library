@@ -1,0 +1,292 @@
+<!-- COMPONENT: ROI Proof (Static) | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ROI Proof — Visual Demonstration</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --red:            #EF4444;
+      --red-dim:        rgba(239,68,68,0.12);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: var(--font-body); min-height: 100vh;
+      padding: 3rem 1rem 5rem;
+    }
+
+    .roi-wrap { max-width: 860px; margin: 0 auto; }
+
+    /* ── Header ── */
+    .roi-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: var(--font-heading); font-size: 0.75rem; font-weight: 600;
+      color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em;
+      padding: 4px 14px; background: var(--accent-dim);
+      border: 1px solid var(--accent-border); border-radius: 100px;
+      margin-bottom: 1rem;
+    }
+    .roi-title {
+      font-family: var(--font-heading); font-size: clamp(1.75rem, 4vw, 2.5rem);
+      font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.5rem;
+    }
+    .roi-subtitle {
+      color: var(--text-secondary); font-size: 1rem; line-height: 1.6;
+      max-width: 540px; margin-bottom: 2.5rem;
+    }
+
+    /* ── Section separator ── */
+    .roi-section { margin-bottom: 2.5rem; }
+    .roi-section-title {
+      font-family: var(--font-heading); font-size: 0.75rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-muted);
+      margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.75rem;
+    }
+    .roi-section-title::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+
+    /* ── Math equation flow ── */
+    .roi-equation {
+      display: flex; align-items: stretch; gap: 0;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden;
+      flex-wrap: wrap;
+    }
+
+    .roi-box {
+      flex: 1; min-width: 160px; padding: 1.25rem 1rem;
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; text-align: center; gap: 0.5rem;
+      border-right: 1px solid var(--border); position: relative;
+    }
+    .roi-box:last-child { border-right: none; }
+
+    .roi-box-label {
+      font-size: 0.6875rem; color: var(--text-muted); text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .roi-box-value {
+      font-family: var(--font-heading); font-size: 1.625rem; font-weight: 700;
+      color: var(--text); line-height: 1;
+    }
+    .roi-box-note { font-size: 0.75rem; color: var(--text-muted); line-height: 1.4; }
+
+    /* Arrow between boxes */
+    .roi-arrow {
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-muted); font-size: 1.25rem; padding: 0 0.25rem;
+      background: var(--elevated); flex-shrink: 0; min-height: 80px;
+    }
+
+    /* Result box — highlighted */
+    .roi-box.result {
+      background: var(--accent-dim); border-color: var(--accent-border);
+      flex: 1.5;
+    }
+    .roi-box.result .roi-box-value { color: var(--accent); font-size: 2rem; }
+    .roi-box.result .roi-box-label { color: var(--accent); }
+
+    /* ── Before/After comparison ── */
+    .roi-compare {
+      display: grid; grid-template-columns: 1fr auto 1fr; gap: 1rem; align-items: center;
+    }
+    @media (max-width: 600px) {
+      .roi-compare { grid-template-columns: 1fr; }
+      .roi-vs { display: none; }
+    }
+
+    .roi-side {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.5rem;
+    }
+    .roi-side.bad  { border-color: rgba(239,68,68,0.3); }
+    .roi-side.good { border-color: var(--accent-border); box-shadow: 0 0 30px rgba(16,185,129,0.1); }
+
+    .roi-side-title {
+      font-family: var(--font-heading); font-size: 0.875rem; font-weight: 700;
+      margin-bottom: 1rem; display: flex; align-items: center; gap: 0.625rem;
+    }
+    .roi-side.bad  .roi-side-title { color: var(--red); }
+    .roi-side.good .roi-side-title { color: var(--accent); }
+
+    .roi-side-items { list-style: none; display: flex; flex-direction: column; gap: 0.625rem; }
+    .roi-side-item {
+      display: flex; align-items: flex-start; gap: 8px;
+      font-size: 0.875rem; color: var(--text-secondary); line-height: 1.4;
+    }
+    .roi-side.bad  .roi-side-item::before { content: '✕'; color: var(--red); font-size: 0.75rem; margin-top: 2px; flex-shrink: 0; }
+    .roi-side.good .roi-side-item::before { content: '✓'; color: var(--accent); font-size: 0.75rem; margin-top: 2px; flex-shrink: 0; }
+
+    .roi-vs {
+      font-family: var(--font-heading); font-size: 1.25rem; font-weight: 700;
+      color: var(--text-muted); text-align: center; white-space: nowrap;
+    }
+
+    /* ── Time value calculation ── */
+    .roi-time {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.5rem;
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;
+    }
+    @media (max-width: 600px) { .roi-time { grid-template-columns: 1fr; } }
+
+    .roi-time-item { text-align: center; }
+    .roi-time-val {
+      font-family: var(--font-heading); font-size: 1.75rem; font-weight: 700;
+      color: var(--text); margin-bottom: 0.25rem;
+    }
+    .roi-time-val.accent { color: var(--accent); }
+    .roi-time-val.red    { color: var(--red); }
+    .roi-time-label { font-size: 0.8125rem; color: var(--text-muted); line-height: 1.4; }
+
+    /* ── Payback statement ── */
+    .roi-payback {
+      text-align: center; padding: 2rem 1.5rem;
+      background: var(--surface); border: 1px solid var(--accent-border);
+      border-radius: var(--radius); box-shadow: 0 0 40px rgba(16,185,129,0.12);
+    }
+    .roi-payback-pre {
+      font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.75rem;
+      text-transform: uppercase; letter-spacing: 0.08em;
+    }
+    .roi-payback-statement {
+      font-family: var(--font-heading); font-size: clamp(1.125rem, 3vw, 1.5rem);
+      font-weight: 700; color: var(--text); line-height: 1.4; max-width: 520px; margin: 0 auto 1.25rem;
+    }
+    .roi-payback-statement span { color: var(--accent); }
+    .roi-payback-sub { font-size: 0.875rem; color: var(--text-secondary); }
+  </style>
+</head>
+<body>
+
+<div class="roi-wrap">
+
+  <div class="roi-eyebrow">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+    The ROI Case
+  </div>
+  <h2 class="roi-title">What Your Website Is Actually Worth</h2>
+  <p class="roi-subtitle">The math is simple. The cost of not having a professional web presence is not.</p>
+
+  <!-- Section 1: The Math -->
+  <div class="roi-section">
+    <div class="roi-section-title">The Revenue Equation</div>
+    <div class="roi-equation">
+      <div class="roi-box">
+        <div class="roi-box-label">Leads per month</div>
+        <div class="roi-box-value">10</div>
+        <div class="roi-box-note">Conservative — our clients average 8–15</div>
+      </div>
+      <div class="roi-arrow">×</div>
+      <div class="roi-box">
+        <div class="roi-box-label">Close rate</div>
+        <div class="roi-box-value">20%</div>
+        <div class="roi-box-note">Industry average for warm inbound leads</div>
+      </div>
+      <div class="roi-arrow">×</div>
+      <div class="roi-box">
+        <div class="roi-box-label">Avg commission</div>
+        <div class="roi-box-value">$950</div>
+        <div class="roi-box-note">Per title closing, national average</div>
+      </div>
+      <div class="roi-arrow">=</div>
+      <div class="roi-box result">
+        <div class="roi-box-label">Monthly revenue from website</div>
+        <div class="roi-box-value">$1,900</div>
+        <div class="roi-box-note">$22,800/year from web-generated business alone</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 2: Before vs After -->
+  <div class="roi-section">
+    <div class="roi-section-title">The Cost of Not Having It</div>
+    <div class="roi-compare">
+      <div class="roi-side bad">
+        <div class="roi-side-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          Your Situation Right Now
+        </div>
+        <ul class="roi-side-items">
+          <li class="roi-side-item">Zero inbound digital leads</li>
+          <li class="roi-side-item">100% referral-dependent for new business</li>
+          <li class="roi-side-item">Invisible when agents Google for a title rep</li>
+          <li class="roi-side-item">No way to capture leads after-hours</li>
+          <li class="roi-side-item">Broker site looks like every other rep</li>
+          <li class="roi-side-item">Vulnerable if top referral sources dry up</li>
+        </ul>
+      </div>
+
+      <div class="roi-vs">VS</div>
+
+      <div class="roi-side good">
+        <div class="roi-side-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          With a Professional Web Presence
+        </div>
+        <ul class="roi-side-items">
+          <li class="roi-side-item">8–15 new contacts per month from Google</li>
+          <li class="roi-side-item">Multiple lead channels — not just referrals</li>
+          <li class="roi-side-item">Page one for your city + "title" searches</li>
+          <li class="roi-side-item">CRM-connected forms capture leads 24/7</li>
+          <li class="roi-side-item">Personal brand that stands apart from the company</li>
+          <li class="roi-side-item">Growing Google review rating builds long-term trust</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 3: Time value -->
+  <div class="roi-section">
+    <div class="roi-section-title">Your Time Has a Dollar Value</div>
+    <div class="roi-time">
+      <div class="roi-time-item">
+        <div class="roi-time-val">5 hrs</div>
+        <div class="roi-time-label">per week spent on manual prospecting and cold outreach</div>
+      </div>
+      <div class="roi-time-item">
+        <div class="roi-time-val red">$1,040</div>
+        <div class="roi-time-label">per month in lost billable time (at $52/hr opportunity cost)</div>
+      </div>
+      <div class="roi-time-item">
+        <div class="roi-time-val accent">$12,480</div>
+        <div class="roi-time-label">per year in time spent on leads your website could generate automatically</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 4: Simple payback -->
+  <div class="roi-payback">
+    <div class="roi-payback-pre">The Bottom Line</div>
+    <div class="roi-payback-statement">
+      At $97/month, your site pays for itself with <span>one extra closing per year.</span>
+      Everything beyond that is pure profit.
+    </div>
+    <div class="roi-payback-sub">Most clients see their first web-generated lead within 30 days of launch.</div>
+  </div>
+
+</div>
+
+</body>
+</html>

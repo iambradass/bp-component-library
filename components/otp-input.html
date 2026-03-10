@@ -1,0 +1,515 @@
+<!-- COMPONENT: OTP Input | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OTP / Verification Input</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      /* ── CUSTOMIZE ── */
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --error:          #EF4444;
+      --error-dim:      rgba(239,68,68,0.15);
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      padding: 3rem 1.5rem 5rem;
+    }
+
+    .wrap { max-width: 760px; margin: 0 auto; }
+
+    .page-header { text-align: center; margin-bottom: 3rem; }
+    .page-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 0.7rem; font-weight: 600; color: var(--accent);
+      text-transform: uppercase; letter-spacing: 0.1em;
+      padding: 4px 12px; background: var(--accent-dim);
+      border: 1px solid var(--accent-border); border-radius: 100px; margin-bottom: 1.25rem;
+    }
+    h1 { font-family: var(--font-heading); font-size: clamp(1.75rem,4vw,2.5rem); font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.75rem; }
+    .page-sub { color: var(--text-secondary); font-size: 0.95rem; line-height: 1.6; }
+
+    .section-label {
+      font-size: 0.7rem; font-weight: 600; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 1.5rem;
+    }
+
+    /* ── Shared panel styling ── */
+    .variant-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2.5rem;
+      margin-bottom: 2rem;
+      display: flex; flex-direction: column; align-items: center;
+      gap: 1.5rem;
+      text-align: center;
+    }
+    .variant-title { font-family: var(--font-heading); font-size: 1.1rem; font-weight: 700; }
+    .variant-sub   { font-size: 0.85rem; color: var(--text-secondary); }
+
+    /* ── Status messages ── */
+    .status-msg {
+      font-size: 0.8rem; font-weight: 600; min-height: 1.2em;
+      transition: color 0.2s;
+    }
+    .status-msg.error   { color: var(--error); }
+    .status-msg.success { color: var(--accent); }
+
+    /* ══════════════════════════════════════════════════
+       VARIANT 1: 6-box OTP
+    ══════════════════════════════════════════════════ */
+    .otp-boxes {
+      display: flex; gap: 0.625rem;
+    }
+
+    .otp-box {
+      width: 52px; height: 60px;
+      background: var(--elevated);
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      font-family: var(--font-heading); font-size: 1.5rem; font-weight: 700;
+      color: var(--text);
+      text-align: center;
+      caret-color: var(--accent);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    }
+    .otp-box:focus    { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+    .otp-box.filled   { border-color: var(--accent-border); background: var(--accent-dim); }
+    .otp-box.error    { border-color: var(--error); box-shadow: 0 0 0 3px var(--error-dim); animation: shake 0.4s ease; }
+    .otp-box.success  { border-color: var(--accent); background: var(--accent-dim); color: var(--accent); }
+
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      25%      { transform: translateX(-6px); }
+      75%      { transform: translateX(6px); }
+    }
+
+    @media (max-width: 400px) {
+      .otp-box { width: 40px; height: 50px; font-size: 1.2rem; }
+      .otp-boxes { gap: 0.4rem; }
+    }
+
+    .otp-btn {
+      padding: 0.75rem 2rem;
+      background: var(--accent); color: var(--bg);
+      font-family: var(--font-heading); font-size: 0.9rem; font-weight: 700;
+      border: none; border-radius: 9px; cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .otp-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(16,185,129,0.35); }
+
+    .reset-link {
+      font-size: 0.8rem; color: var(--text-muted); cursor: pointer;
+      text-decoration: underline; background: none; border: none;
+    }
+    .reset-link:hover { color: var(--text-secondary); }
+
+    /* ── Success checkmark animation ── */
+    .success-check {
+      display: none;
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      background: var(--accent);
+      align-items: center; justify-content: center;
+      animation: checkPop 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .success-check.visible { display: flex; }
+    @keyframes checkPop { from { transform: scale(0); } to { transform: scale(1); } }
+
+    /* ══════════════════════════════════════════════════
+       VARIANT 2: 4-digit PIN pad
+    ══════════════════════════════════════════════════ */
+    .pin-display {
+      display: flex; gap: 0.75rem;
+      margin-bottom: 0.5rem;
+    }
+    .pin-dot {
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      background: transparent;
+      transition: background 0.2s, border-color 0.2s, transform 0.2s;
+    }
+    .pin-dot.filled { background: var(--accent); border-color: var(--accent); transform: scale(1.15); }
+
+    .pin-pad {
+      display: grid;
+      grid-template-columns: repeat(3, 64px);
+      gap: 0.625rem;
+    }
+    .pin-key {
+      width: 64px; height: 56px;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-family: var(--font-heading); font-size: 1.2rem; font-weight: 700;
+      color: var(--text);
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, transform 0.1s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .pin-key:hover  { background: var(--accent-dim); border-color: var(--accent-border); }
+    .pin-key:active { transform: scale(0.93); }
+    .pin-key.zero   { grid-column: 2; }
+    .pin-key.del    { background: transparent; color: var(--text-secondary); }
+
+    /* ══════════════════════════════════════════════════
+       VARIANT 3: Email verification flow
+    ══════════════════════════════════════════════════ */
+    .email-badge {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: var(--elevated); border: 1px solid var(--border);
+      border-radius: 100px; padding: 0.5rem 1rem;
+      font-size: 0.85rem; color: var(--text-secondary);
+    }
+
+    .resend-row {
+      display: flex; align-items: center; gap: 0.5rem;
+      font-size: 0.8rem; color: var(--text-muted);
+    }
+    .resend-btn {
+      background: none; border: none; padding: 0;
+      font-size: 0.8rem; color: var(--accent); font-weight: 600;
+      cursor: pointer; text-decoration: underline;
+    }
+    .resend-btn:disabled { color: var(--text-muted); text-decoration: none; cursor: not-allowed; }
+    .timer { font-family: var(--font-heading); font-weight: 700; color: var(--text); }
+  </style>
+</head>
+<body>
+
+  <div class="wrap">
+    <header class="page-header">
+      <div class="page-eyebrow">Forms</div>
+      <h1>OTP / Verification Input</h1>
+      <p class="page-sub">Three variants: 6-box OTP with paste support and shake-on-error, 4-digit PIN pad, and email verification flow with countdown resend timer.</p>
+    </header>
+
+    <!-- ── VARIANT 1: Standard 6-box OTP ── -->
+    <div class="section-label">01 — 6-Digit OTP (correct code: 123456)</div>
+    <div class="variant-card">
+      <div>
+        <div class="variant-title">Enter verification code</div>
+        <div class="variant-sub">We sent a 6-digit code to your phone. Paste it or type it in.</div>
+      </div>
+
+      <!-- Success checkmark (hidden until correct code) -->
+      <div class="success-check" id="otp1Check">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+
+      <div class="otp-boxes" id="otp1Boxes">
+        <input class="otp-box" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 1">
+        <input class="otp-box" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 2">
+        <input class="otp-box" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 3">
+        <input class="otp-box" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 4">
+        <input class="otp-box" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 5">
+        <input class="otp-box" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 6">
+      </div>
+
+      <div class="status-msg" id="otp1Status">Try pasting "123456" to auto-fill</div>
+
+      <div style="display:flex;gap:0.75rem;align-items:center;">
+        <button class="otp-btn" onclick="verifyOTP1()">Verify</button>
+        <button class="reset-link" onclick="resetOTP1()">Reset</button>
+      </div>
+    </div>
+
+    <!-- ── VARIANT 2: PIN pad ── -->
+    <div class="section-label">02 — 4-Digit PIN Pad (correct PIN: 7890)</div>
+    <div class="variant-card">
+      <div>
+        <div class="variant-title">Enter your PIN</div>
+        <div class="variant-sub">Use the keypad to enter your 4-digit PIN</div>
+      </div>
+
+      <div class="pin-display" id="pinDisplay">
+        <div class="pin-dot" id="pd0"></div>
+        <div class="pin-dot" id="pd1"></div>
+        <div class="pin-dot" id="pd2"></div>
+        <div class="pin-dot" id="pd3"></div>
+      </div>
+
+      <div class="status-msg" id="pinStatus"></div>
+
+      <div class="pin-pad">
+        <button class="pin-key" onclick="pinPress('1')">1</button>
+        <button class="pin-key" onclick="pinPress('2')">2</button>
+        <button class="pin-key" onclick="pinPress('3')">3</button>
+        <button class="pin-key" onclick="pinPress('4')">4</button>
+        <button class="pin-key" onclick="pinPress('5')">5</button>
+        <button class="pin-key" onclick="pinPress('6')">6</button>
+        <button class="pin-key" onclick="pinPress('7')">7</button>
+        <button class="pin-key" onclick="pinPress('8')">8</button>
+        <button class="pin-key" onclick="pinPress('9')">9</button>
+        <button class="pin-key zero" onclick="pinPress('0')">0</button>
+        <button class="pin-key del" onclick="pinDelete()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/><line x1="18" y1="9" x2="12" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- ── VARIANT 3: Email verification ── -->
+    <div class="section-label">03 — Email Verification Flow</div>
+    <div class="variant-card">
+      <div>
+        <div class="variant-title">Verify your email</div>
+        <div class="variant-sub">Enter the 6-digit code we sent to:</div>
+      </div>
+
+      <div class="email-badge">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+        b***@gmail.com
+      </div>
+
+      <div class="otp-boxes" id="otp3Boxes">
+        <input class="otp-box" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 1">
+        <input class="otp-box" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 2">
+        <input class="otp-box" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 3">
+        <input class="otp-box" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 4">
+        <input class="otp-box" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 5">
+        <input class="otp-box" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 6">
+      </div>
+
+      <div class="status-msg" id="otp3Status"></div>
+
+      <div class="resend-row">
+        <span>Didn't get it?</span>
+        <button class="resend-btn" id="resendBtn" disabled onclick="resendCode()">Resend in <span class="timer" id="timerDisplay">0:47</span></button>
+      </div>
+
+      <button class="otp-btn" onclick="verifyOTP3()">Confirm Email</button>
+    </div>
+
+  </div><!-- /wrap -->
+
+  <script>
+    /* ──────────────────────────────────────────────
+       SHARED OTP UTILITY: wire up a set of boxes
+    ────────────────────────────────────────────── */
+
+    function wireOTPBoxes(containerId) {
+      const boxes = [...document.getElementById(containerId).querySelectorAll('.otp-box')];
+
+      boxes.forEach((box, i) => {
+        // Only allow digits
+        box.addEventListener('keydown', e => {
+          if (!/^\d$/.test(e.key) && e.key !== 'Backspace' && e.key !== 'Delete' && e.key !== 'Tab' && !e.metaKey) {
+            e.preventDefault();
+          }
+        });
+
+        box.addEventListener('input', () => {
+          const val = box.value.replace(/\D/g, '');
+          box.value = val.slice(-1); // keep one digit
+
+          if (box.value) {
+            box.classList.add('filled');
+            box.classList.remove('error');
+            if (i < boxes.length - 1) boxes[i + 1].focus();
+          } else {
+            box.classList.remove('filled');
+          }
+        });
+
+        box.addEventListener('keydown', e => {
+          if ((e.key === 'Backspace' || e.key === 'Delete') && !box.value && i > 0) {
+            boxes[i - 1].focus();
+          }
+        });
+
+        // Full paste support — paste "123456" into any box
+        box.addEventListener('paste', e => {
+          e.preventDefault();
+          const pasted = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '');
+          if (!pasted) return;
+          const start = i;
+          pasted.split('').forEach((ch, j) => {
+            if (start + j < boxes.length) {
+              boxes[start + j].value = ch;
+              boxes[start + j].classList.add('filled');
+            }
+          });
+          // Focus last filled or next empty
+          const nextEmpty = boxes.findIndex((b, idx) => idx >= start && !b.value);
+          (nextEmpty !== -1 ? boxes[nextEmpty] : boxes[boxes.length - 1]).focus();
+        });
+
+        box.addEventListener('focus', () => box.select());
+      });
+
+      return boxes;
+    }
+
+    /* ── OTP 1 wired ── */
+    const otp1Boxes = wireOTPBoxes('otp1Boxes');
+
+    function getOTPValue(boxes) { return boxes.map(b => b.value).join(''); }
+
+    function verifyOTP1() {
+      const code = getOTPValue(otp1Boxes);
+      const status = document.getElementById('otp1Status');
+      const check  = document.getElementById('otp1Check');
+
+      if (code.length < 6) {
+        status.textContent = 'Please enter all 6 digits';
+        status.className = 'status-msg error';
+        return;
+      }
+
+      if (code === '123456') {
+        // Success
+        otp1Boxes.forEach(b => b.classList.add('success'));
+        document.getElementById('otp1Boxes').style.display = 'none';
+        check.classList.add('visible');
+        status.textContent = 'Code verified! Welcome back.';
+        status.className = 'status-msg success';
+      } else {
+        // Error — shake all boxes
+        otp1Boxes.forEach(b => { b.classList.add('error'); b.classList.remove('filled'); });
+        status.textContent = 'Incorrect code. Try 123456.';
+        status.className = 'status-msg error';
+        setTimeout(() => otp1Boxes.forEach(b => b.classList.remove('error')), 500);
+        otp1Boxes[0].focus();
+      }
+    }
+
+    function resetOTP1() {
+      otp1Boxes.forEach(b => { b.value = ''; b.className = 'otp-box'; });
+      document.getElementById('otp1Boxes').style.display = 'flex';
+      document.getElementById('otp1Check').classList.remove('visible');
+      document.getElementById('otp1Status').textContent = 'Try pasting "123456" to auto-fill';
+      document.getElementById('otp1Status').className = 'status-msg';
+      otp1Boxes[0].focus();
+    }
+
+    /* ── PIN pad ── */
+    let pinValue = '';
+    const PIN_CORRECT = '7890';
+
+    function updatePinDisplay() {
+      for (let i = 0; i < 4; i++) {
+        document.getElementById('pd' + i).classList.toggle('filled', i < pinValue.length);
+      }
+    }
+
+    function pinPress(digit) {
+      if (pinValue.length >= 4) return;
+      pinValue += digit;
+      updatePinDisplay();
+      document.getElementById('pinStatus').textContent = '';
+      document.getElementById('pinStatus').className = 'status-msg';
+
+      if (pinValue.length === 4) {
+        setTimeout(() => checkPIN(), 200);
+      }
+    }
+
+    function pinDelete() {
+      if (!pinValue) return;
+      pinValue = pinValue.slice(0, -1);
+      updatePinDisplay();
+    }
+
+    function checkPIN() {
+      const status = document.getElementById('pinStatus');
+      if (pinValue === PIN_CORRECT) {
+        status.textContent = '✓ PIN accepted!';
+        status.className = 'status-msg success';
+        setTimeout(() => { pinValue = ''; updatePinDisplay(); status.textContent = ''; }, 2000);
+      } else {
+        status.textContent = `✗ Wrong PIN. Try 7890.`;
+        status.className = 'status-msg error';
+        // Shake dots
+        document.querySelectorAll('.pin-dot').forEach(d => {
+          d.style.animation = 'none'; void d.offsetWidth;
+          d.style.animation = 'shake 0.4s ease';
+        });
+        setTimeout(() => { pinValue = ''; updatePinDisplay(); }, 600);
+      }
+    }
+
+    /* ── OTP 3: Email verification + countdown ── */
+    const otp3Boxes = wireOTPBoxes('otp3Boxes');
+    let timerSeconds = 47;
+    let timerInterval;
+
+    function startTimer() {
+      const resendBtn = document.getElementById('resendBtn');
+      const display   = document.getElementById('timerDisplay');
+
+      timerInterval = setInterval(() => {
+        timerSeconds--;
+        const mins = Math.floor(timerSeconds / 60);
+        const secs = timerSeconds % 60;
+        display.textContent = `${mins}:${secs.toString().padStart(2,'0')}`;
+
+        if (timerSeconds <= 0) {
+          clearInterval(timerInterval);
+          resendBtn.disabled = false;
+          resendBtn.innerHTML = 'Resend code';
+        }
+      }, 1000);
+    }
+
+    function resendCode() {
+      document.getElementById('otp3Status').textContent = 'New code sent!';
+      document.getElementById('otp3Status').className = 'status-msg success';
+      otp3Boxes.forEach(b => { b.value = ''; b.className = 'otp-box'; });
+
+      // Reset timer
+      clearInterval(timerInterval);
+      timerSeconds = 30;
+      const resendBtn = document.getElementById('resendBtn');
+      resendBtn.disabled = true;
+      resendBtn.innerHTML = 'Resend in <span class="timer" id="timerDisplay">0:30</span>';
+      startTimer();
+
+      setTimeout(() => { document.getElementById('otp3Status').textContent = ''; }, 2500);
+    }
+
+    function verifyOTP3() {
+      const code   = getOTPValue(otp3Boxes);
+      const status = document.getElementById('otp3Status');
+
+      if (code.length < 6) {
+        status.textContent = 'Enter all 6 digits'; status.className = 'status-msg error'; return;
+      }
+      status.textContent = '✓ Email verified!';
+      status.className = 'status-msg success';
+    }
+
+    startTimer();
+
+    // Add shake keyframe for pin dots
+    const s = document.createElement('style');
+    s.textContent = `@keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }`;
+    document.head.appendChild(s);
+  </script>
+</body>
+</html>

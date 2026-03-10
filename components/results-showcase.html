@@ -1,0 +1,406 @@
+<!-- COMPONENT: Results Showcase | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Results Showcase</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: var(--font-body); min-height: 100vh;
+      padding: 3rem 1rem 5rem;
+    }
+
+    .rs-wrap { max-width: 960px; margin: 0 auto; }
+
+    /* ── Header ── */
+    .rs-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: var(--font-heading); font-size: 0.75rem; font-weight: 600;
+      color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em;
+      padding: 4px 14px; background: var(--accent-dim);
+      border: 1px solid var(--accent-border); border-radius: 100px;
+      margin-bottom: 1rem;
+    }
+    .rs-title {
+      font-family: var(--font-heading); font-size: clamp(1.75rem, 4vw, 2.5rem);
+      font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.5rem;
+    }
+    .rs-subtitle {
+      color: var(--text-secondary); font-size: 1rem; line-height: 1.6;
+      max-width: 520px; margin-bottom: 1.75rem;
+    }
+
+    /* ── Scrolling ticker ── */
+    .rs-ticker {
+      overflow: hidden; border-radius: 100px;
+      background: var(--surface); border: 1px solid var(--border);
+      margin-bottom: 2rem; padding: 0.625rem 0;
+      position: relative;
+    }
+    /* Fade edges */
+    .rs-ticker::before, .rs-ticker::after {
+      content: ''; position: absolute; top: 0; bottom: 0; width: 4rem; z-index: 1;
+    }
+    .rs-ticker::before { left: 0; background: linear-gradient(to right, var(--surface), transparent); }
+    .rs-ticker::after  { right: 0; background: linear-gradient(to left, var(--surface), transparent); }
+
+    .rs-ticker-track {
+      display: flex; white-space: nowrap;
+      animation: tickerScroll 22s linear infinite;
+    }
+    .rs-ticker-track:hover { animation-play-state: paused; }
+
+    @keyframes tickerScroll {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-50%); }
+    }
+    .rs-ticker-item {
+      display: inline-flex; align-items: center; gap: 0.625rem;
+      padding: 0 2rem; font-size: 0.8125rem; color: var(--text-secondary);
+      font-family: var(--font-heading); font-weight: 500;
+    }
+    .rs-ticker-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+
+    /* ── Results card grid ── */
+    .rs-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    @media (max-width: 700px) { .rs-grid { grid-template-columns: 1fr; } }
+
+    /* ── Individual result card ── */
+    .rs-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden; cursor: pointer;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .rs-card:hover { border-color: var(--accent-border); box-shadow: 0 8px 30px rgba(0,0,0,0.4); }
+
+    .rs-card-top {
+      padding: 1.25rem 1.25rem 1rem;
+    }
+    .rs-client-type {
+      font-family: var(--font-heading); font-size: 0.6875rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted);
+      margin-bottom: 0.625rem;
+    }
+    .rs-problem {
+      font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.5;
+      margin-bottom: 0.5rem;
+    }
+    .rs-problem strong { color: var(--text); }
+    .rs-result-text {
+      font-size: 0.875rem; color: var(--text); font-weight: 500; line-height: 1.5;
+    }
+
+    /* 3 stat blocks */
+    .rs-stats {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+    }
+    .rs-stat {
+      padding: 0.875rem 0.75rem; text-align: center; border-right: 1px solid var(--border);
+    }
+    .rs-stat:last-child { border-right: none; }
+    .rs-stat-before {
+      font-size: 0.6875rem; color: var(--text-muted); text-decoration: line-through;
+      margin-bottom: 2px;
+    }
+    .rs-stat-after {
+      font-family: var(--font-heading); font-size: 1rem; font-weight: 700; color: var(--accent);
+      margin-bottom: 2px;
+    }
+    .rs-stat-label { font-size: 0.625rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+
+    /* Stars + quote */
+    .rs-card-bottom { padding: 1rem 1.25rem; }
+    .rs-stars { display: flex; gap: 2px; margin-bottom: 0.5rem; }
+    .rs-star { color: #F59E0B; }
+    .rs-quote {
+      font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.55;
+      font-style: italic;
+    }
+    .rs-quote::before { content: '"'; }
+    .rs-quote::after  { content: '"'; }
+
+    .rs-card-footer {
+      padding: 0.75rem 1.25rem; background: var(--elevated);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .rs-tag {
+      font-family: var(--font-heading); font-size: 0.625rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent);
+      padding: 2px 9px; border: 1px solid var(--accent-border);
+      border-radius: 100px; background: var(--accent-dim);
+    }
+    .rs-expand-hint {
+      font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center; gap: 4px;
+    }
+
+    /* ── Modal overlay — expanded case study ── */
+    .rs-modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.8);
+      display: flex; align-items: center; justify-content: center;
+      padding: 1rem; z-index: 100; opacity: 0; pointer-events: none;
+      transition: opacity 0.25s;
+    }
+    .rs-modal-overlay.open { opacity: 1; pointer-events: all; }
+
+    .rs-modal {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); max-width: 640px; width: 100%;
+      max-height: 85vh; overflow-y: auto; padding: 2rem;
+      transform: scale(0.95); transition: transform 0.25s;
+    }
+    .rs-modal-overlay.open .rs-modal { transform: none; }
+
+    .rs-modal-close {
+      float: right; background: none; border: none; cursor: pointer;
+      color: var(--text-muted); padding: 4px;
+      font-size: 1.25rem; line-height: 1; transition: color 0.15s;
+    }
+    .rs-modal-close:hover { color: var(--text); }
+
+    .rs-modal-client {
+      font-family: var(--font-heading); font-size: 0.75rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+    .rs-modal-title {
+      font-family: var(--font-heading); font-size: 1.375rem; font-weight: 700;
+      margin-bottom: 1.25rem;
+    }
+    .rs-modal-body {
+      font-size: 0.9375rem; color: var(--text-secondary); line-height: 1.7;
+    }
+    .rs-modal-body p { margin-bottom: 1rem; }
+    .rs-modal-stats {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem;
+      margin: 1.5rem 0;
+    }
+    .rs-modal-stat {
+      background: var(--elevated); border-radius: 8px; padding: 1rem;
+      text-align: center;
+    }
+    .rs-modal-stat-after { font-family: var(--font-heading); font-size: 1.375rem; font-weight: 700; color: var(--accent); }
+    .rs-modal-stat-label { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+    .rs-modal-quote {
+      background: var(--elevated); border-left: 3px solid var(--accent);
+      padding: 1rem 1.25rem; border-radius: 0 8px 8px 0;
+      font-style: italic; color: var(--text-secondary); line-height: 1.6;
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+
+<div class="rs-wrap">
+
+  <div class="rs-eyebrow">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+    Real Client Results
+  </div>
+  <h2 class="rs-title">What Happens After Launch</h2>
+  <p class="rs-subtitle">Numbers from real title reps, 90 days after their site went live. Click any card to read the full story.</p>
+
+  <!-- Scrolling ticker -->
+  <div class="rs-ticker">
+    <div class="rs-ticker-track" id="rsTicker"></div>
+  </div>
+
+  <!-- Results cards — JS renders -->
+  <div class="rs-grid" id="rsGrid"></div>
+
+</div>
+
+<!-- Modal overlay — JS populates content -->
+<div class="rs-modal-overlay" id="rsModal" role="dialog" aria-modal="true">
+  <div class="rs-modal" id="rsModalContent">
+    <button class="rs-modal-close" id="rsModalClose" aria-label="Close">&times;</button>
+    <div id="rsModalBody"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  /* ── Ticker stats ── */
+  var tickerItems = [
+    '127 title reps served', '94% renewal rate',
+    'Avg 12 inbound leads/month', '#1 Google ranking for 34 clients',
+    '10-day average build time', '$0 setup fee', 'Mobile-first, every time',
+  ];
+
+  var tracker = document.getElementById('rsTicker');
+  /* duplicate set for seamless loop */
+  var allItems = tickerItems.concat(tickerItems);
+  allItems.forEach(function(item) {
+    var el = document.createElement('span');
+    el.className = 'rs-ticker-item';
+    el.innerHTML = '<span class="rs-ticker-dot"></span>' + item;
+    tracker.appendChild(el);
+  });
+
+  /* ── Case study data ── */
+  var cases = [
+    {
+      client: 'Title Sales Rep, Dallas TX',
+      problem: '<strong>The problem:</strong> 100% referral-dependent, zero web presence, invisible on Google.',
+      result: 'Within 60 days of launch she was receiving 14 inbound lead requests per month and ranked on page one for "title company Dallas TX".',
+      stats: [
+        { before: '0', after: '14/mo', label: 'Inbound Leads' },
+        { before: 'Invisible', after: 'Page 1', label: 'Google Rank' },
+        { before: '100%', after: '62%', label: 'Referral Dependency' },
+      ],
+      stars: 5,
+      quote: 'I had no idea what I was missing. Now my phone rings from people I\'ve never met.',
+      tag: 'Website + SEO',
+      fullStory: [
+        'Sarah had been in the title industry for 6 years — highly respected in her referral network, but effectively nonexistent online. Every lead came through someone she already knew. She worried about what would happen if her top two referring agents retired or switched companies.',
+        'We built her a 5-page custom website focused on her local Dallas market, optimized every page for "title company Dallas" and related searches, and connected her contact form directly to her GoHighLevel CRM.',
+        'The results started showing up in month two. By month three she was receiving an average of 14 contact form submissions per month from people who found her on Google — buyers, agents, and lenders who had never heard her name before.',
+      ],
+    },
+    {
+      client: 'Title Sales Rep, Phoenix AZ',
+      problem: '<strong>The problem:</strong> Broker website wasn\'t working. No way to differentiate from 40+ reps at the same company.',
+      result: 'His personal brand site positioned him as the local specialist, generating qualified agent referrals from LinkedIn and Google.',
+      stats: [
+        { before: 'Shared page', after: 'Own domain', label: 'Web Presence' },
+        { before: '3/mo', after: '11/mo', label: 'Agent Referrals' },
+        { before: '0', after: '4.9★', label: 'Google Rating' },
+      ],
+      stars: 5,
+      quote: 'My personal site gives me credibility the broker page never could. Agents send me business because they can point to a professional.',
+      tag: 'Full Package',
+      fullStory: [
+        'Marcus was one of 43 title reps at his company, all using the same generic broker-provided profile page. When agents searched for a title rep in Phoenix, they found the company name — not Marcus.',
+        'We built Marcus a personal brand site at his own domain, created a local SEO strategy positioning him as the "Phoenix title specialist," and set up a Google Business Profile under his personal brand.',
+        'The compounding effect was significant: agents could now share his personal URL instead of a generic company link, his Google reviews were attributed to him specifically, and within 90 days he was generating 11 new agent referrals per month — up from 3.',
+      ],
+    },
+    {
+      client: 'Title Sales Rep, Nashville TN',
+      problem: '<strong>The problem:</strong> New to the market — no relationships, no reviews, no recognition.',
+      result: 'Launched with a polished web presence that made her look established before she even had her first 10 clients.',
+      stats: [
+        { before: '0 reviews', after: '22 reviews', label: 'Google Reviews' },
+        { before: 'None', after: '8/mo', label: 'Warm Inbound Leads' },
+        { before: 'Unknown', after: 'Top 3', label: 'Local Search Ranking' },
+      ],
+      stars: 5,
+      quote: 'People assume I\'ve been doing this for years when they see my site. That first impression creates trust before the first meeting.',
+      tag: 'Local SEO',
+      fullStory: [
+        'Amanda relocated to Nashville and entered an unfamiliar market. She had zero name recognition, zero Google reviews, and was competing against reps with 5–10 year head starts in the local network.',
+        'We prioritized her Google Business Profile setup and review funnel from day one, alongside a site that communicated deep local knowledge. Her bio featured Nashville-specific language and her services page was optimized for "title insurance Nashville" and "title company Brentwood TN".',
+        'Within 60 days she had 22 Google reviews (collected via the automated review funnel), appeared in the top 3 local results for her primary keyword, and was receiving 8 warm leads per month from people who found her before they found anyone else.',
+      ],
+    },
+  ];
+
+  var grid   = document.getElementById('rsGrid');
+  var modal  = document.getElementById('rsModal');
+  var mBody  = document.getElementById('rsModalBody');
+  var mClose = document.getElementById('rsModalClose');
+
+  /* ── Build cards ── */
+  cases.forEach(function(cs, i) {
+    var card = document.createElement('div');
+    card.className = 'rs-card';
+    card.setAttribute('tabindex', '0');
+    card.setAttribute('role', 'button');
+    card.setAttribute('aria-label', 'View case study: ' + cs.client);
+
+    var stars = Array(cs.stars).fill('<svg class="rs-star" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>').join('');
+
+    var statsHtml = cs.stats.map(function(s) {
+      return '<div class="rs-stat">' +
+        '<div class="rs-stat-before">' + s.before + '</div>' +
+        '<div class="rs-stat-after">' + s.after + '</div>' +
+        '<div class="rs-stat-label">' + s.label + '</div>' +
+      '</div>';
+    }).join('');
+
+    card.innerHTML =
+      '<div class="rs-card-top">' +
+        '<div class="rs-client-type">' + cs.client + '</div>' +
+        '<p class="rs-problem">' + cs.problem + '</p>' +
+        '<p class="rs-result-text">' + cs.result + '</p>' +
+      '</div>' +
+      '<div class="rs-stats">' + statsHtml + '</div>' +
+      '<div class="rs-card-bottom">' +
+        '<div class="rs-stars">' + stars + '</div>' +
+        '<p class="rs-quote">' + cs.quote + '</p>' +
+      '</div>' +
+      '<div class="rs-card-footer">' +
+        '<span class="rs-tag">' + cs.tag + '</span>' +
+        '<span class="rs-expand-hint">' +
+          'Read full story' +
+          '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12h14"/><path d="m12 5 7 7-7 7"/></svg>' +
+        '</span>' +
+      '</div>';
+
+    function openModal() {
+      var statsModal = cs.stats.map(function(s) {
+        return '<div class="rs-modal-stat">' +
+          '<div class="rs-modal-stat-after">' + s.after + '</div>' +
+          '<div class="rs-modal-stat-label">' + s.label + '</div>' +
+        '</div>';
+      }).join('');
+
+      mBody.innerHTML =
+        '<div class="rs-modal-client">' + cs.client + '</div>' +
+        '<div class="rs-modal-title">' + cs.result + '</div>' +
+        '<div class="rs-modal-body">' +
+          cs.fullStory.map(function(p) { return '<p>' + p + '</p>'; }).join('') +
+        '</div>' +
+        '<div class="rs-modal-stats">' + statsModal + '</div>' +
+        '<div class="rs-modal-quote">' + cs.quote + '</div>';
+
+      modal.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    card.addEventListener('click', openModal);
+    card.addEventListener('keydown', function(e) { if (e.key === 'Enter') openModal(); });
+    grid.appendChild(card);
+  });
+
+  /* Close modal */
+  function closeModal() {
+    modal.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  mClose.addEventListener('click', closeModal);
+  modal.addEventListener('click', function(e) { if (e.target === modal) closeModal(); });
+  document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeModal(); });
+
+})();
+</script>
+</body>
+</html>

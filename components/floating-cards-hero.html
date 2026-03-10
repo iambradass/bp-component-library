@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Floating Cards Hero</title>
+
+  <!--
+    COMPONENT: Hero with Floating Feature Cards
+    COPY: style + html + script
+    Hero headline with 6 small floating cards that bob at different speeds/phases.
+    Cards have mouse parallax (subtle different depths). Mobile: cards hidden.
+  -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+
+    /* ── CUSTOMIZE ── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --glow:           rgba(16,185,129,0.15);
+      --border:         rgba(148,163,184,0.1);
+      --border-accent:  rgba(16,185,129,0.3);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ══════════════════════════════════════
+       HERO SECTION
+    ══════════════════════════════════════ */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    /* Background radial glow behind headline */
+    .hero::before {
+      content: '';
+      position: absolute;
+      width: 600px;
+      height: 600px;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: radial-gradient(circle,
+        rgba(16,185,129,0.10) 0%,
+        rgba(59,130,246,0.05) 40%,
+        transparent 70%
+      );
+      pointer-events: none;
+      border-radius: 50%;
+    }
+
+    /* Dot-grid background */
+    .hero::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(circle, rgba(148,163,184,0.05) 1px, transparent 1px);
+      background-size: 32px 32px;
+      pointer-events: none;
+    }
+
+    /* ── Centered headline content ── */
+    .hero-content {
+      position: relative;
+      z-index: 5;
+      text-align: center;
+      padding: 2rem;
+      max-width: 680px;
+    }
+
+    .hero-eyebrow {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      padding: 4px 12px;
+      border: 1px solid var(--border-accent);
+      background: var(--glow);
+      border-radius: 100px;
+      margin-bottom: 1.5rem;
+    }
+
+    .hero-title {
+      font-family: var(--font-heading);
+      font-size: clamp(2.5rem, 7vw, 5rem);
+      font-weight: 700;
+      line-height: 1.05;
+      letter-spacing: -0.035em;
+      margin-bottom: 1.25rem;
+    }
+    .hero-title span { color: var(--accent); }
+
+    .hero-sub {
+      font-size: clamp(1rem, 2vw, 1.125rem);
+      color: var(--text-secondary);
+      line-height: 1.7;
+      margin-bottom: 2.25rem;
+      max-width: 480px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .hero-ctas {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0.8125rem 1.75rem;
+      background: var(--accent);
+      color: #0D1117;
+      border: none;
+      border-radius: 8px;
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 0.9375rem;
+      cursor: pointer;
+      text-decoration: none;
+      transition: opacity 0.2s;
+      min-height: 44px;
+    }
+    .btn-primary:hover { opacity: 0.88; }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0.8125rem 1.75rem;
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 0.9375rem;
+      cursor: pointer;
+      text-decoration: none;
+      transition: border-color 0.2s, background 0.2s;
+      min-height: 44px;
+    }
+    .btn-secondary:hover { border-color: var(--border-accent); background: var(--glow); }
+
+    /* Social proof row under CTAs */
+    .hero-social {
+      margin-top: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+    }
+    .avatar-stack {
+      display: flex;
+    }
+    .avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid var(--bg);
+      margin-left: -8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.5rem;
+      font-weight: 700;
+    }
+    .avatar:first-child { margin-left: 0; }
+
+    /* Stars */
+    .stars { color: #FBBF24; letter-spacing: -1px; }
+
+
+    /* ══════════════════════════════════════
+       FLOATING CARDS
+    ══════════════════════════════════════ */
+    .float-card {
+      position: absolute;
+      z-index: 4;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0.875rem 1rem;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      /* Mouse parallax position set by JS */
+      will-change: transform;
+    }
+
+    /* Each card gets a different bob keyframe to avoid them moving in unison */
+    @keyframes bob1 { 0%,100%{margin-top:0} 50%{margin-top:-12px} }
+    @keyframes bob2 { 0%,100%{margin-top:0} 50%{margin-top:-10px} }
+    @keyframes bob3 { 0%,100%{margin-top:0} 50%{margin-top:-14px} }
+    @keyframes bob4 { 0%,100%{margin-top:0} 50%{margin-top:-8px} }
+    @keyframes bob5 { 0%,100%{margin-top:0} 50%{margin-top:-11px} }
+    @keyframes bob6 { 0%,100%{margin-top:0} 50%{margin-top:-13px} }
+
+    /* Positions of each card around the hero center */
+    .fc-1 { top: 12%; left:  5%; transform: rotate(-4deg); animation: bob1 4.0s ease-in-out infinite; }
+    .fc-2 { top: 18%; right: 6%; transform: rotate(3deg);  animation: bob2 4.8s ease-in-out infinite; }
+    .fc-3 { top: 48%; left:  2%; transform: rotate(-3deg); animation: bob3 5.2s ease-in-out infinite; }
+    .fc-4 { top: 48%; right: 3%; transform: rotate(5deg);  animation: bob4 3.8s ease-in-out infinite; }
+    .fc-5 { bottom:15%; left: 8%; transform: rotate(-5deg); animation: bob5 4.4s ease-in-out infinite; }
+    .fc-6 { bottom:12%; right:7%; transform: rotate(4deg);  animation: bob6 5.0s ease-in-out infinite; }
+
+    /* Card internals */
+    .fc-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.4rem;
+    }
+    .fc-icon {
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      background: var(--glow);
+      border: 1px solid var(--border-accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+    }
+    .fc-label {
+      font-family: var(--font-heading);
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+    }
+    .fc-value {
+      font-family: var(--font-heading);
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .fc-sub {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    /* Star rating variant */
+    .fc-stars {
+      color: #FBBF24;
+      font-size: 0.7rem;
+      letter-spacing: 1px;
+      margin-bottom: 0.2rem;
+    }
+
+    /* Sparkline mini-chart */
+    .fc-sparkline {
+      display: flex;
+      align-items: flex-end;
+      gap: 2px;
+      height: 24px;
+      margin-top: 0.4rem;
+    }
+    .fc-spark-bar {
+      width: 5px;
+      background: var(--accent);
+      border-radius: 2px;
+      opacity: 0.5;
+    }
+    .fc-spark-bar:last-child { opacity: 1; }
+
+    /* Progress bar variant */
+    .fc-progress-track {
+      height: 4px;
+      background: var(--elevated);
+      border-radius: 2px;
+      margin-top: 0.5rem;
+      overflow: hidden;
+    }
+    .fc-progress-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 2px;
+    }
+
+    /* Timeline dots */
+    .fc-timeline {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 0.4rem;
+    }
+    .fc-tl-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+    .fc-tl-line { flex: 1; height: 2px; background: var(--border); }
+    .fc-tl-dot.empty { background: var(--border); }
+
+    /* Hide floating cards on mobile */
+    @media (max-width: 768px) {
+      .float-card { display: none; }
+    }
+
+  </style>
+</head>
+<body>
+
+  <section class="hero" id="hero">
+
+    <!-- Floating card 1: Project delivered -->
+    <div class="float-card fc-1" data-depth="0.06">
+      <div class="fc-header">
+        <div class="fc-icon">✓</div>
+        <span class="fc-label">Project Delivered</span>
+      </div>
+      <div class="fc-sub">Meridian Rebrand · 14 days</div>
+    </div>
+
+    <!-- Floating card 2: Satisfaction rating -->
+    <div class="float-card fc-2" data-depth="0.08">
+      <div class="fc-stars">★★★★★</div>
+      <div class="fc-label">98% Satisfaction</div>
+      <div class="fc-progress-track">
+        <div class="fc-progress-fill" style="width:98%"></div>
+      </div>
+    </div>
+
+    <!-- Floating card 3: Google ranking -->
+    <div class="float-card fc-3" data-depth="0.05">
+      <div class="fc-header">
+        <div class="fc-icon" style="font-size:0.8rem;">G</div>
+        <span class="fc-label">Google #1</span>
+      </div>
+      <div class="fc-sub">"best web agency local"</div>
+    </div>
+
+    <!-- Floating card 4: Traffic growth -->
+    <div class="float-card fc-4" data-depth="0.07">
+      <div class="fc-label">Traffic Growth</div>
+      <div class="fc-value">+340%</div>
+      <div class="fc-sparkline">
+        <div class="fc-spark-bar" style="height:8px"></div>
+        <div class="fc-spark-bar" style="height:12px"></div>
+        <div class="fc-spark-bar" style="height:10px"></div>
+        <div class="fc-spark-bar" style="height:16px"></div>
+        <div class="fc-spark-bar" style="height:14px"></div>
+        <div class="fc-spark-bar" style="height:20px"></div>
+        <div class="fc-spark-bar" style="height:24px"></div>
+      </div>
+    </div>
+
+    <!-- Floating card 5: Mobile ready -->
+    <div class="float-card fc-5" data-depth="0.09">
+      <div class="fc-header">
+        <div class="fc-icon">📱</div>
+        <span class="fc-label">Mobile Ready</span>
+      </div>
+      <div class="fc-sub">375px+ tested ✓</div>
+    </div>
+
+    <!-- Floating card 6: Timeline -->
+    <div class="float-card fc-6" data-depth="0.06">
+      <div class="fc-header">
+        <div class="fc-icon">📅</div>
+        <span class="fc-label">Live in 14 days</span>
+      </div>
+      <div class="fc-timeline">
+        <div class="fc-tl-dot"></div>
+        <div class="fc-tl-line"></div>
+        <div class="fc-tl-dot"></div>
+        <div class="fc-tl-line"></div>
+        <div class="fc-tl-dot"></div>
+        <div class="fc-tl-line"></div>
+        <div class="fc-tl-dot empty"></div>
+      </div>
+    </div>
+
+
+    <!-- Hero center content -->
+    <div class="hero-content">
+      <div class="hero-eyebrow">Web design &amp; development</div>
+      <h1 class="hero-title">
+        Build sites that<br><span>actually convert</span>
+      </h1>
+      <p class="hero-sub">Strategy-first design. Mobile-first code. Performance-obsessed delivery. We build sites that look sharp and grow your business.</p>
+
+      <div class="hero-ctas">
+        <a href="#" class="btn-primary">
+          Start a project
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </a>
+        <a href="#" class="btn-secondary">View portfolio</a>
+      </div>
+
+      <div class="hero-social">
+        <div class="avatar-stack">
+          <div class="avatar" style="background:#1e3a2f;color:var(--accent);">AK</div>
+          <div class="avatar" style="background:#1e2a3a;color:#60A5FA;">MR</div>
+          <div class="avatar" style="background:#2a1e3a;color:#A78BFA;">JL</div>
+        </div>
+        <span class="stars">★★★★★</span>
+        <span>Trusted by 200+ clients</span>
+      </div>
+    </div>
+
+  </section>
+
+
+  <script>
+  /* ─────────────────────────────────────────────────
+     Mouse parallax on floating cards
+     Each card's data-depth controls its movement multiplier.
+  ───────────────────────────────────────────────── */
+  (function() {
+    if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+
+    const hero  = document.getElementById('hero');
+    const cards = hero.querySelectorAll('.float-card');
+
+    // Current positions (lerped)
+    const state  = Array.from(cards).map(function() { return { x: 0, y: 0 }; });
+    const target = { x: 0, y: 0 };
+    const LERP   = 0.07;  // ← CUSTOMIZE: lower = more lag
+
+    hero.addEventListener('mousemove', function(e) {
+      const r   = hero.getBoundingClientRect();
+      target.x  = e.clientX - r.left - r.width  / 2;
+      target.y  = e.clientY - r.top  - r.height / 2;
+    });
+
+    hero.addEventListener('mouseleave', function() {
+      target.x = 0;
+      target.y = 0;
+    });
+
+    function tick() {
+      cards.forEach(function(card, i) {
+        const depth = parseFloat(card.dataset.depth) || 0.05;
+        state[i].x += (target.x - state[i].x) * LERP;
+        state[i].y += (target.y - state[i].y) * LERP;
+        // Translate on top of the existing bob animation
+        card.style.marginLeft = (state[i].x * depth).toFixed(2) + 'px';
+        card.style.marginTop  = (state[i].y * depth).toFixed(2) + 'px';
+      });
+      requestAnimationFrame(tick);
+    }
+    tick();
+  })();
+  </script>
+
+</body>
+</html>

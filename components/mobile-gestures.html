@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mobile Gestures — Component Library</title>
+  <!-- COMPONENT: Mobile Gestures | COPY: style + html + script -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── CUSTOMIZE ─────────────────────────────────────────────── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.12);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --danger:         #EF4444;
+      --danger-dim:     rgba(239,68,68,0.1);
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+    }
+    /* ── END CUSTOMIZE ─────────────────────────────────────────── */
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: var(--font-body); min-height: 100vh;
+      padding: 2rem 1.5rem 4rem;
+    }
+
+    h1 { font-family: var(--font-heading); font-size: clamp(1.5rem,4vw,2rem); font-weight: 700; letter-spacing:-0.02em; margin-bottom: 0.4rem; }
+    .page-sub { color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 3rem; }
+
+    .demo-row { display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap; max-width: 900px; margin: 0 auto; }
+
+    /* ── Phone frame ─────────────────────────────────────────── */
+    .phone {
+      width: 320px;
+      border-radius: 36px;
+      border: 2px solid rgba(148,163,184,0.12);
+      background: var(--surface);
+      overflow: hidden;
+      box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .phone-header {
+      padding: 1rem 1.25rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+      font-family: var(--font-heading); font-size: 0.9375rem; font-weight: 700;
+    }
+    .phone-sub { font-size: 0.6875rem; color: var(--text-muted); margin-top: 2px; }
+
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       PATTERN 1 — SWIPE TO DELETE
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+    .swipe-list { padding: 0.5rem 0; }
+
+    .swipe-item-wrap {
+      overflow: hidden;
+      position: relative;
+      height: auto;
+      transition: height 0.3s ease, opacity 0.3s ease;
+    }
+    .swipe-item-wrap.removing {
+      height: 0 !important;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .swipe-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.875rem 1.25rem;
+      background: var(--surface);
+      position: relative;
+      cursor: grab;
+      user-select: none;
+      touch-action: pan-y; /* allow vertical scroll, intercept horizontal */
+      transition: transform 0.0s linear;
+      z-index: 2;
+    }
+    .swipe-item:active { cursor: grabbing; }
+    .swipe-item.snap-back { transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1); }
+
+    .item-avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: var(--elevated); flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+    }
+    .item-name { font-size: 0.875rem; font-weight: 500; }
+    .item-meta { font-size: 0.6875rem; color: var(--text-muted); margin-top: 2px; }
+
+    /* Action zones (behind the item) */
+    .item-actions {
+      position: absolute; inset: 0;
+      display: flex; z-index: 1;
+    }
+    .item-undo {
+      background: var(--accent-dim);
+      color: var(--accent);
+      display: flex; align-items: center; justify-content: flex-start;
+      padding-left: 1.25rem;
+      font-family: var(--font-heading); font-size: 0.75rem; font-weight: 700;
+      width: 80px; flex-shrink: 0;
+    }
+    .item-delete {
+      flex: 1;
+      background: var(--danger-dim);
+      color: var(--danger);
+      display: flex; align-items: center; justify-content: flex-end;
+      padding-right: 1.25rem;
+      font-family: var(--font-heading); font-size: 0.75rem; font-weight: 700;
+    }
+    .item-delete-btn {
+      background: var(--danger); color: #fff;
+      font-family: var(--font-heading); font-size: 0.6875rem; font-weight: 700;
+      border: none; border-radius: 6px; padding: 4px 12px; cursor: pointer;
+      transition: opacity 0.15s ease;
+    }
+    .item-delete-btn:hover { opacity: 0.85; }
+
+    .item-divider { height: 1px; background: var(--border); margin: 0 1.25rem; }
+
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       PATTERN 2 — PULL TO REFRESH
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+    .ptr-container {
+      height: 420px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* The spinner above the content */
+    .ptr-spinner-wrap {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 50px;
+      display: flex; align-items: center; justify-content: center;
+      transform: translateY(-50px);
+      transition: transform 0.1s linear;
+    }
+    .ptr-spinner {
+      width: 24px; height: 24px;
+      border: 2.5px solid rgba(16,185,129,0.3);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+    }
+    .ptr-spinner.spinning { animation: ptr-spin 0.7s linear infinite; }
+    @keyframes ptr-spin { to { transform: rotate(360deg); } }
+    .ptr-spinner.idle { border-top-color: var(--text-muted); border-color: var(--border); }
+
+    /* Scrollable content area */
+    .ptr-content {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      overflow-y: auto;
+      transition: transform 0.1s linear;
+      -webkit-overflow-scrolling: touch;
+    }
+    .ptr-content.no-transition { transition: none; }
+    .ptr-content.snap-back { transition: transform 0.35s ease; }
+
+    .ptr-item {
+      padding: 0.875rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      display: flex; gap: 0.75rem; align-items: center;
+    }
+    .ptr-item-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+    .ptr-item.new { background: rgba(16,185,129,0.06); }
+    .ptr-item.new .ptr-item-dot { animation: dot-glow 1.5s ease-in-out; }
+    @keyframes dot-glow { 0%,100%{box-shadow:none} 50%{box-shadow:0 0 8px var(--accent)} }
+    .ptr-item-title { font-size: 0.875rem; font-weight: 500; }
+    .ptr-item-time  { font-size: 0.6875rem; color: var(--text-muted); margin-top: 2px; }
+
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       PATTERN 3 — LONG PRESS CONTEXT MENU
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+    .lp-list { padding: 0.5rem 0; }
+    .lp-item {
+      padding: 0.875rem 1.25rem;
+      display: flex; align-items: center; gap: 0.75rem;
+      cursor: pointer; border-bottom: 1px solid var(--border);
+      position: relative;
+      transition: transform 0.15s ease, background 0.15s ease;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .lp-item:last-child { border-bottom: none; }
+    .lp-item.pressing { transform: scale(0.97); background: var(--elevated); }
+    .lp-item .lp-avatar { width: 36px; height: 36px; border-radius: 8px; background: var(--elevated); display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
+    .lp-item .lp-title { font-size: 0.875rem; font-weight: 500; }
+    .lp-item .lp-meta  { font-size: 0.6875rem; color: var(--text-muted); }
+
+    /* Context menu */
+    .context-menu {
+      position: fixed; z-index: 1000;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      min-width: 180px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+      overflow: hidden;
+      opacity: 0; transform: scale(0.9);
+      transition: opacity 0.2s ease, transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
+      pointer-events: none;
+      transform-origin: top center;
+    }
+    .context-menu.open { opacity: 1; transform: scale(1); pointer-events: all; }
+    .ctx-item {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.75rem 1rem; cursor: pointer; font-size: 0.875rem;
+      transition: background 0.15s ease;
+    }
+    .ctx-item:not(:last-child) { border-bottom: 1px solid var(--border); }
+    .ctx-item:hover { background: rgba(148,163,184,0.06); }
+    .ctx-item.danger { color: var(--danger); }
+    .ctx-icon { width: 20px; text-align: center; }
+
+    /* Context backdrop */
+    .ctx-backdrop {
+      position: fixed; inset: 0;
+      z-index: 999; display: none;
+    }
+    .ctx-backdrop.open { display: block; }
+
+    /* Toast for confirmations */
+    .toast-container {
+      position: fixed; bottom: 2rem; left: 50%;
+      transform: translateX(-50%);
+      z-index: 2000;
+    }
+    .toast {
+      background: var(--elevated); border: 1px solid var(--border);
+      border-radius: 100px; padding: 10px 20px;
+      font-size: 0.8125rem; font-weight: 500;
+      white-space: nowrap;
+      animation: toast-in 0.3s ease, toast-out 0.3s ease 2s forwards;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+    }
+    @keyframes toast-in  { from { opacity:0; transform:translateY(12px); } }
+    @keyframes toast-out { to   { opacity:0; transform:translateY(12px); } }
+  </style>
+</head>
+<body>
+
+  <div style="max-width:1100px; margin:0 auto;">
+    <h1>Mobile Gestures</h1>
+    <p class="page-sub">Swipe-to-delete, pull-to-refresh, and long-press context menu — three essential mobile interaction patterns. All work on touch AND mouse.</p>
+
+    <div class="demo-row">
+
+      <!-- ── PATTERN 1 — Swipe to Delete ─────────────────── -->
+      <div class="phone">
+        <div class="phone-header">
+          Swipe to Delete
+          <div class="phone-sub">Swipe item left to delete · right to undo</div>
+        </div>
+        <div class="swipe-list" id="swipe-list">
+
+          <div class="swipe-item-wrap">
+            <div class="item-actions">
+              <div class="item-undo">↺ Undo</div>
+              <div class="item-delete"><button class="item-delete-btn" onclick="deleteItem(this)">Delete</button></div>
+            </div>
+            <div class="swipe-item">
+              <div class="item-avatar">📧</div>
+              <div><div class="item-name">New proposal from Acme</div><div class="item-meta">2 min ago</div></div>
+            </div>
+          </div>
+          <div class="item-divider"></div>
+
+          <div class="swipe-item-wrap">
+            <div class="item-actions">
+              <div class="item-undo">↺ Undo</div>
+              <div class="item-delete"><button class="item-delete-btn" onclick="deleteItem(this)">Delete</button></div>
+            </div>
+            <div class="swipe-item">
+              <div class="item-avatar">📅</div>
+              <div><div class="item-name">Team standup at 9am</div><div class="item-meta">Tomorrow</div></div>
+            </div>
+          </div>
+          <div class="item-divider"></div>
+
+          <div class="swipe-item-wrap">
+            <div class="item-actions">
+              <div class="item-undo">↺ Undo</div>
+              <div class="item-delete"><button class="item-delete-btn" onclick="deleteItem(this)">Delete</button></div>
+            </div>
+            <div class="swipe-item">
+              <div class="item-avatar">📦</div>
+              <div><div class="item-name">Deploy v2.4 to production</div><div class="item-meta">Due today</div></div>
+            </div>
+          </div>
+          <div class="item-divider"></div>
+
+          <div class="swipe-item-wrap">
+            <div class="item-actions">
+              <div class="item-undo">↺ Undo</div>
+              <div class="item-delete"><button class="item-delete-btn" onclick="deleteItem(this)">Delete</button></div>
+            </div>
+            <div class="swipe-item">
+              <div class="item-avatar">💬</div>
+              <div><div class="item-name">Reply to Sarah's feedback</div><div class="item-meta">15 min ago</div></div>
+            </div>
+          </div>
+          <div class="item-divider"></div>
+
+          <div class="swipe-item-wrap">
+            <div class="item-actions">
+              <div class="item-undo">↺ Undo</div>
+              <div class="item-delete"><button class="item-delete-btn" onclick="deleteItem(this)">Delete</button></div>
+            </div>
+            <div class="swipe-item">
+              <div class="item-avatar">🔍</div>
+              <div><div class="item-name">Review SEO audit report</div><div class="item-meta">Yesterday</div></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ── PATTERN 2 — Pull to Refresh ─────────────────── -->
+      <div class="phone">
+        <div class="phone-header">
+          Pull to Refresh
+          <div class="phone-sub">Pull down from the top of the list</div>
+        </div>
+        <div class="ptr-container" id="ptr-container">
+          <div class="ptr-spinner-wrap" id="ptr-spinner-wrap">
+            <div class="ptr-spinner idle" id="ptr-spinner"></div>
+          </div>
+          <div class="ptr-content" id="ptr-content">
+            <div class="ptr-item"><div class="ptr-item-dot"></div><div><div class="ptr-item-title">Website traffic report</div><div class="ptr-item-time">Just now</div></div></div>
+            <div class="ptr-item"><div class="ptr-item-dot"></div><div><div class="ptr-item-title">New lead: Tom Barrett</div><div class="ptr-item-time">3 min ago</div></div></div>
+            <div class="ptr-item"><div class="ptr-item-dot"></div><div><div class="ptr-item-title">Invoice #1042 paid</div><div class="ptr-item-time">12 min ago</div></div></div>
+            <div class="ptr-item"><div class="ptr-item-dot"></div><div><div class="ptr-item-title">Build deployed to staging</div><div class="ptr-item-time">1 hour ago</div></div></div>
+            <div class="ptr-item"><div class="ptr-item-dot"></div><div><div class="ptr-item-title">Proposal approved by client</div><div class="ptr-item-time">2 hours ago</div></div></div>
+            <div class="ptr-item"><div class="ptr-item-dot"></div><div><div class="ptr-item-title">New comment on design file</div><div class="ptr-item-time">Yesterday</div></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── PATTERN 3 — Long Press Context ──────────────── -->
+      <div class="phone">
+        <div class="phone-header">
+          Long Press
+          <div class="phone-sub">Hold any item for 500ms to open menu</div>
+        </div>
+        <div class="lp-list" id="lp-list">
+          <div class="lp-item"><div class="lp-avatar">🚀</div><div><div class="lp-title">Website Redesign</div><div class="lp-meta">3 days ago</div></div></div>
+          <div class="lp-item"><div class="lp-avatar">🎨</div><div><div class="lp-title">Brand Identity</div><div class="lp-meta">1 week ago</div></div></div>
+          <div class="lp-item"><div class="lp-avatar">📊</div><div><div class="lp-title">Q2 Campaign</div><div class="lp-meta">2 weeks ago</div></div></div>
+          <div class="lp-item"><div class="lp-avatar">⚡</div><div><div class="lp-title">Product Launch</div><div class="lp-meta">Last month</div></div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Context menu (appended to body so it overlays correctly) -->
+  <div class="ctx-backdrop" id="ctx-backdrop" onclick="closeContextMenu()"></div>
+  <div class="context-menu" id="context-menu">
+    <div class="ctx-item" onclick="ctxAction('Edit')"><span class="ctx-icon">✏️</span> Edit</div>
+    <div class="ctx-item" onclick="ctxAction('Share')"><span class="ctx-icon">🔗</span> Share</div>
+    <div class="ctx-item" onclick="ctxAction('Duplicate')"><span class="ctx-icon">📋</span> Duplicate</div>
+    <div class="ctx-item danger" onclick="ctxAction('Delete')"><span class="ctx-icon">🗑️</span> Delete</div>
+  </div>
+
+  <!-- Toast container -->
+  <div class="toast-container" id="toast-container"></div>
+
+<script>
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   PATTERN 1 — SWIPE TO DELETE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+(function() {
+  var THRESHOLD = 80; // px — show action zone
+  var items = document.querySelectorAll('.swipe-item');
+
+  items.forEach(function(item) {
+    var startX = 0, currentX = 0, isDragging = false;
+    var wrap   = item.closest('.swipe-item-wrap');
+
+    function getX(e) { return e.touches ? e.touches[0].clientX : e.clientX; }
+
+    function onStart(e) {
+      startX    = getX(e); currentX = 0; isDragging = true;
+      item.classList.remove('snap-back');
+      item.style.transition = 'none';
+    }
+    function onMove(e) {
+      if (!isDragging) return;
+      currentX = getX(e) - startX;
+      // Limit leftward drag to 80px, rightward to 60px
+      var dx = Math.max(-80, Math.min(60, currentX));
+      item.style.transform = 'translateX(' + dx + 'px)';
+    }
+    function onEnd() {
+      if (!isDragging) return; isDragging = false;
+      item.classList.add('snap-back');
+      if (currentX < -THRESHOLD) {
+        // Stay open at -80px to show delete button
+        item.style.transform = 'translateX(-80px)';
+      } else if (currentX > 40) {
+        // Right: undo action — could restore a deleted item
+        item.style.transform = '';
+        showToast('Marked as done');
+      } else {
+        item.style.transform = '';
+      }
+    }
+
+    item.addEventListener('mousedown',  onStart);
+    item.addEventListener('touchstart', onStart, { passive: true });
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('touchmove', onMove, { passive: true });
+    document.addEventListener('mouseup',   onEnd);
+    document.addEventListener('touchend',  onEnd);
+  });
+
+  window.deleteItem = function(btn) {
+    var wrap = btn.closest('.swipe-item-wrap');
+    wrap.style.height = wrap.offsetHeight + 'px'; // lock height for animation
+    wrap.offsetHeight; // reflow
+    wrap.classList.add('removing');
+    showToast('Item deleted');
+  };
+})();
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   PATTERN 2 — PULL TO REFRESH
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+(function() {
+  var container   = document.getElementById('ptr-container');
+  var content     = document.getElementById('ptr-content');
+  var spinnerWrap = document.getElementById('ptr-spinner-wrap');
+  var spinner     = document.getElementById('ptr-spinner');
+
+  var TRIGGER   = 60;    // px pull to trigger refresh
+  var RESISTANCE= 0.4;   // elastic damping factor
+  var startY    = 0;
+  var isDragging = false;
+  var isRefreshing = false;
+  var pullDist   = 0;
+
+  function getY(e) { return e.touches ? e.touches[0].clientY : e.clientY; }
+
+  function applyPull(dist) {
+    pullDist = dist;
+    var damped = dist * RESISTANCE;
+    content.style.transform     = 'translateY(' + damped + 'px)';
+    spinnerWrap.style.transform = 'translateY(calc(-50px + ' + (damped) + 'px))';
+
+    // Activate spinner when past threshold
+    if (dist > TRIGGER) {
+      spinner.classList.remove('idle');
+      spinner.style.borderTopColor = 'var(--accent)';
+    } else {
+      spinner.classList.add('idle');
+      spinner.style.borderTopColor = '';
+    }
+  }
+
+  function onStart(e) {
+    if (isRefreshing) return;
+    if (content.scrollTop > 0) return; // only trigger at top of scroll
+    startX = getY(e); isDragging = true;
+    content.classList.add('no-transition');
+  }
+
+  function onMove(e) {
+    if (!isDragging) return;
+    var dy = getY(e) - startX;
+    if (dy < 0) return; // only pull down
+    applyPull(dy);
+    if (dy > 5) e.preventDefault(); // prevent scroll
+  }
+
+  function onEnd() {
+    if (!isDragging) return; isDragging = false;
+    content.classList.remove('no-transition');
+    content.classList.add('snap-back');
+
+    if (pullDist > TRIGGER) {
+      // Lock at spinner position and start loading
+      isRefreshing = true;
+      spinner.classList.add('spinning');
+      content.style.transform     = 'translateY(40px)';
+      spinnerWrap.style.transform = 'translateY(-10px)';
+
+      setTimeout(function() {
+        // Inject a new item at top
+        var newItem = document.createElement('div');
+        newItem.className = 'ptr-item new';
+        newItem.innerHTML = '<div class="ptr-item-dot"></div><div><div class="ptr-item-title">Live update pulled!</div><div class="ptr-item-time">Just now</div></div>';
+        content.insertBefore(newItem, content.firstChild);
+
+        // Snap back
+        spinner.classList.remove('spinning');
+        content.style.transform     = '';
+        spinnerWrap.style.transform = '';
+        isRefreshing = false;
+        pullDist = 0;
+        setTimeout(function() { content.classList.remove('snap-back'); }, 400);
+      }, 1500);
+    } else {
+      content.style.transform     = '';
+      spinnerWrap.style.transform = '';
+      pullDist = 0;
+      setTimeout(function() { content.classList.remove('snap-back'); }, 400);
+    }
+  }
+
+  container.addEventListener('mousedown',  onStart);
+  container.addEventListener('touchstart', onStart, { passive: true });
+  document.addEventListener('mousemove',   onMove);
+  document.addEventListener('touchmove',   onMove, { passive: false });
+  document.addEventListener('mouseup',     onEnd);
+  document.addEventListener('touchend',    onEnd);
+})();
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   PATTERN 3 — LONG PRESS CONTEXT MENU
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+(function() {
+  var HOLD_MS  = 500;
+  var menu     = document.getElementById('context-menu');
+  var backdrop = document.getElementById('ctx-backdrop');
+  var timer    = null;
+  var activeItem = null;
+
+  function showMenu(x, y, item) {
+    activeItem = item;
+    // Smart flip: keep menu inside screen
+    var mW = 180, mH = 180;
+    var left = Math.min(x, window.innerWidth  - mW - 8);
+    var top  = Math.min(y, window.innerHeight - mH - 8);
+    menu.style.left = left + 'px';
+    menu.style.top  = top  + 'px';
+    menu.classList.add('open');
+    backdrop.classList.add('open');
+  }
+
+  window.closeContextMenu = function() {
+    menu.classList.remove('open');
+    backdrop.classList.remove('open');
+    if (activeItem) { activeItem.classList.remove('pressing'); activeItem = null; }
+  };
+
+  window.ctxAction = function(action) {
+    var name = activeItem ? activeItem.querySelector('.lp-title').textContent : 'Item';
+    showToast(action + ': ' + name);
+    closeContextMenu();
+  };
+
+  function initLongPress(el) {
+    function getXY(e) {
+      return e.touches ? { x: e.touches[0].clientX, y: e.touches[0].clientY } : { x: e.clientX, y: e.clientY };
+    }
+
+    function onDown(e) {
+      el.classList.add('pressing');
+      timer = setTimeout(function() {
+        var pt = getXY(e);
+        showMenu(pt.x, pt.y + 10, el);
+      }, HOLD_MS);
+    }
+    function onUp() {
+      clearTimeout(timer);
+      el.classList.remove('pressing');
+    }
+
+    el.addEventListener('mousedown',  onDown);
+    el.addEventListener('touchstart', onDown, { passive: true });
+    el.addEventListener('mouseup',    onUp);
+    el.addEventListener('mouseleave', onUp);
+    el.addEventListener('touchend',   onUp);
+    el.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+  }
+
+  document.querySelectorAll('.lp-item').forEach(initLongPress);
+})();
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   SHARED TOAST UTILITY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+window.showToast = function(msg) {
+  var container = document.getElementById('toast-container');
+  var toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = msg;
+  container.appendChild(toast);
+  setTimeout(function() { toast.remove(); }, 2500);
+};
+</script>
+</body>
+</html>

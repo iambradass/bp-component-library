@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Testimonial Wall — Component Library</title>
+
+  <!--
+  /* COMPONENT: Testimonial Wall | COPY: style + html + script */
+  Masonry-style grid of quote cards using CSS `columns` property.
+  Heights vary naturally — no fixed card heights needed.
+  IntersectionObserver reveals each card with a staggered delay.
+  */
+  -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+
+    /* ============================================================
+       CUSTOMIZE — adjust these to match your project
+       ============================================================ */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --glow:           rgba(16,185,129,0.15);
+      --glow-strong:    rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --border-accent:  rgba(16,185,129,0.3);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+    }
+    /* ============================================================ */
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Page wrapper ── */
+    .tw-page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 5rem 1.5rem;
+    }
+
+    /* ── Section header ── */
+    .tw-header {
+      text-align: center;
+      margin-bottom: 3.5rem;
+    }
+    .tw-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 5px 14px;
+      background: rgba(16,185,129,0.08);
+      border: 1px solid var(--border-accent);
+      border-radius: 100px;
+      margin-bottom: 1.25rem;
+    }
+    .tw-title {
+      font-family: var(--font-heading);
+      font-size: clamp(1.75rem, 4vw, 2.75rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.75rem;
+    }
+    .tw-subtitle {
+      color: var(--text-secondary);
+      font-size: 1rem;
+      line-height: 1.6;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+
+    /* ── Masonry wall using CSS `columns` ──
+       columns: 3 on desktop, 2 on tablet, 1 on mobile.
+       Cards have `break-inside: avoid` so they never split across columns.
+       `column-gap` controls horizontal spacing; `margin-bottom` on cards handles vertical. */
+    .tw-wall {
+      columns: 3;
+      column-gap: 1.25rem;
+    }
+    @media (max-width: 860px) {
+      .tw-wall { columns: 2; }
+    }
+    @media (max-width: 520px) {
+      .tw-wall { columns: 1; }
+    }
+
+
+    /* ── Individual testimonial card ── */
+    .tw-card {
+      break-inside: avoid;         /* critical — prevents card splitting across columns */
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--accent); /* accent left stripe */
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+
+      /* Scroll reveal starting state */
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.5s ease, transform 0.5s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    /* When the IntersectionObserver fires .tw-card--visible, the card reveals */
+    .tw-card--visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Subtle hover lift */
+    .tw-card:hover {
+      border-color: var(--border-accent);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+    }
+
+
+    /* Star rating row */
+    .tw-stars {
+      display: flex;
+      gap: 2px;
+      color: var(--accent);
+      font-size: 0.875rem;
+    }
+
+    /* Quote text */
+    .tw-quote {
+      font-size: 0.9375rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      font-style: italic;
+    }
+    .tw-quote::before { content: '\201C'; }
+    .tw-quote::after  { content: '\201D'; }
+
+    /* Reviewer info */
+    .tw-reviewer {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-top: auto;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border);
+    }
+
+    /* Initials avatar circle */
+    .tw-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(16,185,129,0.1);
+      border: 1px solid rgba(16,185,129,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-heading);
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .tw-name {
+      font-family: var(--font-heading);
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .tw-role {
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="tw-page">
+
+    <!-- Header -->
+    <div class="tw-header">
+      <div class="tw-eyebrow">Client Stories</div>
+      <h2 class="tw-title">Results our clients talk about</h2>
+      <p class="tw-subtitle">Real feedback from real businesses — small teams, growing agencies, and service pros who needed more leads.</p>
+    </div>
+
+    <!-- Masonry testimonial wall -->
+    <!-- Cards have varying content length so heights differ naturally -->
+    <div class="tw-wall" id="tw-wall">
+
+      <!-- Short 1-liner -->
+      <div class="tw-card">
+        <div class="tw-stars">★★★★★</div>
+        <p class="tw-quote">Closed three listings in my first month. Haven't looked back.</p>
+        <div class="tw-reviewer">
+          <div class="tw-avatar">MR</div>
+          <div>
+            <div class="tw-name">Marcus Reid</div>
+            <div class="tw-role">Real Estate Agent · Dallas, TX</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Medium length -->
+      <div class="tw-card">
+        <div class="tw-stars">★★★★★</div>
+        <p class="tw-quote">Before working with them, our website was basically a digital business card nobody found. Now it's our top lead source. We get 15–20 qualified inquiries a week without lifting a finger.</p>
+        <div class="tw-reviewer">
+          <div class="tw-avatar">SL</div>
+          <div>
+            <div class="tw-name">Sandra Lieu</div>
+            <div class="tw-role">Owner · Lieu Family Law</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Short -->
+      <div class="tw-card">
+        <div class="tw-stars">★★★★★</div>
+        <p class="tw-quote">The ROI on the website redesign paid for itself in 6 weeks. Genuinely shocked.</p>
+        <div class="tw-reviewer">
+          <div class="tw-avatar">TK</div>
+          <div>
+            <div class="tw-name">Tom Kowalski</div>
+            <div class="tw-role">Owner · Kowalski HVAC</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Long -->
+      <div class="tw-card">
+        <div class="tw-stars">★★★★★</div>
+        <p class="tw-quote">I've been in real estate for 22 years and always relied on referrals. My brokerage told me I needed to get online or get left behind. I was skeptical. The new site launched in February — by April I had more buyer leads than I'd ever had from referrals in a single quarter. The follow-up automation alone is worth every penny. My assistant stopped being my secretary and started doing actual work.</p>
+        <div class="tw-reviewer">
+          <div class="tw-avatar">BH</div>
+          <div>
+            <div class="tw-name">Barbara Hanes</div>
+            <div class="tw-role">Broker · Hanes Premier Realty</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Medium -->
+      <div class="tw-card">
+        <div class="tw-stars">★★★★★</div>
+        <p class="tw-quote">My plumbing company had zero online presence. Within 90 days of the new site going live, we were ranking on page one for 14 local search terms. Phones haven't stopped ringing since. We had to hire two more technicians.</p>
+        <div class="tw-reviewer">
+          <div class="tw-avatar">JD</div>
+          <div>
+            <div class="tw-name">Jake Dubois</div>
+            <div class="tw-role">Owner · Dubois Plumbing Co.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Short -->
+      <div class="tw-card">
+        <div class="tw-stars">★★★★★</div>
+        <p class="tw-quote">Fastest turnaround I've seen from a web team. Site was live in 12 days.</p>
+        <div class="tw-reviewer">
+          <div class="tw-avatar">AN</div>
+          <div>
+            <div class="tw-name">Aisha Nwosu</div>
+            <div class="tw-role">Marketing Director · NovaBuild</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Medium -->
+      <div class="tw-card">
+        <div class="tw-stars">★★★★★</div>
+        <p class="tw-quote">We'd been burned by agencies before — big promises, mediocre delivery. This was different. Clear communication, deadlines actually met, and the finished product looked better than what I'd imagined. We've since referred three other businesses.</p>
+        <div class="tw-reviewer">
+          <div class="tw-avatar">CF</div>
+          <div>
+            <div class="tw-name">Carlos Fuentes</div>
+            <div class="tw-role">Co-founder · Fuentes Property Group</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Short 1-liner -->
+      <div class="tw-card">
+        <div class="tw-stars">★★★★★</div>
+        <p class="tw-quote">Our Google rating went from 3.8 to 4.9 in 4 months. The review funnel is a game changer.</p>
+        <div class="tw-reviewer">
+          <div class="tw-avatar">PW</div>
+          <div>
+            <div class="tw-name">Patricia Webb</div>
+            <div class="tw-role">Owner · Webb Dental Group</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Medium-long -->
+      <div class="tw-card">
+        <div class="tw-stars">★★★★★</div>
+        <p class="tw-quote">I'm a one-person insurance agency competing against regional firms with full marketing departments. My new website finally levels the playing field — it looks professional, loads fast on mobile, and captures leads automatically while I'm out on appointments. I closed $80K in new premiums last quarter that came directly through the site.</p>
+        <div class="tw-reviewer">
+          <div class="tw-avatar">RO</div>
+          <div>
+            <div class="tw-name">Rachel O'Brien</div>
+            <div class="tw-role">Independent Agent · O'Brien Insurance</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /tw-wall -->
+
+  </div><!-- /tw-page -->
+
+  <script>
+  /* ── Staggered scroll reveal ──
+     IntersectionObserver watches all .tw-card elements.
+     When a card enters the viewport, we add .tw-card--visible after
+     a short delay that increases based on its position in the NodeList.
+     This creates a cascade effect where cards reveal in sequence. */
+
+  const cards = document.querySelectorAll('.tw-card');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+
+      const card = entry.target;
+      // Find this card's index in the full list for stagger delay
+      const index = Array.from(cards).indexOf(card);
+      // Cap the delay so late cards don't wait too long
+      const delay = Math.min(index * 80, 400);
+
+      setTimeout(() => {
+        card.classList.add('tw-card--visible');
+      }, delay);
+
+      // Stop watching once revealed — no need to re-trigger
+      observer.unobserve(card);
+    });
+  }, {
+    rootMargin: '0px 0px -60px 0px', // trigger slightly before fully in view
+    threshold: 0.05
+  });
+
+  cards.forEach((card) => observer.observe(card));
+  </script>
+
+</body>
+</html>

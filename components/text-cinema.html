@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Text Cinema — Component Library</title>
+  <!-- COMPONENT: Text Cinema | COPY: style + html + script -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── CUSTOMIZE ─────────────────────────────────────────────── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #1E2D3A;      /* dim word color */
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+    }
+    /* ── END CUSTOMIZE ─────────────────────────────────────────── */
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: auto; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      overflow-x: hidden;
+    }
+
+    /* ── Intro billboard ─────────────────────────────────────── */
+    .intro {
+      height: 60vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 2rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .intro h1 {
+      font-family: var(--font-heading);
+      font-size: clamp(1.75rem, 5vw, 2.75rem);
+      font-weight: 700; letter-spacing: -0.02em;
+      text-align: center; margin-bottom: 1rem;
+    }
+    .intro p { color: var(--text-secondary); text-align: center; max-width: 480px; }
+    .scroll-hint {
+      margin-top: 2rem;
+      font-size: 0.75rem; color: var(--text-secondary);
+      text-transform: uppercase; letter-spacing: 0.1em;
+      animation: bob 2s ease-in-out infinite;
+    }
+    @keyframes bob {
+      0%,100% { transform: translateY(0); }
+      50%      { transform: translateY(6px); }
+    }
+
+    /* ── Section label badge ─────────────────────────────────── */
+    .seq-badge {
+      position: fixed; top: 1.5rem; left: 50%; transform: translateX(-50%);
+      font-family: ui-monospace, monospace;
+      font-size: 0.6875rem; color: var(--accent);
+      text-transform: uppercase; letter-spacing: 0.12em;
+      padding: 4px 14px;
+      background: rgba(16,185,129,0.08);
+      border: 1px solid rgba(16,185,129,0.25);
+      border-radius: 100px;
+      z-index: 100;
+      opacity: 0; transition: opacity 0.3s ease;
+    }
+    .seq-badge.visible { opacity: 1; }
+
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       SEQUENCE A — LINE BY LINE
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+    /* One tall wrapper per sequence; sticky reveals happen inside */
+    .seq-outer { position: relative; }
+
+    /* Sequence A: 5 lines × 1 viewport height of scroll each */
+    #seqA-outer { height: 700vh; background: var(--bg); }
+    #seqA-sticky {
+      position: sticky; top: 0; height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+    }
+
+    .line-text {
+      position: absolute;
+      width: 100%;
+      text-align: center;
+      padding: 0 2rem;
+      font-family: var(--font-heading);
+      font-size: clamp(2.5rem, 8vw, 5.5rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      opacity: 0;
+      transform: scale(1.05);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    .line-text.active   { opacity: 1; transform: scale(1); }
+    .line-text.past     { opacity: 0.08; transform: scale(0.92); }
+    .line-text em { color: var(--accent); font-style: normal; }
+
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       SEQUENCE B — WORD SPOTLIGHT
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+    /* Each word = one "unit" of scroll; 18 words → 18 units */
+    #seqB-outer { height: 250vh; background: var(--surface); }
+    #seqB-sticky {
+      position: sticky; top: 0; height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      padding: 2rem;
+    }
+
+    .spotlight-text {
+      max-width: 800px;
+      font-family: var(--font-heading);
+      font-size: clamp(1.75rem, 5vw, 3rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.5;
+      text-align: center;
+    }
+    .sw { /* spotlight word */
+      display: inline-block;
+      color: rgba(248,250,252,0.12);
+      transition: color 0.25s ease, transform 0.25s ease;
+      padding: 0 0.1em;
+    }
+    .sw.lit {
+      color: var(--text);
+      transform: scale(1.08);
+    }
+    .sw.accent-lit {
+      color: var(--accent);
+      transform: scale(1.12);
+    }
+
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       SEQUENCE C — BUILDING SENTENCE
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+    #seqC-outer { height: 350vh; background: var(--bg); }
+    #seqC-sticky {
+      position: sticky; top: 0; height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      padding: 2rem;
+    }
+
+    .build-text {
+      max-width: 900px;
+      font-family: var(--font-heading);
+      font-size: clamp(2rem, 6vw, 4rem);
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      line-height: 1.3;
+      text-align: center;
+    }
+    .bw { /* build word */
+      display: inline-block;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+      margin: 0 0.15em;
+    }
+    .bw.revealed { opacity: 1; transform: none; }
+    .bw.new-flash {
+      color: var(--accent);
+      animation: flash-settle 0.5s ease forwards;
+    }
+    @keyframes flash-settle {
+      0%   { color: var(--accent); }
+      100% { color: var(--text); }
+    }
+
+    /* Spacer after each sequence */
+    .seq-spacer {
+      height: 50vh;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--bg);
+      border-top: 1px solid var(--border);
+      font-size: 0.8125rem; color: var(--text-secondary);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="seq-badge" id="seq-badge">Scroll to read</div>
+
+  <!-- Intro -->
+  <div class="intro">
+    <h1>Text Cinema</h1>
+    <p>Three typographic scroll sequences — scroll through each to see words, lines, and sentences animate with purpose.</p>
+    <div class="scroll-hint">↓ scroll to begin</div>
+  </div>
+
+  <!-- ── SEQUENCE A — Line by Line ──────────────────────────── -->
+  <div class="seq-outer" id="seqA-outer">
+    <div id="seqA-sticky">
+
+      <div class="line-text" id="l0">Good design<br>starts with<br><em>the truth.</em></div>
+      <div class="line-text" id="l1">Most brands<br>are <em>lying</em><br>to themselves.</div>
+      <div class="line-text" id="l2">They say<br>"premium"<br>and look <em>free.</em></div>
+      <div class="line-text" id="l3">The gap between<br>perception and<br><em>reality</em> costs money.</div>
+      <div class="line-text" id="l4">We close<br><em>that gap.</em><br>That's the job.</div>
+
+    </div>
+  </div>
+
+  <!-- ── SEQUENCE B — Word Spotlight ────────────────────────── -->
+  <div class="seq-outer" id="seqB-outer">
+    <div id="seqB-sticky">
+      <div class="spotlight-text" id="spotlight-para">
+        <!-- Words injected by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SEQUENCE C — Building Sentence ────────────────────── -->
+  <div class="seq-outer" id="seqC-outer">
+    <div id="seqC-sticky">
+      <div class="build-text" id="build-para">
+        <!-- Words injected by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- End -->
+  <div class="seq-spacer">End of demo — scroll back to replay sequences</div>
+
+<script>
+(function() {
+  function clamp(v, lo, hi) { return Math.min(Math.max(v, lo), hi); }
+
+  /* ── Badge shows which sequence is active ──────────────────── */
+  var badge = document.getElementById('seq-badge');
+
+  /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     SEQUENCE A — LINE BY LINE
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+  var seqA  = document.getElementById('seqA-outer');
+  var lines = [
+    document.getElementById('l0'),
+    document.getElementById('l1'),
+    document.getElementById('l2'),
+    document.getElementById('l3'),
+    document.getElementById('l4')
+  ];
+  var lineCount = lines.length;
+
+  /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     SEQUENCE B — WORD SPOTLIGHT
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+  var seqB    = document.getElementById('seqB-outer');
+  var seqBPara = document.getElementById('spotlight-para');
+  var seqBText = 'Every word you publish either builds trust or erodes it — there is no neutral ground in digital communication today.';
+  var seqBWords = seqBText.split(' ');
+
+  // Inject words as spans
+  seqBPara.innerHTML = seqBWords.map(function(w, i) {
+    return '<span class="sw" id="sw-' + i + '">' + w + '</span>';
+  }).join(' ');
+
+  var swEls = document.querySelectorAll('.sw');
+
+  /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     SEQUENCE C — BUILDING SENTENCE
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+  var seqC     = document.getElementById('seqC-outer');
+  var buildPara = document.getElementById('build-para');
+  var buildText = 'The best websites don\'t just look good — they work hard, earn trust, and turn strangers into clients.';
+  var buildWords = buildText.split(' ');
+
+  // Inject words as spans
+  buildPara.innerHTML = buildWords.map(function(w, i) {
+    return '<span class="bw" id="bw-' + i + '">' + w + '</span>';
+  }).join(' ');
+
+  var bwEls = document.querySelectorAll('.bw');
+  var lastRevealed = -1; // track which words are already revealed
+
+  /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     SCROLL UPDATE
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+  var ticking = false;
+
+  function update() {
+    ticking = false;
+    var scrollY = window.pageYOffset;
+    var vh      = window.innerHeight;
+
+    /* ── Badge management ──────────────────────────────────── */
+    var aRect = seqA.getBoundingClientRect();
+    var bRect = seqB.getBoundingClientRect();
+    var cRect = seqC.getBoundingClientRect();
+
+    if (aRect.top < 0 && aRect.bottom > 0) {
+      badge.textContent = 'Sequence A — Line by line';
+      badge.classList.add('visible');
+    } else if (bRect.top < 0 && bRect.bottom > 0) {
+      badge.textContent = 'Sequence B — Word spotlight';
+      badge.classList.add('visible');
+    } else if (cRect.top < 0 && cRect.bottom > 0) {
+      badge.textContent = 'Sequence C — Building sentence';
+      badge.classList.add('visible');
+    } else {
+      badge.classList.remove('visible');
+    }
+
+    /* ── Sequence A ────────────────────────────────────────── */
+    if (aRect.top < 0) {
+      var aScrolled  = -aRect.top;
+      var aScrollable = seqA.offsetHeight - vh;
+      var aProgress   = clamp(aScrolled / aScrollable, 0, 1);
+      var activeIndex = Math.floor(aProgress * lineCount);
+      activeIndex = clamp(activeIndex, 0, lineCount - 1);
+
+      lines.forEach(function(el, i) {
+        el.classList.remove('active', 'past');
+        if (i === activeIndex) el.classList.add('active');
+        else if (i < activeIndex) el.classList.add('past');
+      });
+    } else {
+      lines.forEach(function(el) { el.classList.remove('active', 'past'); });
+    }
+
+    /* ── Sequence B — Word Spotlight ───────────────────────── */
+    if (bRect.top < 0) {
+      var bScrolled  = -bRect.top;
+      var bScrollable = seqB.offsetHeight - vh;
+      var bProgress   = clamp(bScrolled / bScrollable, 0, 1);
+      var litIndex    = Math.floor(bProgress * seqBWords.length);
+
+      swEls.forEach(function(el, i) {
+        el.classList.remove('lit', 'accent-lit');
+        if (i === litIndex) {
+          el.classList.add('accent-lit');
+        } else if (i < litIndex) {
+          el.classList.add('lit');
+        }
+      });
+    } else {
+      swEls.forEach(function(el) { el.classList.remove('lit', 'accent-lit'); });
+    }
+
+    /* ── Sequence C — Building Sentence ────────────────────── */
+    if (cRect.top < 0) {
+      var cScrolled  = -cRect.top;
+      var cScrollable = seqC.offsetHeight - vh;
+      var cProgress   = clamp(cScrolled / cScrollable, 0, 1);
+      // Reveal up to this word index
+      var revealTo = Math.floor(cProgress * buildWords.length);
+
+      bwEls.forEach(function(el, i) {
+        if (i <= revealTo && !el.classList.contains('revealed')) {
+          el.classList.add('revealed');
+          // Flash accent on the newly revealed word
+          if (i === revealTo) {
+            el.classList.add('new-flash');
+            setTimeout(function() { el.classList.remove('new-flash'); }, 600);
+          }
+        } else if (i > revealTo) {
+          el.classList.remove('revealed', 'new-flash');
+        }
+      });
+      lastRevealed = revealTo;
+    } else {
+      bwEls.forEach(function(el) { el.classList.remove('revealed', 'new-flash'); });
+      lastRevealed = -1;
+    }
+  }
+
+  window.addEventListener('scroll', function() {
+    if (!ticking) { requestAnimationFrame(update); ticking = true; }
+  }, { passive: true });
+
+  update();
+})();
+</script>
+</body>
+</html>

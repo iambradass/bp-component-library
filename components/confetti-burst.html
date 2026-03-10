@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Confetti Burst Buttons</title>
+
+  <!--
+    COMPONENT: Confetti & Particle Burst Buttons
+    COPY: style + html + script
+    4 button variants: confetti (paper), sparkle (stars), emoji shower, ripple rings.
+    Variants 1-3 use DOM particle approach (no canvas). Variant 4 is pure CSS.
+    Particles auto-remove on animationend.
+  -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+
+    /* ── CUSTOMIZE ── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --glow:           rgba(16,185,129,0.15);
+      --border:         rgba(148,163,184,0.1);
+      --border-accent:  rgba(16,185,129,0.3);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+    }
+
+    /* Page layout */
+    .page {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 4rem 1.5rem 6rem;
+    }
+
+    /* Page header */
+    .page-header {
+      text-align: center;
+      margin-bottom: 4rem;
+    }
+    .eyebrow {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      padding: 4px 12px;
+      border: 1px solid var(--border-accent);
+      background: var(--glow);
+      border-radius: 100px;
+      margin-bottom: 1.25rem;
+    }
+    .page-title {
+      font-family: var(--font-heading);
+      font-size: clamp(2rem, 5vw, 3rem);
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      margin-bottom: 1rem;
+    }
+    .page-sub {
+      color: var(--text-secondary);
+      font-size: 1rem;
+      line-height: 1.7;
+    }
+
+    /* Grid of 4 demo cards */
+    .variants-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.25rem;
+    }
+    @media (max-width: 600px) {
+      .variants-grid { grid-template-columns: 1fr; }
+    }
+
+    .variant-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2.5rem 1.5rem;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.25rem;
+    }
+    .variant-num {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+    .variant-name {
+      font-family: var(--font-heading);
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .variant-desc {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* ── DEMO BUTTONS ──
+       Each has position:relative so DOM particles
+       can be positioned absolutely to it. */
+    .burst-btn {
+      position: relative;
+      overflow: visible;        /* Particles fly OUTSIDE the button */
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0.75rem 1.75rem;
+      border: none;
+      border-radius: 8px;
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 0.9375rem;
+      cursor: pointer;
+      transition: transform 0.1s, opacity 0.2s;
+      min-width: 160px;
+      justify-content: center;
+    }
+    .burst-btn:active {
+      transform: scale(0.95);
+    }
+
+    /* Variant colors */
+    .btn-confetti  { background: var(--accent); color: #0D1117; }
+    .btn-sparkle   { background: #6366F1; color: #fff; }
+    .btn-emoji     { background: #F59E0B; color: #0D1117; }
+    .btn-ripple    { background: transparent; color: var(--accent); border: 2px solid var(--accent); }
+
+
+    /* ══════════════════════════════════════
+       PARTICLE ANIMATIONS
+       Each variant has its own @keyframes.
+    ══════════════════════════════════════ */
+
+    /* Variant 1: Confetti paper squares */
+    @keyframes confetti-fly {
+      0%   { transform: translate(0,0) rotate(0deg) scale(1);   opacity: 1; }
+      100% { transform: translate(var(--dx), var(--dy)) rotate(var(--rot)) scale(0.3); opacity: 0; }
+    }
+    .particle-confetti {
+      position: absolute;
+      /* centered at button middle — offset by click coords in JS */
+      width:  var(--size, 8px);
+      height: calc(var(--size, 8px) * 0.6);
+      background: var(--color);
+      border-radius: 2px;
+      pointer-events: none;
+      z-index: 1000;
+      animation: confetti-fly var(--dur, 700ms) cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    }
+
+    /* Variant 2: Sparkle stars */
+    @keyframes sparkle-fly {
+      0%   { transform: translate(0,0) scale(1) rotate(0deg); opacity: 1; }
+      60%  { opacity: 1; }
+      100% { transform: translate(var(--dx), var(--dy)) scale(0) rotate(var(--rot)); opacity: 0; }
+    }
+    .particle-sparkle {
+      position: absolute;
+      width:  var(--size, 10px);
+      height: var(--size, 10px);
+      pointer-events: none;
+      z-index: 1000;
+      color: var(--color);
+      font-size: var(--size, 10px);
+      line-height: 1;
+      animation: sparkle-fly var(--dur, 600ms) ease-out forwards;
+    }
+
+    /* Variant 3: Emoji shower */
+    @keyframes emoji-fall {
+      0%   { transform: translate(var(--dx-start), -20px) rotate(0deg); opacity: 1; }
+      100% { transform: translate(var(--dx-end), var(--dy)) rotate(var(--rot)); opacity: 0; }
+    }
+    .particle-emoji {
+      position: fixed;       /* Fixed so emojis fall past page boundaries */
+      font-size: var(--size, 18px);
+      pointer-events: none;
+      z-index: 10000;
+      animation: emoji-fall var(--dur, 1000ms) cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    }
+
+    /* Variant 4: Ripple rings — pure CSS, spawned via JS clones */
+    @keyframes ripple-expand {
+      0%   { transform: translate(-50%, -50%) scale(0); opacity: 0.8; }
+      100% { transform: translate(-50%, -50%) scale(4); opacity: 0; }
+    }
+    .particle-ripple {
+      position: absolute;
+      width: 60px;
+      height: 60px;
+      border: 2px solid var(--accent);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 1000;
+      left: var(--cx, 50%);
+      top:  var(--cy, 50%);
+      transform: translate(-50%, -50%) scale(0);
+      animation: ripple-expand var(--dur, 800ms) ease-out forwards;
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="page">
+
+    <header class="page-header">
+      <div class="eyebrow">Confetti Burst</div>
+      <h1 class="page-title">4 particle explosion styles</h1>
+      <p class="page-sub">Click each button to trigger its burst. Particles are absolute-positioned DOM spans — auto-removed on animationend. No canvas required.</p>
+    </header>
+
+    <div class="variants-grid">
+
+      <!-- VARIANT 1: Confetti -->
+      <div class="variant-card">
+        <span class="variant-num">Variant 01</span>
+        <span class="variant-name">Confetti Burst</span>
+        <button class="burst-btn btn-confetti" id="btn-confetti">
+          🎉 Celebrate
+        </button>
+        <p class="variant-desc">~40 colored paper rectangles spray outward with gravity and rotation.</p>
+      </div>
+
+      <!-- VARIANT 2: Sparkle -->
+      <div class="variant-card">
+        <span class="variant-num">Variant 02</span>
+        <span class="variant-name">Sparkle Burst</span>
+        <button class="burst-btn btn-sparkle" id="btn-sparkle">
+          ✦ Like
+        </button>
+        <p class="variant-desc">Star-shape characters radiate outward in accent + white, fading as they travel.</p>
+      </div>
+
+      <!-- VARIANT 3: Emoji -->
+      <div class="variant-card">
+        <span class="variant-num">Variant 03</span>
+        <span class="variant-name">Emoji Shower</span>
+        <button class="burst-btn btn-emoji" id="btn-emoji">
+          ✨ Success!
+        </button>
+        <p class="variant-desc">Relevant emojis rain down from the button click point with drift and rotation.</p>
+      </div>
+
+      <!-- VARIANT 4: Ripple -->
+      <div class="variant-card">
+        <span class="variant-num">Variant 04</span>
+        <span class="variant-name">Ripple Rings</span>
+        <button class="burst-btn btn-ripple" id="btn-ripple">
+          ◎ Send
+        </button>
+        <p class="variant-desc">Concentric expanding rings emit from click point. Pure CSS keyframes, no random math.</p>
+      </div>
+
+    </div><!-- /variants-grid -->
+  </div><!-- /page -->
+
+
+  <script>
+  /* ─────────────────────────────────────────────────
+     CUSTOMIZE: particle counts and colors
+  ───────────────────────────────────────────────── */
+  const CONFETTI_COUNT  = 40;
+  const SPARKLE_COUNT   = 24;
+  const EMOJI_COUNT     = 18;
+  const RIPPLE_COUNT    = 3;   // Number of concentric ripple rings
+
+  // ── Confetti colors ──
+  const CONFETTI_COLORS = ['#10B981','#34D399','#6EE7B7','#F59E0B','#FBBF24','#60A5FA','#A78BFA','#F472B6','#FCA5A5','#fff'];
+
+  // ── Sparkle chars / colors ──
+  const SPARKLE_CHARS   = ['✦','✧','★','◆','◇','✸','✺','⬡'];
+  const SPARKLE_COLORS  = ['#10B981','#ffffff','#A78BFA','#60A5FA','#FBBF24'];
+
+  // ── Emoji list ──
+  const EMOJIS          = ['🎉','🎊','✨','⭐','🌟','💫','🎈','🏆'];
+
+
+  /* ─────────────────────────────────────────────────
+     Helpers
+  ───────────────────────────────────────────────── */
+  function rand(min, max) { return Math.random() * (max - min) + min; }
+  function pick(arr)       { return arr[Math.floor(Math.random() * arr.length)]; }
+
+  /* Returns the click position relative to the button */
+  function clickPos(btn, e) {
+    const r = btn.getBoundingClientRect();
+    return {
+      cx: e.clientX - r.left,
+      cy: e.clientY - r.top
+    };
+  }
+
+  /* Auto-remove a particle when its animation ends */
+  function autoRemove(el) {
+    el.addEventListener('animationend', function() { el.remove(); }, { once: true });
+  }
+
+
+  /* ─────────────────────────────────────────────────
+     VARIANT 1: Confetti paper squares
+  ───────────────────────────────────────────────── */
+  document.getElementById('btn-confetti').addEventListener('click', function(e) {
+    const btn = this;
+    const { cx, cy } = clickPos(btn, e);
+
+    for (let i = 0; i < CONFETTI_COUNT; i++) {
+      const p   = document.createElement('span');
+      p.className = 'particle-confetti';
+
+      // Random direction vector
+      const angle = rand(0, Math.PI * 2);
+      const dist  = rand(60, 180);
+      const dx    = (Math.cos(angle) * dist).toFixed(1) + 'px';
+      const dy    = (Math.sin(angle) * dist + rand(30, 80)).toFixed(1) + 'px'; // extra gravity down
+
+      p.style.setProperty('--dx',    dx);
+      p.style.setProperty('--dy',    dy);
+      p.style.setProperty('--rot',   rand(-360, 360).toFixed(0) + 'deg');
+      p.style.setProperty('--color', pick(CONFETTI_COLORS));
+      p.style.setProperty('--size',  rand(6, 12).toFixed(0) + 'px');
+      p.style.setProperty('--dur',   rand(500, 900).toFixed(0) + 'ms');
+      // Position at click point
+      p.style.left = cx + 'px';
+      p.style.top  = cy + 'px';
+
+      btn.appendChild(p);
+      autoRemove(p);
+    }
+  });
+
+
+  /* ─────────────────────────────────────────────────
+     VARIANT 2: Sparkle stars
+  ───────────────────────────────────────────────── */
+  document.getElementById('btn-sparkle').addEventListener('click', function(e) {
+    const btn = this;
+    const { cx, cy } = clickPos(btn, e);
+
+    for (let i = 0; i < SPARKLE_COUNT; i++) {
+      const p     = document.createElement('span');
+      p.className = 'particle-sparkle';
+      p.textContent = pick(SPARKLE_CHARS);
+
+      const angle = rand(0, Math.PI * 2);
+      const dist  = rand(40, 130);
+
+      p.style.setProperty('--dx',    (Math.cos(angle) * dist).toFixed(1) + 'px');
+      p.style.setProperty('--dy',    (Math.sin(angle) * dist).toFixed(1) + 'px');
+      p.style.setProperty('--rot',   rand(-180, 180).toFixed(0) + 'deg');
+      p.style.setProperty('--color', pick(SPARKLE_COLORS));
+      p.style.setProperty('--size',  rand(8, 18).toFixed(0) + 'px');
+      p.style.setProperty('--dur',   rand(400, 800).toFixed(0) + 'ms');
+      p.style.color = pick(SPARKLE_COLORS);
+      p.style.left = cx + 'px';
+      p.style.top  = cy + 'px';
+
+      btn.appendChild(p);
+      autoRemove(p);
+    }
+  });
+
+
+  /* ─────────────────────────────────────────────────
+     VARIANT 3: Emoji shower (position: fixed)
+  ───────────────────────────────────────────────── */
+  document.getElementById('btn-emoji').addEventListener('click', function(e) {
+    const btn = this;
+    const r   = btn.getBoundingClientRect();
+    const originX = r.left + r.width / 2;
+    const originY = r.top;
+
+    for (let i = 0; i < EMOJI_COUNT; i++) {
+      const p     = document.createElement('span');
+      p.className = 'particle-emoji';
+      p.textContent = pick(EMOJIS);
+
+      const dxStart = rand(-r.width / 2, r.width / 2).toFixed(0) + 'px';
+      const dxEnd   = rand(-120, 120).toFixed(0) + 'px';
+      const dy      = rand(100, 280).toFixed(0) + 'px';
+
+      p.style.setProperty('--dx-start', dxStart);
+      p.style.setProperty('--dx-end',   dxEnd);
+      p.style.setProperty('--dy',       dy);
+      p.style.setProperty('--rot',      rand(-60, 60).toFixed(0) + 'deg');
+      p.style.setProperty('--size',     rand(14, 26).toFixed(0) + 'px');
+      p.style.setProperty('--dur',      rand(700, 1200).toFixed(0) + 'ms');
+      p.style.left = (originX + rand(-r.width/2, r.width/2)) + 'px';
+      p.style.top  = originY + 'px';
+
+      document.body.appendChild(p);
+      autoRemove(p);
+    }
+  });
+
+
+  /* ─────────────────────────────────────────────────
+     VARIANT 4: Ripple rings
+  ───────────────────────────────────────────────── */
+  document.getElementById('btn-ripple').addEventListener('click', function(e) {
+    const btn = this;
+    const { cx, cy } = clickPos(btn, e);
+
+    for (let i = 0; i < RIPPLE_COUNT; i++) {
+      const p = document.createElement('span');
+      p.className = 'particle-ripple';
+      p.style.setProperty('--cx', cx + 'px');
+      p.style.setProperty('--cy', cy + 'px');
+      // Stagger rings: each one starts a bit later
+      p.style.setProperty('--dur', (600 + i * 200) + 'ms');
+      p.style.animationDelay = (i * 150) + 'ms';
+      btn.appendChild(p);
+      autoRemove(p);
+    }
+  });
+  </script>
+
+</body>
+</html>

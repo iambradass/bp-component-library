@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Comparison Table — Component Library</title>
+
+  <!--
+  /* COMPONENT: Comparison Table | COPY: style + html + script */
+  Feature comparison matrix — 3 service tiers with row groups, sticky first column,
+  highlighted "Pro" column, and mobile horizontal scroll with fixed feature column.
+  ~18 rows across 3 groups.
+  -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+
+    /* ============================================================
+       CUSTOMIZE — adjust these to match your project
+       ============================================================ */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --glow:           rgba(16,185,129,0.15);
+      --glow-strong:    rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --border-accent:  rgba(16,185,129,0.3);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+    }
+    /* ============================================================ */
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Page wrapper ── */
+    .ct-page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 5rem 1.5rem;
+    }
+
+    /* ── Header ── */
+    .ct-header {
+      text-align: center;
+      margin-bottom: 3.5rem;
+    }
+    .ct-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 5px 14px;
+      background: rgba(16,185,129,0.08);
+      border: 1px solid var(--border-accent);
+      border-radius: 100px;
+      margin-bottom: 1.25rem;
+    }
+    .ct-title {
+      font-family: var(--font-heading);
+      font-size: clamp(1.75rem, 4vw, 2.75rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.75rem;
+    }
+    .ct-subtitle {
+      color: var(--text-secondary);
+      font-size: 0.9375rem;
+      line-height: 1.6;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+
+    /* ── Scroll wrapper — enables horizontal scroll on mobile ──
+       The first column (feature names) stays sticky even during horizontal scroll. */
+    .ct-scroll-wrap {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+
+    /* Hint for mobile users that the table scrolls */
+    .ct-scroll-hint {
+      display: none;
+      text-align: right;
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.5rem;
+    }
+    @media (max-width: 700px) {
+      .ct-scroll-hint { display: block; }
+    }
+
+
+    /* ── The table ── */
+    table {
+      width: 100%;
+      min-width: 640px; /* prevents columns from getting too narrow before scroll kicks in */
+      border-collapse: collapse;
+    }
+
+
+    /* ── Column widths ── */
+    col.ct-col-feature { width: 38%; }
+    col.ct-col-tier    { width: 20.66%; }
+
+
+    /* ── Header row ── */
+    thead th {
+      padding: 1.25rem 1.5rem;
+      text-align: center;
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 1rem;
+      vertical-align: bottom;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* Feature column header — left-aligned */
+    thead th:first-child {
+      text-align: left;
+      font-size: 0.75rem;
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      font-weight: 400;
+      /* Sticky — stays visible during horizontal scroll */
+      position: sticky;
+      left: 0;
+      z-index: 2;
+      background: var(--surface);
+    }
+
+    /* Pro column header — highlighted */
+    .ct-th-pro {
+      background: rgba(16,185,129,0.05) !important;
+      border-left: 1px solid var(--border-accent);
+      border-right: 1px solid var(--border-accent);
+    }
+
+    /* Plan name + price */
+    .ct-th-name {
+      font-size: 1.0625rem;
+      color: var(--text);
+      margin-bottom: 0.25rem;
+    }
+    .ct-th-price {
+      font-family: var(--font-heading);
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.125rem;
+    }
+    .ct-th-per {
+      font-family: var(--font-body);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+    .ct-th-badge {
+      display: inline-block;
+      margin-top: 0.5rem;
+      padding: 3px 10px;
+      background: var(--accent);
+      color: #0D1117;
+      font-family: var(--font-mono);
+      font-size: 0.5625rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      border-radius: 100px;
+    }
+
+
+    /* ── Table body ── */
+    tbody td {
+      padding: 0.875rem 1.5rem;
+      text-align: center;
+      font-size: 0.875rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+      color: var(--text-secondary);
+      transition: background 0.15s;
+    }
+
+    /* Feature name column — left-aligned, sticky */
+    tbody td:first-child {
+      text-align: left;
+      color: var(--text);
+      font-size: 0.875rem;
+      position: sticky;
+      left: 0;
+      z-index: 1;
+      background: var(--bg);
+      transition: background 0.15s;
+    }
+
+    /* Row hover highlight */
+    tbody tr:hover td {
+      background: rgba(148,163,184,0.04);
+    }
+    tbody tr:hover td:first-child {
+      background: rgba(148,163,184,0.04);
+    }
+
+    /* Pro column cells — tinted background */
+    .ct-pro-cell {
+      background: rgba(16,185,129,0.03);
+      border-left: 1px solid var(--border-accent);
+      border-right: 1px solid var(--border-accent);
+    }
+    tbody tr:hover .ct-pro-cell {
+      background: rgba(16,185,129,0.07);
+    }
+
+
+    /* ── Check / dash icons ── */
+    .ct-yes {
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 1rem;
+    }
+    .ct-no {
+      color: var(--text-muted);
+      font-size: 1.125rem;
+      line-height: 1;
+    }
+    /* Plain text value (e.g., "5 pages", "Unlimited") */
+    .ct-val {
+      color: var(--text);
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 0.8125rem;
+    }
+
+
+    /* ── Group header rows ── */
+    .ct-group-row td {
+      background: var(--surface) !important;
+      padding: 0.625rem 1.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      text-align: left !important;
+    }
+    .ct-group-row td.ct-pro-cell {
+      background: rgba(16,185,129,0.04) !important;
+    }
+
+
+    /* ── CTA row at the bottom ── */
+    .ct-cta-row td {
+      padding: 1.25rem 1.5rem;
+      border-bottom: none;
+      background: var(--surface);
+    }
+    .ct-cta-row td:first-child {
+      background: var(--surface);
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      font-style: italic;
+    }
+    .ct-cta-row td.ct-pro-cell {
+      background: rgba(16,185,129,0.05);
+    }
+
+    .ct-btn {
+      display: inline-block;
+      padding: 0.625rem 1.25rem;
+      border-radius: 8px;
+      font-family: var(--font-heading);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      min-height: 44px;
+      transition: opacity 0.2s, transform 0.15s;
+      text-decoration: none;
+    }
+    .ct-btn:hover { opacity: 0.85; transform: translateY(-1px); }
+    .ct-btn--outline {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+    }
+    .ct-btn--outline:hover { border-color: var(--border-accent); color: var(--text); }
+    .ct-btn--primary {
+      background: var(--accent);
+      color: #0D1117;
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="ct-page">
+
+    <!-- Header -->
+    <div class="ct-header">
+      <div class="ct-eyebrow">Compare Plans</div>
+      <h2 class="ct-title">Find the right fit for your business</h2>
+      <p class="ct-subtitle">All plans include hosting, SSL, and ongoing support. No hidden fees. Cancel anytime.</p>
+    </div>
+
+    <!-- Mobile scroll hint -->
+    <p class="ct-scroll-hint">Swipe to compare &rarr;</p>
+
+    <!-- Table scroll wrapper -->
+    <div class="ct-scroll-wrap">
+      <table aria-label="Service tier comparison">
+        <colgroup>
+          <col class="ct-col-feature">
+          <col class="ct-col-tier">
+          <col class="ct-col-tier">
+          <col class="ct-col-tier">
+        </colgroup>
+
+        <!-- Header row -->
+        <thead>
+          <tr>
+            <th scope="col" aria-label="Feature"></th>
+
+            <th scope="col">
+              <div class="ct-th-name">Starter</div>
+              <div class="ct-th-price">$997 <span class="ct-th-per">one-time</span></div>
+            </th>
+
+            <th scope="col" class="ct-th-pro">
+              <div class="ct-th-name">Pro</div>
+              <div class="ct-th-price">$2,497 <span class="ct-th-per">one-time</span></div>
+              <span class="ct-th-badge">Most Popular</span>
+            </th>
+
+            <th scope="col">
+              <div class="ct-th-name">Agency</div>
+              <div class="ct-th-price">$4,997 <span class="ct-th-per">one-time</span></div>
+            </th>
+          </tr>
+        </thead>
+
+        <tbody>
+
+          <!-- Group: Core Features -->
+          <tr class="ct-group-row">
+            <td colspan="4">Core Features</td>
+          </tr>
+          <tr>
+            <td>Custom designed pages</td>
+            <td><span class="ct-val">5 pages</span></td>
+            <td class="ct-pro-cell"><span class="ct-val">10 pages</span></td>
+            <td><span class="ct-val">Unlimited</span></td>
+          </tr>
+          <tr>
+            <td>Mobile-first responsive design</td>
+            <td><span class="ct-yes">✓</span></td>
+            <td class="ct-pro-cell"><span class="ct-yes">✓</span></td>
+            <td><span class="ct-yes">✓</span></td>
+          </tr>
+          <tr>
+            <td>Lead capture forms</td>
+            <td><span class="ct-val">1 form</span></td>
+            <td class="ct-pro-cell"><span class="ct-val">3 forms</span></td>
+            <td><span class="ct-val">Unlimited</span></td>
+          </tr>
+          <tr>
+            <td>CRM / GHL integration</td>
+            <td><span class="ct-no">—</span></td>
+            <td class="ct-pro-cell"><span class="ct-yes">✓</span></td>
+            <td><span class="ct-yes">✓</span></td>
+          </tr>
+          <tr>
+            <td>Hosting &amp; SSL included</td>
+            <td><span class="ct-yes">✓</span></td>
+            <td class="ct-pro-cell"><span class="ct-yes">✓</span></td>
+            <td><span class="ct-yes">✓</span></td>
+          </tr>
+          <tr>
+            <td>Page load speed optimization</td>
+            <td><span class="ct-yes">✓</span></td>
+            <td class="ct-pro-cell"><span class="ct-yes">✓</span></td>
+            <td><span class="ct-yes">✓</span></td>
+          </tr>
+
+          <!-- Group: SEO & Marketing -->
+          <tr class="ct-group-row">
+            <td colspan="4">SEO &amp; Marketing</td>
+          </tr>
+          <tr>
+            <td>On-page SEO setup</td>
+            <td><span class="ct-yes">✓</span></td>
+            <td class="ct-pro-cell"><span class="ct-yes">✓</span></td>
+            <td><span class="ct-yes">✓</span></td>
+          </tr>
+          <tr>
+            <td>Google Business optimization</td>
+            <td><span class="ct-no">—</span></td>
+            <td class="ct-pro-cell"><span class="ct-yes">✓</span></td>
+            <td><span class="ct-yes">✓</span></td>
+          </tr>
+          <tr>
+            <td>Review funnel setup</td>
+            <td><span class="ct-no">—</span></td>
+            <td class="ct-pro-cell"><span class="ct-yes">✓</span></td>
+            <td><span class="ct-yes">✓</span></td>
+          </tr>
+          <tr>
+            <td>Email follow-up automation</td>
+            <td><span class="ct-no">—</span></td>
+            <td class="ct-pro-cell"><span class="ct-val">3 sequences</span></td>
+            <td><span class="ct-val">Unlimited</span></td>
+          </tr>
+          <tr>
+            <td>Analytics &amp; conversion tracking</td>
+            <td>Basic</td>
+            <td class="ct-pro-cell"><span class="ct-val">Advanced</span></td>
+            <td><span class="ct-val">Advanced + reports</span></td>
+          </tr>
+          <tr>
+            <td>A/B testing</td>
+            <td><span class="ct-no">—</span></td>
+            <td class="ct-pro-cell"><span class="ct-no">—</span></td>
+            <td><span class="ct-yes">✓</span></td>
+          </tr>
+
+          <!-- Group: Support -->
+          <tr class="ct-group-row">
+            <td colspan="4">Support &amp; Maintenance</td>
+          </tr>
+          <tr>
+            <td>Revisions included</td>
+            <td><span class="ct-val">2 rounds</span></td>
+            <td class="ct-pro-cell"><span class="ct-val">4 rounds</span></td>
+            <td><span class="ct-val">Unlimited</span></td>
+          </tr>
+          <tr>
+            <td>Post-launch support</td>
+            <td><span class="ct-val">30 days</span></td>
+            <td class="ct-pro-cell"><span class="ct-val">90 days</span></td>
+            <td><span class="ct-val">1 year</span></td>
+          </tr>
+          <tr>
+            <td>Dedicated account manager</td>
+            <td><span class="ct-no">—</span></td>
+            <td class="ct-pro-cell"><span class="ct-no">—</span></td>
+            <td><span class="ct-yes">✓</span></td>
+          </tr>
+          <tr>
+            <td>Priority response time</td>
+            <td>72 hrs</td>
+            <td class="ct-pro-cell"><span class="ct-val">24 hrs</span></td>
+            <td><span class="ct-val">Same day</span></td>
+          </tr>
+          <tr>
+            <td>Monthly performance report</td>
+            <td><span class="ct-no">—</span></td>
+            <td class="ct-pro-cell"><span class="ct-yes">✓</span></td>
+            <td><span class="ct-yes">✓</span></td>
+          </tr>
+
+          <!-- CTA row -->
+          <tr class="ct-cta-row">
+            <td>Questions? Let's talk.</td>
+            <td><button class="ct-btn ct-btn--outline">Get Started</button></td>
+            <td class="ct-pro-cell"><button class="ct-btn ct-btn--primary">Get Started</button></td>
+            <td><button class="ct-btn ct-btn--outline">Get Started</button></td>
+          </tr>
+
+        </tbody>
+      </table>
+    </div><!-- /ct-scroll-wrap -->
+
+  </div><!-- /ct-page -->
+
+</body>
+</html>

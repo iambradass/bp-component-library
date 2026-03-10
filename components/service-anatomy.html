@@ -1,0 +1,398 @@
+<!-- COMPONENT: Service Anatomy | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Service Anatomy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── Customize these tokens ── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+
+      /* Layer colors — bottom to top */
+      --layer-1: #1a3a5c;   /* Foundation */
+      --layer-2: #1a4a3a;   /* Core */
+      --layer-3: #3d2b5a;   /* Growth */
+      --layer-4: #4a3010;   /* Results */
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: var(--font-body); min-height: 100vh;
+      padding: 3rem 1rem 5rem;
+    }
+
+    .sa-wrap { max-width: 960px; margin: 0 auto; }
+
+    /* ── Header ── */
+    .sa-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: var(--font-heading); font-size: 0.75rem; font-weight: 600;
+      color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em;
+      padding: 4px 14px; background: var(--accent-dim);
+      border: 1px solid var(--accent-border); border-radius: 100px;
+      margin-bottom: 1rem;
+    }
+    .sa-title {
+      font-family: var(--font-heading); font-size: clamp(1.75rem, 4vw, 2.5rem);
+      font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.5rem;
+    }
+    .sa-title span { color: var(--accent); }
+    .sa-subtitle {
+      color: var(--text-secondary); font-size: 1rem; line-height: 1.6;
+      max-width: 540px; margin-bottom: 2.5rem;
+    }
+
+    /* ── Two-column layout: diagram (left) + detail panel (right) ── */
+    .sa-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      align-items: start;
+    }
+    @media (max-width: 700px) {
+      .sa-layout { grid-template-columns: 1fr; }
+    }
+
+    /* ── Layered diagram ── */
+    .sa-diagram { display: flex; flex-direction: column; gap: 6px; }
+
+    .sa-layer {
+      border-radius: 10px; padding: 1rem 1.25rem;
+      cursor: pointer; border: 2px solid transparent;
+      transition: all 0.22s ease; position: relative;
+      overflow: hidden;
+    }
+    /* Each layer has its own background color set inline */
+    .sa-layer::before {
+      content: ''; position: absolute; inset: 0;
+      background: rgba(0,0,0,0.35); pointer-events: none;
+      transition: opacity 0.22s;
+    }
+    .sa-layer:hover::before, .sa-layer.active::before { opacity: 0; }
+    .sa-layer.active { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+
+    .sa-layer-header {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 0.5rem;
+      position: relative; z-index: 1;
+    }
+    .sa-layer-num {
+      width: 24px; height: 24px; border-radius: 50%; background: rgba(255,255,255,0.15);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-heading); font-size: 0.75rem; font-weight: 700;
+      flex-shrink: 0;
+    }
+    .sa-layer-name {
+      font-family: var(--font-heading); font-size: 0.9375rem; font-weight: 700;
+    }
+    .sa-layer-badge {
+      margin-left: auto; font-family: var(--font-heading); font-size: 0.6875rem;
+      font-weight: 600; padding: 2px 9px; border-radius: 100px;
+      background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.75);
+      white-space: nowrap;
+    }
+    .sa-layer-active-badge {
+      background: var(--accent); color: var(--bg); margin-left: auto;
+      font-family: var(--font-heading); font-size: 0.6875rem; font-weight: 700;
+      padding: 2px 9px; border-radius: 100px; white-space: nowrap;
+    }
+
+    /* Mini item chips inside each layer */
+    .sa-layer-items {
+      display: flex; flex-wrap: wrap; gap: 6px; position: relative; z-index: 1;
+    }
+    .sa-layer-chip {
+      font-size: 0.75rem; color: rgba(255,255,255,0.7);
+      background: rgba(255,255,255,0.1); border-radius: 4px;
+      padding: 3px 8px;
+    }
+
+    /* ── Detail panel ── */
+    .sa-detail {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.5rem;
+      position: sticky; top: 1.5rem;
+    }
+
+    .sa-detail-empty {
+      text-align: center; padding: 2.5rem 1rem; color: var(--text-muted);
+    }
+    .sa-detail-empty-icon { margin: 0 auto 1rem; opacity: 0.4; }
+
+    .sa-detail-label {
+      font-family: var(--font-heading); font-size: 0.6875rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent);
+      margin-bottom: 0.5rem;
+    }
+    .sa-detail-title {
+      font-family: var(--font-heading); font-size: 1.25rem; font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+    .sa-detail-desc {
+      font-size: 0.875rem; color: var(--text-secondary); line-height: 1.6;
+      margin-bottom: 1.25rem;
+    }
+
+    .sa-detail-section { margin-bottom: 1.25rem; }
+    .sa-detail-section-title {
+      font-family: var(--font-heading); font-size: 0.75rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted);
+      margin-bottom: 0.6rem;
+    }
+    .sa-deliverable-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+    .sa-deliverable-item {
+      display: flex; align-items: flex-start; gap: 8px;
+      font-size: 0.875rem; color: var(--text-secondary); line-height: 1.4;
+    }
+    .sa-deliverable-item::before {
+      content: ''; width: 6px; height: 6px; border-radius: 50%;
+      background: var(--accent); margin-top: 6px; flex-shrink: 0;
+    }
+
+    .sa-detail-meta {
+      display: flex; gap: 1rem; flex-wrap: wrap; padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+    .sa-meta-item {
+      display: flex; flex-direction: column; gap: 2px;
+    }
+    .sa-meta-key {
+      font-size: 0.6875rem; color: var(--text-muted); text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .sa-meta-val {
+      font-family: var(--font-heading); font-size: 0.875rem; font-weight: 600;
+      color: var(--text);
+    }
+  </style>
+</head>
+<body>
+
+<div class="sa-wrap">
+
+  <div class="sa-eyebrow">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="m1 10 22 0"/></svg>
+    Service Breakdown
+  </div>
+  <h2 class="sa-title">What's Inside <span>Complete Web Presence</span></h2>
+  <p class="sa-subtitle">Four integrated layers — each building on the last. Click any layer to see exactly what's included and when it's delivered.</p>
+
+  <div class="sa-layout">
+
+    <!-- Layered diagram -->
+    <div class="sa-diagram" id="saDiagram" role="list"></div>
+
+    <!-- Detail panel -->
+    <div class="sa-detail" id="saDetail">
+      <div class="sa-detail-empty" id="saDetailEmpty">
+        <div class="sa-detail-empty-icon">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="m1 10 22 0"/></svg>
+        </div>
+        <p>Select a layer to see what's included</p>
+      </div>
+      <div id="saDetailContent" style="display:none;"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  /* ── Layer data — bottom = index 0 ── */
+  var layers = [
+    {
+      name: 'Foundation',
+      num: '01',
+      color: '#1a3a5c',
+      timeline: 'Week 1',
+      description: 'The infrastructure everything else sits on. We handle all setup so you start on solid ground with a professional domain, secure hosting, and the technical scaffolding that keeps your site fast and trusted.',
+      items: ['Domain Registration', 'Managed Hosting', 'SSL Certificate', 'DNS Configuration'],
+      deliverables: [
+        'Domain name secured (.com)',
+        'Hosting account configured on managed server',
+        'SSL certificate installed — your site is HTTPS from day one',
+        'DNS records pointed and propagated',
+        'Branded email address set up (you@yourdomain.com)',
+      ],
+      owner: 'We handle this',
+      youProvide: 'Domain preference',
+    },
+    {
+      name: 'Core',
+      num: '02',
+      color: '#1a4a3a',
+      timeline: 'Week 1–2',
+      description: 'Your actual website — custom-designed, mobile-first, and built to convert. Every page is structured to move a visitor toward a phone call or form submission.',
+      items: ['Custom Design', '5 Core Pages', 'Mobile-First', 'CRM Forms'],
+      deliverables: [
+        '5 custom pages: Home, About, Services, Testimonials, Contact',
+        'Mobile-first responsive design at every screen size',
+        'Contact forms connected to your CRM pipeline',
+        'Click-to-call phone number on every page',
+        'Google Map embed for local trust signals',
+      ],
+      owner: 'We build, you approve',
+      youProvide: 'Brand questionnaire + your headshot',
+    },
+    {
+      name: 'Growth',
+      num: '03',
+      color: '#3d2b5a',
+      timeline: 'Week 2–3',
+      description: 'The visibility layer. Everything needed for Google to find you, index you, and rank you for title-related searches in your city. Most competitors skip this.',
+      items: ['SEO Setup', 'Google Business', 'Local Keywords', 'Schema Markup'],
+      deliverables: [
+        'On-page SEO: title tags, meta descriptions, H1–H3 structure',
+        'Google Business Profile claimed and optimized',
+        'Local keyword strategy for your city and service area',
+        'Schema markup (LocalBusiness) added to homepage',
+        'Google Search Console connected and site submitted',
+      ],
+      owner: 'We handle this',
+      youProvide: 'Google account access (5 min)',
+    },
+    {
+      name: 'Results',
+      num: '04',
+      color: '#4a3010',
+      timeline: 'Ongoing',
+      description: 'Measurement and iteration. You see what\'s working, we act on it. Monthly reporting keeps both of us accountable to real outcomes — not just a pretty website.',
+      items: ['Analytics', 'Monthly Reports', 'A/B Testing', 'Review Funnel'],
+      deliverables: [
+        'Google Analytics 4 configured with goal tracking',
+        'Monthly email report: traffic, leads, ranking movements',
+        'Review funnel to grow your Google star rating',
+        'Quarterly check-in call to review and adjust',
+        'A/B testing on CTAs when traffic warrants it',
+      ],
+      owner: 'We deliver, you review',
+      youProvide: '15 min/month to review report',
+    },
+  ];
+
+  var activeIndex = null;
+  var diagram = document.getElementById('saDiagram');
+  var detailEmpty = document.getElementById('saDetailEmpty');
+  var detailContent = document.getElementById('saDetailContent');
+
+  /* ── Build each layer row ── */
+  layers.forEach(function(layer, i) {
+    var el = document.createElement('div');
+    el.className = 'sa-layer';
+    el.style.background = layer.color;
+    el.setAttribute('role', 'button');
+    el.setAttribute('tabindex', '0');
+    el.setAttribute('aria-label', 'Layer ' + layer.num + ': ' + layer.name);
+
+    el.innerHTML =
+      '<div class="sa-layer-header">' +
+        '<div class="sa-layer-num">' + layer.num + '</div>' +
+        '<div class="sa-layer-name">' + layer.name + '</div>' +
+        '<span class="sa-layer-badge" data-badge>' + layer.timeline + '</span>' +
+      '</div>' +
+      '<div class="sa-layer-items">' +
+        layer.items.map(function(item) {
+          return '<span class="sa-layer-chip">' + item + '</span>';
+        }).join('') +
+      '</div>';
+
+    el.addEventListener('click', function() { activate(i, el); });
+    el.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(i, el); }
+    });
+
+    diagram.appendChild(el);
+  });
+
+  /* ── Activate a layer — update panel ── */
+  function activate(i, el) {
+    /* toggle off if already active */
+    if (activeIndex === i) {
+      activeIndex = null;
+      el.classList.remove('active');
+      /* restore badge */
+      el.querySelector('[data-badge]').className = 'sa-layer-badge';
+      el.querySelector('[data-badge]').textContent = layers[i].timeline;
+      detailEmpty.style.display = '';
+      detailContent.style.display = 'none';
+      return;
+    }
+
+    /* deactivate previous */
+    document.querySelectorAll('.sa-layer').forEach(function(l, idx) {
+      l.classList.remove('active');
+      var badge = l.querySelector('[data-badge]');
+      if (badge) {
+        badge.className = 'sa-layer-badge';
+        badge.textContent = layers[idx].timeline;
+      }
+    });
+
+    activeIndex = i;
+    el.classList.add('active');
+    var badge = el.querySelector('[data-badge]');
+    badge.className = 'sa-layer-active-badge';
+    badge.textContent = 'Viewing';
+
+    var layer = layers[i];
+    detailContent.innerHTML =
+      '<div class="sa-detail-label">Layer ' + layer.num + '</div>' +
+      '<div class="sa-detail-title">' + layer.name + '</div>' +
+      '<div class="sa-detail-desc">' + layer.description + '</div>' +
+
+      '<div class="sa-detail-section">' +
+        '<div class="sa-detail-section-title">Deliverables</div>' +
+        '<ul class="sa-deliverable-list">' +
+          layer.deliverables.map(function(d) {
+            return '<li class="sa-deliverable-item">' + d + '</li>';
+          }).join('') +
+        '</ul>' +
+      '</div>' +
+
+      '<div class="sa-detail-meta">' +
+        '<div class="sa-meta-item">' +
+          '<span class="sa-meta-key">Timeline</span>' +
+          '<span class="sa-meta-val">' + layer.timeline + '</span>' +
+        '</div>' +
+        '<div class="sa-meta-item">' +
+          '<span class="sa-meta-key">Owner</span>' +
+          '<span class="sa-meta-val">' + layer.owner + '</span>' +
+        '</div>' +
+        '<div class="sa-meta-item">' +
+          '<span class="sa-meta-key">You Provide</span>' +
+          '<span class="sa-meta-val">' + layer.youProvide + '</span>' +
+        '</div>' +
+      '</div>';
+
+    detailEmpty.style.display = 'none';
+    detailContent.style.display = 'block';
+  }
+
+  /* Auto-open first layer on load */
+  activate(0, diagram.children[0]);
+
+})();
+</script>
+</body>
+</html>

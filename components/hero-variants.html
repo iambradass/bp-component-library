@@ -1,0 +1,651 @@
+<!-- COMPONENT: 5 Hero Section Layouts | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hero Variants</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ── Customize ── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.35);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font-body); }
+
+    /* Divider between heroes */
+    .hero-divider {
+      border: none;
+      border-top: 1px dashed var(--border);
+      margin: 0;
+    }
+
+    .variant-label {
+      text-align: center;
+      padding: 0.75rem;
+      font-size: 0.7rem;
+      font-family: ui-monospace, monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-muted);
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* Shared button styles */
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: var(--accent); color: #0D1117; border: none; border-radius: 8px;
+      padding: 0.875rem 1.75rem; font-family: var(--font-heading); font-size: 0.9375rem;
+      font-weight: 600; cursor: pointer; transition: opacity 0.2s, transform 0.2s;
+      text-decoration: none;
+    }
+    .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+
+    .btn-ghost {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: transparent; color: var(--text); border: 1px solid var(--border);
+      border-radius: 8px; padding: 0.875rem 1.75rem; font-family: var(--font-heading);
+      font-size: 0.9375rem; font-weight: 600; cursor: pointer; transition: border-color 0.2s, color 0.2s;
+      text-decoration: none;
+    }
+    .btn-ghost:hover { border-color: var(--accent-border); color: var(--accent); }
+
+    /* ─────────────────────────────────────
+       HERO 1: Split
+    ──────────────────────────────────────*/
+    .hero-split {
+      min-height: 85vh;
+      display: flex;
+      align-items: center;
+      padding: 4rem 1.5rem;
+      gap: 3rem;
+      max-width: 1100px;
+      margin: 0 auto;
+      flex-direction: column;
+    }
+
+    @media (min-width: 768px) {
+      .hero-split { flex-direction: row; }
+    }
+
+    .hero-split-text { flex: 1; }
+
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      font-size: 0.75rem; font-family: ui-monospace, monospace;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      color: var(--accent); margin-bottom: 1.25rem;
+    }
+
+    .hero-split-text h1 {
+      font-family: var(--font-heading);
+      font-size: clamp(2rem, 4.5vw, 3.5rem);
+      font-weight: 700; line-height: 1.1; margin-bottom: 1.25rem;
+    }
+
+    .hero-split-text p {
+      color: var(--text-secondary); font-size: 1.0625rem;
+      line-height: 1.7; margin-bottom: 2rem; max-width: 440px;
+    }
+
+    .hero-split-ctas { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+
+    /* Gradient art placeholder */
+    .hero-visual {
+      flex: 1;
+      min-height: 340px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #0f4c35 0%, #1a3a5c 50%, #2d1060 100%);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-visual::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 70% 30%, rgba(16,185,129,0.2), transparent 60%);
+    }
+
+    .hero-visual-badge {
+      background: rgba(17,24,39,0.85);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem 1.5rem;
+      backdrop-filter: blur(10px);
+      text-align: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-visual-badge-num {
+      font-family: var(--font-heading);
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .hero-visual-badge-label { font-size: 0.8125rem; color: var(--text-secondary); }
+
+    /* ─────────────────────────────────────
+       HERO 2: Centered minimal + particles
+    ──────────────────────────────────────*/
+    .hero-centered {
+      min-height: 85vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 4rem 1.5rem;
+      position: relative;
+      overflow: hidden;
+      background: var(--surface);
+    }
+
+    .hero-centered canvas {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+    }
+
+    .hero-centered-inner {
+      position: relative;
+      z-index: 1;
+      max-width: 680px;
+    }
+
+    .hero-centered-inner h1 {
+      font-family: var(--font-heading);
+      font-size: clamp(2.5rem, 6vw, 5rem);
+      font-weight: 700;
+      line-height: 1.05;
+      margin-bottom: 1.25rem;
+    }
+
+    .hero-centered-inner h1 span { color: var(--accent); }
+
+    .hero-centered-inner p {
+      color: var(--text-secondary);
+      font-size: 1.125rem;
+      line-height: 1.7;
+      margin-bottom: 2.5rem;
+    }
+
+    /* ─────────────────────────────────────
+       HERO 3: Video background (simulated)
+    ──────────────────────────────────────*/
+    .hero-video {
+      min-height: 85vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 4rem 1.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Simulated video background — animated gradient + noise */
+    .hero-video-bg {
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(135deg,
+          rgba(15,76,53,0.8) 0%,
+          rgba(13,17,23,0.9) 50%,
+          rgba(45,16,96,0.8) 100%);
+      animation: videoBg 8s ease infinite alternate;
+    }
+
+    @keyframes videoBg {
+      0%   { background-position: 0% 50%; opacity: 0.8; }
+      50%  { background-position: 100% 50%; opacity: 1; }
+      100% { background-position: 0% 50%; opacity: 0.8; }
+    }
+
+    /* Subtle scan-line overlay to simulate video texture */
+    .hero-video-bg::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.04) 2px,
+        rgba(0,0,0,0.04) 4px
+      );
+    }
+
+    .hero-video-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(17,24,39,0.7);
+      border: 1px solid rgba(148,163,184,0.2);
+      border-radius: 100px;
+      padding: 0.375rem 1rem;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      backdrop-filter: blur(12px);
+      margin-bottom: 1.5rem;
+    }
+
+    .hero-video-inner {
+      position: relative;
+      z-index: 1;
+      max-width: 620px;
+    }
+
+    .hero-video-inner h1 {
+      font-family: var(--font-heading);
+      font-size: clamp(2.25rem, 5vw, 4rem);
+      font-weight: 700;
+      line-height: 1.1;
+      margin-bottom: 1.25rem;
+      text-shadow: 0 2px 20px rgba(0,0,0,0.5);
+    }
+
+    .hero-video-inner p {
+      color: rgba(248,250,252,0.8);
+      font-size: 1.0625rem;
+      line-height: 1.7;
+      margin-bottom: 2.5rem;
+    }
+
+    /* ─────────────────────────────────────
+       HERO 4: Dashboard mockup
+    ──────────────────────────────────────*/
+    .hero-dashboard {
+      min-height: 85vh;
+      display: flex;
+      align-items: center;
+      padding: 4rem 1.5rem;
+      gap: 3rem;
+      max-width: 1100px;
+      margin: 0 auto;
+      flex-direction: column;
+    }
+
+    @media (min-width: 768px) {
+      .hero-dashboard { flex-direction: row; }
+    }
+
+    .hero-db-text { flex: 0 0 auto; width: 100%; }
+
+    @media (min-width: 768px) { .hero-db-text { width: 42%; } }
+
+    .hero-db-text h1 {
+      font-family: var(--font-heading);
+      font-size: clamp(1.875rem, 3.5vw, 2.75rem);
+      font-weight: 700;
+      line-height: 1.15;
+      margin-bottom: 1.25rem;
+    }
+
+    .hero-db-text p {
+      color: var(--text-secondary);
+      font-size: 1rem;
+      line-height: 1.7;
+      margin-bottom: 2rem;
+    }
+
+    /* Browser mockup */
+    .browser-mockup {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+
+    .browser-bar {
+      background: var(--elevated);
+      padding: 0.625rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .browser-dots { display: flex; gap: 6px; }
+    .dot-r { width: 10px; height: 10px; border-radius: 50%; background: #EF4444; }
+    .dot-y { width: 10px; height: 10px; border-radius: 50%; background: #F59E0B; }
+    .dot-g { width: 10px; height: 10px; border-radius: 50%; background: #10B981; }
+
+    .browser-url {
+      flex: 1;
+      background: rgba(13,17,23,0.6);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 0.75rem;
+      font-family: ui-monospace, monospace;
+      color: var(--text-muted);
+    }
+
+    .browser-content {
+      padding: 1rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.625rem;
+    }
+
+    .db-widget {
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.875rem;
+    }
+
+    .db-widget-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.375rem; }
+    .db-widget-value { font-family: var(--font-heading); font-size: 1.5rem; font-weight: 700; color: var(--accent); }
+    .db-widget-sub   { font-size: 0.7rem; color: var(--text-muted); margin-top: 0.125rem; }
+
+    /* Mini bar chart */
+    .db-bar-row { display: flex; align-items: flex-end; gap: 4px; height: 36px; margin-top: 0.5rem; }
+    .db-bar { flex: 1; background: var(--accent-dim); border: 1px solid var(--accent-border); border-radius: 3px 3px 0 0; }
+
+    /* ─────────────────────────────────────
+       HERO 5: Typewriter loop
+    ──────────────────────────────────────*/
+    .hero-typewriter {
+      min-height: 85vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 4rem 1.5rem;
+      background: var(--bg);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Subtle dot grid */
+    .hero-typewriter::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(circle, rgba(148,163,184,0.05) 1px, transparent 1px);
+      background-size: 28px 28px;
+      pointer-events: none;
+    }
+
+    .hero-tw-inner {
+      position: relative;
+      z-index: 1;
+      max-width: 680px;
+    }
+
+    .hero-tw-inner h1 {
+      font-family: var(--font-heading);
+      font-size: clamp(2.5rem, 6vw, 4.5rem);
+      font-weight: 700;
+      line-height: 1.1;
+      margin-bottom: 1.25rem;
+    }
+
+    .tw-word {
+      color: var(--accent);
+      display: inline-block;
+      min-width: 4ch;
+    }
+
+    /* Blinking cursor */
+    .tw-cursor {
+      display: inline-block;
+      width: 3px;
+      height: 1em;
+      background: var(--accent);
+      margin-left: 2px;
+      vertical-align: text-bottom;
+      animation: blink 0.75s step-end infinite;
+    }
+
+    @keyframes blink { 50% { opacity: 0; } }
+
+    .hero-tw-inner p {
+      color: var(--text-secondary);
+      font-size: 1.0625rem;
+      line-height: 1.7;
+      margin-bottom: 2.5rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ─── Hero 1: Split ─── -->
+  <div class="variant-label">Hero 1 — Split</div>
+  <section style="background: var(--bg)">
+    <div class="hero-split">
+      <div class="hero-split-text">
+        <div class="hero-eyebrow">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="5"/></svg>
+          Currently available for projects
+        </div>
+        <h1>Design that converts, code that lasts</h1>
+        <p>We build digital products that balance aesthetic clarity with engineering discipline. Every pixel has a purpose. Every line of code has a reason.</p>
+        <div class="hero-split-ctas">
+          <a href="#" class="btn-primary">View our work</a>
+          <a href="#" class="btn-ghost">Start a project</a>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div class="hero-visual-badge">
+          <div class="hero-visual-badge-num">47</div>
+          <div class="hero-visual-badge-label">Projects shipped this year</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="hero-divider">
+
+  <!-- ─── Hero 2: Centered minimal + particles ─── -->
+  <div class="variant-label">Hero 2 — Centered Minimal with Particle Canvas</div>
+  <section>
+    <div class="hero-centered">
+      <canvas id="particle-canvas"></canvas>
+      <div class="hero-centered-inner">
+        <h1>Great software <span>feels obvious</span></h1>
+        <p>When design and engineering align, complexity disappears. Users don't notice the work — they just notice it works.</p>
+        <a href="#" class="btn-primary">Explore our approach</a>
+      </div>
+    </div>
+  </section>
+
+  <hr class="hero-divider">
+
+  <!-- ─── Hero 3: Video background ─── -->
+  <div class="variant-label">Hero 3 — Simulated Video Background</div>
+  <section>
+    <div class="hero-video">
+      <div class="hero-video-bg"></div>
+      <div class="hero-video-inner">
+        <div class="hero-video-pill">
+          <svg width="8" height="8" viewBox="0 0 24 24" fill="#10B981"><circle cx="12" cy="12" r="10"/></svg>
+          Live streaming now
+        </div>
+        <h1>The future of web is already here</h1>
+        <p>Join thousands of developers and designers building the next generation of digital experiences with modern CSS and vanilla JavaScript.</p>
+        <a href="#" class="btn-primary">Join the community</a>
+      </div>
+    </div>
+  </section>
+
+  <hr class="hero-divider">
+
+  <!-- ─── Hero 4: Dashboard mockup ─── -->
+  <div class="variant-label">Hero 4 — Dashboard Mockup (HTML/CSS — no image)</div>
+  <section style="background: var(--surface)">
+    <div class="hero-dashboard">
+      <div class="hero-db-text">
+        <div class="hero-eyebrow">Analytics Platform</div>
+        <h1>Your data, finally making sense</h1>
+        <p>Real-time dashboards that answer the questions you're actually asking. No more spreadsheet archaeology.</p>
+        <a href="#" class="btn-primary">Start free trial</a>
+      </div>
+      <div class="browser-mockup">
+        <div class="browser-bar">
+          <div class="browser-dots">
+            <div class="dot-r"></div>
+            <div class="dot-y"></div>
+            <div class="dot-g"></div>
+          </div>
+          <div class="browser-url">app.yourproduct.com/dashboard</div>
+        </div>
+        <div class="browser-content">
+          <div class="db-widget">
+            <div class="db-widget-label">Monthly Revenue</div>
+            <div class="db-widget-value">$84.2K</div>
+            <div class="db-widget-sub">↑ 12% vs last month</div>
+          </div>
+          <div class="db-widget">
+            <div class="db-widget-label">Active Users</div>
+            <div class="db-widget-value">12,400</div>
+            <div class="db-widget-sub">↑ 8% this week</div>
+          </div>
+          <div class="db-widget">
+            <div class="db-widget-label">Conversion Rate</div>
+            <div class="db-widget-value">3.8%</div>
+            <div class="db-bar-row">
+              <div class="db-bar" style="height:55%"></div>
+              <div class="db-bar" style="height:70%"></div>
+              <div class="db-bar" style="height:45%"></div>
+              <div class="db-bar" style="height:85%"></div>
+              <div class="db-bar" style="height:60%"></div>
+              <div class="db-bar" style="height:90%"></div>
+              <div class="db-bar" style="height:75%"></div>
+            </div>
+          </div>
+          <div class="db-widget">
+            <div class="db-widget-label">Churn Rate</div>
+            <div class="db-widget-value">1.2%</div>
+            <div class="db-widget-sub">↓ 0.4% improvement</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="hero-divider">
+
+  <!-- ─── Hero 5: Typewriter ─── -->
+  <div class="variant-label">Hero 5 — Typewriter Loop</div>
+  <section>
+    <div class="hero-typewriter">
+      <div class="hero-tw-inner">
+        <h1>We build <span class="tw-word" id="tw-word">experiences</span><span class="tw-cursor"></span></h1>
+        <p>A creative studio at the intersection of design craft and engineering discipline. We work with ambitious teams who want their digital presence to match the quality of their product.</p>
+        <a href="#" class="btn-primary">See what we build</a>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    /* ── Hero 2: Lightweight particle canvas ── */
+    (function() {
+      var canvas  = document.getElementById('particle-canvas');
+      var section = canvas.parentElement;
+      var ctx     = canvas.getContext('2d');
+      var particles = [];
+      var W, H;
+
+      function resize() {
+        W = canvas.width  = section.offsetWidth;
+        H = canvas.height = section.offsetHeight;
+      }
+
+      resize();
+      window.addEventListener('resize', resize);
+
+      /* Spawn particles */
+      for (var i = 0; i < 60; i++) {
+        particles.push({
+          x: Math.random() * 1000,
+          y: Math.random() * 600,
+          vx: (Math.random() - 0.5) * 0.4,
+          vy: (Math.random() - 0.5) * 0.4,
+          r: Math.random() * 1.5 + 0.5
+        });
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, W, H);
+        particles.forEach(function(p) {
+          p.x += p.vx; p.y += p.vy;
+          if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
+          if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(148,163,184,0.35)';
+          ctx.fill();
+        });
+        requestAnimationFrame(draw);
+      }
+      draw();
+    })();
+
+    /* ── Hero 5: Typewriter ── */
+    (function() {
+      var words   = ['experiences', 'products', 'growth', 'futures'];
+      var idx     = 0;
+      var charIdx = 0;
+      var deleting = false;
+      var el      = document.getElementById('tw-word');
+      var SPEED_TYPE = 80;
+      var SPEED_DEL  = 45;
+      var PAUSE_END  = 1800;
+      var PAUSE_START= 300;
+
+      function tick() {
+        var word    = words[idx];
+        var current = el.textContent;
+
+        if (!deleting && charIdx < word.length) {
+          /* Typing */
+          el.textContent = word.slice(0, ++charIdx);
+          setTimeout(tick, SPEED_TYPE);
+        } else if (!deleting && charIdx === word.length) {
+          /* Pause at end */
+          deleting = true;
+          setTimeout(tick, PAUSE_END);
+        } else if (deleting && charIdx > 0) {
+          /* Deleting */
+          el.textContent = word.slice(0, --charIdx);
+          setTimeout(tick, SPEED_DEL);
+        } else {
+          /* Move to next word */
+          deleting = false;
+          idx = (idx + 1) % words.length;
+          setTimeout(tick, PAUSE_START);
+        }
+      }
+
+      setTimeout(tick, 800);
+    })();
+  </script>
+</body>
+</html>

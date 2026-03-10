@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Neon Cards — Component Library</title>
+
+  <!--
+  /* COMPONENT: Neon Cards | COPY: style + html + script */
+  Cards with a rotating conic-gradient border glow — the "scanning" effect.
+  Uses @property CSS Houdini to animate --angle as a real angle type,
+  enabling smooth conic-gradient rotation without JavaScript.
+  Fallback: static solid accent border with pulse animation for browsers
+  without @property support (Safari < 16.4, Firefox < 128).
+  Each card has a different border glow color via CSS var override.
+  -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+
+    /* ============================================================
+       CUSTOMIZE
+       ============================================================ */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --glow:           rgba(16,185,129,0.15);
+      --glow-strong:    rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --border-accent:  rgba(16,185,129,0.3);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+    }
+    /* ============================================================ */
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 4rem 1.5rem 5rem;
+    }
+
+    /* ── Page header ── */
+    .nc-header {
+      text-align: center;
+      max-width: 600px;
+      margin: 0 auto 4rem;
+    }
+    .nc-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.75rem;
+    }
+    .nc-title {
+      font-family: var(--font-heading);
+      font-size: clamp(1.75rem, 4vw, 2.75rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.75rem;
+    }
+    .nc-subtitle {
+      color: var(--text-secondary);
+      font-size: 0.9375rem;
+      line-height: 1.6;
+    }
+
+    /* ── Grid ── */
+    .nc-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2rem;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    @media (max-width: 800px) {
+      .nc-grid { grid-template-columns: 1fr; max-width: 400px; }
+    }
+    @media (min-width: 801px) and (max-width: 1050px) {
+      .nc-grid { grid-template-columns: repeat(2, 1fr); max-width: 700px; }
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       NEON CARD — the main component
+       ═══════════════════════════════════════════════════════════ */
+
+    /* Register --angle as an animatable CSS custom property (Houdini).
+       This is what makes the conic-gradient rotation smooth.
+       Browsers without @property support will skip this and use the fallback. */
+    @property --nc-angle {
+      syntax: '<angle>';
+      initial-value: 0deg;
+      inherits: false;
+    }
+
+    .nc-card {
+      position: relative;
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 28px;
+      /* Glow color per card — overridden on individual cards */
+      --nc-glow-color: var(--accent);
+      --nc-glow-rgb: 16,185,129;
+    }
+
+    /* ── Rotating border via ::before ──
+       The ::before sits 2px outside the card (inset: -2px) and is slightly
+       larger. Its background is a conic-gradient that rotates the --nc-angle
+       custom property. The card's own background sits on top, masking the
+       center of the ::before, leaving only the border visible.
+       z-index: -1 keeps it behind the card content. */
+    .nc-card::before {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      border-radius: 18px; /* 16px card radius + 2px */
+      background: conic-gradient(
+        from var(--nc-angle),
+        transparent 0deg,
+        transparent 70deg,
+        var(--nc-glow-color) 120deg,
+        transparent 170deg,
+        transparent 360deg
+      );
+      /* Smooth angle animation via @property */
+      animation: nc-rotate 3s linear infinite;
+      z-index: -1;
+    }
+
+    @keyframes nc-rotate {
+      from { --nc-angle: 0deg; }
+      to   { --nc-angle: 360deg; }
+    }
+
+    /* ── Fallback for browsers without @property ──
+       @supports not with a @property check — instead we use the animation
+       approach: if the conic-gradient animation doesn't work (no @property),
+       the card gets a pulsing static border instead. */
+    @supports not (background: conic-gradient(from 0deg, red, blue)) {
+      .nc-card::before {
+        background: none;
+        border: 2px solid var(--nc-glow-color);
+        animation: nc-pulse 2s ease-in-out infinite;
+      }
+      @keyframes nc-pulse {
+        0%, 100% { opacity: 0.4; }
+        50%       { opacity: 1; }
+      }
+    }
+
+    /* ── Radial glow inside card background ──
+       Subtle matching color glow emanating from the same angle as the border */
+    .nc-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 16px;
+      background: radial-gradient(
+        circle at 50% 100%,
+        rgba(var(--nc-glow-rgb), 0.07),
+        transparent 60%
+      );
+      pointer-events: none;
+      z-index: 0;
+      transition: opacity 0.3s;
+    }
+    .nc-card:hover::after {
+      background: radial-gradient(
+        circle at 50% 100%,
+        rgba(var(--nc-glow-rgb), 0.14),
+        transparent 60%
+      );
+    }
+
+    /* Card lifts on hover */
+    .nc-card:hover {
+      transform: translateY(-4px);
+      transition: transform 0.3s cubic-bezier(0.34,1.3,0.64,1);
+    }
+
+    /* Card inner content — must be positioned above the ::after glow */
+    .nc-inner {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Card 2: blue */
+    .nc-card-blue {
+      --nc-glow-color: #3B82F6;
+      --nc-glow-rgb: 59,130,246;
+    }
+    /* Slow down rotation on blue card for visual variety */
+    .nc-card-blue::before { animation-duration: 4s; }
+
+    /* Card 3: purple */
+    .nc-card-purple {
+      --nc-glow-color: #8B5CF6;
+      --nc-glow-rgb: 139,92,246;
+    }
+    /* Speed up rotation on purple card */
+    .nc-card-purple::before { animation-duration: 2.2s; }
+
+    /* ── Card content styles ── */
+    .nc-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.25rem;
+      /* Glow-colored background tint */
+      background: rgba(var(--nc-glow-rgb), 0.12);
+      border: 1px solid rgba(var(--nc-glow-rgb), 0.3);
+      color: var(--nc-glow-color);
+    }
+
+    .nc-card-title {
+      font-family: var(--font-heading);
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+    }
+
+    .nc-card-desc {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 1.5rem;
+    }
+
+    /* Stat / metric at bottom */
+    .nc-metric {
+      padding-top: 1.25rem;
+      border-top: 1px solid rgba(var(--nc-glow-rgb), 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nc-metric-num {
+      font-family: var(--font-heading);
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--nc-glow-color);
+      letter-spacing: -0.02em;
+      /* Text glow effect matching border color */
+      text-shadow: 0 0 16px rgba(var(--nc-glow-rgb), 0.5);
+    }
+
+    .nc-metric-label {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      text-align: right;
+    }
+
+    /* ── Slower demo button ── */
+    .nc-demo-toggle {
+      display: flex;
+      justify-content: center;
+      margin-top: 3rem;
+    }
+    .nc-demo-btn {
+      font-family: var(--font-heading);
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 20px;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .nc-demo-btn:hover { color: var(--text); border-color: var(--border-accent); }
+
+  </style>
+</head>
+<body>
+
+  <header class="nc-header">
+    <p class="nc-eyebrow">Visual Components</p>
+    <h1 class="nc-title">Neon Glow Cards</h1>
+    <p class="nc-subtitle">Rotating conic-gradient border that scans around the card perimeter. Each card uses a different glow color. Powered by CSS <code style="font-family:var(--font-mono);font-size:0.85em;color:var(--accent)">@property</code> for smooth angle animation.</p>
+  </header>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       NEON CARDS GRID — copy this entire block
+       ═══════════════════════════════════════════════════════════ -->
+  <div class="nc-grid">
+
+    <!-- Card 1: Green (accent) -->
+    <div class="nc-card">
+      <div class="nc-inner">
+        <div class="nc-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        </div>
+        <h3 class="nc-card-title">Real-time Analytics</h3>
+        <p class="nc-card-desc">Monitor every metric that matters — conversion rates, session depth, and revenue attribution — as they happen, not the next morning.</p>
+        <div class="nc-metric">
+          <span class="nc-metric-num">99.98%</span>
+          <span class="nc-metric-label">Uptime<br>SLA</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 2: Blue -->
+    <div class="nc-card nc-card-blue">
+      <div class="nc-inner">
+        <div class="nc-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <h3 class="nc-card-title">Enterprise Security</h3>
+        <p class="nc-card-desc">SOC 2 Type II certified. End-to-end encryption for all data in transit and at rest. Role-based access control with audit logging.</p>
+        <div class="nc-metric">
+          <span class="nc-metric-num">256-bit</span>
+          <span class="nc-metric-label">AES<br>Encryption</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 3: Purple -->
+    <div class="nc-card nc-card-purple">
+      <div class="nc-inner">
+        <div class="nc-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+        </div>
+        <h3 class="nc-card-title">AI-Powered Insights</h3>
+        <p class="nc-card-desc">Natural language queries across your entire dataset. Ask "what caused the conversion drop last Tuesday" and get an answer in seconds.</p>
+        <div class="nc-metric">
+          <span class="nc-metric-num">2.4B</span>
+          <span class="nc-metric-label">Events<br>Analyzed</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Demo toggle: pause/resume the animation -->
+  <div class="nc-demo-toggle">
+    <button class="nc-demo-btn" id="nc-pause-btn">Pause animation</button>
+  </div>
+
+
+  <script>
+  /* Pause/resume the rotating border animation */
+  (function() {
+    var btn    = document.getElementById('nc-pause-btn');
+    var cards  = document.querySelectorAll('.nc-card');
+    var paused = false;
+
+    btn.addEventListener('click', function() {
+      paused = !paused;
+      cards.forEach(function(card) {
+        /* Toggle animation-play-state on the ::before via a class */
+        var before = card.querySelector(':scope > *');
+        /* We can't directly target ::before via JS, so we toggle a class
+           on the card and handle it in CSS */
+        card.classList.toggle('is-paused', paused);
+      });
+      btn.textContent = paused ? 'Resume animation' : 'Pause animation';
+    });
+  })();
+  </script>
+
+  <style>
+  /* Pause state for the demo button */
+  .nc-card.is-paused::before {
+    animation-play-state: paused;
+  }
+  </style>
+
+</body>
+</html>

@@ -1,0 +1,498 @@
+<!-- COMPONENT: Sticky Feature Demo | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sticky Feature Demo — Scroll-Linked Showcase</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+      --blue:           #3B82F6;
+      --amber:          #F59E0B;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font-body); }
+
+    /* ── Section intro ── */
+    .section-intro {
+      max-width: 700px; margin: 0 auto; padding: 5rem 1.5rem 3rem; text-align: center;
+    }
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: var(--font-mono); font-size: 0.75rem; font-weight: 600;
+      color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em;
+      padding: 5px 14px; background: var(--accent-dim);
+      border: 1px solid var(--accent-border); border-radius: 100px; margin-bottom: 1.25rem;
+    }
+    .section-title {
+      font-family: var(--font-heading);
+      font-size: clamp(1.75rem, 4vw, 2.75rem);
+      font-weight: 700; letter-spacing: -0.025em; line-height: 1.2; margin-bottom: 0.75rem;
+    }
+    .section-sub { font-size: 1.0625rem; color: var(--text-secondary); line-height: 1.6; }
+
+    /* ── Two-column sticky layout ── */
+    .sfd-layout {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 1.5rem 6rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+      align-items: start;
+    }
+    @media (max-width: 768px) {
+      .sfd-layout { grid-template-columns: 1fr; gap: 2rem; }
+    }
+
+    /* ── Left: scrollable feature list ── */
+    .sfd-features { display: flex; flex-direction: column; }
+
+    .sfd-feature {
+      padding: 2rem 0;
+      border-bottom: 1px solid var(--border);
+      opacity: 0.35;
+      transition: opacity 0.35s ease;
+      cursor: default;
+    }
+    .sfd-feature.is-active { opacity: 1; }
+    .sfd-feature:last-child { border-bottom: none; }
+
+    .sfd-feature-num {
+      font-family: var(--font-mono); font-size: 0.6875rem; font-weight: 600;
+      color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em;
+      margin-bottom: 0.75rem;
+    }
+    .sfd-feature-name {
+      font-family: var(--font-heading); font-size: 1.25rem; font-weight: 700;
+      color: var(--text); margin-bottom: 0.75rem; line-height: 1.3;
+    }
+    .sfd-feature-desc { font-size: 0.9375rem; color: var(--text-secondary); line-height: 1.7; margin-bottom: 1rem; }
+    .sfd-feature-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-family: var(--font-heading); font-size: 0.875rem; font-weight: 600;
+      color: var(--accent); text-decoration: none; transition: gap 0.2s;
+    }
+    .sfd-feature.is-active .sfd-feature-link:hover { gap: 10px; }
+
+    /* Active indicator bar */
+    .sfd-feature.is-active .sfd-feature-name::before {
+      content: '';
+      display: inline-block; width: 3px; height: 1em;
+      background: var(--accent); border-radius: 2px;
+      margin-right: 10px; vertical-align: middle;
+    }
+
+    /* ── Right: sticky mockup panel ── */
+    .sfd-sticky {
+      position: sticky;
+      top: calc(50vh - 220px);
+    }
+    @media (max-width: 768px) {
+      .sfd-sticky { position: static; }
+    }
+
+    .sfd-mockup-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      min-height: 420px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Each mockup: hidden unless active */
+    .sfd-panel { display: none; width: 100%; animation: panelFade 0.4s ease; }
+    .sfd-panel.is-active { display: block; }
+    @keyframes panelFade {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Mobile inline mockups (shown between features on mobile) */
+    .sfd-inline-mockup {
+      display: none;
+      margin: 1.5rem 0;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.5rem;
+    }
+    @media (max-width: 768px) {
+      .sfd-sticky { display: none; }
+      .sfd-inline-mockup { display: block; }
+    }
+
+    /* ───── Mockup inner UI components ───── */
+    /* Shared: mini browser frame */
+    .mini-browser { background: var(--elevated); border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+    .mini-bar { display: flex; align-items: center; gap: 6px; padding: 8px 12px; background: var(--bg); border-bottom: 1px solid var(--border); }
+    .mini-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .mini-dot.r { background: #ef4444; } .mini-dot.a { background: #f59e0b; } .mini-dot.g { background: #10b981; }
+    .mini-url { flex: 1; height: 18px; background: var(--surface); border-radius: 3px; padding: 0 8px; font-family: var(--font-mono); font-size: 0.5625rem; color: var(--text-muted); display: flex; align-items: center; }
+    .mini-body { padding: 1rem; }
+
+    /* Mockup 0: website preview */
+    .m0-hero { text-align: center; padding: 1.5rem 1rem; }
+    .m0-logo { font-family: var(--font-heading); font-size: 0.875rem; font-weight: 700; color: var(--text); margin-bottom: 0.75rem; }
+    .m0-title { font-family: var(--font-heading); font-size: 1.25rem; font-weight: 700; color: var(--text); margin-bottom: 0.5rem; }
+    .m0-sub { font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 1rem; line-height: 1.5; }
+    .m0-btn { display: inline-block; padding: 7px 18px; background: var(--accent); color: #0D1117; border-radius: 5px; font-size: 0.75rem; font-weight: 700; font-family: var(--font-heading); }
+    .m0-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-top: 1rem; }
+    .m0-stat { background: var(--bg); border-radius: 6px; padding: 8px; text-align: center; border: 1px solid var(--border); }
+    .m0-stat-n { font-family: var(--font-heading); font-size: 1rem; font-weight: 700; color: var(--accent); }
+    .m0-stat-l { font-size: 0.5625rem; color: var(--text-muted); }
+
+    /* Mockup 1: search ranking */
+    .m1-serp { background: var(--elevated); border-radius: 8px; padding: 1rem; }
+    .m1-gbar { display: flex; gap: 8px; margin-bottom: 1rem; align-items: center; }
+    .m1-glogo { font-weight: 700; font-size: 1rem; background: linear-gradient(135deg,#4285f4,#34a853,#fbbc05,#ea4335); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .m1-gsearch { flex: 1; height: 28px; background: var(--surface); border-radius: 14px; display: flex; align-items: center; padding: 0 12px; font-size: 0.6875rem; color: var(--text-secondary); }
+    .m1-result { padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .m1-result:last-child { border-bottom: none; }
+    .m1-result.is-you { background: rgba(16,185,129,0.05); border-radius: 6px; padding: 10px 8px; border: 1px solid rgba(16,185,129,0.15); border-bottom: 1px solid rgba(16,185,129,0.15); }
+    .m1-url { font-size: 0.5625rem; color: #5f9f3d; margin-bottom: 2px; }
+    .m1-title { font-size: 0.8125rem; color: #8ab4f8; margin-bottom: 2px; }
+    .m1-result.is-you .m1-title { color: var(--accent); }
+    .m1-desc { font-size: 0.625rem; color: var(--text-secondary); line-height: 1.4; }
+
+    /* Mockup 2: lead notification */
+    .m2-wrap { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+    .m2-notif {
+      background: var(--elevated); border: 1px solid var(--accent-border);
+      border-radius: 10px; padding: 1rem 1.25rem;
+      animation: slideDown 0.4s ease;
+    }
+    @keyframes slideDown { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:none} }
+    .m2-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .m2-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: puls 2s infinite; }
+    @keyframes puls { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    .m2-badge { font-family: var(--font-mono); font-size: 0.625rem; font-weight: 600; color: var(--accent); }
+    .m2-name { font-family: var(--font-heading); font-size: 1rem; font-weight: 700; margin-bottom: 2px; }
+    .m2-detail { font-size: 0.75rem; color: var(--text-muted); }
+    .m2-form { background: var(--elevated); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; }
+    .m2-form-title { font-size: 0.8125rem; font-family: var(--font-heading); font-weight: 700; margin-bottom: 8px; }
+    .m2-input { height: 28px; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; margin-bottom: 6px; width: 100%; display: flex; align-items: center; padding: 0 8px; font-size: 0.625rem; color: var(--text-muted); }
+    .m2-submit { width: 100%; height: 30px; background: var(--accent); border: none; border-radius: 4px; font-size: 0.75rem; font-weight: 700; font-family: var(--font-heading); color: #0D1117; cursor: pointer; }
+
+    /* Mockup 3: analytics mini chart */
+    .m3-card { background: var(--elevated); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem; width: 100%; }
+    .m3-header { display: flex; justify-content: space-between; margin-bottom: 1rem; }
+    .m3-title { font-family: var(--font-heading); font-size: 0.875rem; font-weight: 700; }
+    .m3-badge { font-family: var(--font-mono); font-size: 0.5625rem; color: var(--text-muted); padding: 2px 8px; border: 1px solid var(--border); border-radius: 100px; }
+    .m3-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 1rem; }
+    .m3-stat { background: var(--bg); border-radius: 6px; padding: 8px; }
+    .m3-snum { font-family: var(--font-heading); font-size: 1.125rem; font-weight: 700; color: var(--text); }
+    .m3-slbl { font-size: 0.5625rem; color: var(--text-muted); }
+    .m3-strend { font-size: 0.5625rem; color: var(--accent); }
+    .m3-chart { height: 64px; display: flex; align-items: flex-end; gap: 4px; }
+    .m3-bar { flex: 1; background: linear-gradient(to top, var(--accent), rgba(16,185,129,0.3)); border-radius: 2px 2px 0 0; }
+
+    /* Mockup 4: mobile preview */
+    .m4-phone {
+      width: 180px; margin: 0 auto;
+      background: var(--bg); border: 3px solid var(--elevated); border-radius: 24px;
+      padding: 16px 10px; box-shadow: 0 0 0 6px rgba(30,41,59,0.4);
+      position: relative;
+    }
+    .m4-notch { width: 60px; height: 8px; background: var(--elevated); border-radius: 4px; margin: 0 auto 12px; }
+    .m4-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .m4-navlogo { font-family: var(--font-heading); font-size: 0.5625rem; font-weight: 700; }
+    .m4-hamburger { display: flex; flex-direction: column; gap: 2px; }
+    .m4-hline { width: 12px; height: 1px; background: var(--text-secondary); }
+    .m4-hero { text-align: center; padding: 8px 0; }
+    .m4-htitle { font-family: var(--font-heading); font-size: 0.625rem; font-weight: 700; margin-bottom: 4px; color: var(--text); }
+    .m4-hsub { font-size: 0.5rem; color: var(--text-secondary); margin-bottom: 6px; }
+    .m4-hbtn { display: inline-block; padding: 4px 10px; background: var(--accent); color: #0D1117; border-radius: 3px; font-size: 0.5rem; font-weight: 700; }
+    .m4-section { margin-top: 8px; }
+    .m4-scard { background: var(--surface); border-radius: 4px; padding: 6px 8px; margin-bottom: 4px; }
+    .m4-scard-title { font-size: 0.5rem; font-weight: 600; color: var(--text); }
+    .m4-scard-sub { font-size: 0.4375rem; color: var(--text-muted); }
+
+    /* Mockup 5: CRM contact card */
+    .m5-crm { background: var(--elevated); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; width: 100%; }
+    .m5-head { background: var(--bg); padding: 10px 14px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .m5-headtitle { font-family: var(--font-heading); font-size: 0.75rem; font-weight: 700; }
+    .m5-newbadge { padding: 2px 8px; background: var(--accent-dim); border: 1px solid var(--accent-border); border-radius: 100px; font-size: 0.5625rem; font-weight: 600; color: var(--accent); animation: puls 2s infinite; }
+    .m5-body { padding: 1rem; }
+    .m5-avatar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 1rem; }
+    .m5-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--accent-dim); border: 1px solid var(--accent-border); display: flex; align-items: center; justify-content: center; font-family: var(--font-heading); font-weight: 700; color: var(--accent); font-size: 0.875rem; }
+    .m5-name { font-family: var(--font-heading); font-size: 0.875rem; font-weight: 700; }
+    .m5-source { font-size: 0.6875rem; color: var(--text-muted); }
+    .m5-field { display: flex; justify-content: space-between; font-size: 0.75rem; padding: 7px 0; border-bottom: 1px solid var(--border); }
+    .m5-field:last-child { border-bottom: none; }
+    .m5-flbl { color: var(--text-muted); }
+    .m5-fval { color: var(--text-secondary); font-weight: 500; }
+
+  </style>
+</head>
+<body>
+
+  <div class="section-intro">
+    <div class="eyebrow">How it works</div>
+    <h2 class="section-title">Six features. One platform. Zero headaches.</h2>
+    <p class="section-sub">Scroll through each feature to see exactly what you're getting and how it shows up in practice.</p>
+  </div>
+
+  <div class="sfd-layout">
+
+    <!-- Left: scrollable feature blocks -->
+    <div class="sfd-features">
+
+      <div class="sfd-feature is-active" data-feature="0">
+        <div class="sfd-feature-num">01 / 06</div>
+        <div class="sfd-feature-name">Custom Website Preview</div>
+        <p class="sfd-feature-desc">Your own professionally designed website, built for credibility and conversion. Not a template — a custom build with your name, market, and story. Hosted, managed, and updated for you.</p>
+        <a href="#" class="sfd-feature-link">
+          See site examples
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </a>
+        <!-- Mobile inline mockup -->
+        <div class="sfd-inline-mockup">
+          <div class="mini-browser">
+            <div class="mini-bar"><div class="mini-dot r"></div><div class="mini-dot a"></div><div class="mini-dot g"></div><div class="mini-url">sarahwilliamstitle.com</div></div>
+            <div class="mini-body">
+              <div class="m0-hero">
+                <div class="m0-logo">Sarah Williams | Title Rep</div>
+                <div class="m0-title">Dallas' Most Trusted Title Rep</div>
+                <div class="m0-sub">Fast closings, clear communication, 12 years of DFW experience.</div>
+                <div class="m0-btn">Schedule a Consultation</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sfd-feature" data-feature="1">
+        <div class="sfd-feature-num">02 / 06</div>
+        <div class="sfd-feature-name">Search Ranking Simulation</div>
+        <p class="sfd-feature-desc">We optimize your site so you show up when someone in your market Googles "title rep near me" — the most valuable traffic you can get. Real organic search rankings, not ads.</p>
+        <a href="#" class="sfd-feature-link">
+          Learn about SEO
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </a>
+        <div class="sfd-inline-mockup">
+          <div class="m1-serp">
+            <div class="m1-gbar"><span class="m1-glogo">Google</span><div class="m1-gsearch">title rep Dallas TX</div></div>
+            <div class="m1-result is-you"><div class="m1-url">sarahwilliamstitle.com</div><div class="m1-title">Sarah Williams — Title Rep | Dallas TX</div><div class="m1-desc">12+ years in DFW. Fast closings, dedicated support.</div></div>
+            <div class="m1-result" style="opacity:.5"><div class="m1-url">competitor.com</div><div class="m1-title">DFW Title Services</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sfd-feature" data-feature="2">
+        <div class="sfd-feature-num">03 / 06</div>
+        <div class="sfd-feature-name">Lead Notification Card</div>
+        <p class="sfd-feature-desc">Every time a visitor fills out your contact form, you get an instant notification with their name, phone, and email. Leads go directly into your CRM so nothing slips through the cracks.</p>
+        <a href="#" class="sfd-feature-link">
+          See lead flow
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </a>
+        <div class="sfd-inline-mockup">
+          <div class="m2-notif"><div class="m2-header"><div class="m2-dot"></div><span class="m2-badge">New Lead — Just Now</span></div><div class="m2-name">Marcus Johnson</div><div class="m2-detail">(214) 555-0192 · Contact Form</div></div>
+        </div>
+      </div>
+
+      <div class="sfd-feature" data-feature="3">
+        <div class="sfd-feature-num">04 / 06</div>
+        <div class="sfd-feature-name">Analytics Mini-Chart</div>
+        <p class="sfd-feature-desc">Every month you receive a plain-English report showing site visitors, lead count, and search ranking movement. No dashboards to learn — just the numbers that matter, delivered to your inbox.</p>
+        <a href="#" class="sfd-feature-link">
+          See sample report
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </a>
+        <div class="sfd-inline-mockup">
+          <div class="m3-card">
+            <div class="m3-header"><div class="m3-title">March 2026</div><div class="m3-badge">Monthly Report</div></div>
+            <div class="m3-stats">
+              <div class="m3-stat"><div class="m3-snum">1,284</div><div class="m3-slbl">Visitors</div><div class="m3-strend">▲ +34%</div></div>
+              <div class="m3-stat"><div class="m3-snum">23</div><div class="m3-slbl">Leads</div><div class="m3-strend">▲ +8</div></div>
+              <div class="m3-stat"><div class="m3-snum">#2</div><div class="m3-slbl">Rank</div><div class="m3-strend">▲ +6</div></div>
+            </div>
+            <div class="m3-chart"><div class="m3-bar" style="height:30%"></div><div class="m3-bar" style="height:45%"></div><div class="m3-bar" style="height:40%"></div><div class="m3-bar" style="height:60%"></div><div class="m3-bar" style="height:65%"></div><div class="m3-bar" style="height:75%"></div><div class="m3-bar" style="height:85%"></div><div class="m3-bar" style="height:100%"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sfd-feature" data-feature="4">
+        <div class="sfd-feature-num">05 / 06</div>
+        <div class="sfd-feature-name">Contact Form Mockup</div>
+        <p class="sfd-feature-desc">A clean, conversion-optimized contact form built into your site. Simple to fill out on mobile. Validates inputs, handles spam filtering, and delivers leads instantly — no plugins, no maintenance.</p>
+        <a href="#" class="sfd-feature-link">
+          View form options
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </a>
+        <div class="sfd-inline-mockup">
+          <div class="m2-form"><div class="m2-form-title">Get in Touch</div><div class="m2-input">Name</div><div class="m2-input">Email</div><div class="m2-input">Phone</div><button class="m2-submit">Send Message</button></div>
+        </div>
+      </div>
+
+      <div class="sfd-feature" data-feature="5">
+        <div class="sfd-feature-num">06 / 06</div>
+        <div class="sfd-feature-name">Mobile Version Preview</div>
+        <p class="sfd-feature-desc">Over 60% of your visitors are on a phone. Your site is built mobile-first from day one — thumb-friendly navigation, fast load times, and a layout that looks intentional at any screen size.</p>
+        <a href="#" class="sfd-feature-link">
+          Preview mobile
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </a>
+        <div class="sfd-inline-mockup">
+          <div style="display:flex;justify-content:center">
+            <div class="m4-phone"><div class="m4-notch"></div><div class="m4-nav"><div class="m4-navlogo">Sarah Williams</div><div class="m4-hamburger"><div class="m4-hline"></div><div class="m4-hline"></div><div class="m4-hline"></div></div></div><div class="m4-hero"><div class="m4-htitle">Dallas' Most Trusted Title Rep</div><div class="m4-hsub">Fast closings, dedicated support.</div><div class="m4-hbtn">Contact Me</div></div><div class="m4-section"><div class="m4-scard"><div class="m4-scard-title">About Sarah</div><div class="m4-scard-sub">12 years in DFW title</div></div><div class="m4-scard"><div class="m4-scard-title">Services</div><div class="m4-scard-sub">Buyers · Sellers · Refi</div></div></div></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /sfd-features -->
+
+    <!-- Right: sticky mockup panel (desktop only) -->
+    <div class="sfd-sticky">
+      <div class="sfd-mockup-card">
+
+        <!-- Panel 0: website mockup -->
+        <div class="sfd-panel is-active" data-panel="0">
+          <div class="mini-browser">
+            <div class="mini-bar"><div class="mini-dot r"></div><div class="mini-dot a"></div><div class="mini-dot g"></div><div class="mini-url">sarahwilliamstitle.com</div></div>
+            <div class="mini-body">
+              <div class="m0-hero">
+                <div class="m0-logo">Sarah Williams | Title Rep</div>
+                <div class="m0-title">Dallas' Most Trusted Title Rep</div>
+                <div class="m0-sub">Fast closings, clear communication, and 12 years of DFW experience behind every transaction.</div>
+                <div class="m0-btn">Schedule a Consultation</div>
+                <div class="m0-stats">
+                  <div class="m0-stat"><div class="m0-stat-n">847</div><div class="m0-stat-l">Closings</div></div>
+                  <div class="m0-stat"><div class="m0-stat-n">4.9★</div><div class="m0-stat-l">Rating</div></div>
+                  <div class="m0-stat"><div class="m0-stat-n">12yr</div><div class="m0-stat-l">Experience</div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel 1: SERP -->
+        <div class="sfd-panel" data-panel="1">
+          <div class="m1-serp" style="width:100%">
+            <div class="m1-gbar"><span class="m1-glogo">Google</span><div class="m1-gsearch">title rep Dallas TX near me</div></div>
+            <div class="m1-result is-you"><div class="m1-url">sarahwilliamstitle.com</div><div class="m1-title">Sarah Williams — Title Rep | Dallas TX</div><div class="m1-desc">12+ years in DFW. Fast closings, dedicated support, and 847+ satisfied clients.</div></div>
+            <div class="m1-result" style="opacity:.5"><div class="m1-url">competitor-title.com</div><div class="m1-title">DFW Title Services | Title Company</div><div class="m1-desc">Title insurance for buyers and sellers...</div></div>
+            <div class="m1-result" style="opacity:.3"><div class="m1-url">anothertitleco.net</div><div class="m1-title">Title Rep — Dallas Fort Worth</div><div class="m1-desc">Professional title services. Contact us to learn more.</div></div>
+          </div>
+        </div>
+
+        <!-- Panel 2: lead form + notification -->
+        <div class="sfd-panel" data-panel="2">
+          <div class="m2-wrap">
+            <div class="m2-notif">
+              <div class="m2-header"><div class="m2-dot"></div><span class="m2-badge">New Lead — Just Now</span></div>
+              <div class="m2-name">Marcus Johnson</div>
+              <div class="m2-detail">(214) 555-0192 · Contact Form</div>
+            </div>
+            <div class="m2-form">
+              <div class="m2-form-title">Get in Touch</div>
+              <div class="m2-input">Name</div>
+              <div class="m2-input">Email address</div>
+              <div class="m2-input">Phone number</div>
+              <button class="m2-submit">Send Message</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel 3: analytics chart -->
+        <div class="sfd-panel" data-panel="3">
+          <div class="m3-card" style="width:100%">
+            <div class="m3-header"><div class="m3-title">Monthly Performance Report</div><div class="m3-badge">March 2026</div></div>
+            <div class="m3-stats">
+              <div class="m3-stat"><div class="m3-snum">1,284</div><div class="m3-slbl">Visitors</div><div class="m3-strend">▲ +34%</div></div>
+              <div class="m3-stat"><div class="m3-snum">23</div><div class="m3-slbl">Leads</div><div class="m3-strend">▲ +8</div></div>
+              <div class="m3-stat"><div class="m3-snum">#2</div><div class="m3-slbl">Google Rank</div><div class="m3-strend">▲ +6 spots</div></div>
+            </div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:8px;">Traffic — last 8 months</div>
+            <div class="m3-chart"><div class="m3-bar" style="height:30%"></div><div class="m3-bar" style="height:45%"></div><div class="m3-bar" style="height:38%"></div><div class="m3-bar" style="height:58%"></div><div class="m3-bar" style="height:64%"></div><div class="m3-bar" style="height:72%"></div><div class="m3-bar" style="height:84%"></div><div class="m3-bar" style="height:100%"></div></div>
+          </div>
+        </div>
+
+        <!-- Panel 4: contact form mockup -->
+        <div class="sfd-panel" data-panel="4">
+          <div class="m2-form" style="width:100%">
+            <div class="m2-form-title">Contact Sarah Williams</div>
+            <div class="m2-input">Full name</div>
+            <div class="m2-input">Email address</div>
+            <div class="m2-input">Phone number</div>
+            <div class="m2-input" style="height:50px;align-items:flex-start;padding-top:8px;">How can I help you?</div>
+            <button class="m2-submit">Send Message</button>
+          </div>
+        </div>
+
+        <!-- Panel 5: mobile phone mockup -->
+        <div class="sfd-panel" data-panel="5">
+          <div style="display:flex;justify-content:center">
+            <div class="m4-phone" style="width:200px">
+              <div class="m4-notch"></div>
+              <div class="m4-nav"><div class="m4-navlogo">Sarah Williams</div><div class="m4-hamburger"><div class="m4-hline"></div><div class="m4-hline"></div><div class="m4-hline"></div></div></div>
+              <div class="m4-hero">
+                <div class="m4-htitle">Dallas' Most Trusted Title Rep</div>
+                <div class="m4-hsub">Fast closings. Dedicated support. 12 years in DFW.</div>
+                <div class="m4-hbtn">Contact Me</div>
+              </div>
+              <div class="m4-section">
+                <div class="m4-scard"><div class="m4-scard-title">About Sarah</div><div class="m4-scard-sub">12 years DFW · 847+ closings</div></div>
+                <div class="m4-scard"><div class="m4-scard-title">Services</div><div class="m4-scard-sub">Buyers · Sellers · Refinance</div></div>
+                <div class="m4-scard"><div class="m4-scard-title">Reviews</div><div class="m4-scard-sub">4.9★ — 127 reviews</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /sfd-mockup-card -->
+    </div><!-- /sfd-sticky -->
+
+  </div><!-- /sfd-layout -->
+
+  <script>
+    // IntersectionObserver: watch each feature block at ~40% threshold
+    // When a feature enters the center zone, activate its panel
+    const features = document.querySelectorAll('.sfd-feature');
+    const panels = document.querySelectorAll('.sfd-panel');
+
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        const idx = parseInt(entry.target.dataset.feature);
+        // Deactivate all
+        features.forEach(f => f.classList.remove('is-active'));
+        panels.forEach(p => p.classList.remove('is-active'));
+        // Activate current
+        entry.target.classList.add('is-active');
+        panels[idx] && panels[idx].classList.add('is-active');
+      });
+    }, {
+      // Trigger when the block hits ~40% into the viewport from top
+      rootMargin: '-35% 0px -45% 0px',
+      threshold: 0
+    });
+
+    features.forEach(f => io.observe(f));
+  </script>
+
+</body>
+</html>

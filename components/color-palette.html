@@ -1,0 +1,694 @@
+<!-- COMPONENT: Color Palette Display & Tools | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Color Palette Tools</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ── Customize ── */
+    :root {
+      --bg:            #0D1117;
+      --surface:       #111827;
+      --elevated:      #1E293B;
+      --accent:        #10B981;
+      --accent-dim:    rgba(16,185,129,0.15);
+      --accent-border: rgba(16,185,129,0.3);
+      --border:        rgba(148,163,184,0.1);
+      --text:          #F8FAFC;
+      --text-secondary:#94A3B8;
+      --text-muted:    #475569;
+      --radius:        12px;
+      --font-heading:  'Space Grotesk', sans-serif;
+      --font-body:     'Inter', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      padding: 2.5rem 1rem 4rem;
+    }
+
+    .page-wrap {
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-family: var(--font-heading);
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .page-sub {
+      font-size: 0.925rem;
+      color: var(--text-secondary);
+      margin-bottom: 2.5rem;
+    }
+
+    /* Section titles */
+    .section-label {
+      font-family: var(--font-heading);
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .section-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    /* ── 1. Palette display ── */
+    .palette-group {
+      margin-bottom: 1.75rem;
+    }
+
+    .palette-group:last-child { margin-bottom: 0; }
+
+    .palette-name {
+      font-family: var(--font-heading);
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 0.75rem;
+    }
+
+    .palette-swatches {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .swatch {
+      width: 60px;
+      height: 60px;
+      border-radius: 10px;
+      cursor: pointer;
+      position: relative;
+      transition: transform 0.15s, box-shadow 0.15s;
+      border: 1px solid rgba(255,255,255,0.07);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      padding-bottom: 5px;
+    }
+
+    @media (max-width: 480px) { .swatch { width: 48px; height: 48px; } }
+
+    .swatch:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.4);
+    }
+
+    /* Hex label on the swatch */
+    .swatch-hex {
+      font-size: 0.58rem;
+      font-family: ui-monospace, monospace;
+      color: rgba(255,255,255,0.65);
+      text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+      pointer-events: none;
+      line-height: 1;
+    }
+
+    /* Copied tooltip */
+    .swatch-copied {
+      position: absolute;
+      top: -28px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.2rem 0.5rem;
+      font-size: 0.68rem;
+      color: var(--accent);
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+
+    .swatch.copied .swatch-copied { opacity: 1; }
+
+    /* ── 2. Shade generator ── */
+    .shade-input-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+    }
+
+    .shade-label {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+
+    .color-text-input {
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: ui-monospace, monospace;
+      font-size: 0.875rem;
+      padding: 0.5rem 0.75rem;
+      width: 110px;
+      outline: none;
+    }
+    .color-text-input:focus { border-color: var(--accent-border); }
+
+    .color-picker-input {
+      width: 38px;
+      height: 38px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      padding: 2px;
+      background: var(--elevated);
+    }
+
+    .btn-generate {
+      background: var(--accent);
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      padding: 0.55rem 1.1rem;
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    .btn-generate:hover { filter: brightness(1.1); }
+
+    .shade-row {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+
+    .shade-swatch {
+      flex: 1;
+      min-width: 52px;
+      max-width: 90px;
+      aspect-ratio: 1;
+      border-radius: 8px;
+      cursor: pointer;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      padding-bottom: 4px;
+      transition: transform 0.15s;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .shade-swatch:hover { transform: translateY(-2px); }
+
+    .shade-label-num {
+      font-size: 0.58rem;
+      font-family: ui-monospace, monospace;
+      color: rgba(255,255,255,0.55);
+      text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+      pointer-events: none;
+    }
+
+    /* ── 3. Contrast checker ── */
+    .contrast-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+
+    @media (max-width: 560px) {
+      .contrast-grid { grid-template-columns: 1fr; }
+    }
+
+    .contrast-picker-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .contrast-picker-label {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .contrast-picker-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .contrast-result {
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      flex-wrap: wrap;
+    }
+
+    /* Live preview */
+    .contrast-preview {
+      flex: 1;
+      min-width: 160px;
+      padding: 1.25rem;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .preview-large { font-size: 1.4rem; font-weight: 700; font-family: var(--font-heading); }
+    .preview-small { font-size: 0.85rem; }
+
+    /* Ratio display */
+    .ratio-display {
+      text-align: center;
+    }
+
+    .ratio-number {
+      font-family: var(--font-heading);
+      font-size: 2rem;
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 0.25rem;
+    }
+
+    .ratio-label {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .wcag-badges {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .wcag-badge {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      font-size: 0.78rem;
+    }
+
+    .badge-label { color: var(--text-secondary); }
+
+    .badge-result {
+      font-weight: 700;
+      font-size: 0.72rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+    }
+
+    .pass { background: rgba(16,185,129,0.15); color: #10B981; }
+    .fail { background: rgba(239,68,68,0.15);  color: #EF4444; }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 1.5rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      z-index: 300;
+      background: var(--elevated);
+      border: 1px solid var(--accent-border);
+      border-radius: 999px;
+      padding: 0.55rem 1.25rem;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s, transform 0.25s;
+      white-space: nowrap;
+    }
+
+    .toast.visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page-wrap">
+    <h1>Color Palette Tools</h1>
+    <p class="page-sub">Curated palettes, shade generator, and WCAG contrast checker — all in vanilla JS.</p>
+
+    <!-- ── Section 1: Palette display ── -->
+    <div class="section-label">Curated Palettes</div>
+    <div class="section-wrap">
+
+      <div class="palette-group">
+        <div class="palette-name">Emerald Dark</div>
+        <div class="palette-swatches" id="palette1"></div>
+      </div>
+
+      <div class="palette-group">
+        <div class="palette-name">Ocean Depths</div>
+        <div class="palette-swatches" id="palette2"></div>
+      </div>
+
+      <div class="palette-group">
+        <div class="palette-name">Warm Ember</div>
+        <div class="palette-swatches" id="palette3"></div>
+      </div>
+
+    </div>
+
+    <!-- ── Section 2: Shade generator ── -->
+    <div class="section-label">Shade Generator</div>
+    <div class="section-wrap">
+      <div class="shade-input-row">
+        <span class="shade-label">Base color:</span>
+        <input type="color" class="color-picker-input" id="shadePicker" value="#10B981">
+        <input type="text"  class="color-text-input"   id="shadeHexInput" value="#10B981" maxlength="7" placeholder="#RRGGBB">
+        <button class="btn-generate" id="btnGenerate">Generate</button>
+      </div>
+      <div class="shade-row" id="shadeRow"></div>
+    </div>
+
+    <!-- ── Section 3: Contrast checker ── -->
+    <div class="section-label">WCAG Contrast Checker</div>
+    <div class="section-wrap">
+      <div class="contrast-grid">
+        <div class="contrast-picker-group">
+          <div class="contrast-picker-label">Background color</div>
+          <div class="contrast-picker-row">
+            <input type="color" class="color-picker-input" id="contrastBg" value="#111827">
+            <input type="text"  class="color-text-input"   id="contrastBgText" value="#111827" maxlength="7">
+          </div>
+        </div>
+        <div class="contrast-picker-group">
+          <div class="contrast-picker-label">Text color</div>
+          <div class="contrast-picker-row">
+            <input type="color" class="color-picker-input" id="contrastFg" value="#F8FAFC">
+            <input type="text"  class="color-text-input"   id="contrastFgText" value="#F8FAFC" maxlength="7">
+          </div>
+        </div>
+      </div>
+      <div class="contrast-result">
+        <div class="contrast-preview" id="contrastPreview">
+          <span class="preview-large" id="previewLarge">Aa</span>
+          <span class="preview-small" id="previewSmall">The quick brown fox jumps over the lazy dog</span>
+        </div>
+        <div class="ratio-display">
+          <div class="ratio-number" id="ratioNumber">—</div>
+          <div class="ratio-label">Contrast ratio</div>
+        </div>
+        <div class="wcag-badges">
+          <div class="wcag-badge">
+            <span class="badge-label">AA Normal</span>
+            <span class="badge-result" id="aaSmall">—</span>
+          </div>
+          <div class="wcag-badge">
+            <span class="badge-label">AA Large</span>
+            <span class="badge-result" id="aaLarge">—</span>
+          </div>
+          <div class="wcag-badge">
+            <span class="badge-label">AAA Normal</span>
+            <span class="badge-result" id="aaaSmall">—</span>
+          </div>
+          <div class="wcag-badge">
+            <span class="badge-label">AAA Large</span>
+            <span class="badge-result" id="aaaLarge">—</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)"><polyline points="20 6 9 17 4 12"/></svg>
+    <span id="toastMsg">Copied!</span>
+  </div>
+
+  <script>
+    // ──────────────────────────────────────────────
+    // Color math — pure vanilla JS, no library
+    // ──────────────────────────────────────────────
+
+    // Parse a hex string (#RRGGBB or #RGB) → [r, g, b] (0–255)
+    function hexToRgb(hex) {
+      hex = hex.replace(/^#/, '');
+      if (hex.length === 3) hex = hex.split('').map(c => c+c).join('');
+      const n = parseInt(hex, 16);
+      return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+    }
+
+    // [r,g,b] → hex string
+    function rgbToHex(r, g, b) {
+      return '#' + [r,g,b].map(v => Math.round(Math.max(0, Math.min(255, v))).toString(16).padStart(2,'0')).join('').toUpperCase();
+    }
+
+    // [r,g,b] → [h(0-360), s(0-1), l(0-1)]
+    function rgbToHsl(r, g, b) {
+      r /= 255; g /= 255; b /= 255;
+      const max = Math.max(r,g,b), min = Math.min(r,g,b);
+      let h, s, l = (max + min) / 2;
+      if (max === min) { h = s = 0; }
+      else {
+        const d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        switch (max) {
+          case r: h = ((g-b)/d + (g<b?6:0)) / 6; break;
+          case g: h = ((b-r)/d + 2) / 6;          break;
+          default: h = ((r-g)/d + 4) / 6;
+        }
+      }
+      return [h * 360, s, l];
+    }
+
+    // [h(0-360), s(0-1), l(0-1)] → [r,g,b]
+    function hslToRgb(h, s, l) {
+      h /= 360;
+      const hue2rgb = (p, q, t) => {
+        if (t < 0) t += 1;
+        if (t > 1) t -= 1;
+        if (t < 1/6) return p + (q-p)*6*t;
+        if (t < 1/2) return q;
+        if (t < 2/3) return p + (q-p)*(2/3-t)*6;
+        return p;
+      };
+      if (s === 0) { const v = Math.round(l*255); return [v,v,v]; }
+      const q = l < 0.5 ? l*(1+s) : l+s-l*s;
+      const p = 2*l - q;
+      return [
+        Math.round(hue2rgb(p,q,h+1/3)*255),
+        Math.round(hue2rgb(p,q,h)*255),
+        Math.round(hue2rgb(p,q,h-1/3)*255),
+      ];
+    }
+
+    // Generate 10-step tint-to-shade scale from a base hex
+    // Steps: 50,100,200,...,900 (light → dark)
+    function generateShades(hex) {
+      const [r,g,b] = hexToRgb(hex);
+      const [h,s]   = rgbToHsl(r,g,b);
+      // Light values for each step
+      const lightValues = [0.97, 0.90, 0.80, 0.70, 0.58, 0.46, 0.35, 0.26, 0.18, 0.11];
+      return lightValues.map((l, i) => {
+        const label = i === 0 ? '50' : String(i * 100);
+        const rgb   = hslToRgb(h, s, l);
+        return { label, hex: rgbToHex(...rgb) };
+      });
+    }
+
+    // WCAG relative luminance of [r,g,b]
+    function relativeLuminance(r, g, b) {
+      const toLinear = c => {
+        c /= 255;
+        return c <= 0.04045 ? c/12.92 : Math.pow((c+0.055)/1.055, 2.4);
+      };
+      return 0.2126*toLinear(r) + 0.7152*toLinear(g) + 0.0722*toLinear(b);
+    }
+
+    // WCAG contrast ratio between two hex colors
+    function contrastRatio(hex1, hex2) {
+      const l1 = relativeLuminance(...hexToRgb(hex1));
+      const l2 = relativeLuminance(...hexToRgb(hex2));
+      const lighter = Math.max(l1, l2);
+      const darker  = Math.min(l1, l2);
+      return (lighter + 0.05) / (darker + 0.05);
+    }
+
+    // ── Toast ──
+    let toastTimer;
+    function showToast(msg) {
+      clearTimeout(toastTimer);
+      document.getElementById('toastMsg').textContent = msg;
+      document.getElementById('toast').classList.add('visible');
+      toastTimer = setTimeout(() => document.getElementById('toast').classList.remove('visible'), 1800);
+    }
+
+    // ── Copy to clipboard ──
+    function copyHex(hex, el) {
+      navigator.clipboard.writeText(hex).then(() => {
+        showToast(`Copied ${hex}`);
+        el.classList.add('copied');
+        setTimeout(() => el.classList.remove('copied'), 1500);
+      }).catch(() => showToast('Copy failed'));
+    }
+
+    // ── Determine if text on a colored bg should be white or black ──
+    function textOnColor(hex) {
+      const [r,g,b] = hexToRgb(hex);
+      return relativeLuminance(r,g,b) > 0.35 ? '#000' : '#fff';
+    }
+
+    // ── Build palette swatch ──
+    function buildSwatch(hex, container) {
+      const div = document.createElement('div');
+      div.className = 'swatch';
+      div.style.background = hex;
+      div.title = hex;
+      div.innerHTML = `<span class="swatch-copied">Copied!</span><span class="swatch-hex">${hex}</span>`;
+      div.querySelector('.swatch-hex').style.color = textOnColor(hex);
+      div.addEventListener('click', () => copyHex(hex, div));
+      container.appendChild(div);
+    }
+
+    // ── Palette data ──
+    const PALETTES = {
+      palette1: ['#022C22','#064E3B','#065F46','#047857','#059669','#10B981','#34D399','#6EE7B7','#A7F3D0','#ECFDF5'],
+      palette2: ['#0C1429','#0F2456','#1E3A8A','#1D4ED8','#2563EB','#3B82F6','#60A5FA','#93C5FD','#BAE6FD','#E0F2FE'],
+      palette3: ['#1C0700','#431407','#7C2D12','#9A3412','#C2410C','#EA580C','#F97316','#FB923C','#FDBA74','#FFF7ED'],
+    };
+
+    Object.entries(PALETTES).forEach(([id, swatches]) => {
+      const container = document.getElementById(id);
+      swatches.forEach(hex => buildSwatch(hex, container));
+    });
+
+    // ── Shade generator ──
+    function generateAndRender(hex) {
+      const shades  = generateShades(hex);
+      const row     = document.getElementById('shadeRow');
+      row.innerHTML = '';
+      shades.forEach(({ label, hex: shadeHex }) => {
+        const div = document.createElement('div');
+        div.className    = 'shade-swatch';
+        div.style.background = shadeHex;
+        div.innerHTML = `<span class="shade-label-num">${label}</span>`;
+        div.querySelector('.shade-label-num').style.color = textOnColor(shadeHex);
+        div.title = `${label}: ${shadeHex}`;
+        div.addEventListener('click', () => copyHex(shadeHex, div));
+        row.appendChild(div);
+      });
+    }
+
+    // Sync picker ↔ text input
+    const shadePicker   = document.getElementById('shadePicker');
+    const shadeHexInput = document.getElementById('shadeHexInput');
+
+    shadePicker.addEventListener('input', () => {
+      shadeHexInput.value = shadePicker.value.toUpperCase();
+      generateAndRender(shadePicker.value);
+    });
+
+    shadeHexInput.addEventListener('input', () => {
+      const val = shadeHexInput.value;
+      if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+        shadePicker.value = val;
+        generateAndRender(val);
+      }
+    });
+
+    document.getElementById('btnGenerate').addEventListener('click', () => {
+      generateAndRender(shadePicker.value);
+    });
+
+    // Initial generation
+    generateAndRender('#10B981');
+
+    // ── Contrast checker ──
+    function updateContrast() {
+      const bg = document.getElementById('contrastBg').value;
+      const fg = document.getElementById('contrastFg').value;
+
+      // Update preview
+      const preview = document.getElementById('contrastPreview');
+      preview.style.background = bg;
+      document.getElementById('previewLarge').style.color = fg;
+      document.getElementById('previewSmall').style.color = fg;
+
+      // Calculate ratio
+      const ratio = contrastRatio(bg, fg);
+      document.getElementById('ratioNumber').textContent = ratio.toFixed(2) + ':1';
+
+      // Color ratio number by quality
+      const ratioEl = document.getElementById('ratioNumber');
+      ratioEl.style.color = ratio >= 7 ? '#10B981' : ratio >= 4.5 ? '#FBBF24' : '#EF4444';
+
+      // WCAG pass/fail
+      function badge(pass) {
+        return `<span class="badge-result ${pass ? 'pass' : 'fail'}">${pass ? '✓ Pass' : '✗ Fail'}</span>`;
+      }
+
+      document.getElementById('aaSmall').outerHTML  = badge(ratio >= 4.5).replace('badge-result', 'badge-result" id="aaSmall');
+      document.getElementById('aaLarge').outerHTML  = badge(ratio >= 3.0).replace('badge-result', 'badge-result" id="aaLarge');
+      document.getElementById('aaaSmall').outerHTML = badge(ratio >= 7.0).replace('badge-result', 'badge-result" id="aaaSmall');
+      document.getElementById('aaaLarge').outerHTML = badge(ratio >= 4.5).replace('badge-result', 'badge-result" id="aaaLarge');
+    }
+
+    // Sync pickers ↔ text inputs for contrast checker
+    function syncContrast(pickerId, textId) {
+      const picker = document.getElementById(pickerId);
+      const text   = document.getElementById(textId);
+      picker.addEventListener('input', () => { text.value = picker.value.toUpperCase(); updateContrast(); });
+      text.addEventListener('input', () => {
+        if (/^#[0-9A-Fa-f]{6}$/.test(text.value)) {
+          picker.value = text.value;
+          updateContrast();
+        }
+      });
+    }
+
+    syncContrast('contrastBg', 'contrastBgText');
+    syncContrast('contrastFg', 'contrastFgText');
+    updateContrast();
+  </script>
+</body>
+</html>

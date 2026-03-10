@@ -1,0 +1,314 @@
+<!-- COMPONENT: Floating Navigation Pill | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Floating Navigation Pill</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ── Customize ── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.2);
+      --accent-border:  rgba(16,185,129,0.35);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+    }
+
+    /* ── Page sections — each 100vh for scroll demo ── */
+    .section {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 4rem 1.5rem;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section:nth-child(odd)  { background: var(--bg); }
+    .section:nth-child(even) { background: var(--surface); }
+
+    .section-eyebrow {
+      font-size: 0.75rem;
+      font-family: ui-monospace, monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      margin-bottom: 1rem;
+    }
+
+    .section h2 {
+      font-family: var(--font-heading);
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 700;
+      line-height: 1.1;
+      max-width: 700px;
+      margin-bottom: 1.25rem;
+    }
+
+    .section p {
+      color: var(--text-secondary);
+      font-size: 1.0625rem;
+      max-width: 560px;
+      line-height: 1.7;
+    }
+
+    /* ── Floating Nav Pill ── */
+    .fnp {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(0);
+      z-index: 1000;
+      transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                  opacity  0.35s;
+    }
+
+    /* Hidden state — slides down off screen */
+    .fnp.hidden {
+      transform: translateX(-50%) translateY(120px);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* The pill capsule */
+    .fnp-inner {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      background: rgba(17, 24, 39, 0.92);
+      border: 1px solid rgba(148,163,184,0.18);
+      border-radius: 100px;
+      padding: 5px;
+      backdrop-filter: blur(16px) saturate(180%);
+      -webkit-backdrop-filter: blur(16px) saturate(180%);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3);
+      position: relative;
+    }
+
+    /* Sliding active indicator — absolutely positioned behind active item */
+    .fnp-indicator {
+      position: absolute;
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-border);
+      border-radius: 100px;
+      transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                  width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                  top 0.3s, height 0.3s;
+      pointer-events: none;
+    }
+
+    /* Nav item button */
+    .fnp-item {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.5rem 0.75rem;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      border-radius: 100px;
+      cursor: pointer;
+      font-family: var(--font-body);
+      font-size: 0.8125rem;
+      font-weight: 500;
+      transition: color 0.2s;
+      position: relative;
+      z-index: 1;
+      white-space: nowrap;
+      /* Touch target — minimum 44px height */
+      min-height: 44px;
+    }
+
+    .fnp-item svg { flex-shrink: 0; transition: color 0.2s; }
+
+    /* Active item label styling */
+    .fnp-item.active { color: var(--accent); }
+
+    /* Label hidden on smallest screens, visible on desktop */
+    .fnp-label { display: none; }
+
+    @media (min-width: 480px) { .fnp-label { display: inline; } }
+
+    /* Expanded state (hover on desktop) — labels always visible */
+    .fnp:hover .fnp-label { display: inline; }
+  </style>
+</head>
+<body>
+
+  <!-- ── 5 Demo Sections ── -->
+  <section class="section" id="sec-home">
+    <div class="section-eyebrow">Section 01</div>
+    <h2>Welcome to the Experience</h2>
+    <p>Scroll down to see the floating pill nav hide when scrolling down and reappear when scrolling up. The active indicator tracks your position.</p>
+  </section>
+
+  <section class="section" id="sec-work">
+    <div class="section-eyebrow">Section 02</div>
+    <h2>Our Work</h2>
+    <p>A curated selection of projects that demonstrate craft, intention, and measurable outcomes across digital product design and development.</p>
+  </section>
+
+  <section class="section" id="sec-about">
+    <div class="section-eyebrow">Section 03</div>
+    <h2>About the Studio</h2>
+    <p>We are a small, focused team of designers and engineers who believe great software should feel effortless to the people who use it every day.</p>
+  </section>
+
+  <section class="section" id="sec-blog">
+    <div class="section-eyebrow">Section 04</div>
+    <h2>Writing &amp; Thinking</h2>
+    <p>Occasional long-form pieces on design systems, web performance, and the intersection of craft and commerce.</p>
+  </section>
+
+  <section class="section" id="sec-contact">
+    <div class="section-eyebrow">Section 05</div>
+    <h2>Start a Conversation</h2>
+    <p>We take on a small number of new clients each quarter. If you have something interesting to build, we would love to hear about it.</p>
+  </section>
+
+  <!-- ── Floating Nav Pill ── -->
+  <nav class="fnp" id="fnp" aria-label="Page navigation">
+    <div class="fnp-inner" id="fnp-inner">
+      <!-- Active slide indicator — sized and positioned by JS -->
+      <div class="fnp-indicator" id="fnp-indicator"></div>
+
+      <button class="fnp-item active" data-target="sec-home" onclick="navTo('sec-home')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span class="fnp-label">Home</span>
+      </button>
+
+      <button class="fnp-item" data-target="sec-work" onclick="navTo('sec-work')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+        <span class="fnp-label">Work</span>
+      </button>
+
+      <button class="fnp-item" data-target="sec-about" onclick="navTo('sec-about')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>
+        <span class="fnp-label">About</span>
+      </button>
+
+      <button class="fnp-item" data-target="sec-blog" onclick="navTo('sec-blog')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        <span class="fnp-label">Blog</span>
+      </button>
+
+      <button class="fnp-item" data-target="sec-contact" onclick="navTo('sec-contact')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        <span class="fnp-label">Contact</span>
+      </button>
+    </div>
+  </nav>
+
+  <script>
+    /* ── Scroll hide/show behavior ── */
+    var lastScrollY = window.scrollY;
+    var pill = document.getElementById('fnp');
+    var ticking = false;
+
+    window.addEventListener('scroll', function() {
+      if (!ticking) {
+        requestAnimationFrame(function() {
+          var current = window.scrollY;
+          /* Hide when scrolling down > 50px from top, show when scrolling up */
+          if (current > lastScrollY && current > 50) {
+            pill.classList.add('hidden');
+          } else {
+            pill.classList.remove('hidden');
+          }
+          lastScrollY = current;
+          ticking = false;
+        });
+        ticking = true;
+      }
+    });
+
+    /* ── Active section detection via IntersectionObserver ── */
+    var sections = ['sec-home', 'sec-work', 'sec-about', 'sec-blog', 'sec-contact'];
+    var activeSection = 'sec-home';
+
+    var io = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          setActive(entry.target.id);
+        }
+      });
+    }, {
+      threshold: 0.45 /* Section must be 45% visible to be "active" */
+    });
+
+    sections.forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) io.observe(el);
+    });
+
+    function setActive(id) {
+      if (id === activeSection) return;
+      activeSection = id;
+
+      document.querySelectorAll('.fnp-item').forEach(function(btn) {
+        var isActive = btn.dataset.target === id;
+        btn.classList.toggle('active', isActive);
+      });
+
+      moveIndicator();
+    }
+
+    /* ── Slide the indicator to the active button ── */
+    function moveIndicator() {
+      var activeBtn = document.querySelector('.fnp-item.active');
+      var indicator = document.getElementById('fnp-indicator');
+      var inner     = document.getElementById('fnp-inner');
+
+      if (!activeBtn || !indicator) return;
+
+      var btnRect   = activeBtn.getBoundingClientRect();
+      var innerRect = inner.getBoundingClientRect();
+
+      indicator.style.left   = (btnRect.left - innerRect.left) + 'px';
+      indicator.style.top    = (btnRect.top  - innerRect.top)  + 'px';
+      indicator.style.width  = btnRect.width  + 'px';
+      indicator.style.height = btnRect.height + 'px';
+    }
+
+    /* ── Click to scroll to section ── */
+    function navTo(id) {
+      var el = document.getElementById(id);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setActive(id);
+    }
+
+    /* ── Initialize indicator position on load ── */
+    /* Use rAF to ensure layout is settled before reading getBoundingClientRect */
+    requestAnimationFrame(function() {
+      requestAnimationFrame(moveIndicator);
+    });
+
+    /* Re-position indicator on window resize */
+    window.addEventListener('resize', moveIndicator);
+  </script>
+</body>
+</html>

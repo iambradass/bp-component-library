@@ -1,0 +1,402 @@
+<!-- COMPONENT: Progress Tracker | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Goal & Habit Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      /* ── CUSTOMIZE ── */
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      padding: 3rem 1.5rem 5rem;
+    }
+
+    .wrap { max-width: 960px; margin: 0 auto; }
+
+    .page-header { text-align: center; margin-bottom: 2.5rem; }
+    .page-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 0.7rem; font-weight: 600; color: var(--accent);
+      text-transform: uppercase; letter-spacing: 0.1em;
+      padding: 4px 12px; background: var(--accent-dim);
+      border: 1px solid var(--accent-border); border-radius: 100px; margin-bottom: 1.25rem;
+    }
+    h1 { font-family: var(--font-heading); font-size: clamp(1.75rem,4vw,2.5rem); font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.75rem; }
+    .page-sub { color: var(--text-secondary); font-size: 0.95rem; line-height: 1.6; }
+
+    .section-label {
+      font-size: 0.7rem; font-weight: 600; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.12em;
+      margin-bottom: 1.25rem;
+    }
+    .mb4 { margin-bottom: 3rem; }
+
+    /* ── Motivational message ── */
+    .motivation-bar {
+      background: var(--surface);
+      border: 1px solid var(--accent-border);
+      border-radius: 10px;
+      padding: 1rem 1.5rem;
+      display: flex; align-items: center; gap: 0.875rem;
+      margin-bottom: 2rem;
+    }
+    .motivation-emoji { font-size: 1.5rem; }
+    .motivation-text {
+      font-family: var(--font-heading); font-size: 1rem; font-weight: 600;
+      color: var(--accent);
+    }
+    .motivation-sub { font-size: 0.8rem; color: var(--text-muted); }
+    .completion-pill {
+      margin-left: auto;
+      font-family: var(--font-heading); font-size: 0.85rem; font-weight: 700;
+      color: var(--accent);
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-border);
+      padding: 4px 12px; border-radius: 100px;
+    }
+
+    /* ── SECTION 1: Habit Grid ── */
+    .habit-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 3rem;
+    }
+
+    .habit-header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .habit-header-left { display: flex; align-items: center; gap: 0.625rem; }
+    .habit-header-title { font-family: var(--font-heading); font-weight: 700; font-size: 1rem; }
+
+    /* Day column labels */
+    .habit-day-labels {
+      display: grid;
+      grid-template-columns: 2.5rem 1.75rem 1fr repeat(7, 36px) 64px;
+      gap: 0.5rem;
+      align-items: center;
+      padding: 0.625rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .day-label-text { font-size: 0.65rem; color: var(--text-muted); text-align: center; font-weight: 600; }
+
+    /* Each habit row */
+    .habit-row {
+      display: grid;
+      grid-template-columns: 2.5rem 1.75rem 1fr repeat(7, 36px) 64px;
+      gap: 0.5rem;
+      align-items: center;
+      padding: 0.625rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s;
+    }
+    .habit-row:last-child { border-bottom: none; }
+    .habit-row:hover { background: var(--elevated); }
+
+    .habit-emoji { font-size: 1.1rem; text-align: center; }
+    .habit-name  { font-size: 0.85rem; font-weight: 500; color: var(--text); }
+
+    /* Day circle — click to toggle */
+    .day-circle {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      background: transparent;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s, transform 0.15s;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .day-circle:hover { border-color: var(--accent-border); transform: scale(1.1); }
+    .day-circle.done  {
+      background: var(--accent);
+      border-color: var(--accent);
+      animation: pop 0.25s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    @keyframes pop { 0% { transform: scale(0.7); } 100% { transform: scale(1); } }
+    .day-circle.done svg { display: block; }
+    .day-circle svg { display: none; }
+
+    .streak-pill {
+      font-family: var(--font-heading); font-size: 0.75rem; font-weight: 700;
+      padding: 3px 10px; border-radius: 100px;
+      background: var(--elevated); color: var(--text-muted);
+      text-align: center; white-space: nowrap;
+    }
+    .streak-pill.hot { background: rgba(251,191,36,0.15); color: #FBBF24; border: 1px solid rgba(251,191,36,0.3); }
+
+    @media (max-width: 600px) {
+      .habit-day-labels, .habit-row {
+        grid-template-columns: 1.5rem 1fr repeat(7, 28px) 52px;
+        padding: 0.625rem 1rem;
+        gap: 0.3rem;
+      }
+      .day-circle { width: 26px; height: 26px; }
+    }
+
+    /* ── SECTION 2: Goal Progress Rings ── */
+    .goals-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 3rem;
+    }
+    @media (max-width: 680px) { .goals-grid { grid-template-columns: repeat(2, 1fr); } }
+
+    .goal-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem 1rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s, transform 0.15s;
+      display: flex; flex-direction: column; align-items: center; gap: 0.875rem;
+    }
+    .goal-card:hover { border-color: var(--accent-border); background: var(--elevated); transform: translateY(-2px); }
+    .goal-card:active { transform: scale(0.97); }
+
+    /* SVG ring */
+    .ring-wrap { position: relative; width: 88px; height: 88px; }
+    .ring-svg { transform: rotate(-90deg); }
+    .ring-bg   { fill: none; stroke: var(--elevated); stroke-width: 8; }
+    .ring-fill {
+      fill: none; stroke: var(--accent); stroke-width: 8;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 0.6s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .ring-value {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .ring-number { font-family: var(--font-heading); font-size: 1.1rem; font-weight: 700; line-height: 1; color: var(--text); }
+    .ring-denom  { font-size: 0.65rem; color: var(--text-muted); }
+
+    .goal-name { font-family: var(--font-heading); font-size: 0.85rem; font-weight: 700; color: var(--text); }
+    .goal-meta { font-size: 0.72rem; color: var(--text-muted); }
+    .goal-hint { font-size: 0.68rem; color: var(--accent); }
+  </style>
+</head>
+<body>
+
+  <div class="wrap">
+    <header class="page-header">
+      <div class="page-eyebrow">Dashboard</div>
+      <h1>Goal &amp; Habit Tracker</h1>
+      <p class="page-sub">Click day circles to mark habits complete. Click goal rings to increment progress. Streaks and messages update live.</p>
+    </header>
+
+    <!-- Motivational message -->
+    <div class="motivation-bar" id="motivationBar">
+      <span class="motivation-emoji" id="motivationEmoji">🌟</span>
+      <div>
+        <div class="motivation-text" id="motivationText">Start tracking your week!</div>
+        <div class="motivation-sub" id="motivationSub">Click the day circles to log completed habits</div>
+      </div>
+      <div class="completion-pill" id="completionPill">0%</div>
+    </div>
+
+    <!-- Section 1: Weekly habit grid -->
+    <div class="section-label mb4" style="margin-bottom:0.75rem;">01 — Weekly Habit Grid</div>
+    <div class="habit-card mb4">
+
+      <div class="habit-header">
+        <div class="habit-header-left">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+          <span class="habit-header-title">This Week's Habits</span>
+        </div>
+        <span style="font-size:0.75rem;color:var(--text-muted);">Week of Mar 3–9, 2026</span>
+      </div>
+
+      <!-- Day labels -->
+      <div class="habit-day-labels">
+        <span></span><span></span><span></span>
+        <span class="day-label-text">Mon</span>
+        <span class="day-label-text">Tue</span>
+        <span class="day-label-text">Wed</span>
+        <span class="day-label-text">Thu</span>
+        <span class="day-label-text">Fri</span>
+        <span class="day-label-text">Sat</span>
+        <span class="day-label-text">Sun</span>
+        <span class="day-label-text">Streak</span>
+      </div>
+
+      <!-- Habit rows — rendered by JS -->
+      <div id="habitRows"></div>
+
+    </div><!-- /habit-card -->
+
+    <!-- Section 2: Goal progress rings -->
+    <div class="section-label" style="margin-bottom:1rem;">02 — Goal Progress (click to increment)</div>
+    <div class="goals-grid" id="goalsGrid">
+      <!-- Populated by JS -->
+    </div>
+
+  </div><!-- /wrap -->
+
+  <script>
+    /* ─────────────────────────────────────────────
+       HABIT TRACKER + GOAL RINGS
+    ───────────────────────────────────────────── */
+
+    /* ── Habit data ── */
+    const habits = [
+      { emoji: '🏃', name: 'Morning Run',      days: [true, true, false, false, false, false, false] },
+      { emoji: '📚', name: 'Read 30 mins',     days: [true, true, true, false, false, false, false] },
+      { emoji: '💧', name: 'Drink 2L Water',   days: [true, true, true, true, false, false, false] },
+      { emoji: '🧘', name: 'Meditate',         days: [true, false, true, false, false, false, false] },
+      { emoji: '✍️', name: 'Journaling',       days: [true, true, true, true, true, false, false] },
+      { emoji: '💪', name: 'Strength Training',days: [false, true, false, true, false, false, false] },
+    ];
+
+    /* ── Build habit rows ── */
+    function streakCount(days) {
+      let s = 0;
+      for (let i = 0; i < days.length; i++) { if (days[i]) s++; else break; }
+      return s;
+    }
+
+    function renderHabits() {
+      const container = document.getElementById('habitRows');
+      container.innerHTML = habits.map((h, hi) => {
+        const streak = streakCount(h.days);
+        const streakClass = streak >= 4 ? 'hot' : '';
+
+        const circles = h.days.map((done, di) => `
+          <button class="day-circle ${done ? 'done' : ''}" data-habit="${hi}" data-day="${di}" onclick="toggleDay(this, ${hi}, ${di})" aria-label="Toggle day ${di+1}" title="${done ? 'Mark incomplete' : 'Mark complete'}">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </button>
+        `).join('');
+
+        return `
+          <div class="habit-row">
+            <span class="habit-emoji">${h.emoji}</span>
+            <span></span>
+            <span class="habit-name">${h.name}</span>
+            ${circles}
+            <span class="streak-pill ${streakClass}" id="streak-${hi}">${streak > 0 ? '🔥 ' + streak + 'd' : '—'}</span>
+          </div>
+        `;
+      }).join('');
+
+      updateMotivation();
+    }
+
+    function toggleDay(btn, habitIdx, dayIdx) {
+      habits[habitIdx].days[dayIdx] = !habits[habitIdx].days[dayIdx];
+      btn.classList.toggle('done', habits[habitIdx].days[dayIdx]);
+
+      // Update streak for this habit
+      const streak = streakCount(habits[habitIdx].days);
+      const pill = document.getElementById('streak-' + habitIdx);
+      pill.textContent = streak > 0 ? '🔥 ' + streak + 'd' : '—';
+      pill.className = 'streak-pill' + (streak >= 4 ? ' hot' : '');
+
+      updateMotivation();
+    }
+
+    function updateMotivation() {
+      const total    = habits.length * 7;
+      const done     = habits.reduce((sum, h) => sum + h.days.filter(Boolean).length, 0);
+      const pct      = Math.round((done / total) * 100);
+
+      document.getElementById('completionPill').textContent = pct + '%';
+
+      let emoji, text, sub;
+      if (pct === 0)       { emoji = '🌟'; text = 'Start tracking your week!'; sub = 'Click the day circles to log completed habits'; }
+      else if (pct < 25)   { emoji = '👋'; text = "You've started!"; sub = 'Building momentum — keep it going'; }
+      else if (pct < 50)   { emoji = '💪'; text = 'Keep going!'; sub = "You're building real consistency"; }
+      else if (pct < 75)   { emoji = '🔥'; text = "You're on fire!"; sub = "More than halfway — don't stop now"; }
+      else if (pct < 100)  { emoji = '🚀'; text = "You're crushing it!"; sub = 'Almost a perfect week — push through!'; }
+      else                 { emoji = '🏆'; text = 'Perfect week!'; sub = 'Every single habit completed — incredible!'; }
+
+      document.getElementById('motivationEmoji').textContent = emoji;
+      document.getElementById('motivationText').textContent  = text;
+      document.getElementById('motivationSub').textContent   = sub;
+    }
+
+    /* ── Goal rings ── */
+    const goals = [
+      { name: 'Weekly Exercise', icon: '🏋️', current: 3, target: 5, unit: 'sessions' },
+      { name: 'Books Read',      icon: '📖', current: 4, target: 12, unit: 'this year' },
+      { name: 'Projects Done',   icon: '✅', current: 7, target: 10, unit: 'this quarter' },
+      { name: 'Revenue Goal',    icon: '💰', current: 62, target: 100, unit: '% of $10K goal' },
+    ];
+
+    const CIRCUMFERENCE = 2 * Math.PI * 36; // r=36, circumference ≈ 226
+
+    function renderGoals() {
+      const grid = document.getElementById('goalsGrid');
+      grid.innerHTML = goals.map((g, i) => {
+        const pct    = Math.min(g.current / g.target, 1);
+        const offset = CIRCUMFERENCE * (1 - pct);
+
+        return `
+          <div class="goal-card" onclick="incrementGoal(${i})">
+            <div class="ring-wrap">
+              <svg class="ring-svg" width="88" height="88" viewBox="0 0 88 88">
+                <circle class="ring-bg"   cx="44" cy="44" r="36"/>
+                <circle class="ring-fill" cx="44" cy="44" r="36"
+                  stroke-dasharray="${CIRCUMFERENCE}"
+                  stroke-dashoffset="${offset}"
+                  id="ring-fill-${i}"/>
+              </svg>
+              <div class="ring-value">
+                <span class="ring-number" id="ring-num-${i}">${g.current}</span>
+                <span class="ring-denom">/ ${g.target}</span>
+              </div>
+            </div>
+            <div class="goal-name">${g.icon} ${g.name}</div>
+            <div class="goal-meta">${g.unit}</div>
+            <div class="goal-hint">Click to increment +1</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function incrementGoal(i) {
+      if (goals[i].current >= goals[i].target) return;
+      goals[i].current++;
+
+      const pct    = Math.min(goals[i].current / goals[i].target, 1);
+      const offset = CIRCUMFERENCE * (1 - pct);
+
+      document.getElementById('ring-fill-' + i).style.strokeDashoffset = offset;
+      document.getElementById('ring-num-'  + i).textContent            = goals[i].current;
+    }
+
+    /* ── Init ── */
+    renderHabits();
+    renderGoals();
+  </script>
+</body>
+</html>

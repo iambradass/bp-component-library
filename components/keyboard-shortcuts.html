@@ -1,0 +1,537 @@
+<!-- COMPONENT: Keyboard Shortcut Help Modal | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Keyboard Shortcuts</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ── Customize ── */
+    :root {
+      --bg:            #0D1117;
+      --surface:       #111827;
+      --elevated:      #1E293B;
+      --accent:        #10B981;
+      --accent-dim:    rgba(16,185,129,0.15);
+      --accent-border: rgba(16,185,129,0.3);
+      --border:        rgba(148,163,184,0.1);
+      --text:          #F8FAFC;
+      --text-secondary:#94A3B8;
+      --text-muted:    #475569;
+      --radius:        12px;
+      --font-heading:  'Space Grotesk', sans-serif;
+      --font-body:     'Inter', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1.5rem;
+    }
+
+    /* ── Demo page ── */
+    .demo-center {
+      text-align: center;
+      max-width: 500px;
+    }
+
+    .demo-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-border);
+      border-radius: 999px;
+      padding: 0.3rem 0.9rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--accent);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 1.25rem;
+    }
+
+    h1 {
+      font-family: var(--font-heading);
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+
+    .demo-sub {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 2rem;
+    }
+
+    .hint-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-bottom: 1.5rem;
+    }
+
+    /* Trigger button */
+    .open-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text-secondary);
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      font-weight: 500;
+      padding: 0.65rem 1.25rem;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .open-btn:hover { border-color: var(--accent-border); color: var(--text); }
+
+    /* ── kbd key styling ── Physical key cap look ── */
+    kbd {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--elevated);
+      border: 1px solid rgba(148,163,184,0.2);
+      border-bottom: 2px solid rgba(148,163,184,0.35);
+      border-radius: 6px;
+      font-family: ui-monospace, 'Cascadia Code', monospace;
+      font-size: 0.72rem;
+      font-weight: 500;
+      padding: 0.2rem 0.5rem;
+      color: var(--text);
+      white-space: nowrap;
+      min-width: 24px;
+      text-align: center;
+    }
+
+    .kbd-combo {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .kbd-plus {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+    }
+
+    /* ── Modal overlay ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: rgba(0,0,0,0.75);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s;
+    }
+
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .modal-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      width: 100%;
+      max-width: 680px;
+      max-height: 88vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+      transform: scale(0.96) translateY(8px);
+      transition: transform 0.25s;
+    }
+
+    .modal-overlay.open .modal-box {
+      transform: scale(1) translateY(0);
+    }
+
+    /* Modal header */
+    .modal-header {
+      padding: 1.5rem 1.5rem 1rem;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .modal-header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .modal-title {
+      font-family: var(--font-heading);
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .os-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      padding: 0.2rem 0.6rem;
+      font-family: ui-monospace, monospace;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 0.35rem;
+      border-radius: 6px;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+    }
+    .modal-close:hover { background: var(--elevated); color: var(--text); }
+
+    /* Search input */
+    .search-wrap {
+      position: relative;
+    }
+
+    .search-wrap svg {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    .shortcut-search {
+      width: 100%;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.6rem 0.75rem 0.6rem 2.25rem;
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 0.875rem;
+      outline: none;
+    }
+
+    .shortcut-search:focus { border-color: var(--accent-border); }
+    .shortcut-search::placeholder { color: var(--text-muted); }
+
+    /* Modal body — scrollable */
+    .modal-body {
+      overflow-y: auto;
+      padding: 0.75rem 1.5rem 1.5rem;
+      flex: 1;
+    }
+
+    /* Section */
+    .shortcut-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .shortcut-section:last-child { margin-bottom: 0; }
+
+    .section-heading {
+      font-family: var(--font-heading);
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin: 1.25rem 0 0.6rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .section-heading::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* Shortcuts grid — 2 columns */
+    .shortcuts-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.35rem;
+    }
+
+    @media (max-width: 480px) {
+      .shortcuts-grid { grid-template-columns: 1fr; }
+    }
+
+    .shortcut-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: 0.5rem 0.6rem;
+      border-radius: 8px;
+      transition: background 0.12s;
+    }
+
+    .shortcut-row:hover { background: var(--elevated); }
+
+    .shortcut-row.hidden-row { display: none; }
+
+    .shortcut-desc {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      flex: 1;
+    }
+
+    .shortcut-keys {
+      display: flex;
+      gap: 0.25rem;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    /* No results state */
+    .no-results {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Demo page content -->
+  <div class="demo-center">
+    <div class="demo-eyebrow">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.001M10 8h.001M14 8h.001M18 8h.001M8 12h.001M12 12h.001M16 12h.001M7 16h10"/></svg>
+      Keyboard Shortcuts
+    </div>
+    <h1>Every shortcut at your fingertips</h1>
+    <p class="demo-sub">Press <kbd>?</kbd> anywhere on this page to open the shortcut reference. Detects your OS and shows the right modifier keys.</p>
+
+    <div class="hint-row">
+      Press
+      <kbd>?</kbd>
+      to open
+    </div>
+
+    <button class="open-btn" id="openModalBtn">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.001M10 8h.001M14 8h.001M18 8h.001M8 12h.001M12 12h.001M16 12h.001M7 16h10"/></svg>
+      Keyboard Shortcuts
+    </button>
+  </div>
+
+  <!-- ── Shortcuts Modal ── -->
+  <div class="modal-overlay" id="shortcutModal" role="dialog" aria-modal="true" aria-label="Keyboard shortcuts reference">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-header-top">
+          <div class="modal-title">Keyboard Shortcuts</div>
+          <div style="display:flex;align-items:center;gap:0.5rem">
+            <span class="os-badge" id="osBadge"></span>
+            <button class="modal-close" id="closeModal" aria-label="Close">✕</button>
+          </div>
+        </div>
+        <div class="search-wrap">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input class="shortcut-search" id="shortcutSearch" type="text" placeholder="Filter shortcuts...">
+        </div>
+      </div>
+      <div class="modal-body" id="modalBody">
+        <!-- Sections generated by JS -->
+        <div class="no-results" id="noResults">No shortcuts match your search</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ── OS Detection ──
+    // Detect macOS to show ⌘ instead of Ctrl
+    const isMac = /Mac|iPhone|iPad/.test(navigator.userAgent) || navigator.platform?.startsWith('Mac');
+    const MOD   = isMac ? '⌘' : 'Ctrl';
+    const ALT   = isMac ? '⌥' : 'Alt';
+    const SHIFT = '⇧';
+
+    // ── Shortcut Data ──
+    // Format: { desc, keys: [ [kbd1, kbd2?], ... ] }
+    // Each keys entry is a separate key combination shown side-by-side with +
+    const SECTIONS = [
+      {
+        name: 'Navigation',
+        icon: '🧭',
+        shortcuts: [
+          { desc: 'Go to Home',           keys: [['G'], ['H']] },
+          { desc: 'Go to Search',         keys: [[MOD, 'K']] },
+          { desc: 'Go to Settings',       keys: [['G'], ['S']] },
+          { desc: 'Go back',              keys: [['Alt', '←']] },
+          { desc: 'Open command palette', keys: [[MOD, 'P']] },
+          { desc: 'New tab',              keys: [[MOD, 'T']] },
+        ]
+      },
+      {
+        name: 'Actions',
+        icon: '⚡',
+        shortcuts: [
+          { desc: 'Save',                 keys: [[MOD, 'S']] },
+          { desc: 'Undo',                 keys: [[MOD, 'Z']] },
+          { desc: 'Redo',                 keys: [[MOD, SHIFT, 'Z']] },
+          { desc: 'Copy',                 keys: [[MOD, 'C']] },
+          { desc: 'Cut',                  keys: [[MOD, 'X']] },
+          { desc: 'Paste',                keys: [[MOD, 'V']] },
+          { desc: 'Select all',           keys: [[MOD, 'A']] },
+          { desc: 'Find & replace',       keys: [[MOD, 'H']] },
+        ]
+      },
+      {
+        name: 'View',
+        icon: '👁',
+        shortcuts: [
+          { desc: 'Toggle sidebar',       keys: [[MOD, 'B']] },
+          { desc: 'Zoom in',              keys: [[MOD, '+']] },
+          { desc: 'Zoom out',             keys: [[MOD, '-']] },
+          { desc: 'Reset zoom',           keys: [[MOD, '0']] },
+          { desc: 'Toggle dark mode',     keys: [[MOD, SHIFT, 'L']] },
+          { desc: 'Full screen',          keys: [['F11']] },
+          { desc: 'Show shortcuts (this)', keys: [['?']] },
+        ]
+      },
+      {
+        name: 'Text Editing',
+        icon: '✏️',
+        shortcuts: [
+          { desc: 'Bold',                 keys: [[MOD, 'B']] },
+          { desc: 'Italic',               keys: [[MOD, 'I']] },
+          { desc: 'Underline',            keys: [[MOD, 'U']] },
+          { desc: 'Heading 1',            keys: [[MOD, ALT, '1']] },
+          { desc: 'Heading 2',            keys: [[MOD, ALT, '2']] },
+          { desc: 'Code block',           keys: [[MOD, SHIFT, 'C']] },
+          { desc: 'Strikethrough',        keys: [[MOD, SHIFT, 'S']] },
+        ]
+      },
+    ];
+
+    // ── Build modal body ──
+    function buildShortcuts() {
+      const body = document.getElementById('modalBody');
+      // Clear existing content except no-results
+      body.querySelectorAll('.shortcut-section').forEach(s => s.remove());
+
+      SECTIONS.forEach(section => {
+        const sec = document.createElement('div');
+        sec.className = 'shortcut-section';
+        sec.innerHTML = `<div class="section-heading">${section.icon} ${section.name}</div>`;
+
+        const grid = document.createElement('div');
+        grid.className = 'shortcuts-grid';
+
+        section.shortcuts.forEach(sc => {
+          const row = document.createElement('div');
+          row.className = 'shortcut-row';
+          row.dataset.desc = sc.desc.toLowerCase();
+
+          // Build keys HTML
+          const keysHtml = sc.keys.map(combo =>
+            combo.map((k, i) => {
+              const spacer = i > 0 ? `<span class="kbd-plus">+</span>` : '';
+              return `${spacer}<kbd>${k}</kbd>`;
+            }).join('')
+          ).join('&nbsp;');
+
+          row.innerHTML = `
+            <span class="shortcut-desc">${sc.desc}</span>
+            <span class="shortcut-keys">${keysHtml}</span>
+          `;
+
+          grid.appendChild(row);
+        });
+
+        sec.appendChild(grid);
+        body.insertBefore(sec, document.getElementById('noResults'));
+      });
+    }
+
+    // ── Search/filter ──
+    document.getElementById('shortcutSearch').addEventListener('input', function() {
+      const query = this.value.toLowerCase().trim();
+      let anyVisible = false;
+
+      document.querySelectorAll('.shortcut-row').forEach(row => {
+        const match = !query || row.dataset.desc.includes(query);
+        row.classList.toggle('hidden-row', !match);
+        if (match) anyVisible = true;
+      });
+
+      // Hide empty sections
+      document.querySelectorAll('.shortcut-section').forEach(sec => {
+        const visibleRows = sec.querySelectorAll('.shortcut-row:not(.hidden-row)');
+        sec.style.display = visibleRows.length ? '' : 'none';
+      });
+
+      document.getElementById('noResults').style.display = anyVisible ? 'none' : 'block';
+    });
+
+    // ── Modal open/close ──
+    const modal = document.getElementById('shortcutModal');
+
+    function openModal() {
+      modal.classList.add('open');
+      document.getElementById('shortcutSearch').value = '';
+      // Reset search state
+      document.querySelectorAll('.shortcut-row').forEach(r => r.classList.remove('hidden-row'));
+      document.querySelectorAll('.shortcut-section').forEach(s => s.style.display = '');
+      document.getElementById('noResults').style.display = 'none';
+      setTimeout(() => document.getElementById('shortcutSearch').focus(), 100);
+    }
+
+    function closeModal() { modal.classList.remove('open'); }
+
+    document.getElementById('openModalBtn').addEventListener('click', openModal);
+    document.getElementById('closeModal').addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
+    // Press ? to open, Escape to close
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)) return;
+      if (e.key === '?' || (e.key === '/' && e.shiftKey)) { e.preventDefault(); openModal(); }
+      if (e.key === 'Escape') closeModal();
+    });
+
+    // ── OS badge ──
+    document.getElementById('osBadge').textContent = isMac ? '⌘ macOS' : 'Ctrl Windows/Linux';
+
+    // ── Init ──
+    buildShortcuts();
+  </script>
+</body>
+</html>

@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Animated Stats Counter — Component Library</title>
+
+  <!--
+  ============================================================
+  COMPONENT: Animated Stats Counter
+  COPY: <style> block + HTML block + <script> block into target site
+  EFFECT: Large numbers count up when scrolled into view (IntersectionObserver).
+  SUPPORTS: Prefix ($), suffix (+, %, x, M), decimal values.
+  DATA ATTRIBUTES on each .sc-stat:
+    data-target  — final number (use decimal point if needed, e.g. "2.4")
+    data-prefix  — text before the number, e.g. "$"
+    data-suffix  — text after the number, e.g. "M" or "+"
+    data-decimals — decimal places to display (default 0)
+    data-duration — count-up duration in ms (default 1800)
+  ============================================================
+  -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+
+    /* ── CUSTOMIZE: swap these variables ── */
+    :root {
+      --sc-bg-page:       #0D1117;
+      --sc-bg-surface:    #111827;
+      --sc-bg-elevated:   #1E293B;
+      --sc-accent:        #10B981;
+      --sc-accent-glow:   rgba(16, 185, 129, 0.25);
+      --sc-accent-subtle: rgba(16, 185, 129, 0.08);
+      --sc-accent-border: rgba(16, 185, 129, 0.3);
+      --sc-text:          #F8FAFC;
+      --sc-text-secondary:#94A3B8;
+      --sc-text-muted:    #475569;
+      --sc-border:        rgba(148, 163, 184, 0.1);
+      --sc-radius:        12px;
+      --sc-font-heading:  'Space Grotesk', system-ui, sans-serif;
+      --sc-font-body:     'Inter', system-ui, sans-serif;
+      --sc-font-mono:     ui-monospace, monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--sc-bg-page);
+      color: var(--sc-text);
+      font-family: var(--sc-font-body);
+      min-height: 100vh;
+      padding: 3rem 1.5rem 5rem;
+    }
+
+    /* Demo wrapper */
+    .demo-label {
+      font-family: var(--sc-font-mono);
+      font-size: 0.75rem;
+      color: var(--sc-accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+    .demo-title {
+      font-family: var(--sc-font-heading);
+      font-size: 2rem;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+    .demo-subtitle {
+      color: var(--sc-text-secondary);
+      text-align: center;
+      font-size: 0.9375rem;
+      margin-bottom: 3.5rem;
+    }
+
+
+    /* ════════════════════════════════════════════
+       COMPONENT STYLES
+    ════════════════════════════════════════════ */
+
+    /* Section wrapper — use this to contain the stat grid on your page */
+    .sc-section {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    /* Optional section headline */
+    .sc-heading {
+      font-family: var(--sc-font-heading);
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--sc-text-secondary);
+      text-align: center;
+      margin-bottom: 2.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-family: var(--sc-font-mono);
+      font-size: 0.8125rem;
+    }
+
+    /* 4-up grid: 2x2 on mobile, 4-across on desktop */
+    .sc-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1px;               /* 1px gap creates separator lines between cells */
+      background: var(--sc-border); /* gap color = border color — clever separator trick */
+      border: 1px solid var(--sc-border);
+      border-radius: var(--sc-radius);
+      overflow: hidden;
+    }
+    @media (min-width: 768px) {
+      .sc-grid { grid-template-columns: repeat(4, 1fr); }
+    }
+
+    /* Individual stat cell */
+    .sc-stat {
+      background: var(--sc-bg-surface);
+      padding: 2.5rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 0.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Subtle accent underline that glows when count completes */
+    .sc-stat::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 2px;
+      background: var(--sc-accent);
+      border-radius: 1px;
+      transition: width 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+      box-shadow: 0 0 12px var(--sc-accent-glow);
+    }
+    .sc-stat.sc-done::after {
+      width: 60%;  /* line extends when counter finishes */
+    }
+
+    /* The big number — this is the star of the show */
+    .sc-number {
+      font-family: var(--sc-font-heading);
+      font-size: clamp(2.5rem, 5vw, 3.5rem); /* fluid size */
+      font-weight: 700;
+      color: var(--sc-text);
+      line-height: 1;
+      letter-spacing: -0.02em;
+      transition: text-shadow 0.3s ease;
+    }
+    /* Neon glow at peak (when counter reaches target) */
+    .sc-stat.sc-done .sc-number {
+      text-shadow: 0 0 40px var(--sc-accent-glow), 0 0 80px rgba(16, 185, 129, 0.1);
+    }
+
+    /* Prefix and suffix styling ($ / + / % / x / M etc.) */
+    .sc-prefix,
+    .sc-suffix {
+      font-family: var(--sc-font-heading);
+      font-size: clamp(1.5rem, 3vw, 2rem);
+      font-weight: 600;
+      color: var(--sc-accent);
+      line-height: 1;
+    }
+    .sc-number-wrap {
+      display: flex;
+      align-items: baseline;
+      gap: 2px;
+    }
+
+    /* Label below the number */
+    .sc-label {
+      font-size: 0.875rem;
+      color: var(--sc-text-secondary);
+      line-height: 1.4;
+      max-width: 140px;
+    }
+
+    /* Before count starts: numbers are hidden (will be set to 0 by JS) */
+    .sc-stat[data-counted="false"] .sc-number { opacity: 0.3; }
+
+    /* Section footer note */
+    .sc-footer {
+      text-align: center;
+      margin-top: 1.5rem;
+      font-size: 0.8125rem;
+      color: var(--sc-text-muted);
+      font-family: var(--sc-font-mono);
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="demo-label">Component Demo</div>
+  <h1 class="demo-title">Animated Stats Counter</h1>
+  <p class="demo-subtitle">Numbers count up when scrolled into view. Scroll down slightly to trigger if already visible.</p>
+
+  <div class="sc-section">
+    <div class="sc-heading">Proven Results Across 60+ Client Campaigns</div>
+
+    <!--
+    To add/change stats: edit the data-* attributes.
+      data-target   = final number (e.g. "2.4" for $2.4M)
+      data-prefix   = symbol before number (e.g. "$")
+      data-suffix   = symbol after number (e.g. "M", "+", "%", "x")
+      data-decimals = decimal places (default 0; use "1" for 2.4)
+      data-duration = ms for count-up (default 1800)
+    -->
+    <div class="sc-grid">
+
+      <div class="sc-stat" data-target="60" data-suffix="+" data-duration="1400" data-counted="false">
+        <div class="sc-number-wrap">
+          <span class="sc-number" aria-label="60+">0</span>
+          <span class="sc-suffix" aria-hidden="true">+</span>
+        </div>
+        <div class="sc-label">Client websites launched</div>
+      </div>
+
+      <div class="sc-stat" data-target="2.4" data-prefix="$" data-suffix="M" data-decimals="1" data-duration="2000" data-counted="false">
+        <div class="sc-number-wrap">
+          <span class="sc-prefix" aria-hidden="true">$</span>
+          <span class="sc-number" aria-label="$2.4M revenue driven">0</span>
+          <span class="sc-suffix" aria-hidden="true">M</span>
+        </div>
+        <div class="sc-label">Revenue driven for clients</div>
+      </div>
+
+      <div class="sc-stat" data-target="98" data-suffix="%" data-duration="1600" data-counted="false">
+        <div class="sc-number-wrap">
+          <span class="sc-number" aria-label="98% client satisfaction">0</span>
+          <span class="sc-suffix" aria-hidden="true">%</span>
+        </div>
+        <div class="sc-label">Client satisfaction rate</div>
+      </div>
+
+      <div class="sc-stat" data-target="3" data-suffix="x" data-duration="1200" data-counted="false">
+        <div class="sc-number-wrap">
+          <span class="sc-number" aria-label="3x average traffic increase">0</span>
+          <span class="sc-suffix" aria-hidden="true">x</span>
+        </div>
+        <div class="sc-label">Average traffic increase</div>
+      </div>
+
+    </div>
+
+    <div class="sc-footer">Based on aggregate data from 2022–2026 client campaigns</div>
+  </div>
+
+
+  <script>
+  /*
+  ── HOW IT WORKS ──
+  1. IntersectionObserver watches .sc-grid
+  2. When it enters the viewport, we kick off count-up on all .sc-stat children
+  3. Count-up uses easeOutQuart (t => 1 - (1-t)^4) for a satisfying deceleration
+  4. After reaching the target, we add .sc-done to trigger the glow + underline CSS
+  5. Observer disconnects after first trigger — counter only runs once
+  */
+
+  // Easing function: fast start, slow finish (easeOutQuart)
+  function easeOutQuart(t) {
+    return 1 - Math.pow(1 - t, 4);
+  }
+
+  function animateCounter(statEl) {
+    var target   = parseFloat(statEl.dataset.target)   || 0;
+    var decimals = parseInt(statEl.dataset.decimals, 10) || 0;
+    var duration = parseInt(statEl.dataset.duration, 10) || 1800;
+    var numEl    = statEl.querySelector('.sc-number');
+    if (!numEl) return;
+
+    var startTime = null;
+
+    function step(timestamp) {
+      if (!startTime) startTime = timestamp;
+      var elapsed  = timestamp - startTime;
+      var progress = Math.min(elapsed / duration, 1);          // 0..1
+      var eased    = easeOutQuart(progress);                   // apply easing
+      var current  = eased * target;                           // current value
+      numEl.textContent = current.toFixed(decimals);           // update display
+
+      if (progress < 1) {
+        requestAnimationFrame(step);                           // keep going
+      } else {
+        numEl.textContent = target.toFixed(decimals);          // snap to exact final value
+        statEl.classList.add('sc-done');                       // trigger glow + underline
+        statEl.dataset.counted = 'true';
+      }
+    }
+
+    requestAnimationFrame(step);
+  }
+
+  // Watch the grid — fire once when it comes into view
+  var grid = document.querySelector('.sc-grid');
+  if (grid) {
+    var observer = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          // Start all counters with a small stagger
+          var stats = grid.querySelectorAll('.sc-stat');
+          stats.forEach(function(stat, i) {
+            setTimeout(function() {
+              animateCounter(stat);
+            }, i * 120); // 120ms stagger between each stat
+          });
+          observer.disconnect(); // only run once
+        }
+      });
+    }, { threshold: 0.3 }); // trigger when 30% of grid is visible
+
+    observer.observe(grid);
+  }
+  </script>
+
+</body>
+</html>

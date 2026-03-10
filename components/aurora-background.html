@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aurora Background — Component Library</title>
+
+  <!--
+  /* COMPONENT: Aurora Background | COPY: style + html + script */
+  Animated northern-lights gradient effect. 5 large blurred radial orbs
+  drift in organic paths via CSS @keyframes. Noise texture overlay adds
+  a tactile, premium feel (used by Linear, Vercel, etc).
+  No JS required — pure CSS animation.
+  -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+
+    /* ============================================================
+       CUSTOMIZE — adjust these to match your project
+       ============================================================ */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --glow:           rgba(16,185,129,0.15);
+      --glow-strong:    rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --border-accent:  rgba(16,185,129,0.3);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+
+      /* Aurora orb colors — customize for your brand palette */
+      --orb1: rgba(16,185,129,0.28);    /* teal/emerald */
+      --orb2: rgba(99,102,241,0.22);    /* indigo/violet */
+      --orb3: rgba(59,130,246,0.18);    /* blue */
+      --orb4: rgba(52,211,153,0.2);     /* mint */
+      --orb5: rgba(139,92,246,0.16);    /* purple */
+    }
+    /* ============================================================ */
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    /* ── Aurora wrapper — contains the orbs and clip to bounds ── */
+    .aurora-section {
+      position: relative;
+      min-height: 100vh;
+      overflow: hidden;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ── Noise texture overlay — makes gradient feel tactile and premium ──
+       SVG feTurbulence filter applied to a full-bleed div at very low opacity.
+       The SVG filter definition itself is zero-size and invisible. */
+    .aurora-noise {
+      position: absolute;
+      inset: 0;
+      opacity: 0.045;
+      filter: url(#aurora-noise-filter);
+      pointer-events: none;
+      z-index: 2;
+      /* The actual noise comes from the background color interacting with the filter */
+      background: var(--text);
+    }
+
+    /* ── Orbs ── */
+    .aurora-orbs {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+    }
+
+    .aurora-orb {
+      position: absolute;
+      border-radius: 50%;
+      /* Heavy blur creates the soft glow effect */
+      filter: blur(80px);
+      pointer-events: none;
+    }
+
+    /* Orb 1 — large emerald, drifts in slow figure-8 */
+    .aurora-orb-1 {
+      width: 700px;
+      height: 500px;
+      background: radial-gradient(ellipse at center, var(--orb1), transparent 70%);
+      top: -100px;
+      left: -100px;
+      animation: drift-1 24s ease-in-out infinite;
+    }
+    @keyframes drift-1 {
+      0%   { transform: translate(0,    0)    rotate(0deg); }
+      25%  { transform: translate(30%,  20%)  rotate(45deg); }
+      50%  { transform: translate(15%,  45%)  rotate(20deg); }
+      75%  { transform: translate(-10%, 20%)  rotate(-20deg); }
+      100% { transform: translate(0,    0)    rotate(0deg); }
+    }
+
+    /* Orb 2 — indigo, orbits upper right */
+    .aurora-orb-2 {
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(ellipse at center, var(--orb2), transparent 70%);
+      top: -80px;
+      right: -120px;
+      animation: drift-2 30s ease-in-out infinite;
+    }
+    @keyframes drift-2 {
+      0%   { transform: translate(0,   0); }
+      33%  { transform: translate(-20%, 25%); }
+      66%  { transform: translate(-5%,  50%); }
+      100% { transform: translate(0,   0); }
+    }
+
+    /* Orb 3 — blue, floats center-left */
+    .aurora-orb-3 {
+      width: 500px;
+      height: 400px;
+      background: radial-gradient(ellipse at center, var(--orb3), transparent 70%);
+      top: 40%;
+      left: 20%;
+      animation: drift-3 20s ease-in-out infinite;
+    }
+    @keyframes drift-3 {
+      0%   { transform: translate(0,   0)    scale(1); }
+      30%  { transform: translate(10%, -15%) scale(1.1); }
+      60%  { transform: translate(20%, 10%)  scale(0.95); }
+      100% { transform: translate(0,   0)    scale(1); }
+    }
+
+    /* Orb 4 — mint, anchors bottom left */
+    .aurora-orb-4 {
+      width: 550px;
+      height: 450px;
+      background: radial-gradient(ellipse at center, var(--orb4), transparent 70%);
+      bottom: -100px;
+      left: 30%;
+      animation: drift-4 26s ease-in-out infinite;
+    }
+    @keyframes drift-4 {
+      0%   { transform: translate(0,   0); }
+      40%  { transform: translate(-15%, -20%); }
+      80%  { transform: translate(10%,  -30%); }
+      100% { transform: translate(0,   0); }
+    }
+
+    /* Orb 5 — purple accent, bottom right */
+    .aurora-orb-5 {
+      width: 480px;
+      height: 480px;
+      background: radial-gradient(ellipse at center, var(--orb5), transparent 70%);
+      bottom: -80px;
+      right: -80px;
+      animation: drift-5 35s ease-in-out infinite;
+    }
+    @keyframes drift-5 {
+      0%   { transform: translate(0,    0); }
+      25%  { transform: translate(-20%, -10%); }
+      50%  { transform: translate(-30%, -30%); }
+      75%  { transform: translate(-10%, -15%); }
+      100% { transform: translate(0,    0); }
+    }
+
+    /* ── Hero content layer (above orbs and noise) ── */
+    .aurora-content {
+      position: relative;
+      z-index: 3;
+      text-align: center;
+      padding: 2rem 1.5rem;
+      max-width: 760px;
+    }
+
+    .aurora-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 5px 14px;
+      background: rgba(16,185,129,0.1);
+      border: 1px solid var(--border-accent);
+      border-radius: 100px;
+      margin-bottom: 1.75rem;
+    }
+    .aurora-eyebrow-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.5; transform: scale(0.7); }
+    }
+
+    .aurora-title {
+      font-family: var(--font-heading);
+      font-size: clamp(2.5rem, 7vw, 4.5rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.08;
+      margin-bottom: 1.25rem;
+      /* Gradient text effect */
+      background: linear-gradient(135deg, var(--text) 30%, rgba(248,250,252,0.6) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .aurora-subtitle {
+      font-size: clamp(1rem, 2.5vw, 1.1875rem);
+      color: var(--text-secondary);
+      line-height: 1.7;
+      max-width: 540px;
+      margin: 0 auto 2.5rem;
+    }
+
+    .aurora-actions {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .aurora-btn-primary {
+      font-family: var(--font-heading);
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: #fff;
+      background: var(--accent);
+      border: none;
+      border-radius: 10px;
+      padding: 13px 28px;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.15s;
+      text-decoration: none;
+    }
+    .aurora-btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+
+    .aurora-btn-secondary {
+      font-family: var(--font-heading);
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: var(--text);
+      background: rgba(248,250,252,0.06);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 13px 28px;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, transform 0.15s;
+      text-decoration: none;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .aurora-btn-secondary:hover {
+      background: rgba(248,250,252,0.1);
+      border-color: rgba(148,163,184,0.25);
+      transform: translateY(-1px);
+    }
+
+    /* ── Stats strip below hero ── */
+    .aurora-stats {
+      position: relative;
+      z-index: 3;
+      display: flex;
+      justify-content: center;
+      gap: 3rem;
+      padding: 2.5rem 1.5rem;
+      flex-wrap: wrap;
+    }
+    .aurora-stat {
+      text-align: center;
+    }
+    .aurora-stat-num {
+      font-family: var(--font-heading);
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: -0.02em;
+      display: block;
+    }
+    .aurora-stat-label {
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* ── Scroll indicator ── */
+    .aurora-scroll {
+      position: absolute;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 3;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .aurora-scroll-line {
+      width: 1px;
+      height: 36px;
+      background: linear-gradient(to bottom, var(--text-muted), transparent);
+      animation: scroll-line 1.8s ease-in-out infinite;
+    }
+    @keyframes scroll-line {
+      0%   { transform: scaleY(0); transform-origin: top; opacity: 1; }
+      50%  { transform: scaleY(1); transform-origin: top; opacity: 1; }
+      51%  { transform: scaleY(1); transform-origin: bottom; }
+      100% { transform: scaleY(0); transform-origin: bottom; opacity: 0; }
+    }
+
+    /* ── Info section below aurora ── */
+    .info-section {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 5rem 1.5rem;
+      text-align: center;
+    }
+    .info-section h2 {
+      font-family: var(--font-heading);
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+    .info-section p {
+      color: var(--text-secondary);
+      font-size: 0.9375rem;
+      line-height: 1.7;
+      max-width: 560px;
+      margin: 0 auto;
+    }
+    .info-section code {
+      font-family: var(--font-mono);
+      font-size: 0.8125rem;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 2px 7px;
+      color: var(--accent);
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       AURORA SECTION — copy everything inside this element
+       ═══════════════════════════════════════════════════════════ -->
+  <section class="aurora-section">
+
+    <!-- SVG noise filter definition (zero-size, invisible) -->
+    <svg style="position:absolute;width:0;height:0" aria-hidden="true">
+      <filter id="aurora-noise-filter">
+        <!-- fractalNoise creates the grain texture -->
+        <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/>
+        <!-- desaturate to pure grayscale -->
+        <feColorMatrix type="saturate" values="0"/>
+      </filter>
+    </svg>
+
+    <!-- Noise overlay div — interacts with the SVG filter above -->
+    <div class="aurora-noise" aria-hidden="true"></div>
+
+    <!-- Aurora orbs — each drifts on its own keyframe path -->
+    <div class="aurora-orbs" aria-hidden="true">
+      <div class="aurora-orb aurora-orb-1"></div>
+      <div class="aurora-orb aurora-orb-2"></div>
+      <div class="aurora-orb aurora-orb-3"></div>
+      <div class="aurora-orb aurora-orb-4"></div>
+      <div class="aurora-orb aurora-orb-5"></div>
+    </div>
+
+    <!-- Hero content — z-index: 3 keeps it above orbs and noise -->
+    <div class="aurora-content">
+      <div class="aurora-eyebrow">
+        <span class="aurora-eyebrow-dot"></span>
+        Now in public beta
+      </div>
+
+      <h1 class="aurora-title">Build faster.<br>Ship with confidence.</h1>
+
+      <p class="aurora-subtitle">
+        The platform that merges analytics, automation, and AI so your team can focus on what actually moves the needle — not wrangling dashboards.
+      </p>
+
+      <div class="aurora-actions">
+        <a href="#" class="aurora-btn-primary">Start building free</a>
+        <a href="#" class="aurora-btn-secondary">See how it works &rarr;</a>
+      </div>
+    </div>
+
+    <!-- Stats below hero -->
+    <div class="aurora-stats">
+      <div class="aurora-stat">
+        <span class="aurora-stat-num">47k+</span>
+        <span class="aurora-stat-label">Teams</span>
+      </div>
+      <div class="aurora-stat">
+        <span class="aurora-stat-num">2.4B</span>
+        <span class="aurora-stat-label">Events tracked</span>
+      </div>
+      <div class="aurora-stat">
+        <span class="aurora-stat-num">99.98%</span>
+        <span class="aurora-stat-label">Uptime SLA</span>
+      </div>
+    </div>
+
+    <!-- Scroll cue -->
+    <div class="aurora-scroll" aria-hidden="true">
+      <span class="aurora-scroll-line"></span>
+      Scroll
+    </div>
+
+  </section>
+
+  <!-- Info section showing how to copy the component -->
+  <section class="info-section">
+    <h2>How to use this component</h2>
+    <p>
+      Copy the <code>.aurora-section</code> element (including the SVG filter and all child divs) into your page. Customize orb colors via CSS variables at the top. The noise texture uses an inline <code>feTurbulence</code> SVG filter — no external files needed.
+    </p>
+  </section>
+
+</body>
+</html>

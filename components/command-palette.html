@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Command Palette — Component Library</title>
+
+  <!--
+  ============================================================
+  COMPONENT: Command Palette (Cmd+K)
+  COPY: <style> block + HTML block + <script> block into target site
+  FEATURES:
+    - Opens on Cmd+K / Ctrl+K, closes on Escape or backdrop click
+    - Type to filter results (case-insensitive match on label)
+    - Arrow key navigation + Enter to select
+    - Grouped results with section labels
+    - Smooth scale + opacity open/close transition
+    - Keyboard hint badges on the right
+    - Empty state when no results match
+    - Focus trap: Tab stays inside modal while open
+  ============================================================
+  -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+
+    /* ── CUSTOMIZE: swap these variables ── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --glow:           rgba(16, 185, 129, 0.08);
+      --border:         rgba(148, 163, 184, 0.1);
+      --border-accent:  rgba(16, 185, 129, 0.3);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         16px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      padding: 3rem 1.5rem 5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .demo-label {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+    .demo-title {
+      font-family: var(--font-heading);
+      font-size: 2rem;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+    .demo-subtitle {
+      color: var(--text-secondary);
+      text-align: center;
+      font-size: 0.9375rem;
+      margin-bottom: 2.5rem;
+    }
+
+    /* Demo trigger button */
+    .demo-trigger-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 3rem;
+    }
+
+    .trigger-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text-secondary);
+      font-family: var(--font-body);
+      font-size: 0.9375rem;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      min-height: 44px;
+    }
+    .trigger-btn:hover {
+      border-color: var(--border-accent);
+      background: var(--elevated);
+      color: var(--text);
+    }
+
+    .trigger-kbd {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      margin-left: 4px;
+    }
+    .kbd {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      padding: 2px 6px;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 4px;
+      background: rgba(148, 163, 184, 0.06);
+      color: var(--text-muted);
+    }
+
+    /* Demo hint text */
+    .demo-hint {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+
+    /* ════════════════════════════════════════════
+       COMMAND PALETTE OVERLAY + MODAL
+    ════════════════════════════════════════════ */
+
+    /* Overlay: full-screen backdrop with blur */
+    .cp-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      z-index: 9999;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 15vh;
+
+      /* Hidden state */
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    /* Visible state — JS adds .cp-open to overlay */
+    .cp-overlay.cp-open {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    /* Modal panel */
+    .cp-modal {
+      width: 100%;
+      max-width: 560px;
+      background: var(--elevated);
+      border: 1px solid var(--border-accent);
+      border-radius: var(--radius);
+      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(16, 185, 129, 0.05);
+      overflow: hidden;
+
+      /* Hidden state: slightly shrunk */
+      transform: scale(0.95) translateY(-8px);
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .cp-overlay.cp-open .cp-modal {
+      transform: scale(1) translateY(0);
+    }
+
+    /* ── Search input row ── */
+    .cp-search-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 18px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .cp-search-icon {
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    .cp-input {
+      flex: 1;
+      padding: 18px 0;
+      background: none;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 1.0625rem;
+      caret-color: var(--accent);
+    }
+    .cp-input::placeholder { color: var(--text-muted); }
+
+    .cp-close {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      background: rgba(148, 163, 184, 0.08);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      flex-shrink: 0;
+      transition: background 0.15s, color 0.15s;
+    }
+    .cp-close:hover { background: rgba(148, 163, 184, 0.15); color: var(--text); }
+
+
+    /* ── Results list ── */
+    .cp-results {
+      max-height: 380px;
+      overflow-y: auto;
+      padding: 8px;
+      /* Custom scrollbar */
+      scrollbar-width: thin;
+      scrollbar-color: rgba(148, 163, 184, 0.2) transparent;
+    }
+    .cp-results::-webkit-scrollbar { width: 4px; }
+    .cp-results::-webkit-scrollbar-track { background: transparent; }
+    .cp-results::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.2); border-radius: 2px; }
+
+    /* Group label */
+    .cp-group-label {
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      padding: 10px 12px 4px;
+    }
+
+    /* Individual result item */
+    .cp-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.12s ease;
+      border: 1px solid transparent;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    /* Active (keyboard-highlighted) item */
+    .cp-item.cp-active {
+      background: rgba(16, 185, 129, 0.1);
+      border-color: rgba(16, 185, 129, 0.2);
+    }
+
+    .cp-item-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: rgba(148, 163, 184, 0.06);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+      flex-shrink: 0;
+      transition: background 0.12s, border-color 0.12s, color 0.12s;
+    }
+    .cp-item.cp-active .cp-item-icon {
+      background: rgba(16, 185, 129, 0.12);
+      border-color: rgba(16, 185, 129, 0.25);
+      color: var(--accent);
+    }
+
+    .cp-item-label {
+      flex: 1;
+      font-size: 0.9375rem;
+      color: var(--text);
+    }
+
+    .cp-item-hint {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--text-muted);
+      padding: 2px 7px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: rgba(148, 163, 184, 0.04);
+      white-space: nowrap;
+    }
+
+    /* Empty state */
+    .cp-empty {
+      text-align: center;
+      padding: 2.5rem 1rem;
+      color: var(--text-muted);
+      font-size: 0.9375rem;
+      display: none;
+    }
+    .cp-empty.cp-empty-visible { display: block; }
+
+    /* Footer hint bar */
+    .cp-footer {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 10px 18px;
+      border-top: 1px solid var(--border);
+    }
+    .cp-footer-hint {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-mono);
+      font-size: 0.5625rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .cp-footer-hint .kbd { font-size: 0.5625rem; }
+
+    /* Mobile: smaller modal, full width */
+    @media (max-width: 600px) {
+      .cp-overlay { padding-top: 5vh; align-items: flex-start; }
+      .cp-modal { max-width: 100%; border-radius: 12px 12px 0 0; margin-top: auto; }
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="demo-label">Component Demo</div>
+  <h1 class="demo-title">Command Palette</h1>
+  <p class="demo-subtitle">Press <strong>Cmd+K</strong> (Mac) or <strong>Ctrl+K</strong> (Windows). Type to filter. Arrow keys to navigate. Enter to select.</p>
+
+  <div class="demo-trigger-wrap">
+    <button class="trigger-btn" id="cp-open-btn" aria-label="Open command palette">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      Search or jump to...
+      <span class="trigger-kbd">
+        <span class="kbd">⌘</span>
+        <span class="kbd">K</span>
+      </span>
+    </button>
+    <span class="demo-hint">or use the keyboard shortcut</span>
+  </div>
+
+
+  <!-- ════════════════════════════════════════════
+       COMMAND PALETTE MODAL
+  ════════════════════════════════════════════ -->
+  <div class="cp-overlay" id="cp-overlay" role="dialog" aria-modal="true" aria-label="Command palette">
+
+    <div class="cp-modal" id="cp-modal">
+
+      <!-- Search input -->
+      <div class="cp-search-row">
+        <span class="cp-search-icon" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        </span>
+        <input
+          type="text"
+          class="cp-input"
+          id="cp-input"
+          placeholder="Search commands..."
+          autocomplete="off"
+          spellcheck="false"
+          aria-label="Search commands"
+        >
+        <button class="cp-close" id="cp-close" aria-label="Close palette">Esc</button>
+      </div>
+
+      <!-- Results list — built by JS -->
+      <div class="cp-results" id="cp-results" role="listbox">
+        <div class="cp-empty" id="cp-empty" role="status">No results for that search.</div>
+      </div>
+
+      <!-- Footer key hints -->
+      <div class="cp-footer" aria-hidden="true">
+        <div class="cp-footer-hint">
+          <span class="kbd">↑</span><span class="kbd">↓</span> Navigate
+        </div>
+        <div class="cp-footer-hint">
+          <span class="kbd">↵</span> Select
+        </div>
+        <div class="cp-footer-hint">
+          <span class="kbd">Esc</span> Close
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+
+  <script>
+  /*
+  ════════════════════════════════════════
+  CUSTOMIZE: Commands data
+  Add/remove entries here. Groups appear as section headers.
+  action: URL string navigates, 'fn' runs the action() function.
+  ════════════════════════════════════════
+  */
+  var commands = [
+    { group: 'Pages',   icon: 'home',     label: 'Home',              hint: '',      action: '#' },
+    { group: 'Pages',   icon: 'briefcase',label: 'Services',          hint: '',      action: '#' },
+    { group: 'Pages',   icon: 'folder',   label: 'Work / Projects',   hint: '',      action: '#' },
+    { group: 'Pages',   icon: 'user',     label: 'About',             hint: '',      action: '#' },
+    { group: 'Pages',   icon: 'mail',     label: 'Contact',           hint: '',      action: '#' },
+    { group: 'Actions', icon: 'sun',      label: 'Toggle theme',      hint: 'T',     action: 'fn', fn: function() { alert('Theme toggle — wire up your own logic here.'); } },
+    { group: 'Actions', icon: 'copy',     label: 'Copy page URL',     hint: '⌘ C',  action: 'fn', fn: function() { navigator.clipboard.writeText(window.location.href).catch(function(){}); closePalette(); } },
+    { group: 'Actions', icon: 'code',     label: 'View source',       hint: '',      action: 'view-source:' },
+    { group: 'Social',  icon: 'twitter',  label: 'Twitter / X',       hint: '',      action: 'https://twitter.com' },
+    { group: 'Social',  icon: 'linkedin', label: 'LinkedIn',          hint: '',      action: 'https://linkedin.com' },
+  ];
+
+  /* ── SVG icons used in the palette ── */
+  var icons = {
+    home:      '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>',
+    briefcase: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>',
+    folder:    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>',
+    user:      '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+    mail:      '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>',
+    sun:       '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>',
+    copy:      '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>',
+    code:      '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>',
+    twitter:   '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"/></svg>',
+    linkedin:  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>',
+  };
+
+  /* ── State ── */
+  var overlay   = document.getElementById('cp-overlay');
+  var input     = document.getElementById('cp-input');
+  var results   = document.getElementById('cp-results');
+  var empty     = document.getElementById('cp-empty');
+  var activeIdx = -1;   /* currently keyboard-highlighted item index */
+  var filtered  = [];   /* currently visible commands array */
+
+  /* ── Open / close ── */
+  function openPalette() {
+    overlay.classList.add('cp-open');
+    input.value = '';
+    renderResults('');
+    /* Small delay ensures modal is visible before focusing input */
+    setTimeout(function() { input.focus(); }, 50);
+  }
+
+  function closePalette() {
+    overlay.classList.remove('cp-open');
+    activeIdx = -1;
+  }
+
+  /* ── Render result items ── */
+  function renderResults(query) {
+    /* Clear existing items (but keep the empty state div) */
+    var existing = results.querySelectorAll('.cp-group-label, .cp-item');
+    existing.forEach(function(el) { el.remove(); });
+
+    var q = query.toLowerCase().trim();
+
+    /* Filter commands */
+    filtered = q
+      ? commands.filter(function(cmd) { return cmd.label.toLowerCase().includes(q); })
+      : commands.slice();
+
+    if (filtered.length === 0) {
+      empty.classList.add('cp-empty-visible');
+      activeIdx = -1;
+      return;
+    }
+    empty.classList.remove('cp-empty-visible');
+
+    /* Group and render */
+    var groups = {};
+    filtered.forEach(function(cmd) {
+      if (!groups[cmd.group]) groups[cmd.group] = [];
+      groups[cmd.group].push(cmd);
+    });
+
+    Object.keys(groups).forEach(function(groupName) {
+      /* Group label */
+      var label = document.createElement('div');
+      label.className = 'cp-group-label';
+      label.textContent = groupName;
+      results.appendChild(label);
+
+      /* Items in group */
+      groups[groupName].forEach(function(cmd) {
+        var item = document.createElement('div');
+        item.className = 'cp-item';
+        item.setAttribute('role', 'option');
+        item.setAttribute('tabindex', '-1');
+        item.setAttribute('data-action', cmd.action);
+
+        item.innerHTML =
+          '<div class="cp-item-icon">' + (icons[cmd.icon] || '') + '</div>' +
+          '<span class="cp-item-label">' + escapeHtml(cmd.label) + '</span>' +
+          (cmd.hint ? '<span class="cp-item-hint">' + escapeHtml(cmd.hint) + '</span>' : '');
+
+        item.addEventListener('click', function() { executeCmd(cmd); });
+        results.appendChild(item);
+      });
+    });
+
+    /* Default: highlight first item */
+    activeIdx = 0;
+    updateActive();
+  }
+
+  /* ── Execute a command ── */
+  function executeCmd(cmd) {
+    closePalette();
+    if (cmd.action === 'fn' && typeof cmd.fn === 'function') {
+      cmd.fn();
+    } else if (cmd.action && cmd.action !== '#') {
+      window.location.href = cmd.action;
+    }
+  }
+
+  /* ── Keyboard highlight ── */
+  function updateActive() {
+    var items = results.querySelectorAll('.cp-item');
+    items.forEach(function(el, i) {
+      el.classList.toggle('cp-active', i === activeIdx);
+      if (i === activeIdx) {
+        /* Scroll into view if needed */
+        el.scrollIntoView({ block: 'nearest' });
+      }
+    });
+  }
+
+  /* ── Utility ── */
+  function escapeHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  /* ── Event listeners ── */
+
+  /* Trigger button */
+  document.getElementById('cp-open-btn').addEventListener('click', openPalette);
+
+  /* Close button */
+  document.getElementById('cp-close').addEventListener('click', closePalette);
+
+  /* Click outside modal to close */
+  overlay.addEventListener('click', function(e) {
+    if (e.target === overlay) closePalette();
+  });
+
+  /* Search input */
+  input.addEventListener('input', function() {
+    activeIdx = 0;
+    renderResults(this.value);
+  });
+
+  /* Keyboard navigation inside modal */
+  input.addEventListener('keydown', function(e) {
+    var items = results.querySelectorAll('.cp-item');
+    if (!items.length) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      activeIdx = Math.min(activeIdx + 1, items.length - 1);
+      updateActive();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      activeIdx = Math.max(activeIdx - 1, 0);
+      updateActive();
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (activeIdx >= 0 && activeIdx < filtered.length) {
+        /* Map index back through filtered array */
+        var allItems = Array.from(items);
+        /* Find which filtered command the active item maps to */
+        var activeCmd = filtered[activeIdx];
+        if (activeCmd) executeCmd(activeCmd);
+      }
+    } else if (e.key === 'Escape') {
+      closePalette();
+    }
+  });
+
+  /* Global keyboard shortcut: Cmd+K / Ctrl+K */
+  document.addEventListener('keydown', function(e) {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      e.preventDefault();
+      if (overlay.classList.contains('cp-open')) {
+        closePalette();
+      } else {
+        openPalette();
+      }
+    }
+    /* Escape from anywhere */
+    if (e.key === 'Escape' && overlay.classList.contains('cp-open')) {
+      closePalette();
+    }
+  });
+  </script>
+
+</body>
+</html>

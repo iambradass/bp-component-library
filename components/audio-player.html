@@ -1,0 +1,694 @@
+<!-- COMPONENT: Custom Audio Player | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Custom Audio Player</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ── Customize ── */
+    :root {
+      --bg:            #0D1117;
+      --surface:       #111827;
+      --elevated:      #1E293B;
+      --accent:        #10B981;
+      --accent-dim:    rgba(16,185,129,0.15);
+      --accent-border: rgba(16,185,129,0.3);
+      --border:        rgba(148,163,184,0.1);
+      --text:          #F8FAFC;
+      --text-secondary:#94A3B8;
+      --text-muted:    #475569;
+      --radius:        12px;
+      --font-heading:  'Space Grotesk', sans-serif;
+      --font-body:     'Inter', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    .page-wrap {
+      width: 100%;
+      max-width: 640px;
+    }
+
+    .page-title {
+      font-family: var(--font-heading);
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+
+    /* ── Main Player Card ── */
+    .player-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+
+    /* Track info row: art + text */
+    .track-info {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      margin-bottom: 1.75rem;
+    }
+
+    /* Album art: a gradient square placeholder */
+    .album-art {
+      width: 72px;
+      height: 72px;
+      border-radius: 12px;
+      flex-shrink: 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .album-art canvas {
+      width: 100%;
+      height: 100%;
+    }
+
+    .track-meta { flex: 1; min-width: 0; }
+
+    .track-title {
+      font-family: var(--font-heading);
+      font-size: 1.1rem;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 0.25rem;
+    }
+
+    .track-artist {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+
+    /* Like button */
+    .btn-like {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 0.4rem;
+      border-radius: 8px;
+      transition: color 0.2s, background 0.2s;
+    }
+    .btn-like:hover { color: var(--accent); background: var(--accent-dim); }
+    .btn-like.liked { color: #F43F5E; }
+
+    /* ── Waveform Canvas ── */
+    .waveform-wrap {
+      position: relative;
+      margin-bottom: 0.75rem;
+      cursor: pointer;
+    }
+
+    #waveformCanvas {
+      width: 100%;
+      height: 64px;
+      display: block;
+      border-radius: 8px;
+    }
+
+    /* ── Seek / Time Row ── */
+    .time-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .time-display {
+      font-size: 0.78rem;
+      font-family: ui-monospace, monospace;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .seek-bar {
+      flex: 1;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 4px;
+      border-radius: 999px;
+      background: var(--elevated);
+      cursor: pointer;
+      outline: none;
+      position: relative;
+    }
+
+    .seek-bar::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      transition: transform 0.15s;
+    }
+
+    .seek-bar:hover::-webkit-slider-thumb { transform: scale(1.3); }
+
+    /* ── Controls Row ── */
+    .controls-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .ctrl-btn {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 0.5rem;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.2s, background 0.2s;
+    }
+    .ctrl-btn:hover { color: var(--text); background: var(--elevated); }
+
+    /* Play/pause is larger and accented */
+    .btn-play {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: var(--bg) !important;
+      box-shadow: 0 0 24px var(--accent-dim);
+    }
+    .btn-play:hover { filter: brightness(1.1); background: var(--accent) !important; }
+
+    /* ── Volume + Speed Row ── */
+    .extras-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .vol-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex: 1;
+      min-width: 140px;
+    }
+
+    .vol-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 0.25rem;
+      flex-shrink: 0;
+    }
+    .vol-btn:hover { color: var(--text); }
+
+    .vol-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      flex: 1;
+      height: 3px;
+      border-radius: 999px;
+      background: var(--elevated);
+      cursor: pointer;
+      outline: none;
+    }
+    .vol-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--text-secondary);
+      cursor: pointer;
+    }
+
+    /* Speed selector */
+    .speed-select {
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-secondary);
+      font-family: var(--font-body);
+      font-size: 0.8rem;
+      padding: 0.3rem 0.5rem;
+      cursor: pointer;
+      outline: none;
+    }
+    .speed-select:focus { border-color: var(--accent-border); }
+
+    /* ── Queue ── */
+    .queue-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .queue-header {
+      padding: 1rem 1.25rem 0.75rem;
+      font-family: var(--font-heading);
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .queue-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.85rem 1.25rem;
+      cursor: pointer;
+      transition: background 0.15s;
+      border-bottom: 1px solid var(--border);
+    }
+    .queue-item:last-child { border-bottom: none; }
+    .queue-item:hover { background: var(--elevated); }
+    .queue-item.active { background: var(--accent-dim); }
+
+    .queue-num {
+      font-size: 0.78rem;
+      font-family: ui-monospace, monospace;
+      color: var(--text-muted);
+      width: 18px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+    .queue-item.active .queue-num { color: var(--accent); }
+
+    .queue-art {
+      width: 36px;
+      height: 36px;
+      border-radius: 6px;
+      flex-shrink: 0;
+    }
+
+    .queue-info { flex: 1; min-width: 0; }
+
+    .queue-title {
+      font-size: 0.88rem;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .queue-item.active .queue-title { color: var(--accent); }
+
+    .queue-artist {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .queue-duration {
+      font-size: 0.78rem;
+      font-family: ui-monospace, monospace;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Actual audio element — wire up a real src to enable audio -->
+  <!-- <audio id="audioEl" src="your-track.mp3"></audio> -->
+
+  <div class="page-wrap">
+    <div class="page-title">Custom Audio Player</div>
+
+    <!-- ── Main Player ── -->
+    <div class="player-card">
+
+      <!-- Track info -->
+      <div class="track-info">
+        <div class="album-art">
+          <canvas id="albumArtCanvas" width="72" height="72"></canvas>
+        </div>
+        <div class="track-meta">
+          <div class="track-title" id="trackTitle">Neon Horizon</div>
+          <div class="track-artist" id="trackArtist">Skyline Echo</div>
+        </div>
+        <button class="btn-like" id="btnLike" aria-label="Like track">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        </button>
+      </div>
+
+      <!-- Waveform visualization -->
+      <div class="waveform-wrap" id="waveformWrap">
+        <canvas id="waveformCanvas"></canvas>
+      </div>
+
+      <!-- Time display + seek bar -->
+      <div class="time-row">
+        <span class="time-display" id="timeCurrentDisplay">0:00</span>
+        <input type="range" class="seek-bar" id="seekBar" min="0" max="100" value="0" aria-label="Seek">
+        <span class="time-display" id="timeTotalDisplay">3:45</span>
+      </div>
+
+      <!-- Playback controls -->
+      <div class="controls-row">
+        <!-- Shuffle -->
+        <button class="ctrl-btn" id="btnShuffle" aria-label="Shuffle">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
+        </button>
+        <!-- Previous -->
+        <button class="ctrl-btn" id="btnPrev" aria-label="Previous track">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg>
+        </button>
+        <!-- Play / Pause — icon swaps via JS -->
+        <button class="ctrl-btn btn-play" id="btnPlay" aria-label="Play">
+          <svg id="iconPlay" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          <svg id="iconPause" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="display:none"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+        </button>
+        <!-- Next -->
+        <button class="ctrl-btn" id="btnNext" aria-label="Next track">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
+        </button>
+        <!-- Repeat -->
+        <button class="ctrl-btn" id="btnRepeat" aria-label="Repeat">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+        </button>
+      </div>
+
+      <!-- Volume + Speed -->
+      <div class="extras-row">
+        <div class="vol-group">
+          <button class="vol-btn" id="btnMute" aria-label="Mute">
+            <svg id="iconVol" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+            <svg id="iconMuted" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+          </button>
+          <input type="range" class="vol-slider" id="volSlider" min="0" max="100" value="80" aria-label="Volume">
+        </div>
+        <select class="speed-select" id="speedSelect" aria-label="Playback speed">
+          <option value="0.5">0.5×</option>
+          <option value="1" selected>1×</option>
+          <option value="1.5">1.5×</option>
+          <option value="2">2×</option>
+        </select>
+      </div>
+
+    </div><!-- /player-card -->
+
+    <!-- ── Track Queue ── -->
+    <div class="queue-card">
+      <div class="queue-header">Up Next</div>
+      <!-- Queue items generated by JS -->
+      <div id="queueList"></div>
+    </div>
+
+  </div><!-- /page-wrap -->
+
+  <script>
+    // ── Track Data ──
+    const TRACKS = [
+      { title: 'Neon Horizon',      artist: 'Skyline Echo',      duration: 225, color1: '#10B981', color2: '#065F46' },
+      { title: 'Drift & Pulse',     artist: 'CODA',              duration: 198, color1: '#6366F1', color2: '#1E1B4B' },
+      { title: 'Glass Half Full',   artist: 'Mara Soleil',       duration: 261, color1: '#F97316', color2: '#431407' },
+      { title: 'Pale Blue Transit', artist: 'The Echonauts',     duration: 183, color1: '#06B6D4', color2: '#083344' },
+    ];
+
+    // ── State ──
+    let currentTrack = 0;
+    let isPlaying    = false;
+    let currentTime  = 0;   // seconds (simulated)
+    let volume       = 80;
+    let isMuted      = false;
+    let speed        = 1;
+    let timer        = null;
+    let waveformBars = [];  // pre-generated random bar heights for current track
+
+    // ── DOM refs ──
+    const btnPlay    = document.getElementById('btnPlay');
+    const iconPlay   = document.getElementById('iconPlay');
+    const iconPause  = document.getElementById('iconPause');
+    const btnPrev    = document.getElementById('btnPrev');
+    const btnNext    = document.getElementById('btnNext');
+    const btnMute    = document.getElementById('btnMute');
+    const btnLike    = document.getElementById('btnLike');
+    const iconVol    = document.getElementById('iconVol');
+    const iconMuted  = document.getElementById('iconMuted');
+    const seekBar    = document.getElementById('seekBar');
+    const volSlider  = document.getElementById('volSlider');
+    const speedSel   = document.getElementById('speedSelect');
+    const timeCurr   = document.getElementById('timeCurrentDisplay');
+    const timeTotal  = document.getElementById('timeTotalDisplay');
+    const trackTitle = document.getElementById('trackTitle');
+    const trackArtist= document.getElementById('trackArtist');
+    const waveCanvas = document.getElementById('waveformCanvas');
+    const albumCanvas= document.getElementById('albumArtCanvas');
+    const queueList  = document.getElementById('queueList');
+
+    // ── Helpers ──
+    function fmtTime(sec) {
+      const m = Math.floor(sec / 60);
+      const s = Math.floor(sec % 60).toString().padStart(2, '0');
+      return `${m}:${s}`;
+    }
+
+    // Generate a fresh set of random waveform bar heights (80 bars)
+    function generateWaveform() {
+      waveformBars = Array.from({ length: 80 }, () => 0.2 + Math.random() * 0.8);
+    }
+
+    // Draw the waveform canvas — highlighted bars = before playhead, dim = after
+    function drawWaveform() {
+      const track    = TRACKS[currentTrack];
+      const progress = track.duration > 0 ? currentTime / track.duration : 0;
+      const ctx      = waveCanvas.getContext('2d');
+      const W        = waveCanvas.width;
+      const H        = waveCanvas.height;
+
+      ctx.clearRect(0, 0, W, H);
+
+      const barW   = W / waveformBars.length;
+      const gap    = 2;
+      const accent = '#10B981'; // always use accent green for played portion
+      const dim    = '#1E293B';
+
+      waveformBars.forEach((h, i) => {
+        const x      = i * barW + gap / 2;
+        const barH   = h * H * 0.9;
+        const y      = (H - barH) / 2;
+        const played = (i / waveformBars.length) <= progress;
+
+        ctx.fillStyle = played ? accent : dim;
+        ctx.beginPath();
+        // Rounded pill bars
+        const r = Math.min(2, (barW - gap) / 2);
+        ctx.roundRect(x, y, barW - gap, barH, r);
+        ctx.fill();
+      });
+    }
+
+    // Draw album art as a gradient square on canvas
+    function drawAlbumArt() {
+      const track = TRACKS[currentTrack];
+      const ctx   = albumCanvas.getContext('2d');
+      const W     = albumCanvas.width;
+      const H     = albumCanvas.height;
+      const grad  = ctx.createLinearGradient(0, 0, W, H);
+      grad.addColorStop(0, track.color1);
+      grad.addColorStop(1, track.color2);
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, W, H);
+
+      // Draw a simple musical note icon on top
+      ctx.fillStyle = 'rgba(255,255,255,0.4)';
+      ctx.font = '28px serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('♪', W / 2, H / 2);
+    }
+
+    // Build queue mini art for each track
+    function drawQueueArt(canvas, track) {
+      const ctx  = canvas.getContext('2d');
+      const W    = canvas.width;
+      const H    = canvas.height;
+      const grad = ctx.createLinearGradient(0, 0, W, H);
+      grad.addColorStop(0, track.color1);
+      grad.addColorStop(1, track.color2);
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, W, H);
+    }
+
+    // Build the queue DOM
+    function renderQueue() {
+      queueList.innerHTML = '';
+      TRACKS.forEach((t, i) => {
+        const item = document.createElement('div');
+        item.className = 'queue-item' + (i === currentTrack ? ' active' : '');
+        item.dataset.index = i;
+        item.innerHTML = `
+          <span class="queue-num">${i + 1}</span>
+          <canvas class="queue-art" width="36" height="36"></canvas>
+          <div class="queue-info">
+            <div class="queue-title">${t.title}</div>
+            <div class="queue-artist">${t.artist}</div>
+          </div>
+          <span class="queue-duration">${fmtTime(t.duration)}</span>
+        `;
+        queueList.appendChild(item);
+        drawQueueArt(item.querySelector('canvas'), t);
+
+        item.addEventListener('click', () => loadTrack(i));
+      });
+    }
+
+    // Load a track by index — resets time, regenerates waveform
+    function loadTrack(index) {
+      currentTrack = index;
+      currentTime  = 0;
+      const track  = TRACKS[index];
+
+      trackTitle.textContent  = track.title;
+      trackArtist.textContent = track.artist;
+      timeTotal.textContent   = fmtTime(track.duration);
+      seekBar.value           = 0;
+      timeCurr.textContent    = '0:00';
+
+      generateWaveform();
+      drawAlbumArt();
+      drawWaveform();
+      renderQueue();
+
+      // If we were playing, continue playing the new track
+      if (isPlaying) startTimer();
+    }
+
+    // Start playback simulation timer
+    function startTimer() {
+      clearInterval(timer);
+      timer = setInterval(() => {
+        const track = TRACKS[currentTrack];
+        currentTime += speed;
+        if (currentTime >= track.duration) {
+          currentTime = track.duration;
+          stopPlayback();
+          // Auto-advance to next track
+          const next = (currentTrack + 1) % TRACKS.length;
+          setTimeout(() => loadTrack(next), 300);
+          return;
+        }
+        seekBar.value = (currentTime / track.duration) * 100;
+        timeCurr.textContent = fmtTime(currentTime);
+        drawWaveform();
+      }, 1000);
+    }
+
+    function stopPlayback() {
+      clearInterval(timer);
+      isPlaying = false;
+      iconPlay.style.display  = '';
+      iconPause.style.display = 'none';
+    }
+
+    // ── Control handlers ──
+    btnPlay.addEventListener('click', () => {
+      isPlaying = !isPlaying;
+      iconPlay.style.display  = isPlaying ? 'none' : '';
+      iconPause.style.display = isPlaying ? '' : 'none';
+      if (isPlaying) {
+        startTimer();
+      } else {
+        clearInterval(timer);
+      }
+    });
+
+    btnPrev.addEventListener('click', () => {
+      const prev = (currentTrack - 1 + TRACKS.length) % TRACKS.length;
+      loadTrack(prev);
+    });
+
+    btnNext.addEventListener('click', () => {
+      const next = (currentTrack + 1) % TRACKS.length;
+      loadTrack(next);
+    });
+
+    // Seek bar: click/drag to jump to position
+    seekBar.addEventListener('input', () => {
+      const track = TRACKS[currentTrack];
+      currentTime = (seekBar.value / 100) * track.duration;
+      timeCurr.textContent = fmtTime(currentTime);
+      drawWaveform();
+    });
+
+    // Waveform click also seeks
+    document.getElementById('waveformWrap').addEventListener('click', (e) => {
+      const rect  = waveCanvas.getBoundingClientRect();
+      const ratio = (e.clientX - rect.left) / rect.width;
+      const track = TRACKS[currentTrack];
+      currentTime = ratio * track.duration;
+      seekBar.value = ratio * 100;
+      timeCurr.textContent = fmtTime(currentTime);
+      drawWaveform();
+    });
+
+    btnMute.addEventListener('click', () => {
+      isMuted = !isMuted;
+      iconVol.style.display   = isMuted ? 'none' : '';
+      iconMuted.style.display = isMuted ? '' : 'none';
+    });
+
+    speedSel.addEventListener('change', () => {
+      speed = parseFloat(speedSel.value);
+      if (isPlaying) startTimer(); // restart timer with new speed
+    });
+
+    btnLike.addEventListener('click', () => {
+      btnLike.classList.toggle('liked');
+    });
+
+    // Resize canvas to match CSS size
+    function resizeCanvas() {
+      const wrap = document.getElementById('waveformWrap');
+      waveCanvas.width  = wrap.clientWidth * window.devicePixelRatio;
+      waveCanvas.height = 64 * window.devicePixelRatio;
+      waveCanvas.style.height = '64px';
+      // Scale context so bars are sharp on HiDPI screens
+      const ctx = waveCanvas.getContext('2d');
+      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+      drawWaveform();
+    }
+
+    // ── Init ──
+    generateWaveform();
+    renderQueue();
+    drawAlbumArt();
+
+    // Wait for layout to settle before sizing canvas
+    setTimeout(resizeCanvas, 50);
+    window.addEventListener('resize', resizeCanvas);
+  </script>
+</body>
+</html>

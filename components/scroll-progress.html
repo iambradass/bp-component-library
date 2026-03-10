@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scroll Progress — Component Library</title>
+
+  <!--
+  /* COMPONENT: Scroll Progress | COPY: style + html + script */
+  Two utilities in one file:
+  1. Fixed 3px progress bar at top — fills as you scroll the page
+  2. Article reading-time badge — shows "8 min read · 34% complete" as you scroll
+  Both use requestAnimationFrame for performance. Scroll listener only
+  flags a dirty state; rAF does the actual DOM writes.
+  -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+
+    /* ============================================================
+       CUSTOMIZE
+       ============================================================ */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --glow:           rgba(16,185,129,0.15);
+      --glow-strong:    rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --border-accent:  rgba(16,185,129,0.3);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+    }
+    /* ============================================================ */
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 1rem;
+      line-height: 1.7;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       SCROLL PROGRESS BAR — fixed to very top of viewport
+       ═══════════════════════════════════════════════════════════ */
+    #sp-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 0%;       /* driven by JS */
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent), #34D399);
+      box-shadow: 0 0 10px var(--accent), 0 0 20px rgba(16,185,129,0.4);
+      z-index: 9999;
+      transition: width 0.05s linear;
+      transform-origin: left;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       ARTICLE LAYOUT
+       ═══════════════════════════════════════════════════════════ */
+    .sp-wrap {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 5rem 1.5rem 6rem;
+    }
+
+    /* ── Article header ── */
+    .sp-article-header {
+      margin-bottom: 2.5rem;
+    }
+
+    .sp-category {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 1rem;
+    }
+
+    .sp-article-title {
+      font-family: var(--font-heading);
+      font-size: clamp(1.75rem, 4vw, 2.75rem);
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      line-height: 1.15;
+      margin-bottom: 1rem;
+    }
+
+    .sp-article-meta {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .sp-author {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .sp-author-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), #3B82F6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-heading);
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #fff;
+      flex-shrink: 0;
+    }
+    .sp-author-name {
+      font-weight: 600;
+      font-size: 0.875rem;
+      color: var(--text);
+    }
+    .sp-author-date {
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+    }
+
+    .sp-meta-sep {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--border);
+      flex-shrink: 0;
+    }
+
+    /* ── Reading time badge — the dynamic one ── */
+    #sp-read-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      padding: 4px 12px;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    /* Turns accent colored once you've started reading */
+    #sp-read-badge.is-reading {
+      color: var(--accent);
+      border-color: var(--border-accent);
+    }
+    .sp-badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    /* ── Hero image placeholder ── */
+    .sp-hero-img {
+      width: 100%;
+      height: 340px;
+      background: linear-gradient(135deg, var(--elevated) 0%, #1a2540 50%, var(--elevated) 100%);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      margin: 2rem 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+    .sp-hero-img::after {
+      content: 'Article Hero Image';
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    /* ── Article body typography ── */
+    .sp-article-body {
+      color: var(--text-secondary);
+    }
+
+    .sp-article-body p {
+      margin-bottom: 1.5rem;
+      font-size: 1.0625rem;
+      line-height: 1.75;
+    }
+
+    .sp-article-body h2 {
+      font-family: var(--font-heading);
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.015em;
+      margin: 2.5rem 0 1rem;
+    }
+
+    .sp-article-body h3 {
+      font-family: var(--font-heading);
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--text);
+      margin: 2rem 0 0.75rem;
+    }
+
+    .sp-article-body strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .sp-article-body blockquote {
+      border-left: 3px solid var(--accent);
+      margin: 2rem 0;
+      padding: 1rem 1.5rem;
+      background: var(--surface);
+      border-radius: 0 var(--radius) var(--radius) 0;
+    }
+    .sp-article-body blockquote p {
+      font-size: 1.0625rem;
+      color: var(--text);
+      font-style: italic;
+      margin: 0;
+    }
+
+    .sp-article-body ul {
+      margin: 0 0 1.5rem 1.5rem;
+    }
+    .sp-article-body li {
+      margin-bottom: 0.5rem;
+      font-size: 1.0625rem;
+      line-height: 1.7;
+    }
+    .sp-article-body li::marker {
+      color: var(--accent);
+    }
+
+    /* ── Article footer ── */
+    .sp-article-footer {
+      margin-top: 3rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .sp-tags {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .sp-tag {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--text-muted);
+      padding: 4px 10px;
+      border: 1px solid var(--border);
+      border-radius: 100px;
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SCROLL PROGRESS BAR — one div, z-index 9999
+       ═══════════════════════════════════════════════════════════ -->
+  <div id="sp-bar" role="progressbar" aria-label="Reading progress" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+
+
+  <!-- Article content — gives the page height so scrolling works -->
+  <article class="sp-wrap">
+
+    <!-- Article header with reading time badge -->
+    <header class="sp-article-header">
+      <p class="sp-category">Design Systems</p>
+      <h1 class="sp-article-title">The Principles Behind High-Performance Landing Pages That Convert</h1>
+
+      <div class="sp-article-meta">
+        <div class="sp-author">
+          <div class="sp-author-avatar">BP</div>
+          <div>
+            <div class="sp-author-name">Bradley Patterson</div>
+            <div class="sp-author-date">March 6, 2026</div>
+          </div>
+        </div>
+
+        <span class="sp-meta-sep" aria-hidden="true"></span>
+
+        <!-- Reading time badge — JS populates and updates this -->
+        <span id="sp-read-badge">
+          <span class="sp-badge-dot"></span>
+          <span id="sp-badge-text">Calculating...</span>
+        </span>
+      </div>
+    </header>
+
+    <!-- Hero image placeholder -->
+    <div class="sp-hero-img" role="img" aria-label="Article hero image placeholder"></div>
+
+    <!-- Article body — reading time is calculated from words inside this element -->
+    <div class="sp-article-body" id="sp-article-body">
+
+      <p>Every great landing page starts with a single question: what is the one thing we want the visitor to do? Before layout, before color, before copywriting — answer that question. Then design everything in service of that answer.</p>
+
+      <p>The most common mistake I see on client sites is a page that tries to accomplish six things at once. A hero promoting a product launch. A middle section pushing a newsletter. A footer collecting phone numbers for a webinar. All of these goals compete. The visitor's attention is finite, and when you divide it, you lose it.</p>
+
+      <h2>Above the fold: the only guarantee</h2>
+
+      <p>The content above the fold is the only content your visitor is <strong>guaranteed to see</strong>. Everything below requires a scroll, and depending on your traffic source and device, a meaningful percentage of users will never scroll at all.</p>
+
+      <p>This means your headline, your subhead, your primary CTA, and your first trust signal should all live above the fold on mobile. On a 375px screen with a 64px sticky header, that gives you roughly 580px of vertical real estate.</p>
+
+      <blockquote>
+        <p>"Your page doesn't need to be clever. It needs to be clear. Clarity converts."</p>
+      </blockquote>
+
+      <p>Test this for yourself: shrink your browser to 375px wide, remove the navigation, and screenshot what's above the fold. That's your entire pitch for a huge slice of your traffic.</p>
+
+      <h2>The friction audit</h2>
+
+      <p>Before running ads or obsessing over headline copy, run a friction audit. Walk through every step a visitor takes from landing on your page to completing the goal. At each step, ask:</p>
+
+      <ul>
+        <li>Does the visitor need to make a decision here?</li>
+        <li>Is that decision necessary to reach the goal?</li>
+        <li>What cognitive load does this add?</li>
+      </ul>
+
+      <p>Unnecessary decisions are friction. A form asking for company name, phone number, budget range, and timeline before a visitor has even seen your pricing — that's friction. A page with seven competing CTAs — friction. A hero with autoplay video and a popup that fires after 3 seconds — friction stacked on friction.</p>
+
+      <h3>Form field psychology</h3>
+
+      <p>Research consistently shows that conversion rate drops as the number of form fields increases. The sweet spot for most lead-gen pages is 2–3 fields: name, email, and optionally phone. Each additional field requires mental energy. The visitor has to decide whether they trust you with that data, whether the offer is worth the effort, and whether now is the right time.</p>
+
+      <p>You'll recapture qualification information later through onboarding, follow-up emails, or discovery calls. Do not gatekeep your conversion with an interrogation form.</p>
+
+      <h2>Typography and reading comfort</h2>
+
+      <p>Dark theme interfaces have become standard in 2026, but many implementations sacrifice readability. Pure white text on pure black backgrounds creates intense contrast that fatigues readers on long-form content. The sweet spot is slightly off-white text on a very dark (not black) background.</p>
+
+      <p>Body font size should be at least 16px — Google penalizes pages with smaller text in mobile search rankings. Line height between 1.6 and 1.75 for body copy. Paragraph max-width of 65–75 characters (roughly 600–700px at 16px) keeps line length readable without readers losing their place.</p>
+
+      <h3>Hierarchy signals trust</h3>
+
+      <p>A page with clear visual hierarchy communicates that a professional made it. Hierarchy is created through contrast — not just color contrast, but size contrast, weight contrast, and spacing contrast. Your H1 should feel dramatically larger than your H2. Your body copy should feel clearly smaller than your subheads. The eye should know immediately what to read first, second, and third.</p>
+
+      <h2>Mobile performance is conversion performance</h2>
+
+      <p>Google's Core Web Vitals directly affect your search ranking, but more importantly they affect whether your visitor stays or bounces. A page that loads in under 2 seconds on a 4G connection will outperform an identical page that loads in 5 seconds — not because of the half second difference in isolation, but because of what the visitor feels. Speed communicates quality and credibility before a single word is read.</p>
+
+      <p>Compress every image. Lazy-load anything below the fold. Eliminate render-blocking scripts. Use system fonts or a minimal Google Fonts subset. These aren't nice-to-haves — they are table stakes for any serious web property in 2026.</p>
+
+      <p>The principles haven't changed much in a decade: clarity, speed, trust, and a single focused goal. What's changed is the competitive landscape. Your visitors are more educated, more distracted, and more skeptical than they've ever been. The pages that win are the ones that respect their time and make the next step blindingly obvious.</p>
+
+    </div>
+
+    <!-- Article footer tags -->
+    <footer class="sp-article-footer">
+      <div class="sp-tags">
+        <span class="sp-tag">Design</span>
+        <span class="sp-tag">Conversion</span>
+        <span class="sp-tag">Mobile</span>
+        <span class="sp-tag">Performance</span>
+      </div>
+      <span id="sp-read-badge-footer" style="font-family:var(--font-mono);font-size:0.75rem;color:var(--text-muted);"></span>
+    </footer>
+
+  </article>
+
+
+  <script>
+  /* ── Scroll Progress Bar + Reading Time Badge ──
+     Architecture:
+     - scroll event only sets a dirty flag (cheap)
+     - requestAnimationFrame loop reads scroll + writes DOM (batched)
+     This avoids layout thrashing.
+  */
+  (function() {
+    var bar      = document.getElementById('sp-bar');
+    var badge    = document.getElementById('sp-badge-text');
+    var badgeEl  = document.getElementById('sp-read-badge');
+    var footer   = document.getElementById('sp-read-badge-footer');
+    var body     = document.getElementById('sp-article-body');
+
+    /* ── Calculate reading time from word count ──
+       Average adult reads ~238 words per minute. */
+    var words     = (body.textContent || '').trim().split(/\s+/).length;
+    var readMins  = Math.max(1, Math.ceil(words / 238));
+    badge.textContent = readMins + ' min read';
+
+    /* ── State ── */
+    var dirty    = true; /* start dirty so initial state renders */
+    var lastPct  = -1;
+
+    window.addEventListener('scroll', function() { dirty = true; }, { passive: true });
+    window.addEventListener('resize', function() { dirty = true; }, { passive: true });
+
+    function update() {
+      if (dirty) {
+        dirty = false;
+        var scrollY    = window.scrollY || window.pageYOffset;
+        var docHeight  = document.documentElement.scrollHeight;
+        var viewHeight = window.innerHeight;
+        var maxScroll  = docHeight - viewHeight;
+        var pct        = maxScroll > 0 ? Math.min(100, (scrollY / maxScroll) * 100) : 0;
+
+        /* Only write DOM if value changed (avoids unnecessary repaints) */
+        if (Math.abs(pct - lastPct) > 0.25) {
+          lastPct = pct;
+
+          /* Progress bar width */
+          bar.style.width = pct.toFixed(2) + '%';
+          bar.setAttribute('aria-valuenow', Math.round(pct));
+
+          /* Badge text */
+          if (pct < 3) {
+            badge.textContent = readMins + ' min read';
+            badgeEl.classList.remove('is-reading');
+          } else {
+            badge.textContent = readMins + ' min read \u00B7 ' + Math.round(pct) + '% complete';
+            badgeEl.classList.add('is-reading');
+          }
+
+          /* Footer badge */
+          if (footer) {
+            footer.textContent = Math.round(pct) + '% read';
+          }
+        }
+      }
+      requestAnimationFrame(update);
+    }
+
+    requestAnimationFrame(update);
+  })();
+  </script>
+
+</body>
+</html>

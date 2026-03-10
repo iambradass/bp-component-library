@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spotlight Grid — Component Library</title>
+
+  <!--
+  ============================================================
+  COMPONENT: Spotlight Grid
+  COPY: <style> block + HTML block + <script> block into target site
+  FEATURES:
+    - Single radial spotlight follows the cursor across the ENTIRE grid
+    - Each card's ::before computed relative to that card's local position
+    - 3-col desktop / 2-col tablet / 1-col mobile
+    - On hover: individual card border brightens
+    - Touch devices: spotlight disabled, static accent border style
+    - Used by Stripe, Vercel product pages
+  ============================================================
+  -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+
+    /* ── CUSTOMIZE: swap these variables ── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --glow:           rgba(16, 185, 129, 0.12);
+      --border:         rgba(148, 163, 184, 0.1);
+      --border-accent:  rgba(16, 185, 129, 0.35);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      padding: 3rem 1.5rem 5rem;
+    }
+
+    .demo-label {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+    .demo-title {
+      font-family: var(--font-heading);
+      font-size: 2rem;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+    .demo-subtitle {
+      color: var(--text-secondary);
+      text-align: center;
+      font-size: 0.9375rem;
+      margin-bottom: 3rem;
+    }
+
+
+    /* ════════════════════════════════════════════
+       SPOTLIGHT GRID
+    ════════════════════════════════════════════ */
+
+    /* The outer container captures mousemove for the global spotlight */
+    .sg-container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .sg-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;          /* tight grid seam — cards appear connected */
+      background: var(--border);  /* shows as gap lines */
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    /* ── Individual spotlight card ── */
+    .sg-card {
+      background: var(--surface);
+      padding: 32px 28px;
+      position: relative;
+      overflow: hidden;
+      transition: background 0.2s ease;
+      /* CSS vars for cursor position — updated by JS per card */
+      --mouse-x: 50%;
+      --mouse-y: 50%;
+    }
+
+    /* The spotlight pseudo-element — gradient origin is cursor position, card-local */
+    .sg-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+        600px circle at var(--mouse-x) var(--mouse-y),
+        var(--glow),
+        transparent 40%
+      );
+      opacity: 0;
+      transition: opacity 0.4s ease;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Top accent line — hidden by default, fades in on hover */
+    .sg-card::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    /* Spotlight active: show glow on ALL cards when mouse is over container */
+    .sg-grid.spotlight-active .sg-card::before {
+      opacity: 1;
+    }
+
+    /* Individual card hover: accent border on top */
+    .sg-card:hover::after {
+      opacity: 1;
+    }
+
+    /* Touch-only devices: static style instead of spotlight */
+    @media (hover: none) {
+      .sg-card {
+        border-bottom: 1px solid var(--border);
+      }
+      .sg-card::before { display: none; }
+    }
+
+    /* Card inner content sits above the ::before pseudo-element */
+    .sg-card-inner {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Icon */
+    .sg-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+      margin-bottom: 20px;
+      transition: background 0.2s ease, border-color 0.2s ease;
+    }
+    .sg-card:hover .sg-icon {
+      background: rgba(16, 185, 129, 0.12);
+      border-color: rgba(16, 185, 129, 0.35);
+    }
+
+    .sg-card-title {
+      font-family: var(--font-heading);
+      font-size: 1.0625rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 10px;
+      transition: color 0.2s ease;
+    }
+    .sg-card:hover .sg-card-title { color: #fff; }
+
+    .sg-card-desc {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      line-height: 1.65;
+    }
+
+    /* Tablet: 2 columns */
+    @media (max-width: 768px) {
+      .sg-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    /* Mobile: 1 column */
+    @media (max-width: 480px) {
+      .sg-grid { grid-template-columns: 1fr; }
+      .sg-card { padding: 28px 22px; }
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="demo-label">Component Demo</div>
+  <h1 class="demo-title">Spotlight Grid</h1>
+  <p class="demo-subtitle">Move your mouse across the grid. One spotlight illuminates whichever cards are nearest — just like Vercel and Stripe.</p>
+
+  <!-- ════════════════════════════════════════════
+       SPOTLIGHT GRID
+  ════════════════════════════════════════════ -->
+  <div class="sg-container">
+    <div class="sg-grid" id="sg-grid">
+
+      <!-- Card 1 -->
+      <div class="sg-card">
+        <div class="sg-card-inner">
+          <div class="sg-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          </div>
+          <h3 class="sg-card-title">Blazing Performance</h3>
+          <p class="sg-card-desc">Hand-coded output with no framework bloat. Lighthouse 98+ out of the box, every time.</p>
+        </div>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="sg-card">
+        <div class="sg-card-inner">
+          <div class="sg-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg>
+          </div>
+          <h3 class="sg-card-title">Mobile-First Design</h3>
+          <p class="sg-card-desc">Every pixel is designed for a 375px viewport first. Desktop is the enhancement, not the baseline.</p>
+        </div>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="sg-card">
+        <div class="sg-card-inner">
+          <div class="sg-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <h3 class="sg-card-title">You Own Everything</h3>
+          <p class="sg-card-desc">Source files, credentials, walkthroughs — all handed off at launch. Zero vendor lock-in.</p>
+        </div>
+      </div>
+
+      <!-- Card 4 -->
+      <div class="sg-card">
+        <div class="sg-card-inner">
+          <div class="sg-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+          </div>
+          <h3 class="sg-card-title">CRM Integration</h3>
+          <p class="sg-card-desc">Every lead form connects to your GoHighLevel pipeline via webhook. No manual follow-up needed.</p>
+        </div>
+      </div>
+
+      <!-- Card 5 -->
+      <div class="sg-card">
+        <div class="sg-card-inner">
+          <div class="sg-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          </div>
+          <h3 class="sg-card-title">Built to Convert</h3>
+          <p class="sg-card-desc">CTA placement, form psychology, trust signals — baked into the structure, not bolted on after.</p>
+        </div>
+      </div>
+
+      <!-- Card 6 -->
+      <div class="sg-card">
+        <div class="sg-card-inner">
+          <div class="sg-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <h3 class="sg-card-title">Fast Turnaround</h3>
+          <p class="sg-card-desc">Structured process means predictable timelines. Most sites are live within 3 weeks of kickoff.</p>
+        </div>
+      </div>
+
+    </div>
+  </div><!-- /sg-container -->
+
+
+  <script>
+  /*
+  ════════════════════════════════════════
+  SPOTLIGHT GRID — cursor tracking
+  ════════════════════════════════════════
+
+  How it works:
+  1. Listen for mousemove on the entire grid container
+  2. For each card, compute cursor position relative to that card's top-left corner
+  3. Set --mouse-x / --mouse-y on the card element
+  4. The ::before pseudo-element uses those vars as the radial-gradient origin
+  5. Because the gradient is card-local, it appears to emanate from the cursor
+     position as it passes over each card — creating one unified spotlight across the grid.
+
+  Touch devices: no mousemove → spotlight never activates → static style shows.
+  */
+
+  var grid  = document.getElementById('sg-grid');
+  var cards = grid.querySelectorAll('.sg-card');
+
+  /* Only run on pointer (mouse) devices — skip touch */
+  var hasPointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+  if (hasPointer) {
+    grid.addEventListener('mousemove', function(e) {
+      /* Activate spotlight mode on the grid */
+      grid.classList.add('spotlight-active');
+
+      cards.forEach(function(card) {
+        /* getBoundingClientRect gives card's position relative to viewport */
+        var rect = card.getBoundingClientRect();
+        /* Compute cursor offset relative to THIS card's top-left */
+        var x = e.clientX - rect.left;
+        var y = e.clientY - rect.top;
+        card.style.setProperty('--mouse-x', x + 'px');
+        card.style.setProperty('--mouse-y', y + 'px');
+      });
+    });
+
+    /* Remove spotlight when cursor leaves the grid */
+    grid.addEventListener('mouseleave', function() {
+      grid.classList.remove('spotlight-active');
+    });
+  }
+  </script>
+
+</body>
+</html>

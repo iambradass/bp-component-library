@@ -1,0 +1,497 @@
+<!-- COMPONENT: Scroll Story Section | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scroll Story Section — 4-Act Narrative</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+      --red:            #EF4444;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+    }
+
+    /* ── Lead-in section (page context above the story) ── */
+    .pre-story {
+      height: 40vh;
+      display: flex; align-items: center; justify-content: center;
+      text-align: center; padding: 2rem 1.5rem;
+      background: var(--surface); border-bottom: 1px solid var(--border);
+    }
+    .pre-story h1 {
+      font-family: var(--font-heading); font-size: clamp(1.5rem,4vw,2.5rem);
+      font-weight: 700; letter-spacing: -0.02em; color: var(--text);
+    }
+    .pre-story p { color: var(--text-secondary); margin-top: 0.75rem; font-size: 1rem; }
+
+    /* ════════════════════════════════════════
+       SCROLL STORY CONTAINER
+       min-height: 400vh gives 4 acts × ~100vh each
+    ════════════════════════════════════════ */
+    .story-container {
+      position: relative;
+      min-height: 400vh;
+    }
+
+    /* Sticky inner — pinned to viewport, full height */
+    .story-sticky {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* All 4 acts stacked, absolute, full screen */
+    .act {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 1.5rem;
+      text-align: center;
+      opacity: 0;
+      transition: opacity 0.6s ease;
+      pointer-events: none;
+    }
+    .act.is-active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* ── ACT 1: Problem — dark, searching ── */
+    .act-1 { background: var(--bg); }
+    .act-1::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image: radial-gradient(circle, rgba(148,163,184,0.04) 1px, transparent 1px);
+      background-size: 28px 28px;
+    }
+    .act-label {
+      font-family: var(--font-mono); font-size: 0.6875rem; font-weight: 600;
+      color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em;
+      margin-bottom: 2rem; position: relative; z-index: 1;
+    }
+    .act-1-question {
+      font-family: var(--font-heading);
+      font-size: clamp(1.5rem, 4vw, 2.75rem);
+      font-weight: 700; letter-spacing: -0.025em; line-height: 1.3;
+      color: var(--text); max-width: 700px; position: relative; z-index: 1;
+      margin-bottom: 3rem;
+    }
+    .act-1-question em { font-style: normal; color: var(--text-secondary); }
+
+    /* Search bar visual */
+    .search-visual {
+      width: 100%; max-width: 560px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 28px; padding: 16px 24px;
+      display: flex; align-items: center; gap: 12px;
+      position: relative; z-index: 1;
+    }
+    .search-visual-icon { color: var(--text-muted); flex-shrink: 0; }
+    .search-text {
+      font-size: 1.125rem; color: var(--text-secondary);
+      font-family: var(--font-body);
+    }
+    /* Blinking cursor */
+    .cursor {
+      display: inline-block; width: 2px; height: 1.2em;
+      background: var(--accent); vertical-align: text-bottom;
+      animation: blink 1s step-end infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+    /* ── ACT 2: Agitate — red tint, search fills with competitors ── */
+    .act-2 {
+      background: linear-gradient(180deg, #0D1117 0%, rgba(239,68,68,0.06) 100%);
+    }
+    .act-2-serp {
+      width: 100%; max-width: 560px;
+      background: var(--surface); border: 1px solid rgba(239,68,68,0.2);
+      border-radius: var(--radius); overflow: hidden; position: relative; z-index: 1;
+    }
+    .act-2-serp-header {
+      background: var(--bg); padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .act-2-glogo { font-weight: 700; font-size: 1rem; background: linear-gradient(135deg,#4285f4,#34a853,#fbbc05,#ea4335); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .act-2-query { flex: 1; height: 28px; background: var(--surface); border-radius: 14px; display: flex; align-items: center; padding: 0 12px; font-size: 0.8125rem; color: var(--text-secondary); }
+    .act-2-result { padding: 12px 16px; border-bottom: 1px solid var(--border); }
+    .act-2-result:last-child { border-bottom: none; }
+    .act-2-url { font-size: 0.6875rem; color: #5f9f3d; margin-bottom: 3px; }
+    .act-2-title { font-size: 0.9375rem; color: #8ab4f8; margin-bottom: 3px; }
+    .act-2-desc { font-size: 0.75rem; color: var(--text-secondary); line-height: 1.4; }
+    .act-2-absent {
+      margin: 1.5rem auto; max-width: 560px;
+      background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.25);
+      border-radius: 10px; padding: 1rem 1.25rem;
+      font-family: var(--font-heading); font-size: 1rem; font-weight: 600;
+      color: rgba(239,68,68,0.9); position: relative; z-index: 1;
+    }
+    .act-2-title-text {
+      font-family: var(--font-heading); font-size: clamp(1.25rem, 3vw, 1.75rem);
+      font-weight: 700; color: var(--text-muted); margin-bottom: 1.5rem;
+      position: relative; z-index: 1;
+    }
+
+    /* ── ACT 3: Solution — green shift, your site appears ── */
+    .act-3 {
+      background: linear-gradient(180deg, var(--bg) 0%, rgba(16,185,129,0.06) 100%);
+    }
+    .act-3-serp {
+      width: 100%; max-width: 560px;
+      background: var(--surface); border: 1px solid var(--accent-border);
+      border-radius: var(--radius); overflow: hidden; position: relative; z-index: 1;
+      box-shadow: 0 0 40px rgba(16,185,129,0.15);
+    }
+    .act-3-result-you {
+      padding: 14px 16px; border-bottom: 1px solid var(--border);
+      background: rgba(16,185,129,0.06);
+    }
+    .act-3-url { font-size: 0.6875rem; color: #10b981; margin-bottom: 3px; }
+    .act-3-title-link { font-size: 0.9375rem; color: var(--accent); font-weight: 600; margin-bottom: 3px; }
+    .act-3-desc { font-size: 0.75rem; color: var(--text-secondary); line-height: 1.4; }
+    /* Your profile card */
+    .act-3-profile {
+      margin: 1.5rem auto; max-width: 400px;
+      background: var(--elevated); border: 1px solid var(--accent-border);
+      border-radius: 14px; padding: 1.25rem 1.5rem;
+      display: flex; align-items: center; gap: 1rem;
+      position: relative; z-index: 1;
+    }
+    .act-3-avatar {
+      width: 56px; height: 56px; border-radius: 50%;
+      background: var(--accent-dim); border: 2px solid var(--accent);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-heading); font-weight: 700; font-size: 1.125rem;
+      color: var(--accent); flex-shrink: 0;
+    }
+    .act-3-pname { font-family: var(--font-heading); font-size: 1rem; font-weight: 700; }
+    .act-3-prole { font-size: 0.8125rem; color: var(--text-muted); margin-top: 2px; }
+    .act-3-pstars { color: #f59e0b; font-size: 0.875rem; margin-top: 4px; }
+    .act-3-pbtn {
+      margin-left: auto; padding: 8px 16px;
+      background: var(--accent); color: #0D1117;
+      border: none; border-radius: 6px;
+      font-family: var(--font-heading); font-size: 0.8125rem; font-weight: 700;
+      cursor: pointer;
+    }
+    .act-3-headline {
+      font-family: var(--font-heading); font-size: clamp(1.25rem, 3vw, 2rem);
+      font-weight: 700; color: var(--text); margin-bottom: 1.5rem;
+      position: relative; z-index: 1;
+    }
+    .act-3-headline strong { color: var(--accent); }
+
+    /* ── ACT 4: CTA — big moment ── */
+    .act-4 {
+      background: radial-gradient(ellipse at center, rgba(16,185,129,0.1) 0%, var(--bg) 60%);
+    }
+    .act-4-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: var(--font-mono); font-size: 0.75rem; font-weight: 600;
+      color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em;
+      padding: 5px 14px; background: var(--accent-dim);
+      border: 1px solid var(--accent-border); border-radius: 100px;
+      margin-bottom: 1.5rem; position: relative; z-index: 1;
+    }
+    .act-4-title {
+      font-family: var(--font-heading); font-size: clamp(2rem, 6vw, 4rem);
+      font-weight: 700; letter-spacing: -0.03em; line-height: 1.1;
+      color: var(--text); margin-bottom: 1rem; position: relative; z-index: 1;
+    }
+    .act-4-sub {
+      font-size: 1.0625rem; color: var(--text-secondary); line-height: 1.6;
+      max-width: 480px; margin-bottom: 2.5rem; position: relative; z-index: 1;
+    }
+    .act-4-btn {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 16px 36px; background: var(--accent); color: #0D1117;
+      font-family: var(--font-heading); font-size: 1.0625rem; font-weight: 700;
+      border-radius: 10px; border: none; cursor: pointer; text-decoration: none;
+      transition: transform 0.2s, box-shadow 0.2s;
+      position: relative; z-index: 1;
+    }
+    .act-4-btn:hover { transform: translateY(-3px); box-shadow: 0 16px 40px rgba(16,185,129,0.4); }
+
+    /* Progress dots — show which act is active */
+    .story-progress {
+      position: fixed;
+      right: 1.5rem; top: 50%;
+      transform: translateY(-50%);
+      display: flex; flex-direction: column; gap: 8px;
+      z-index: 200;
+    }
+    .progress-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--border); border: 1px solid rgba(148,163,184,0.2);
+      transition: background 0.3s, transform 0.3s;
+      cursor: pointer;
+    }
+    .progress-dot.is-active { background: var(--accent); transform: scale(1.4); }
+    @media (max-width: 480px) { .story-progress { display: none; } }
+
+    /* ── Scroll prompt ── */
+    .scroll-prompt {
+      position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      z-index: 10; opacity: 0.6;
+    }
+    .scroll-prompt span { font-family: var(--font-mono); font-size: 0.625rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); }
+    .scroll-arrow { animation: bounce 1.5s ease-in-out infinite; }
+    @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(6px)} }
+
+    /* Post-story content */
+    .post-story {
+      min-height: 30vh; background: var(--surface);
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      padding: 3rem 1.5rem; text-align: center;
+    }
+    .post-story p { color: var(--text-secondary); font-size: 1rem; }
+
+    /* DOM confetti (spawned by JS) */
+    .confetti-piece {
+      position: fixed; pointer-events: none; z-index: 9999;
+      width: 8px; height: 8px; border-radius: 2px;
+      animation: confettiFall var(--dur) ease forwards;
+    }
+    @keyframes confettiFall {
+      0%   { transform: translate(0,0) rotate(0deg); opacity: 1; }
+      100% { transform: translate(var(--dx), var(--dy)) rotate(var(--rot)); opacity: 0; }
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- Page context above the story -->
+  <div class="pre-story">
+    <div>
+      <h1>The story of how title reps start winning online.</h1>
+      <p>Scroll through &darr;</p>
+    </div>
+  </div>
+
+  <!-- Progress dots (fixed, right side) -->
+  <div class="story-progress" id="storyProgress">
+    <div class="progress-dot is-active" data-act="0" title="Problem"></div>
+    <div class="progress-dot" data-act="1" title="Agitate"></div>
+    <div class="progress-dot" data-act="2" title="Solution"></div>
+    <div class="progress-dot" data-act="3" title="CTA"></div>
+  </div>
+
+  <!-- ════════════════════════════════════════ -->
+  <!-- THE SCROLL STORY CONTAINER              -->
+  <!-- ════════════════════════════════════════ -->
+  <div class="story-container" id="storyContainer">
+    <div class="story-sticky" id="storySticky">
+
+      <!-- ACT 1: Problem -->
+      <div class="act act-1 is-active" id="act-0">
+        <div class="act-label">Act 1 — The problem</div>
+        <p class="act-1-question">
+          Right now, someone in your market is<br>
+          searching for a title rep online.<br>
+          <em>Are they finding you?</em>
+        </p>
+        <div class="search-visual">
+          <div class="search-visual-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          </div>
+          <div class="search-text">
+            title rep near me<span class="cursor"></span>
+          </div>
+        </div>
+        <div class="scroll-prompt">
+          <span>Scroll to continue</span>
+          <div class="scroll-arrow">
+            <svg class="scroll-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- ACT 2: Agitate -->
+      <div class="act act-2" id="act-1">
+        <div class="act-label">Act 2 — The absence</div>
+        <div class="act-2-title-text">The search results come back. Your competitors are there.</div>
+        <div class="act-2-serp">
+          <div class="act-2-serp-header">
+            <span class="act-2-glogo">Google</span>
+            <div class="act-2-query">title rep near me</div>
+          </div>
+          <div class="act-2-result">
+            <div class="act-2-url">premiertitleservices.com</div>
+            <div class="act-2-title">Premier Title Rep | Dallas TX — Fast Closings</div>
+            <div class="act-2-desc">Serving DFW with 10 years of experience. Schedule your consultation online today.</div>
+          </div>
+          <div class="act-2-result" style="opacity:0.7">
+            <div class="act-2-url">dallastitleco.com</div>
+            <div class="act-2-title">Dallas Title Rep — Trusted Closings Specialist</div>
+            <div class="act-2-desc">Professional title services across the metroplex. 4.8 stars, 200+ reviews.</div>
+          </div>
+          <div class="act-2-result" style="opacity:0.4">
+            <div class="act-2-url">txclosings.com</div>
+            <div class="act-2-title">TX Closings — Title Rep Services</div>
+            <div class="act-2-desc">Get a quote from our team today. We make the process simple.</div>
+          </div>
+        </div>
+        <div class="act-2-absent">
+          You're not here. The phone call goes to someone else.
+        </div>
+      </div>
+
+      <!-- ACT 3: Solution -->
+      <div class="act act-3" id="act-2">
+        <div class="act-label">Act 3 — The solution</div>
+        <p class="act-3-headline">Now imagine <strong>your name</strong> at the top.</p>
+        <div class="act-3-serp">
+          <div class="act-2-serp-header">
+            <span class="act-2-glogo">Google</span>
+            <div class="act-2-query">title rep near me</div>
+          </div>
+          <div class="act-3-result-you">
+            <div class="act-3-url">sarahwilliamstitle.com &rsaquo; Dallas TX</div>
+            <div class="act-3-title-link">Sarah Williams — Title Rep | Dallas TX</div>
+            <div class="act-3-desc">12 years of DFW experience. Fast, reliable closings. 4.9 stars, 200+ reviews. Schedule online.</div>
+          </div>
+          <div class="act-2-result" style="opacity:0.35">
+            <div class="act-2-url">premiertitleservices.com</div>
+            <div class="act-2-title">Premier Title Rep | Dallas TX</div>
+          </div>
+        </div>
+        <div class="act-3-profile">
+          <div class="act-3-avatar">SW</div>
+          <div>
+            <div class="act-3-pname">Sarah Williams</div>
+            <div class="act-3-prole">Title Rep — Dallas, TX</div>
+            <div class="act-3-pstars">★★★★★ 4.9 (200 reviews)</div>
+          </div>
+          <button class="act-3-pbtn">Contact</button>
+        </div>
+      </div>
+
+      <!-- ACT 4: CTA -->
+      <div class="act act-4" id="act-3">
+        <div class="act-4-eyebrow">
+          <span style="width:6px;height:6px;border-radius:50%;background:var(--accent);display:inline-block"></span>
+          This is possible
+        </div>
+        <h2 class="act-4-title">This is what's possible.</h2>
+        <p class="act-4-sub">
+          You've seen the story. A professional website that gets found, captures leads, and works while you're at closings.
+          It takes 10 days to build. It costs less than you think.
+        </p>
+        <a href="#" class="act-4-btn">
+          Build My Site Now
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </a>
+      </div>
+
+    </div><!-- /story-sticky -->
+  </div><!-- /story-container -->
+
+  <!-- Content after story -->
+  <div class="post-story">
+    <p>Continue reading about our process &darr;</p>
+  </div>
+
+  <script>
+    // ── Scroll-driven act switching ──
+    // Divides the container height into 4 equal acts
+    const container = document.getElementById('storyContainer');
+    const acts = document.querySelectorAll('.act');
+    const dots = document.querySelectorAll('.progress-dot');
+    let currentAct = 0;
+    let confettiFired = false;
+
+    function getActiveAct() {
+      const rect = container.getBoundingClientRect();
+      const scrolled = -rect.top; // how far we've scrolled into the container
+      const totalHeight = container.offsetHeight - window.innerHeight;
+      const progress = Math.max(0, Math.min(1, scrolled / totalHeight));
+      // 4 acts, each gets 25% of the scroll range
+      return Math.min(3, Math.floor(progress * 4));
+    }
+
+    function activateAct(idx) {
+      if (idx === currentAct) return;
+      currentAct = idx;
+      acts.forEach((a, i) => a.classList.toggle('is-active', i === idx));
+      dots.forEach((d, i) => d.classList.toggle('is-active', i === idx));
+      // Fire confetti when arriving at Act 4 (index 3)
+      if (idx === 3 && !confettiFired) {
+        confettiFired = true;
+        spawnConfetti();
+      }
+    }
+
+    window.addEventListener('scroll', () => {
+      activateAct(getActiveAct());
+    }, { passive: true });
+
+    // ── Click dots to jump ──
+    dots.forEach(dot => {
+      dot.addEventListener('click', () => {
+        const actIdx = parseInt(dot.dataset.act);
+        const containerTop = container.offsetTop;
+        const containerH = container.offsetHeight - window.innerHeight;
+        const targetScroll = containerTop + (actIdx / 4) * containerH + (containerH * 0.125);
+        window.scrollTo({ top: targetScroll, behavior: 'smooth' });
+      });
+    });
+
+    // ── DOM confetti burst ──
+    function spawnConfetti() {
+      const colors = ['#10B981','#38bdf8','#f59e0b','#a78bfa','#f472b6'];
+      const cx = window.innerWidth / 2;
+      const cy = window.innerHeight / 2;
+
+      for (let i = 0; i < 60; i++) {
+        const el = document.createElement('div');
+        el.className = 'confetti-piece';
+        const angle = Math.random() * 2 * Math.PI;
+        const dist = 200 + Math.random() * 300;
+        el.style.setProperty('--dx', Math.cos(angle) * dist + 'px');
+        el.style.setProperty('--dy', (Math.sin(angle) * dist + Math.random() * 200) + 'px');
+        el.style.setProperty('--rot', (Math.random() * 720 - 360) + 'deg');
+        el.style.setProperty('--dur', (0.8 + Math.random() * 1.2) + 's');
+        el.style.left = (cx + (Math.random() - 0.5) * 80) + 'px';
+        el.style.top = (cy + (Math.random() - 0.5) * 80) + 'px';
+        el.style.background = colors[Math.floor(Math.random() * colors.length)];
+        document.body.appendChild(el);
+        el.addEventListener('animationend', () => el.remove());
+      }
+    }
+  </script>
+
+</body>
+</html>

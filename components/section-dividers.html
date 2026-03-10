@@ -1,0 +1,302 @@
+<!-- COMPONENT: Creative Section Dividers | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Section Dividers</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ── Customize ── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.12);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font-body); }
+
+    /* ── Content block common styles ── */
+    .content-block {
+      padding: 5rem 1.5rem;
+      text-align: center;
+      position: relative;
+    }
+
+    .content-inner {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .block-label {
+      font-size: 0.7rem;
+      font-family: ui-monospace, monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--accent);
+      margin-bottom: 1rem;
+    }
+
+    .block-title {
+      font-family: var(--font-heading);
+      font-size: clamp(1.5rem, 3vw, 2.25rem);
+      font-weight: 700;
+      margin-bottom: 0.875rem;
+    }
+
+    .block-body {
+      color: var(--text-secondary);
+      font-size: 0.9375rem;
+      line-height: 1.7;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    /* Alternating section backgrounds */
+    .bg-page    { background: var(--bg); }
+    .bg-surface { background: var(--surface); }
+    .bg-accent  { background: linear-gradient(135deg, #0f4c35, #0D1117); }
+
+    /* ───────────────────────────────────────
+       DIVIDER 1: Wave (SVG inline)
+       — Place immediately after first section.
+       The SVG sits at the bottom of the upper section,
+       matching the color of the NEXT section.
+    ─────────────────────────────────────────*/
+    .divider-wave {
+      line-height: 0;
+      overflow: hidden;
+      background: var(--bg); /* color of the section above */
+    }
+
+    .divider-wave svg { display: block; width: 100%; height: 60px; }
+
+    /* ───────────────────────────────────────
+       DIVIDER 2: Diagonal cut (clip-path)
+    ─────────────────────────────────────────*/
+    /* The lower section itself gets clipped — gives the illusion of a diagonal edge on the upper one */
+    .divider-diagonal {
+      clip-path: polygon(0 40px, 100% 0, 100% 100%, 0 100%);
+      margin-top: -40px; /* overlap to remove gap */
+      padding-top: calc(5rem + 40px);
+    }
+
+    /* ───────────────────────────────────────
+       DIVIDER 3: Torn paper (jagged SVG edge)
+    ─────────────────────────────────────────*/
+    .divider-torn {
+      line-height: 0;
+      overflow: hidden;
+      background: var(--surface);
+    }
+
+    .divider-torn svg { display: block; width: 100%; height: 40px; }
+
+    /* ───────────────────────────────────────
+       DIVIDER 4: Mountain peaks (SVG zigzag)
+    ─────────────────────────────────────────*/
+    .divider-mountains {
+      line-height: 0;
+      overflow: hidden;
+      background: var(--bg);
+    }
+
+    .divider-mountains svg { display: block; width: 100%; height: 70px; }
+
+    /* ───────────────────────────────────────
+       DIVIDER 5: Flowing S-curve
+    ─────────────────────────────────────────*/
+    .divider-curve {
+      line-height: 0;
+      overflow: hidden;
+      background: var(--surface);
+    }
+
+    .divider-curve svg { display: block; width: 100%; height: 80px; }
+
+    /* ───────────────────────────────────────
+       DIVIDER 6: Layered card (overlap with shadow)
+       — Next section "slides over" previous with elevation
+    ─────────────────────────────────────────*/
+    .divider-card {
+      position: relative;
+      z-index: 2;
+      border-radius: 24px 24px 0 0;
+      margin-top: -24px;
+      box-shadow: 0 -16px 48px rgba(0,0,0,0.5);
+    }
+
+    /* ───────────────────────────────────────
+       DIVIDER 7: Fade to dark (gradient)
+    ─────────────────────────────────────────*/
+    .divider-fade {
+      /* The section itself has a gradient background fading from surface → bg */
+      background: linear-gradient(to bottom, var(--surface) 0%, var(--bg) 100%);
+    }
+
+    /* ───────────────────────────────────────
+       DIVIDER 8: Particle / noise texture strip
+    ─────────────────────────────────────────*/
+    .divider-noise-strip {
+      height: 48px;
+      /* SVG noise via background-image inline */
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='48'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.12'/%3E%3C/svg%3E");
+      background-size: 200px 48px;
+      background-color: var(--surface);
+      /* Gradient overlay so it blends into sections above/below */
+      -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 30%, black 70%, transparent 100%);
+      mask-image: linear-gradient(to bottom, transparent 0%, black 30%, black 70%, transparent 100%);
+    }
+
+    /* Labels shown at the transition point */
+    .divider-label {
+      text-align: center;
+      font-size: 0.7rem;
+      font-family: ui-monospace, monospace;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 0.625rem;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      display: inline-block;
+      margin: 0 auto;
+    }
+
+    /* Centered label wrapper */
+    .divider-label-wrap {
+      display: flex;
+      justify-content: center;
+      padding: 0.75rem 0;
+      position: relative;
+      z-index: 3;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── SECTION + DIVIDER 1: Wave ── -->
+  <div class="content-block bg-page">
+    <div class="content-inner">
+      <div class="block-label">Section A</div>
+      <h2 class="block-title">Start somewhere clean</h2>
+      <p class="block-body">This section has a plain dark background. Below it, a CSS SVG wave transitions smoothly into the surface color.</p>
+    </div>
+  </div>
+
+  <div class="divider-label-wrap"><span class="divider-label">Divider 1 — Wave</span></div>
+  <!-- Wave SVG: fill = color of the NEXT section (--surface) -->
+  <div class="divider-wave">
+    <svg viewBox="0 0 1440 60" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+      <path d="M0,30 C240,60 480,0 720,30 C960,60 1200,0 1440,30 L1440,60 L0,60 Z" fill="#111827"/>
+    </svg>
+  </div>
+
+  <!-- ── SECTION + DIVIDER 2: Diagonal ── -->
+  <div class="content-block bg-surface">
+    <div class="content-inner">
+      <div class="block-label">Section B</div>
+      <h2 class="block-title">A clean diagonal cut</h2>
+      <p class="block-body">This section uses clip-path: polygon() to create an angled entry. The top edge is cut at an angle rather than horizontal.</p>
+    </div>
+  </div>
+
+  <div class="divider-label-wrap" style="background:var(--surface)"><span class="divider-label">Divider 2 — Diagonal Cut</span></div>
+  <!-- The NEXT section itself is clipped to look diagonal -->
+  <div class="content-block bg-page divider-diagonal">
+    <div class="content-inner">
+      <div class="block-label">Section C</div>
+      <h2 class="block-title">Clipped into view</h2>
+      <p class="block-body">clip-path: polygon(0 40px, 100% 0, 100% 100%, 0 100%) applied directly to this section creates the diagonal top edge.</p>
+    </div>
+  </div>
+
+  <!-- ── DIVIDER 3: Torn paper ── -->
+  <div class="divider-label-wrap"><span class="divider-label">Divider 3 — Torn Paper</span></div>
+  <div class="divider-torn">
+    <!-- Irregular tear edge path -->
+    <svg viewBox="0 0 1440 40" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+      <path d="M0,20 L40,8 L80,25 L130,5 L180,22 L240,10 L300,28 L370,6 L440,20 L510,3 L570,18 L640,8 L700,24 L760,10 L830,26 L900,7 L960,21 L1020,5 L1080,22 L1150,11 L1200,27 L1270,8 L1330,23 L1380,12 L1440,20 L1440,40 L0,40 Z" fill="#111827"/>
+    </svg>
+  </div>
+
+  <!-- ── SECTION + DIVIDER 4: Mountain peaks ── -->
+  <div class="content-block bg-page">
+    <div class="content-inner">
+      <div class="block-label">Section D</div>
+      <h2 class="block-title">Rough edge, soft contrast</h2>
+      <p class="block-body">The torn paper edge above suggests a physical quality to the transition. Below, mountain peaks create a dramatic skyline silhouette.</p>
+    </div>
+  </div>
+
+  <div class="divider-label-wrap"><span class="divider-label">Divider 4 — Mountain Peaks</span></div>
+  <div class="divider-mountains">
+    <!-- Zigzag mountain skyline -->
+    <svg viewBox="0 0 1440 70" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+      <path d="M0,70 L0,50 L80,20 L180,55 L280,10 L380,50 L440,30 L520,60 L620,15 L700,50 L780,25 L860,55 L960,8 L1060,48 L1140,22 L1220,52 L1300,18 L1380,45 L1440,30 L1440,70 Z" fill="#111827"/>
+    </svg>
+  </div>
+
+  <!-- ── SECTION + DIVIDER 5: Flowing curve ── -->
+  <div class="content-block bg-page">
+    <div class="content-inner">
+      <div class="block-label">Section E</div>
+      <h2 class="block-title">Peaks and valleys</h2>
+      <p class="block-body">The mountain divider above creates visual drama. Below, a gentle cubic Bezier S-curve offers an organic, flowing transition.</p>
+    </div>
+  </div>
+
+  <div class="divider-label-wrap"><span class="divider-label">Divider 5 — Flowing Curve</span></div>
+  <div class="divider-curve">
+    <!-- Gentle S-curve: starts curved left, ends curved right -->
+    <svg viewBox="0 0 1440 80" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+      <path d="M0,0 C360,80 1080,0 1440,80 L1440,80 L0,80 Z" fill="#0D1117"/>
+    </svg>
+  </div>
+
+  <!-- ── DIVIDER 6: Layered card overlap ── -->
+  <div class="divider-label-wrap" style="background:var(--surface)"><span class="divider-label">Divider 6 — Layered Card</span></div>
+  <div class="content-block bg-page divider-card" style="background: var(--elevated);">
+    <div class="content-inner">
+      <div class="block-label">Section F</div>
+      <h2 class="block-title">Cards layering over content</h2>
+      <p class="block-body">This section uses border-radius on the top corners and a negative margin-top to overlap the previous section. Combined with a deep box-shadow, it creates a card-over-card feel.</p>
+    </div>
+  </div>
+
+  <!-- ── DIVIDER 7: Fade to dark ── -->
+  <div class="divider-label-wrap" style="background:var(--elevated)"><span class="divider-label">Divider 7 — Fade to Dark</span></div>
+  <div class="content-block divider-fade">
+    <div class="content-inner">
+      <div class="block-label">Section G</div>
+      <h2 class="block-title">Gradual fading transition</h2>
+      <p class="block-body">Sometimes the subtlest transition is the most powerful. This section's background fades from the surface color down to the dark page background over its full height.</p>
+    </div>
+  </div>
+
+  <!-- ── DIVIDER 8: Noise strip ── -->
+  <div class="divider-label-wrap"><span class="divider-label">Divider 8 — Grain / Noise</span></div>
+  <div class="divider-noise-strip"></div>
+
+  <div class="content-block bg-surface">
+    <div class="content-inner">
+      <div class="block-label">Section H</div>
+      <h2 class="block-title">Textured grain transition</h2>
+      <p class="block-body">The noise strip above uses an SVG feTurbulence filter tiled as a background-image with a gradient mask to blend into both sections. Pure CSS, no canvas.</p>
+    </div>
+  </div>
+
+</body>
+</html>

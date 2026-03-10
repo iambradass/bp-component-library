@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bottom Tab Bar — Component Library</title>
+  <!-- COMPONENT: Bottom Tab Bar | COPY: style + html + script -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── CUSTOMIZE ─────────────────────────────────────────────── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.12);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+    }
+    /* ── END CUSTOMIZE ─────────────────────────────────────────── */
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: var(--font-body); min-height: 100vh;
+      padding: 2rem 1.5rem 4rem;
+    }
+
+    h1 { font-family: var(--font-heading); font-size: clamp(1.5rem,4vw,2rem); font-weight:700; letter-spacing:-0.02em; margin-bottom:0.4rem; }
+    .page-sub { color: var(--text-secondary); font-size:0.875rem; margin-bottom:3rem; }
+    .max-wrap { max-width:960px; margin:0 auto; }
+
+    .variant-title {
+      font-family: var(--font-heading); font-size: 1rem; font-weight: 600;
+      color: var(--accent); margin-bottom: 1.25rem;
+      padding-bottom: 0.75rem; border-bottom: 1px solid var(--border);
+    }
+
+    /* ── Phone frame ──────────────────────────────────────────── */
+    .phone-frame {
+      width: 375px;
+      height: 680px;
+      border-radius: 40px;
+      border: 2px solid rgba(148,163,184,0.15);
+      background: var(--surface);
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 40px 80px rgba(0,0,0,0.5);
+      margin: 0 auto;
+    }
+
+    /* Screen area — the scrollable app content */
+    .phone-screen {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      bottom: 0;
+      overflow: hidden;
+    }
+
+    /* Each "app page" inside the phone */
+    .app-page {
+      position: absolute;
+      inset: 0;
+      padding: 2.5rem 1.5rem 90px;
+      display: none;
+      flex-direction: column;
+      gap: 1rem;
+      overflow-y: auto;
+      animation: page-in 0.25s ease;
+    }
+    .app-page.active { display: flex; }
+    @keyframes page-in { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+
+    .app-page-title {
+      font-family: var(--font-heading); font-size: 1.25rem; font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    .app-card {
+      background: var(--elevated); border: 1px solid var(--border);
+      border-radius: 12px; padding: 1rem;
+    }
+    .app-card-title { font-size: 0.875rem; font-weight: 600; margin-bottom: 4px; }
+    .app-card-sub   { font-size: 0.75rem; color: var(--text-secondary); }
+
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       VARIANT A — STANDARD TAB BAR
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+    .tab-bar {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 68px;
+      padding: 0 0.5rem;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      background: rgba(17,24,39,0.85);
+      -webkit-backdrop-filter: blur(20px);
+      backdrop-filter: blur(20px);
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center;
+      z-index: 10;
+    }
+
+    .tab-item {
+      flex: 1;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 3px; cursor: pointer;
+      padding: 6px 0;
+      position: relative;
+      /* 44px touch target height is handled by the 68px bar */
+    }
+
+    .tab-icon {
+      color: var(--text-muted);
+      transition: color 0.25s ease, transform 0.25s ease;
+    }
+    .tab-label {
+      font-size: 0.625rem; font-weight: 500;
+      color: var(--text-muted);
+      transition: color 0.25s ease;
+      text-transform: uppercase; letter-spacing: 0.05em;
+      opacity: 0;
+      transform: translateY(4px);
+      transition: all 0.25s ease;
+    }
+
+    /* Active pill indicator */
+    .tab-pill {
+      position: absolute;
+      top: 0; left: 50%;
+      width: 32px; height: 3px;
+      background: var(--accent);
+      border-radius: 0 0 4px 4px;
+      transform: translateX(-50%) scaleX(0);
+      transform-origin: center top;
+      transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    }
+
+    .tab-item.active .tab-icon  { color: var(--accent); transform: translateY(-2px); }
+    .tab-item.active .tab-label { color: var(--accent); opacity: 1; transform: none; }
+    .tab-item.active .tab-pill  { transform: translateX(-50%) scaleX(1); }
+
+    /* Notification badge */
+    .tab-badge {
+      position: absolute; top: 2px; left: calc(50% + 6px);
+      background: #EF4444; color: #fff;
+      font-size: 0.5rem; font-weight: 700;
+      min-width: 16px; height: 16px; border-radius: 100px;
+      display: flex; align-items: center; justify-content: center;
+      padding: 0 4px; border: 2px solid var(--surface);
+    }
+
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       VARIANT B — CENTER FAB TAB BAR
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+    .tab-bar-fab {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 68px;
+      padding: 0 1rem;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      background: rgba(17,24,39,0.85);
+      -webkit-backdrop-filter: blur(20px);
+      backdrop-filter: blur(20px);
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center;
+      z-index: 10;
+    }
+
+    .tab-item-fab {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 3px; cursor: pointer; padding: 6px 0;
+    }
+    .tab-item-fab .ti { color: var(--text-muted); transition: color 0.2s ease; }
+    .tab-item-fab.active .ti { color: var(--accent); }
+    .tab-item-fab .tl { font-size: 0.5625rem; color: var(--text-muted); transition: color 0.2s ease; text-transform: uppercase; letter-spacing: 0.05em; }
+    .tab-item-fab.active .tl { color: var(--accent); }
+
+    /* FAB center button */
+    .fab-center {
+      flex: 0 0 64px; height: 64px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #0D1117;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 1.5rem; font-weight: 300;
+      box-shadow: 0 4px 20px rgba(16,185,129,0.4);
+      position: relative;
+      transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.2s ease;
+      margin-top: -20px; /* lifts above the bar */
+      z-index: 11;
+    }
+    .fab-center.open { transform: rotate(45deg); }
+
+    /* Speed dial actions */
+    .fab-actions {
+      position: absolute;
+      bottom: 80px;
+      left: 50%; transform: translateX(-50%);
+      display: flex; gap: 0.75rem;
+      pointer-events: none;
+      z-index: 20;
+    }
+    .fab-action {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: var(--elevated); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 1rem;
+      opacity: 0;
+      transform: translateY(20px) scale(0.8);
+      transition: opacity 0.25s ease, transform 0.3s cubic-bezier(0.34,1.56,0.64,1), background 0.2s ease;
+    }
+    .fab-actions.open .fab-action { opacity: 1; transform: none; pointer-events: all; }
+    .fab-actions.open .fab-action:nth-child(1) { transition-delay: 0.0s; }
+    .fab-actions.open .fab-action:nth-child(2) { transition-delay: 0.06s; }
+    .fab-actions.open .fab-action:nth-child(3) { transition-delay: 0.12s; }
+    .fab-action:hover { background: var(--accent-dim); border-color: var(--accent-border); }
+
+    .fab-backdrop {
+      position: absolute; inset: 0;
+      background: rgba(0,0,0,0);
+      z-index: 9; pointer-events: none;
+      transition: background 0.25s ease;
+    }
+    .fab-backdrop.open { background: rgba(0,0,0,0.5); pointer-events: all; }
+
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       VARIANT C — GESTURE SWIPE PAGES
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+    .swipe-phone .phone-screen { overflow: hidden; }
+
+    .swipe-pages {
+      display: flex;
+      width: 300%; /* 3 pages × 100% */
+      height: 100%;
+      transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+    }
+    .swipe-page {
+      width: calc(100% / 3);
+      height: 100%;
+      flex-shrink: 0;
+      display: flex; flex-direction: column; justify-content: center;
+      align-items: center; gap: 0.75rem;
+      padding: 2rem 1.5rem 80px;
+    }
+    .swipe-page-icon { font-size: 3rem; }
+    .swipe-page-title { font-family: var(--font-heading); font-size: 1.125rem; font-weight: 700; }
+    .swipe-page-sub   { font-size: 0.8125rem; color: var(--text-secondary); text-align: center; }
+
+    /* Swipe arrows hint */
+    .swipe-hint {
+      position: absolute; bottom: 80px;
+      display: flex; align-items: center; gap: 6px;
+      font-size: 0.6875rem; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.06em;
+      animation: hint-fade 3s ease-in-out infinite;
+    }
+    @keyframes hint-fade {
+      0%,30%,100% { opacity: 0.4; }
+      60%           { opacity: 1; }
+    }
+
+    /* Page dots indicator */
+    .swipe-dots {
+      position: absolute; bottom: 76px;
+      display: flex; gap: 6px; left: 50%; transform: translateX(-50%);
+    }
+    .swipe-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--border);
+      transition: background 0.25s ease, width 0.25s ease;
+    }
+    .swipe-dot.active { background: var(--accent); width: 18px; border-radius: 3px; }
+
+    .tab-bar-c {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      height: 68px; padding: 0 0.5rem;
+      background: rgba(17,24,39,0.85);
+      -webkit-backdrop-filter: blur(20px);
+      backdrop-filter: blur(20px);
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center; z-index: 10;
+    }
+    .tab-item-c {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; gap: 3px; cursor: pointer; padding: 6px;
+    }
+    .tab-item-c .ic { color: var(--text-muted); transition: color 0.2s ease; }
+    .tab-item-c.active .ic { color: var(--accent); }
+
+    /* Layout for all three variants side by side */
+    .variants-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+    @media (max-width: 800px) {
+      .variants-grid { grid-template-columns: 1fr; }
+      .phone-frame { width: min(340px, 90vw); }
+    }
+    .variant-cell h3 {
+      font-family: var(--font-heading); font-size: 0.875rem; font-weight: 600;
+      color: var(--text-secondary); text-align: center; margin-bottom: 1rem;
+    }
+  </style>
+</head>
+<body>
+
+<div class="max-wrap">
+  <h1>Bottom Tab Bar</h1>
+  <p class="page-sub">3 variants: standard, center FAB with speed dial, and gesture-swipeable pages. All phone-framed.</p>
+
+  <div class="variants-grid">
+
+    <!-- ── VARIANT A ─────────────────────────────────────── -->
+    <div class="variant-cell">
+      <h3>A — Standard</h3>
+      <div class="phone-frame">
+        <div class="phone-screen" id="pA">
+
+          <div class="app-page active" id="pA-home">
+            <div class="app-page-title">Home</div>
+            <div class="app-card"><div class="app-card-title">Today's overview</div><div class="app-card-sub">3 tasks due, 2 meetings</div></div>
+            <div class="app-card"><div class="app-card-title">Recent activity</div><div class="app-card-sub">Updated 2 min ago</div></div>
+          </div>
+          <div class="app-page" id="pA-search">
+            <div class="app-page-title">Search</div>
+            <div class="app-card"><div class="app-card-title">Browse everything</div><div class="app-card-sub">200+ items indexed</div></div>
+          </div>
+          <div class="app-page" id="pA-activity">
+            <div class="app-page-title">Activity</div>
+            <div class="app-card"><div class="app-card-title">Your feed</div><div class="app-card-sub">12 new updates</div></div>
+          </div>
+          <div class="app-page" id="pA-messages">
+            <div class="app-page-title">Messages</div>
+            <div class="app-card"><div class="app-card-title">Inbox</div><div class="app-card-sub">3 unread</div></div>
+          </div>
+          <div class="app-page" id="pA-profile">
+            <div class="app-page-title">Profile</div>
+            <div class="app-card"><div class="app-card-title">Your account</div><div class="app-card-sub">Settings &amp; preferences</div></div>
+          </div>
+
+          <nav class="tab-bar" id="tabbar-a">
+            <div class="tab-item active" onclick="switchTabA('home',this)">
+              <div class="tab-pill"></div>
+              <div class="tab-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+              <div class="tab-label">Home</div>
+            </div>
+            <div class="tab-item" onclick="switchTabA('search',this)">
+              <div class="tab-pill"></div>
+              <div class="tab-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+              <div class="tab-label">Search</div>
+            </div>
+            <div class="tab-item" onclick="switchTabA('activity',this)">
+              <div class="tab-pill"></div>
+              <div class="tab-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+              <div class="tab-label">Activity</div>
+            </div>
+            <div class="tab-item" onclick="switchTabA('messages',this)">
+              <div class="tab-pill"></div>
+              <div class="tab-icon" style="position:relative">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                <div class="tab-badge">3</div>
+              </div>
+              <div class="tab-label">Messages</div>
+            </div>
+            <div class="tab-item" onclick="switchTabA('profile',this)">
+              <div class="tab-pill"></div>
+              <div class="tab-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+              <div class="tab-label">Profile</div>
+            </div>
+          </nav>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── VARIANT B ─────────────────────────────────────── -->
+    <div class="variant-cell">
+      <h3>B — Center FAB</h3>
+      <div class="phone-frame">
+        <div class="phone-screen">
+          <div class="app-page active">
+            <div class="app-page-title">Dashboard</div>
+            <div class="app-card"><div class="app-card-title">Total revenue</div><div class="app-card-sub">$24,850 this month</div></div>
+            <div class="app-card"><div class="app-card-title">Active projects</div><div class="app-card-sub">7 in progress</div></div>
+          </div>
+
+          <div class="fab-backdrop" id="fab-backdrop" onclick="closeFab()"></div>
+
+          <!-- Speed dial actions (positioned above the FAB) -->
+          <div class="fab-actions" id="fab-actions">
+            <div class="fab-action" title="Upload" onclick="closeFab()">📎</div>
+            <div class="fab-action" title="New task" onclick="closeFab()">✏️</div>
+            <div class="fab-action" title="Schedule" onclick="closeFab()">📅</div>
+          </div>
+
+          <nav class="tab-bar-fab">
+            <div class="tab-item-fab active"><div class="ti"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div><div class="tl">Home</div></div>
+            <div class="tab-item-fab"><div class="ti"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div><div class="tl">Search</div></div>
+
+            <div class="fab-center" id="fab-center" onclick="toggleFab()">+</div>
+
+            <div class="tab-item-fab"><div class="ti"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><div class="tl">Stats</div></div>
+            <div class="tab-item-fab"><div class="ti"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><div class="tl">Profile</div></div>
+          </nav>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── VARIANT C ─────────────────────────────────────── -->
+    <div class="variant-cell">
+      <h3>C — Swipe Pages</h3>
+      <div class="phone-frame swipe-phone">
+        <div class="phone-screen" id="swipe-screen">
+
+          <div class="swipe-pages" id="swipe-pages">
+            <div class="swipe-page" style="background:rgba(16,185,129,0.04)">
+              <div class="swipe-page-icon">🏠</div>
+              <div class="swipe-page-title">Home</div>
+              <p class="swipe-page-sub">Swipe left to navigate to the next screen</p>
+            </div>
+            <div class="swipe-page" style="background:rgba(99,102,241,0.04)">
+              <div class="swipe-page-icon">📊</div>
+              <div class="swipe-page-title">Analytics</div>
+              <p class="swipe-page-sub">Swipe left or right to browse screens</p>
+            </div>
+            <div class="swipe-page" style="background:rgba(245,158,11,0.04)">
+              <div class="swipe-page-icon">⚙️</div>
+              <div class="swipe-page-title">Settings</div>
+              <p class="swipe-page-sub">Swipe right to go back to the previous screen</p>
+            </div>
+          </div>
+
+          <div class="swipe-dots" id="swipe-dots">
+            <div class="swipe-dot active"></div>
+            <div class="swipe-dot"></div>
+            <div class="swipe-dot"></div>
+          </div>
+
+          <nav class="tab-bar-c" id="tabbar-c">
+            <div class="tab-item-c active" onclick="gotoPage(0)">
+              <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div>
+            </div>
+            <div class="tab-item-c" onclick="gotoPage(1)">
+              <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
+            </div>
+            <div class="tab-item-c" onclick="gotoPage(2)">
+              <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M4.93 4.93a10 10 0 0 0 0 14.14"/></svg></div>
+            </div>
+          </nav>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* ── Variant A — Standard tab switching ───────────────────────── */
+window.switchTabA = function(page, el) {
+  document.querySelectorAll('#pA .app-page').forEach(function(p) { p.classList.remove('active'); });
+  document.querySelectorAll('#tabbar-a .tab-item').forEach(function(t) { t.classList.remove('active'); });
+  var target = document.getElementById('pA-' + page);
+  if (target) target.classList.add('active');
+  el.classList.add('active');
+};
+
+/* ── Variant B — FAB speed dial ───────────────────────────────── */
+var fabOpen = false;
+window.toggleFab = function() {
+  fabOpen = !fabOpen;
+  document.getElementById('fab-center').classList.toggle('open', fabOpen);
+  document.getElementById('fab-actions').classList.toggle('open', fabOpen);
+  document.getElementById('fab-backdrop').classList.toggle('open', fabOpen);
+};
+window.closeFab = function() {
+  fabOpen = false;
+  document.getElementById('fab-center').classList.remove('open');
+  document.getElementById('fab-actions').classList.remove('open');
+  document.getElementById('fab-backdrop').classList.remove('open');
+};
+
+/* ── Variant C — Swipe pages ──────────────────────────────────── */
+(function() {
+  var pages      = document.getElementById('swipe-pages');
+  var dots       = document.querySelectorAll('#swipe-dots .swipe-dot');
+  var tabs       = document.querySelectorAll('#tabbar-c .tab-item-c');
+  var curPage    = 0;
+  var totalPages = 3;
+
+  var startX = 0, isDragging = false;
+
+  function gotoPage(i) {
+    curPage = Math.max(0, Math.min(i, totalPages - 1));
+    pages.style.transform = 'translateX(-' + (curPage * (100 / 3)) + '%)';
+    dots.forEach(function(d, di) { d.classList.toggle('active', di === curPage); });
+    tabs.forEach(function(t, ti) { t.classList.toggle('active', ti === curPage); });
+  }
+  window.gotoPage = gotoPage;
+
+  var screen = document.getElementById('swipe-screen');
+  screen.addEventListener('touchstart', function(e) {
+    startX = e.touches[0].clientX; isDragging = true;
+  }, { passive: true });
+  screen.addEventListener('touchend', function(e) {
+    if (!isDragging) return;
+    var delta = e.changedTouches[0].clientX - startX;
+    if (delta < -40) gotoPage(curPage + 1);
+    else if (delta > 40) gotoPage(curPage - 1);
+    isDragging = false;
+  });
+
+  // Mouse swipe support
+  screen.addEventListener('mousedown', function(e) { startX = e.clientX; isDragging = true; });
+  screen.addEventListener('mouseup',   function(e) {
+    if (!isDragging) return;
+    var delta = e.clientX - startX;
+    if (delta < -40) gotoPage(curPage + 1);
+    else if (delta > 40) gotoPage(curPage - 1);
+    isDragging = false;
+  });
+})();
+</script>
+</body>
+</html>

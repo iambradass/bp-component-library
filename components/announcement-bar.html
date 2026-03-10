@@ -1,0 +1,466 @@
+<!-- COMPONENT: Announcement / Promo Bar | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Announcement Bars</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ── Customize ── */
+    :root {
+      --bg:            #0D1117;
+      --surface:       #111827;
+      --elevated:      #1E293B;
+      --accent:        #10B981;
+      --accent-dim:    rgba(16,185,129,0.15);
+      --accent-border: rgba(16,185,129,0.3);
+      --border:        rgba(148,163,184,0.1);
+      --text:          #F8FAFC;
+      --text-secondary:#94A3B8;
+      --text-muted:    #475569;
+      --radius:        12px;
+      --font-heading:  'Space Grotesk', sans-serif;
+      --font-body:     'Inter', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+    }
+
+    /* Each bar sits at the top and pushes content down when not dismissed */
+    /* We stack them all visually since this is a demo */
+
+    /* ── Shared bar styles ── */
+    .ann-bar {
+      width: 100%;
+      overflow: hidden;
+      max-height: 100px;
+      transition: max-height 0.4s ease, opacity 0.3s ease, padding 0.4s ease;
+    }
+
+    .ann-bar.dismissed {
+      max-height: 0;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .ann-bar-inner {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.7rem 1.25rem;
+    }
+
+    /* Close button shared style */
+    .bar-close {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0.25rem;
+      border-radius: 4px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0.6;
+      transition: opacity 0.15s;
+      margin-left: auto;
+    }
+    .bar-close:hover { opacity: 1; }
+
+    /* Divider between bars */
+    .bar-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 0;
+    }
+
+    /* ── 1. Simple top bar — accent green ── */
+    .bar-simple {
+      background: var(--accent-dim);
+      border-bottom: 1px solid var(--accent-border);
+    }
+
+    .bar-simple .bar-close { color: var(--accent); }
+
+    .bar-simple-text {
+      flex: 1;
+      font-size: 0.875rem;
+      color: var(--text);
+    }
+
+    .bar-simple-link {
+      color: var(--accent);
+      font-weight: 600;
+      text-decoration: none;
+      font-size: 0.875rem;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .bar-simple-link:hover { text-decoration: underline; }
+
+    /* ── 2. Countdown promo bar ── */
+    .bar-countdown {
+      background: linear-gradient(90deg, #1A0E07, #231308);
+      border-bottom: 1px solid rgba(249,115,22,0.3);
+    }
+
+    .countdown-label {
+      font-size: 0.875rem;
+      color: #FDB276;
+      font-weight: 500;
+    }
+
+    .countdown-label strong { color: #F97316; }
+
+    .countdown-timer {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .countdown-unit {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: rgba(249,115,22,0.15);
+      border: 1px solid rgba(249,115,22,0.3);
+      border-radius: 6px;
+      padding: 0.2rem 0.5rem;
+      min-width: 40px;
+    }
+
+    .countdown-num {
+      font-family: ui-monospace, monospace;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #F97316;
+      line-height: 1;
+    }
+
+    .countdown-label-small {
+      font-size: 0.55rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: rgba(253,178,118,0.7);
+      margin-top: 1px;
+    }
+
+    .countdown-colon {
+      color: rgba(249,115,22,0.6);
+      font-weight: 700;
+      font-size: 1rem;
+      margin-top: -4px;
+    }
+
+    .bar-countdown .bar-close { color: #F97316; }
+
+    /* ── 3. Cookie notice bar ── */
+    .bar-cookie {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .cookie-bar-text {
+      flex: 1;
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+    }
+
+    .cookie-bar-text a {
+      color: var(--accent);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .btn-cookie-ok {
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-secondary);
+      font-size: 0.78rem;
+      font-weight: 500;
+      padding: 0.3rem 0.75rem;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .btn-cookie-ok:hover { border-color: var(--accent-border); color: var(--text); }
+
+    /* ── 4. New feature bar ── */
+    .bar-feature {
+      background: linear-gradient(90deg, rgba(99,102,241,0.08), rgba(139,92,246,0.08));
+      border-bottom: 1px solid rgba(99,102,241,0.2);
+    }
+
+    .feature-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      background: rgba(99,102,241,0.15);
+      border: 1px solid rgba(99,102,241,0.3);
+      border-radius: 999px;
+      padding: 0.15rem 0.6rem;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #818CF8;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    /* Pulsing dot */
+    .pulse-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #818CF8;
+      animation: pulseDot 2s ease-in-out infinite;
+    }
+
+    @keyframes pulseDot {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(129,140,248,0.6); }
+      50%       { box-shadow: 0 0 0 5px rgba(129,140,248,0); }
+    }
+
+    .feature-text {
+      flex: 1;
+      font-size: 0.875rem;
+      color: var(--text);
+    }
+
+    .feature-link {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      color: #818CF8;
+      font-size: 0.875rem;
+      font-weight: 500;
+      text-decoration: none;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .feature-link:hover { color: #A5B4FC; }
+
+    .bar-feature .bar-close { color: #818CF8; }
+
+    /* ── 5. Alert / warning bar ── */
+    .bar-alert {
+      background: rgba(251,191,36,0.08);
+      border-bottom: 1px solid rgba(251,191,36,0.25);
+    }
+
+    .alert-icon {
+      color: #FBBF24;
+      flex-shrink: 0;
+    }
+
+    .alert-text {
+      flex: 1;
+      font-size: 0.875rem;
+      color: var(--text);
+    }
+
+    .alert-text strong { color: #FBBF24; }
+
+    .alert-learn {
+      font-size: 0.82rem;
+      color: #FBBF24;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .bar-alert .bar-close { color: #FBBF24; }
+
+    /* ── Demo page content below bars ── */
+    .demo-content {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem;
+    }
+
+    .demo-content h1 {
+      font-family: var(--font-heading);
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+
+    .demo-content p {
+      color: var(--text-secondary);
+      line-height: 1.7;
+      margin-bottom: 1.25rem;
+    }
+
+    .restore-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      font-weight: 500;
+      padding: 0.55rem 1rem;
+      cursor: pointer;
+      margin-top: 0.5rem;
+    }
+    .restore-btn:hover { border-color: var(--accent-border); color: var(--text); }
+  </style>
+</head>
+<body>
+
+  <!-- ── 1. Simple announcement bar ── -->
+  <div class="ann-bar bar-simple" id="barSimple">
+    <div class="ann-bar-inner">
+      <span class="bar-simple-text">🎉 We just launched Component Library v3 — 109 production-ready components.</span>
+      <a href="#" class="bar-simple-link">
+        Explore what's new
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+      </a>
+      <button class="bar-close" data-bar="barSimple" aria-label="Close">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="bar-divider"></div>
+
+  <!-- ── 2. Countdown promo bar ── -->
+  <div class="ann-bar bar-countdown" id="barCountdown">
+    <div class="ann-bar-inner">
+      <span class="countdown-label"><strong>Flash Sale:</strong> 40% off all Pro plans.</span>
+      <div class="countdown-timer">
+        <div class="countdown-unit">
+          <span class="countdown-num" id="cdDays">02</span>
+          <span class="countdown-label-small">Days</span>
+        </div>
+        <span class="countdown-colon">:</span>
+        <div class="countdown-unit">
+          <span class="countdown-num" id="cdHours">14</span>
+          <span class="countdown-label-small">Hrs</span>
+        </div>
+        <span class="countdown-colon">:</span>
+        <div class="countdown-unit">
+          <span class="countdown-num" id="cdMins">37</span>
+          <span class="countdown-label-small">Min</span>
+        </div>
+        <span class="countdown-colon">:</span>
+        <div class="countdown-unit">
+          <span class="countdown-num" id="cdSecs">00</span>
+          <span class="countdown-label-small">Sec</span>
+        </div>
+      </div>
+      <a href="#" style="color:#F97316;font-size:0.85rem;font-weight:600;text-decoration:none;white-space:nowrap;flex-shrink:0">Claim offer →</a>
+      <button class="bar-close" data-bar="barCountdown" aria-label="Close">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="bar-divider"></div>
+
+  <!-- ── 3. Cookie notice bar ── -->
+  <div class="ann-bar bar-cookie" id="barCookie">
+    <div class="ann-bar-inner">
+      <span style="font-size:1.1rem;flex-shrink:0">🍪</span>
+      <span class="cookie-bar-text">By using our site you agree to our use of cookies to enhance your experience. <a href="#">Privacy policy</a></span>
+      <button class="btn-cookie-ok" data-bar="barCookie">Got it</button>
+      <button class="bar-close" data-bar="barCookie" aria-label="Close">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="bar-divider"></div>
+
+  <!-- ── 4. New feature bar ── -->
+  <div class="ann-bar bar-feature" id="barFeature">
+    <div class="ann-bar-inner">
+      <span class="feature-badge">
+        <span class="pulse-dot"></span>
+        New
+      </span>
+      <span class="feature-text">AI-powered component search just dropped — find the right pattern in seconds.</span>
+      <a href="#" class="feature-link">
+        See what's new →
+      </a>
+      <button class="bar-close" data-bar="barFeature" aria-label="Close">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="bar-divider"></div>
+
+  <!-- ── 5. Alert / warning bar ── -->
+  <div class="ann-bar bar-alert" id="barAlert">
+    <div class="ann-bar-inner">
+      <span class="alert-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </span>
+      <span class="alert-text"><strong>Scheduled maintenance:</strong> All services will be offline on March 15 between 2:00–4:00 AM UTC.</span>
+      <span class="alert-learn">Learn more</span>
+      <button class="bar-close" data-bar="barAlert" aria-label="Close">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Demo content ── -->
+  <div class="demo-content">
+    <h1>Announcement Bars</h1>
+    <p>Five variants shown stacked above. Close them to see how the page reflows. Each bar is independently dismissible. The countdown ticks live in real time.</p>
+    <p>Dismiss any bar above and use the button below to restore all five at once.</p>
+    <button class="restore-btn" onclick="restoreAllBars()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.5"/></svg>
+      Restore all bars
+    </button>
+  </div>
+
+  <script>
+    // ── Close any bar ──
+    document.querySelectorAll('.bar-close, .btn-cookie-ok').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const barId = btn.dataset.bar;
+        const bar   = document.getElementById(barId);
+        if (bar) bar.classList.add('dismissed');
+      });
+    });
+
+    function restoreAllBars() {
+      document.querySelectorAll('.ann-bar').forEach(b => b.classList.remove('dismissed'));
+    }
+
+    // ── Live countdown timer ──
+    // Target: 2 days, 14 hours, 37 minutes from now (demo — just counts down)
+    const targetTime = Date.now() + (2 * 86400 + 14 * 3600 + 37 * 60) * 1000;
+
+    function updateCountdown() {
+      const remaining = Math.max(0, targetTime - Date.now());
+      const days  = Math.floor(remaining / 86400000);
+      const hours = Math.floor((remaining % 86400000) / 3600000);
+      const mins  = Math.floor((remaining % 3600000)  / 60000);
+      const secs  = Math.floor((remaining % 60000)    / 1000);
+
+      document.getElementById('cdDays').textContent  = String(days).padStart(2, '0');
+      document.getElementById('cdHours').textContent = String(hours).padStart(2, '0');
+      document.getElementById('cdMins').textContent  = String(mins).padStart(2, '0');
+      document.getElementById('cdSecs').textContent  = String(secs).padStart(2, '0');
+    }
+
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
+  </script>
+</body>
+</html>

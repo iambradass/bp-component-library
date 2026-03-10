@@ -1,0 +1,667 @@
+<!-- COMPONENT: GDPR Cookie Consent | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cookie Consent</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ── Customize ── */
+    :root {
+      --bg:            #0D1117;
+      --surface:       #111827;
+      --elevated:      #1E293B;
+      --accent:        #10B981;
+      --accent-dim:    rgba(16,185,129,0.15);
+      --accent-border: rgba(16,185,129,0.3);
+      --border:        rgba(148,163,184,0.1);
+      --text:          #F8FAFC;
+      --text-secondary:#94A3B8;
+      --text-muted:    #475569;
+      --radius:        12px;
+      --font-heading:  'Space Grotesk', sans-serif;
+      --font-body:     'Inter', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      padding: 2rem 1.5rem 8rem;
+    }
+
+    /* ── Demo page content ── */
+    .demo-page {
+      max-width: 740px;
+      margin: 0 auto;
+    }
+
+    .demo-eyebrow {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.75rem;
+    }
+
+    h1 {
+      font-family: var(--font-heading);
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+
+    .demo-para {
+      color: var(--text-secondary);
+      line-height: 1.7;
+      margin-bottom: 1.5rem;
+    }
+
+    .demo-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .demo-card h3 {
+      font-family: var(--font-heading);
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .demo-card p {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+
+    /* ── Cookie consent banner (fixed bottom) ── */
+    .cookie-banner {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      padding: 1rem 1.5rem;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      box-shadow: 0 -4px 30px rgba(0,0,0,0.3);
+      /* Animate in from below */
+      transform: translateY(0);
+      transition: transform 0.4s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    .cookie-banner.hidden {
+      transform: translateY(110%);
+    }
+
+    .banner-inner {
+      max-width: 960px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      flex-wrap: wrap;
+    }
+
+    .banner-icon {
+      font-size: 1.4rem;
+      flex-shrink: 0;
+    }
+
+    .banner-text {
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .banner-text p {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .banner-text a {
+      color: var(--accent);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .banner-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-shrink: 0;
+      flex-wrap: wrap;
+    }
+
+    .btn-reject {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-muted);
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      font-weight: 500;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+    }
+    .btn-reject:hover { border-color: var(--accent-border); color: var(--text-secondary); }
+
+    .btn-manage {
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-secondary);
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      font-weight: 500;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+    }
+    .btn-manage:hover { border-color: var(--accent-border); color: var(--text); }
+
+    .btn-accept-all {
+      background: var(--accent);
+      border: none;
+      border-radius: 8px;
+      color: #000;
+      font-family: var(--font-heading);
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 0.5rem 1.2rem;
+      cursor: pointer;
+    }
+    .btn-accept-all:hover { filter: brightness(1.1); }
+
+    /* ── Preferences Modal ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s;
+    }
+
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .modal-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      width: 100%;
+      max-width: 520px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+      transform: scale(0.95);
+      transition: transform 0.25s;
+    }
+
+    .modal-overlay.open .modal-box { transform: scale(1); }
+
+    .modal-header {
+      padding: 1.5rem 1.5rem 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+    }
+
+    .modal-title {
+      font-family: var(--font-heading);
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 0.3rem;
+      border-radius: 6px;
+      font-size: 1.1rem;
+    }
+    .modal-close:hover { background: var(--elevated); color: var(--text); }
+
+    .modal-sub {
+      padding: 0 1.5rem 1.25rem;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* Cookie category rows */
+    .cookie-category {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .cookie-cat-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 0.4rem;
+    }
+
+    .cookie-cat-name {
+      font-weight: 600;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .required-badge {
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      padding: 0.1rem 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .cookie-cat-desc {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .cookie-cat-count {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-top: 0.3rem;
+    }
+
+    /* Toggle switch */
+    .toggle-wrap {
+      flex-shrink: 0;
+    }
+
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+    }
+
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      top: 2px;
+      left: 2px;
+      transition: transform 0.2s, background 0.2s;
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+      background: var(--accent-dim);
+      border-color: var(--accent-border);
+    }
+
+    .toggle-switch input:checked + .toggle-slider::before {
+      background: var(--accent);
+      transform: translateX(20px);
+    }
+
+    .toggle-switch input:disabled + .toggle-slider {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    /* Modal footer */
+    .modal-footer {
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .modal-footer-links {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .modal-footer-links a {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      text-decoration: none;
+    }
+    .modal-footer-links a:hover { color: var(--accent); }
+
+    .modal-footer-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    /* ── Toast notification ── */
+    .toast {
+      position: fixed;
+      bottom: 1.5rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      z-index: 300;
+      background: var(--elevated);
+      border: 1px solid var(--accent-border);
+      border-radius: 999px;
+      padding: 0.6rem 1.25rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s, transform 0.3s;
+      white-space: nowrap;
+    }
+
+    .toast.visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .toast-check { color: var(--accent); }
+
+    /* ── Re-open cookie settings button ── */
+    .cookie-settings-btn {
+      position: fixed;
+      bottom: 1.5rem;
+      left: 1.5rem;
+      z-index: 90;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 0.5rem 1rem;
+      font-family: var(--font-body);
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s, border-color 0.15s, color 0.15s;
+    }
+
+    .cookie-settings-btn.visible {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .cookie-settings-btn:hover { border-color: var(--accent-border); color: var(--text); }
+  </style>
+</head>
+<body>
+
+  <!-- ── Demo page content ── -->
+  <div class="demo-page">
+    <div class="demo-eyebrow">GDPR Compliant</div>
+    <h1>Cookie Consent System</h1>
+    <p class="demo-para">This page demonstrates a complete cookie consent implementation. The banner appears at the bottom, allows accepting all, rejecting all, or managing granular preferences. Your choice is saved to localStorage.</p>
+    <div class="demo-card">
+      <h3>How it works</h3>
+      <p>Accept or manage your cookie preferences using the bar at the bottom. After making a choice, the bar dismisses and a floating button appears in the corner to reopen settings at any time.</p>
+    </div>
+    <div class="demo-card">
+      <h3>Categories</h3>
+      <p>Four cookie categories: Strictly Necessary (always on), Analytics, Marketing, and Personalization. Each has a description and a cookie count.</p>
+    </div>
+    <div class="demo-card">
+      <h3>Persistence</h3>
+      <p>Preferences are saved to localStorage. Reload this page — the banner won't reappear until you reset via the floating button.</p>
+    </div>
+  </div>
+
+  <!-- ── Cookie Banner ── -->
+  <div class="cookie-banner" id="cookieBanner" role="alert">
+    <div class="banner-inner">
+      <span class="banner-icon">🍪</span>
+      <div class="banner-text">
+        <p>We use cookies to improve your experience, analyze traffic, and serve personalized content. <a href="#">Learn more</a></p>
+      </div>
+      <div class="banner-actions">
+        <button class="btn-reject"    id="btnRejectAll">Reject All</button>
+        <button class="btn-manage"    id="btnManage">Manage Preferences</button>
+        <button class="btn-accept-all" id="btnAcceptAll">Accept All</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Preferences Modal ── -->
+  <div class="modal-overlay" id="prefModal" role="dialog" aria-modal="true" aria-label="Cookie preferences">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-title">Cookie Preferences</div>
+        <button class="modal-close" id="closeModal" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-sub">
+        Manage which cookies we use to deliver content and personalize your experience. Strictly Necessary cookies cannot be disabled as the site requires them to function.
+      </div>
+
+      <!-- Strictly Necessary — locked on -->
+      <div class="cookie-category">
+        <div class="cookie-cat-row">
+          <div class="cookie-cat-name">
+            Strictly Necessary
+            <span class="required-badge">Always On</span>
+          </div>
+          <div class="toggle-wrap">
+            <label class="toggle-switch">
+              <input type="checkbox" checked disabled>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+        <p class="cookie-cat-desc">Required for the website to function. These cannot be turned off and don't store any personal information.</p>
+        <div class="cookie-cat-count">4 cookies</div>
+      </div>
+
+      <!-- Analytics -->
+      <div class="cookie-category">
+        <div class="cookie-cat-row">
+          <div class="cookie-cat-name">Analytics</div>
+          <div class="toggle-wrap">
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggleAnalytics" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+        <p class="cookie-cat-desc">Help us understand how visitors interact with our site by collecting anonymous usage data. Powered by a privacy-first analytics provider.</p>
+        <div class="cookie-cat-count">3 cookies</div>
+      </div>
+
+      <!-- Marketing -->
+      <div class="cookie-category">
+        <div class="cookie-cat-row">
+          <div class="cookie-cat-name">Marketing</div>
+          <div class="toggle-wrap">
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggleMarketing">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+        <p class="cookie-cat-desc">Enable more relevant advertising by allowing us to share anonymized data with advertising partners. Used to limit ad frequency and measure campaign performance.</p>
+        <div class="cookie-cat-count">7 cookies</div>
+      </div>
+
+      <!-- Personalization -->
+      <div class="cookie-category">
+        <div class="cookie-cat-row">
+          <div class="cookie-cat-name">Personalization</div>
+          <div class="toggle-wrap">
+            <label class="toggle-switch">
+              <input type="checkbox" id="togglePersonal" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+        <p class="cookie-cat-desc">Remember your preferences, language settings, and display options to provide a more tailored experience across visits.</p>
+        <div class="cookie-cat-count">2 cookies</div>
+      </div>
+
+      <div class="modal-footer">
+        <div class="modal-footer-links">
+          <a href="#">Privacy Policy</a>
+          <a href="#">Cookie Policy</a>
+        </div>
+        <div class="modal-footer-actions">
+          <button class="btn-reject" id="modalRejectAll">Reject All</button>
+          <button class="btn-accept-all" id="btnSavePrefs">Save Preferences</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Toast ── -->
+  <div class="toast" id="toastEl">
+    <span class="toast-check">✓</span>
+    <span id="toastMsg">Preferences saved</span>
+  </div>
+
+  <!-- ── Re-open button ── -->
+  <button class="cookie-settings-btn" id="cookieSettingsBtn" aria-label="Open cookie settings">
+    🍪 Cookie Settings
+  </button>
+
+  <script>
+    // ── State ──
+    const STORAGE_KEY = 'cookie-consent-v1';
+
+    const banner          = document.getElementById('cookieBanner');
+    const prefModal       = document.getElementById('prefModal');
+    const toast           = document.getElementById('toastEl');
+    const toastMsg        = document.getElementById('toastMsg');
+    const reopenBtn       = document.getElementById('cookieSettingsBtn');
+    const analyticsToggle = document.getElementById('toggleAnalytics');
+    const marketingToggle = document.getElementById('toggleMarketing');
+    const personalToggle  = document.getElementById('togglePersonal');
+
+    // Show the toast for 2.5 seconds
+    function showToast(message) {
+      toastMsg.textContent = message;
+      toast.classList.add('visible');
+      setTimeout(() => toast.classList.remove('visible'), 2500);
+    }
+
+    // Dismiss the banner and show the re-open button
+    function dismissBanner() {
+      banner.classList.add('hidden');
+      reopenBtn.classList.add('visible');
+    }
+
+    // Save consent to localStorage
+    function saveConsent(prefs) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...prefs, timestamp: Date.now() }));
+      dismissBanner();
+      prefModal.classList.remove('open');
+      showToast('Preferences saved ✓');
+    }
+
+    // Accept all
+    document.getElementById('btnAcceptAll').addEventListener('click', () => {
+      saveConsent({ necessary: true, analytics: true, marketing: true, personalization: true });
+    });
+
+    // Reject all (except necessary)
+    document.getElementById('btnRejectAll').addEventListener('click', () => {
+      saveConsent({ necessary: true, analytics: false, marketing: false, personalization: false });
+    });
+
+    // Open preferences modal
+    document.getElementById('btnManage').addEventListener('click', () => {
+      prefModal.classList.add('open');
+    });
+
+    // Close modal
+    document.getElementById('closeModal').addEventListener('click', () => prefModal.classList.remove('open'));
+    prefModal.addEventListener('click', (e) => { if (e.target === prefModal) prefModal.classList.remove('open'); });
+
+    // Save granular preferences from modal
+    document.getElementById('btnSavePrefs').addEventListener('click', () => {
+      saveConsent({
+        necessary:      true,
+        analytics:      analyticsToggle.checked,
+        marketing:      marketingToggle.checked,
+        personalization: personalToggle.checked,
+      });
+    });
+
+    // Modal reject all
+    document.getElementById('modalRejectAll').addEventListener('click', () => {
+      analyticsToggle.checked = false;
+      marketingToggle.checked = false;
+      personalToggle.checked  = false;
+      saveConsent({ necessary: true, analytics: false, marketing: false, personalization: false });
+    });
+
+    // Re-open cookie settings
+    reopenBtn.addEventListener('click', () => {
+      prefModal.classList.add('open');
+    });
+
+    // ── On load: check if already consented ──
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      // Already consented — skip banner, show re-open button
+      banner.classList.add('hidden');
+      reopenBtn.classList.add('visible');
+      // Restore toggle states
+      try {
+        const prefs = JSON.parse(saved);
+        analyticsToggle.checked = !!prefs.analytics;
+        marketingToggle.checked = !!prefs.marketing;
+        personalToggle.checked  = !!prefs.personalization;
+      } catch (e) {}
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Data Story</title>
+  <!-- COMPONENT: Data Story | COPY: style + html + script -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── CUSTOMIZE ── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --glow:           rgba(16,185,129,0.15);
+      --glow-strong:    rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --border-accent:  rgba(16,185,129,0.3);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+    }
+
+    /* ── Chapter layout: full-width sections ── */
+    .chapter {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 4rem 1.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Subtle grid pattern on odd chapters */
+    .chapter-alt::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(circle, rgba(148,163,184,0.04) 1px, transparent 1px);
+      background-size: 24px 24px;
+      pointer-events: none;
+    }
+
+    .chapter-inner {
+      max-width: 760px;
+      margin: 0 auto;
+      width: 100%;
+      position: relative;
+    }
+
+    /* ── Chapter header ── */
+    .chapter-header {
+      margin-bottom: 3rem;
+    }
+    .chapter-num {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .chapter-num::after {
+      content: '';
+      flex: 1;
+      max-width: 80px;
+      height: 1px;
+      background: var(--border-accent);
+    }
+    .chapter-title {
+      font-family: var(--font-heading);
+      font-size: clamp(1.5rem, 4vw, 2rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+    }
+    .chapter-sub {
+      color: var(--text-secondary);
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+
+    /* ── Hero stat ── */
+    .hero-stat {
+      text-align: center;
+      padding: 2.5rem 0;
+    }
+    .hero-number {
+      font-family: var(--font-heading);
+      font-size: clamp(5rem, 15vw, 9rem);
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: -0.03em;
+      line-height: 0.95;
+      margin-bottom: 0.5rem;
+      /* Count-up animation: starts from JS */
+    }
+    .hero-number.count-up { transition: none; }
+    .hero-sublabel {
+      font-family: var(--font-mono);
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.75rem;
+    }
+    .hero-context {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      max-width: 500px;
+      margin: 0 auto;
+      line-height: 1.7;
+    }
+
+    /* ── Narrative text ── */
+    .narrative {
+      color: var(--text-secondary);
+      font-size: 1rem;
+      line-height: 1.8;
+      max-width: 620px;
+      margin: 0 auto 2rem;
+    }
+    .narrative strong { color: var(--text); font-weight: 600; }
+
+    /* ── Supporting stats grid (3 smaller stats) ── */
+    .support-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin: 2rem 0;
+    }
+    @media (max-width: 560px) { .support-grid { grid-template-columns: 1fr; } }
+
+    .support-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+    }
+    .support-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+    .support-number {
+      font-family: var(--font-heading);
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 0.25rem;
+    }
+    .support-label {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* ── Chart: animated bars ── */
+    .chart-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin: 2rem 0;
+    }
+    .chart-title {
+      font-family: var(--font-heading);
+      font-size: 0.9375rem;
+      font-weight: 600;
+      margin-bottom: 1.25rem;
+      color: var(--text-secondary);
+    }
+    .bar-chart { display: flex; flex-direction: column; gap: 0.625rem; }
+    .bar-row { display: flex; align-items: center; gap: 0.875rem; }
+    .bar-name {
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      width: 100px;
+      flex-shrink: 0;
+      text-align: right;
+    }
+    .bar-track {
+      flex: 1;
+      height: 8px;
+      background: var(--elevated);
+      border-radius: 100px;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 100px;
+      background: var(--accent);
+      width: 0%;
+      transition: width 1.4s cubic-bezier(0.4,0,0.2,1);
+      box-shadow: 0 0 8px var(--glow-strong);
+    }
+    .bar-val {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--text-muted);
+      width: 36px;
+      flex-shrink: 0;
+    }
+
+    /* ── Pull-quote transition ── */
+    .transition-quote {
+      border-left: 3px solid var(--accent);
+      padding: 0.75rem 1.5rem;
+      margin: 2.5rem 0;
+      background: var(--glow);
+      border-radius: 0 var(--radius) var(--radius) 0;
+    }
+    .transition-label {
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.5rem;
+    }
+    .transition-text {
+      font-family: var(--font-heading);
+      font-size: clamp(1rem, 2.5vw, 1.25rem);
+      font-style: italic;
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    /* ── Conclusion callout ── */
+    .conclusion-box {
+      background: var(--surface);
+      border: 1px solid var(--border-accent);
+      border-radius: var(--radius);
+      padding: 1.75rem;
+      text-align: center;
+      margin-top: 2rem;
+    }
+    .conclusion-emoji { font-size: 2rem; margin-bottom: 0.75rem; }
+    .conclusion-heading {
+      font-family: var(--font-heading);
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+    .conclusion-text {
+      color: var(--text-secondary);
+      font-size: 0.9375rem;
+      line-height: 1.7;
+      max-width: 500px;
+      margin: 0 auto 1.5rem;
+    }
+    .conclusion-cta {
+      display: inline-block;
+      padding: 0.75rem 2rem;
+      background: var(--accent);
+      color: var(--bg);
+      font-family: var(--font-heading);
+      font-size: 0.9375rem;
+      font-weight: 700;
+      border-radius: 8px;
+      text-decoration: none;
+      transition: opacity 0.2s;
+    }
+    .conclusion-cta:hover { opacity: 0.85; }
+
+    /* ── Scroll reveal ── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- CHAPTER 1: The Problem -->
+  <section class="chapter chapter-alt">
+    <div class="chapter-inner">
+
+      <header class="chapter-header reveal">
+        <div class="chapter-num">Chapter 1</div>
+        <h1 class="chapter-title">The State of Small Business Web Presence</h1>
+        <p class="chapter-sub">What the data actually says about why most small businesses struggle online — and who's winning.</p>
+      </header>
+
+      <!-- Hero stat: the big number -->
+      <div class="hero-stat reveal">
+        <div class="hero-sublabel">of small businesses</div>
+        <div class="hero-number" id="hero-num-1" data-target="73">0%</div>
+        <div class="hero-sublabel">have no professional website</div>
+        <p class="hero-context">That's nearly three-quarters of all small businesses operating without a 24/7 sales asset — relying entirely on word-of-mouth, foot traffic, and social media.</p>
+      </div>
+
+      <p class="narrative reveal">
+        This isn't a technology problem. Small business owners are busy — most are doing the work, not building the infrastructure. But the data shows that <strong>invisibility online is not neutral.</strong> It actively costs money.
+      </p>
+
+      <!-- Supporting grid -->
+      <div class="support-grid reveal">
+        <div class="support-card">
+          <div class="support-icon">🔍</div>
+          <div class="support-number">97%</div>
+          <div class="support-label">of consumers search online before visiting a local business</div>
+        </div>
+        <div class="support-card">
+          <div class="support-icon">📱</div>
+          <div class="support-number">61%</div>
+          <div class="support-label">of searches are made on mobile devices — up from 40% in 2018</div>
+        </div>
+        <div class="support-card">
+          <div class="support-icon">⏱️</div>
+          <div class="support-number">3s</div>
+          <div class="support-label">is how long visitors wait for a page to load before leaving</div>
+        </div>
+      </div>
+
+      <!-- Bar chart: platform breakdown -->
+      <div class="chart-wrap reveal">
+        <div class="chart-title">Where small businesses currently get discovered online</div>
+        <div class="bar-chart" id="bar-chart-1">
+          <!-- JS builds these -->
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- TRANSITION -->
+  <div style="max-width:760px; margin:0 auto; padding:0 1.5rem;">
+    <div class="transition-quote reveal">
+      <div class="transition-label">But here's the thing...</div>
+      <div class="transition-text">"The businesses that do invest in a real web presence don't just survive — they grow at 2.8× the rate of those that don't. The gap is widening every year."</div>
+    </div>
+  </div>
+
+  <!-- CHAPTER 2: The Opportunity -->
+  <section class="chapter">
+    <div class="chapter-inner">
+
+      <header class="chapter-header reveal">
+        <div class="chapter-num">Chapter 2</div>
+        <h2 class="chapter-title">The Businesses That Get It Right</h2>
+        <p class="chapter-sub">A clear pattern emerges when you study the small businesses generating consistent web-based revenue.</p>
+      </header>
+
+      <div class="hero-stat reveal">
+        <div class="hero-sublabel">increase in leads</div>
+        <div class="hero-number" id="hero-num-2" data-target="517">0%</div>
+        <div class="hero-sublabel">average across 90 days after a proper redesign</div>
+        <p class="hero-context">Not a cherry-picked outlier. The median result across 40 tracked small business website redesigns — new site, real SEO, speed-optimized, mobile-first.</p>
+      </div>
+
+      <p class="narrative reveal">
+        The formula isn't complicated. It's just <strong>consistently executed</strong>: fast load time, clear value proposition above the fold, mobile-first design, and a simple conversion point. Most small business websites fail at all four.
+      </p>
+
+      <!-- Bar chart: what drives results -->
+      <div class="chart-wrap reveal">
+        <div class="chart-title">Impact by optimization area — % improvement in lead volume</div>
+        <div class="bar-chart" id="bar-chart-2"></div>
+      </div>
+
+      <!-- Conclusion -->
+      <div class="conclusion-box reveal">
+        <div class="conclusion-emoji">📈</div>
+        <h3 class="conclusion-heading">The window is still open</h3>
+        <p class="conclusion-text">
+          Most small business competitors still don't have a strong web presence. The businesses that move now — with a fast, mobile-first, conversion-optimized site — will own local search rankings before the window closes.
+        </p>
+        <a href="#" class="conclusion-cta">Get a Free Website Audit</a>
+      </div>
+
+    </div>
+  </section>
+
+
+  <script>
+  /* ──────────────────────────────────────────
+     DATA STORY — Script
+     1. Scroll reveal for all .reveal elements
+     2. Animated count-up for hero numbers
+     3. Animated bar charts
+  ────────────────────────────────────────── */
+
+  /* ── Reveal on scroll ── */
+  var reveals = document.querySelectorAll('.reveal');
+  var revealObs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        revealObs.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15 });
+  reveals.forEach(function(el) { revealObs.observe(el); });
+
+  /* ── Count-up ── */
+  function countUp(el, target, suffix, duration) {
+    var start = 0;
+    var startTime = null;
+    function step(ts) {
+      if (!startTime) startTime = ts;
+      var progress = Math.min((ts - startTime) / duration, 1);
+      /* EaseOutQuart */
+      var ease = 1 - Math.pow(1 - progress, 4);
+      var val = Math.round(start + ease * (target - start));
+      el.textContent = val + (suffix || '');
+      if (progress < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  /* Trigger count-up when hero numbers enter viewport */
+  var heroNums = document.querySelectorAll('.hero-number[data-target]');
+  var countObs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        var el     = entry.target;
+        var target = parseInt(el.dataset.target);
+        countUp(el, target, '%', 1600);
+        countObs.unobserve(el);
+      }
+    });
+  }, { threshold: 0.5 });
+  heroNums.forEach(function(el) { countObs.observe(el); });
+
+  /* ── Bar chart 1 ── */
+  var chart1Data = [
+    { name: 'Google Search',  pct: 42 },
+    { name: 'Facebook',       pct: 23 },
+    { name: 'Google Maps',    pct: 18 },
+    { name: 'Yelp / Reviews', pct: 11 },
+    { name: 'Direct / Other', pct: 6  }
+  ];
+
+  var bc1 = document.getElementById('bar-chart-1');
+  chart1Data.forEach(function(row) {
+    var rowEl = document.createElement('div');
+    rowEl.className = 'bar-row';
+    rowEl.innerHTML = '<div class="bar-name">' + row.name + '</div>'
+      + '<div class="bar-track"><div class="bar-fill" data-width="' + row.pct + '"></div></div>'
+      + '<div class="bar-val">' + row.pct + '%</div>';
+    bc1.appendChild(rowEl);
+  });
+
+  /* ── Bar chart 2 ── */
+  var chart2Data = [
+    { name: 'Mobile-first',   pct: 88 },
+    { name: 'Load speed',     pct: 82 },
+    { name: 'Clear headline', pct: 71 },
+    { name: 'Single CTA',     pct: 64 },
+    { name: 'Trust signals',  pct: 55 },
+    { name: 'Schema markup',  pct: 38 }
+  ];
+
+  var bc2 = document.getElementById('bar-chart-2');
+  chart2Data.forEach(function(row) {
+    var rowEl = document.createElement('div');
+    rowEl.className = 'bar-row';
+    rowEl.innerHTML = '<div class="bar-name">' + row.name + '</div>'
+      + '<div class="bar-track"><div class="bar-fill" data-width="' + row.pct + '"></div></div>'
+      + '<div class="bar-val">+' + row.pct + '%</div>';
+    bc2.appendChild(rowEl);
+  });
+
+  /* ── Animate bars on scroll ── */
+  var bars = document.querySelectorAll('.bar-fill[data-width]');
+  var barObs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        /* Animate all bars in the parent chart */
+        var chartBars = entry.target.closest('.chart-wrap').querySelectorAll('.bar-fill');
+        chartBars.forEach(function(b, i) {
+          setTimeout(function() { b.style.width = b.dataset.width + '%'; }, i * 100);
+        });
+        barObs.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.3 });
+
+  /* Observe first bar in each chart to trigger the group */
+  document.querySelectorAll('.chart-wrap .bar-fill').forEach(function(bar, i) {
+    if (i === 0 || i === chart1Data.length) barObs.observe(bar);
+  });
+  </script>
+
+</body>
+</html>

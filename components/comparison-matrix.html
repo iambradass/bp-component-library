@@ -1,0 +1,396 @@
+<!-- COMPONENT: Comparison Matrix | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Comparison Matrix</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --red:            #EF4444;
+      --amber:          #F59E0B;
+      --blue:           #3B82F6;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 13px;
+      padding: 24px;
+      min-height: 100vh;
+    }
+    .wrap { max-width: 1100px; margin: 0 auto; }
+
+    /* ── Header ── */
+    .cm-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .cm-title { font-family: var(--font-heading); font-size: 1.125rem; font-weight: 600; }
+    .search-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .search-icon {
+      padding: 0 10px;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+    .search-input {
+      background: none;
+      border: none;
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 0.8125rem;
+      padding: 8px 12px 8px 0;
+      outline: none;
+      width: 220px;
+    }
+    .search-input::placeholder { color: var(--text-muted); }
+
+    /* ── Table container (scrollable) ── */
+    .table-outer {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .table-scroll {
+      overflow-x: auto;
+      overflow-y: auto;
+      max-height: calc(100vh - 160px);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 700px;
+    }
+
+    /* ── Sticky header ── */
+    thead th {
+      position: sticky;
+      top: 0;
+      background: var(--surface);
+      z-index: 10;
+      border-bottom: 2px solid var(--border);
+    }
+
+    /* ── Sticky first column ── */
+    th:first-child,
+    td:first-child {
+      position: sticky;
+      left: 0;
+      background: var(--surface);
+      z-index: 5;
+    }
+    thead th:first-child { z-index: 15; }
+
+    /* ── Header row ── */
+    .plan-header {
+      padding: 16px 14px 12px;
+      text-align: center;
+      min-width: 140px;
+    }
+    .plan-name {
+      font-family: var(--font-heading);
+      font-size: 0.9375rem;
+      font-weight: 700;
+    }
+    .plan-price {
+      font-size: 1.25rem;
+      font-weight: 700;
+      font-family: var(--font-heading);
+      margin: 6px 0 2px;
+    }
+    .plan-price-sub { font-size: 0.6875rem; color: var(--text-muted); }
+    .popular-badge {
+      display: inline-block;
+      font-size: 0.625rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #000;
+      background: var(--accent);
+      padding: 2px 8px;
+      border-radius: 20px;
+      margin-top: 4px;
+    }
+
+    /* Recommended column highlight */
+    td.col-recommended,
+    th.col-recommended {
+      background: rgba(16,185,129,0.04) !important;
+      border-left: 1px solid var(--accent-border);
+      border-right: 1px solid var(--accent-border);
+    }
+
+    /* ── Criteria column ── */
+    .criteria-col {
+      padding: 10px 14px;
+      min-width: 200px;
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    /* ── Group header rows ── */
+    .group-row td {
+      padding: 8px 14px;
+      background: rgba(255,255,255,0.025);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      cursor: pointer;
+      user-select: none;
+    }
+    .group-row td:first-child { display: flex; align-items: center; gap: 8px; }
+    .group-chevron { transition: transform 0.2s; }
+    .group-chevron.open { transform: rotate(90deg); }
+
+    /* ── Data cells ── */
+    td.data-cell {
+      text-align: center;
+      padding: 9px 14px;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.8125rem;
+      transition: background 0.1s;
+    }
+    tr.data-row:hover td { background: var(--elevated) !important; }
+    tr.data-row.hidden { display: none; }
+
+    /* Cell types */
+    .check-yes { color: var(--accent); font-size: 1rem; }
+    .check-no  { color: var(--text-muted); font-size: 0.875rem; }
+
+    .tier-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.6875rem;
+      font-weight: 600;
+    }
+    .tier-basic    { background:rgba(148,163,184,0.12); color:#94A3B8; }
+    .tier-advanced { background:rgba(59,130,246,0.12); color:#3B82F6; }
+    .tier-pro      { background:rgba(139,92,246,0.12); color:#8B5CF6; }
+    .tier-enterprise{ background:rgba(16,185,129,0.12); color:#10B981; }
+
+    .star-row { color: var(--amber); font-size: 0.875rem; letter-spacing: -1px; }
+    .star-empty { opacity: 0.25; }
+
+    .prog-wrap { display:flex; align-items:center; justify-content:center; gap:6px; }
+    .prog-bg { width:50px; height:5px; background:var(--elevated); border-radius:3px; overflow:hidden; }
+    .prog-fill { height:100%; border-radius:3px; background:var(--accent); }
+    .prog-label { font-size:.6875rem; color:var(--text-muted); }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="cm-header">
+    <h2 class="cm-title">Plan Comparison</h2>
+    <div class="search-wrap">
+      <div class="search-icon">🔍</div>
+      <input type="text" class="search-input" id="searchInput" placeholder="Filter features...">
+    </div>
+  </div>
+
+  <div class="table-outer">
+    <div class="table-scroll">
+      <table id="compTable">
+        <thead id="thead"></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ── Plans ─────────────────────────────────────────────────────────
+  const plans = [
+    { name:'Free',       price:'$0',   sub:'forever',        recommended:false },
+    { name:'Starter',    price:'$19',  sub:'per month',      recommended:false },
+    { name:'Pro',        price:'$49',  sub:'per month',      recommended:true  },
+    { name:'Business',   price:'$129', sub:'per month',      recommended:false },
+    { name:'Enterprise', price:'Custom', sub:'contact sales', recommended:false },
+  ];
+
+  // Cell types: check|text|badge|stars|progress
+  const groups = [
+    {
+      name: 'Core Features',
+      rows: [
+        { label:'Team Members',    type:'text',    values:['1','5','15','Unlimited','Unlimited'] },
+        { label:'Storage',         type:'text',    values:['5 GB','25 GB','100 GB','500 GB','Unlimited'] },
+        { label:'Projects',        type:'text',    values:['3','15','Unlimited','Unlimited','Unlimited'] },
+        { label:'API Access',      type:'check',   values:[false,true,true,true,true] },
+        { label:'Custom Domain',   type:'check',   values:[false,false,true,true,true] },
+        { label:'Analytics',       type:'badge',   values:['basic','basic','advanced','advanced','enterprise'] },
+        { label:'Automations',     type:'progress',values:[0,20,60,90,100], label2:'/ month' },
+        { label:'Data Exports',    type:'check',   values:[false,false,true,true,true] },
+      ]
+    },
+    {
+      name: 'Integrations',
+      rows: [
+        { label:'Slack',           type:'check',   values:[true,true,true,true,true] },
+        { label:'GitHub',          type:'check',   values:[false,true,true,true,true] },
+        { label:'Salesforce',      type:'check',   values:[false,false,true,true,true] },
+        { label:'Custom Webhooks', type:'text',    values:['—','5','25','Unlimited','Unlimited'] },
+        { label:'Zapier',          type:'check',   values:[true,true,true,true,true] },
+        { label:'SSO / SAML',      type:'check',   values:[false,false,false,true,true] },
+      ]
+    },
+    {
+      name: 'Support',
+      rows: [
+        { label:'Support Channel', type:'badge',   values:['basic','basic','advanced','advanced','enterprise'] },
+        { label:'Response Time',   type:'text',    values:['72h','48h','12h','4h','1h'] },
+        { label:'Dedicated Manager',type:'check',  values:[false,false,false,false,true] },
+        { label:'SLA Guarantee',   type:'check',   values:[false,false,false,true,true] },
+        { label:'Support Quality', type:'stars',   values:[2,3,4,4,5] },
+      ]
+    },
+    {
+      name: 'Security',
+      rows: [
+        { label:'2FA',             type:'check',   values:[true,true,true,true,true] },
+        { label:'Audit Logs',      type:'check',   values:[false,false,true,true,true] },
+        { label:'SOC 2',           type:'check',   values:[false,false,false,true,true] },
+        { label:'IP Allowlist',    type:'check',   values:[false,false,false,true,true] },
+        { label:'Security Tier',   type:'badge',   values:['basic','basic','pro','pro','enterprise'] },
+      ]
+    },
+  ];
+
+  // ── Group collapse state ──────────────────────────────────────────
+  const groupOpen = [true, true, true, true];
+
+  // ── Render header ─────────────────────────────────────────────────
+  function renderHeader() {
+    const thead = document.getElementById('thead');
+    let html = `<tr>
+      <th style="padding:16px 14px;text-align:left;min-width:200px">
+        <span style="font-size:.6875rem;text-transform:uppercase;letter-spacing:.07em;color:var(--text-muted)">Feature</span>
+      </th>`;
+    plans.forEach((p, pi) => {
+      html += `<th class="${p.recommended?'col-recommended':''} plan-col" data-pi="${pi}">
+        <div class="plan-header">
+          <div class="plan-name">${p.name}</div>
+          <div class="plan-price">${p.price}</div>
+          <div class="plan-price-sub">${p.sub}</div>
+          ${p.recommended ? '<div class="popular-badge">Most Popular</div>' : ''}
+        </div>
+      </th>`;
+    });
+    html += '</tr>';
+    thead.innerHTML = html;
+  }
+
+  // ── Cell renderer ─────────────────────────────────────────────────
+  function renderCell(row, pi) {
+    const v = row.values[pi];
+    switch(row.type) {
+      case 'check':
+        return v
+          ? '<span class="check-yes">✓</span>'
+          : '<span class="check-no">✗</span>';
+      case 'text':
+        return `<span style="color:${v==='—'?'var(--text-muted)':'var(--text-secondary)'}">${v}</span>`;
+      case 'badge': {
+        const cls = {basic:'tier-basic',advanced:'tier-advanced',pro:'tier-pro',enterprise:'tier-enterprise'}[v] || 'tier-basic';
+        const label = v.charAt(0).toUpperCase()+v.slice(1);
+        return `<span class="tier-badge ${cls}">${label}</span>`;
+      }
+      case 'stars': {
+        const n = Math.round(v);
+        return `<div class="star-row">${Array.from({length:5},(_,i)=>`<span class="${i<n?'':'star-empty'}">★</span>`).join('')}</div>`;
+      }
+      case 'progress': {
+        const pct = v;
+        return `<div class="prog-wrap">
+          <div class="prog-bg"><div class="prog-fill" style="width:${pct}%"></div></div>
+          <div class="prog-label">${pct}%</div>
+        </div>`;
+      }
+      default: return v;
+    }
+  }
+
+  // ── Render body ───────────────────────────────────────────────────
+  let searchVal = '';
+
+  function renderBody() {
+    const tbody = document.getElementById('tbody');
+    let html = '';
+    groups.forEach((g, gi) => {
+      // Group header row
+      html += `<tr class="group-row" data-gi="${gi}">
+        <td colspan="${plans.length+1}">
+          <span class="group-chevron ${groupOpen[gi]?'open':''}">▶</span>
+          ${g.name}
+        </td>
+      </tr>`;
+      // Data rows
+      g.rows.forEach((row, ri) => {
+        const isHidden = !groupOpen[gi] || (searchVal && !row.label.toLowerCase().includes(searchVal));
+        html += `<tr class="data-row ${isHidden?'hidden':''}" data-gi="${gi}" data-ri="${ri}">
+          <td class="criteria-col">${row.label}</td>
+          ${plans.map((_,pi) => `<td class="data-cell${plans[pi].recommended?' col-recommended':''}">${renderCell(row,pi)}</td>`).join('')}
+        </tr>`;
+      });
+    });
+    tbody.innerHTML = html;
+
+    // Attach group toggle events
+    tbody.querySelectorAll('.group-row').forEach(row => {
+      row.addEventListener('click', () => {
+        const gi = parseInt(row.dataset.gi);
+        groupOpen[gi] = !groupOpen[gi];
+        renderBody(); // re-render
+      });
+    });
+  }
+
+  // ── Search ────────────────────────────────────────────────────────
+  document.getElementById('searchInput').addEventListener('input', e => {
+    searchVal = e.target.value.toLowerCase().trim();
+    renderBody();
+  });
+
+  // ── Init ─────────────────────────────────────────────────────────
+  renderHeader();
+  renderBody();
+</script>
+</body>
+</html>

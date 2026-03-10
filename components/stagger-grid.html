@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Staggered Grid — Component Library</title>
+
+  <!--
+  /* COMPONENT: Staggered Grid | COPY: style + html + script */
+  9-card portfolio grid that animates in on scroll with a diagonal wave stagger.
+  Each card gets --col and --row CSS custom properties set by JS.
+  transition-delay = col * 80ms + row * 60ms creates the diagonal effect.
+  Load More button appends 3 additional cards with the same animation.
+  Card hover: thumbnail scales, border brightens.
+  -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+
+    /* ============================================================
+       CUSTOMIZE
+       ============================================================ */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --glow:           rgba(16,185,129,0.15);
+      --glow-strong:    rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --border-accent:  rgba(16,185,129,0.3);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+
+      /* Grid columns — adjust for different layouts */
+      --grid-cols: 3;
+    }
+    /* ============================================================ */
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Page layout ── */
+    .sg-page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 4rem 1.5rem 5rem;
+    }
+
+    /* ── Page header ── */
+    .sg-header {
+      margin-bottom: 3rem;
+    }
+    .sg-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.75rem;
+    }
+    .sg-title {
+      font-family: var(--font-heading);
+      font-size: clamp(1.75rem, 4vw, 2.75rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+    }
+    .sg-subtitle {
+      color: var(--text-secondary);
+      font-size: 0.9375rem;
+      line-height: 1.6;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       STAGGER GRID
+       ═══════════════════════════════════════════════════════════ */
+    .sg-grid {
+      display: grid;
+      grid-template-columns: repeat(var(--grid-cols), 1fr);
+      gap: 1.5rem;
+    }
+    @media (max-width: 900px) {
+      :root { --grid-cols: 2; }
+    }
+    @media (max-width: 540px) {
+      :root { --grid-cols: 1; }
+    }
+
+    /* ── Individual card ──
+       Starts invisible/offset; becomes visible when IntersectionObserver
+       fires and the .is-revealed class is added. */
+    .sg-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+
+      /* Initial state: invisible and shifted down */
+      opacity: 0;
+      transform: translateY(40px);
+
+      /* Transition uses CSS custom properties set by JS.
+         Delay = col * 80ms + row * 60ms creates diagonal wave. */
+      transition:
+        opacity 0.5s ease calc(var(--col, 0) * 80ms + var(--row, 0) * 60ms),
+        transform 0.5s ease calc(var(--col, 0) * 80ms + var(--row, 0) * 60ms),
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+    }
+
+    /* Revealed state — added by JS via IntersectionObserver */
+    .sg-card.is-revealed {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Card hover: border brightens */
+    .sg-card:hover {
+      border-color: var(--border-accent);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+
+    /* ── Thumbnail area ── */
+    .sg-thumb {
+      aspect-ratio: 4 / 3;
+      overflow: hidden;
+      position: relative;
+      background: var(--elevated);
+    }
+
+    /* CSS gradient thumbnail — no real images needed */
+    .sg-thumb-inner {
+      width: 100%;
+      height: 100%;
+      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      align-items: flex-end;
+      padding: 1rem;
+    }
+    .sg-card:hover .sg-thumb-inner { transform: scale(1.05); }
+
+    /* Each thumbnail has a unique gradient — set via inline style */
+    .sg-thumb-label {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: rgba(255,255,255,0.5);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      background: rgba(0,0,0,0.4);
+      padding: 3px 8px;
+      border-radius: 4px;
+      backdrop-filter: blur(4px);
+    }
+
+    /* ── Card body ── */
+    .sg-card-body {
+      padding: 1.25rem;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .sg-card-category {
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      font-weight: 600;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .sg-card-title {
+      font-family: var(--font-heading);
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.3;
+    }
+
+    .sg-card-desc {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      flex: 1;
+    }
+
+    .sg-card-link {
+      font-family: var(--font-heading);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--accent);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 0.25rem;
+      transition: gap 0.2s;
+    }
+    .sg-card:hover .sg-card-link { gap: 8px; }
+
+    /* ── Load more button ── */
+    .sg-load-more-wrap {
+      display: flex;
+      justify-content: center;
+      margin-top: 3rem;
+    }
+    .sg-load-more {
+      font-family: var(--font-heading);
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: var(--text);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 28px;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s, transform 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .sg-load-more:hover {
+      border-color: var(--border-accent);
+      background: var(--elevated);
+      transform: translateY(-1px);
+    }
+    .sg-load-more.is-hidden { display: none; }
+
+  </style>
+</head>
+<body>
+
+  <div class="sg-page">
+
+    <header class="sg-header">
+      <p class="sg-eyebrow">Portfolio</p>
+      <h1 class="sg-title">Selected Work</h1>
+      <p class="sg-subtitle">Scroll down to see the diagonal stagger animation. Each column reveals slightly before the next, creating a wave pattern. Click Load More to add 3 more cards.</p>
+    </header>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         STAGGER GRID — copy this block + the JS below
+         ═══════════════════════════════════════════════════════════ -->
+    <div class="sg-grid" id="sg-grid">
+
+      <!-- Card 1 -->
+      <a class="sg-card" href="#">
+        <div class="sg-thumb">
+          <div class="sg-thumb-inner" style="background: linear-gradient(135deg, #0a2d1a, #10B981);">
+            <span class="sg-thumb-label">Brand Identity</span>
+          </div>
+        </div>
+        <div class="sg-card-body">
+          <span class="sg-card-category">Branding</span>
+          <h2 class="sg-card-title">Meridian Financial Group</h2>
+          <p class="sg-card-desc">Complete brand overhaul — identity system, typography, and digital guidelines for a $2B wealth management firm.</p>
+          <span class="sg-card-link">View case study <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+        </div>
+      </a>
+
+      <!-- Card 2 -->
+      <a class="sg-card" href="#">
+        <div class="sg-thumb">
+          <div class="sg-thumb-inner" style="background: linear-gradient(135deg, #0a1a3b, #3B82F6);">
+            <span class="sg-thumb-label">Web Design</span>
+          </div>
+        </div>
+        <div class="sg-card-body">
+          <span class="sg-card-category">Web</span>
+          <h2 class="sg-card-title">Apex SaaS Platform</h2>
+          <p class="sg-card-desc">Redesigned the marketing site and onboarding flow, increasing trial signups by 38% in the first 60 days post-launch.</p>
+          <span class="sg-card-link">View case study <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+        </div>
+      </a>
+
+      <!-- Card 3 -->
+      <a class="sg-card" href="#">
+        <div class="sg-thumb">
+          <div class="sg-thumb-inner" style="background: linear-gradient(135deg, #2a0a3b, #8B5CF6);">
+            <span class="sg-thumb-label">Mobile App</span>
+          </div>
+        </div>
+        <div class="sg-card-body">
+          <span class="sg-card-category">Product Design</span>
+          <h2 class="sg-card-title">Vellum Health App</h2>
+          <p class="sg-card-desc">iOS and Android patient engagement app. Designed the entire system from information architecture to final UI specs.</p>
+          <span class="sg-card-link">View case study <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+        </div>
+      </a>
+
+      <!-- Card 4 -->
+      <a class="sg-card" href="#">
+        <div class="sg-thumb">
+          <div class="sg-thumb-inner" style="background: linear-gradient(135deg, #2a1a0a, #F59E0B);">
+            <span class="sg-thumb-label">E-commerce</span>
+          </div>
+        </div>
+        <div class="sg-card-body">
+          <span class="sg-card-category">Commerce</span>
+          <h2 class="sg-card-title">Ember Home Goods</h2>
+          <p class="sg-card-desc">Custom Shopify build with a product configurator for customizable furniture. 210% increase in average order value.</p>
+          <span class="sg-card-link">View case study <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+        </div>
+      </a>
+
+      <!-- Card 5 -->
+      <a class="sg-card" href="#">
+        <div class="sg-thumb">
+          <div class="sg-thumb-inner" style="background: linear-gradient(135deg, #0a2a2a, #06B6D4);">
+            <span class="sg-thumb-label">Data Viz</span>
+          </div>
+        </div>
+        <div class="sg-card-body">
+          <span class="sg-card-category">Dashboard</span>
+          <h2 class="sg-card-title">Northstar Analytics</h2>
+          <p class="sg-card-desc">Executive-facing data dashboard with 40+ custom chart types. Real-time updates, dark/light mode, and export functionality.</p>
+          <span class="sg-card-link">View case study <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+        </div>
+      </a>
+
+      <!-- Card 6 -->
+      <a class="sg-card" href="#">
+        <div class="sg-thumb">
+          <div class="sg-thumb-inner" style="background: linear-gradient(135deg, #2a0a0a, #EF4444);">
+            <span class="sg-thumb-label">Campaign</span>
+          </div>
+        </div>
+        <div class="sg-card-body">
+          <span class="sg-card-category">Marketing</span>
+          <h2 class="sg-card-title">Solstice Energy Launch</h2>
+          <p class="sg-card-desc">Full campaign creative — landing pages, email sequence, paid social, and video thumbnails for a $50M Series B launch.</p>
+          <span class="sg-card-link">View case study <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+        </div>
+      </a>
+
+      <!-- Card 7 -->
+      <a class="sg-card" href="#">
+        <div class="sg-thumb">
+          <div class="sg-thumb-inner" style="background: linear-gradient(135deg, #0a0a2a, #6366F1);">
+            <span class="sg-thumb-label">AI Product</span>
+          </div>
+        </div>
+        <div class="sg-card-body">
+          <span class="sg-card-category">Product</span>
+          <h2 class="sg-card-title">Prism AI Writing Tool</h2>
+          <p class="sg-card-desc">Designed the entire user experience for an AI writing assistant — prompting interface, output controls, and publishing workflow.</p>
+          <span class="sg-card-link">View case study <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+        </div>
+      </a>
+
+      <!-- Card 8 -->
+      <a class="sg-card" href="#">
+        <div class="sg-thumb">
+          <div class="sg-thumb-inner" style="background: linear-gradient(135deg, #1a2a0a, #84CC16);">
+            <span class="sg-thumb-label">Real Estate</span>
+          </div>
+        </div>
+        <div class="sg-card-body">
+          <span class="sg-card-category">Real Estate</span>
+          <h2 class="sg-card-title">Summit Realty Group</h2>
+          <p class="sg-card-desc">Lead generation funnel, CRM integration, and property search UI for a multi-office brokerage. 4x lead volume in 90 days.</p>
+          <span class="sg-card-link">View case study <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+        </div>
+      </a>
+
+      <!-- Card 9 -->
+      <a class="sg-card" href="#">
+        <div class="sg-thumb">
+          <div class="sg-thumb-inner" style="background: linear-gradient(135deg, #2a1a1a, #EC4899);">
+            <span class="sg-thumb-label">Events</span>
+          </div>
+        </div>
+        <div class="sg-card-body">
+          <span class="sg-card-category">Events</span>
+          <h2 class="sg-card-title">Luminary Summit 2026</h2>
+          <p class="sg-card-desc">Conference brand, microsite, ticket flow, and speaker kit for a 3,000-person marketing summit. Sold out in 48 hours.</p>
+          <span class="sg-card-link">View case study <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+        </div>
+      </a>
+
+    </div><!-- /sg-grid -->
+
+    <!-- Load more button -->
+    <div class="sg-load-more-wrap">
+      <button class="sg-load-more" id="sg-load-more">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Load more projects
+      </button>
+    </div>
+
+  </div><!-- /sg-page -->
+
+
+  <script>
+  /* ── Staggered Grid Animation + Load More ── */
+  (function() {
+    var grid      = document.getElementById('sg-grid');
+    var loadMore  = document.getElementById('sg-load-more');
+    var cols      = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--grid-cols')) || 3;
+    var totalLoaded = 9;
+
+    /* ── Step 1: Assign --col and --row CSS vars to each card ──
+       These drive the transition-delay in CSS for the diagonal wave.
+       Row/col are 0-indexed. */
+    function assignPositions(cards, startIndex) {
+      cards.forEach(function(card, i) {
+        var absoluteIndex = startIndex + i;
+        var col = absoluteIndex % cols;
+        var row = Math.floor(absoluteIndex / cols);
+        card.style.setProperty('--col', col);
+        card.style.setProperty('--row', row);
+      });
+    }
+
+    /* Recalculate cols on resize (CSS variables update, JS needs to re-read) */
+    function getCols() {
+      return parseInt(getComputedStyle(document.documentElement).getPropertyValue('--grid-cols')) || 3;
+    }
+
+    /* ── Step 2: Observe grid — when it enters viewport, reveal all cards ── */
+    var revealed = false;
+
+    var observer = new IntersectionObserver(function(entries) {
+      if (entries[0].isIntersecting && !revealed) {
+        revealed = true;
+        var cards = grid.querySelectorAll('.sg-card');
+        cols = getCols();
+        assignPositions(Array.from(cards), 0);
+        /* Small frame delay ensures positions are applied before revealing */
+        requestAnimationFrame(function() {
+          cards.forEach(function(card) { card.classList.add('is-revealed'); });
+        });
+      }
+    }, { threshold: 0.1 });
+
+    observer.observe(grid);
+
+    /* ── Load More: append 3 new cards and animate them ── */
+    var moreCards = [
+      {
+        bg: 'linear-gradient(135deg, #0a2a1a, #059669)',
+        label: 'SaaS',
+        category: 'Product',
+        title: 'Clockwork Project Tool',
+        desc: 'Project management redesign focused on reducing meeting overhead. Teams report saving 6+ hours per week post-launch.'
+      },
+      {
+        bg: 'linear-gradient(135deg, #1a0a2a, #7C3AED)',
+        label: 'Agency',
+        category: 'Branding',
+        title: 'Cascade Creative Agency',
+        desc: 'Rebrand for a 15-person creative studio — positioning, visual identity, and a new portfolio site with client case studies.'
+      },
+      {
+        bg: 'linear-gradient(135deg, #2a2a0a, #D97706)',
+        label: 'Retail',
+        category: 'Commerce',
+        title: 'Golden Hour Jewelry',
+        desc: 'Custom Shopify theme with ring builder configurator. Product personalization increased conversions by 52% vs. standard PDPs.'
+      }
+    ];
+
+    loadMore.addEventListener('click', function() {
+      cols = getCols();
+
+      moreCards.forEach(function(data, i) {
+        var card = document.createElement('a');
+        card.href = '#';
+        card.className = 'sg-card'; /* starts invisible/offset via CSS */
+        card.innerHTML = [
+          '<div class="sg-thumb">',
+            '<div class="sg-thumb-inner" style="background:' + data.bg + '">',
+              '<span class="sg-thumb-label">' + data.label + '</span>',
+            '</div>',
+          '</div>',
+          '<div class="sg-card-body">',
+            '<span class="sg-card-category">' + data.category + '</span>',
+            '<h2 class="sg-card-title">' + data.title + '</h2>',
+            '<p class="sg-card-desc">' + data.desc + '</p>',
+            '<span class="sg-card-link">View case study <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>',
+          '</div>'
+        ].join('');
+
+        /* Assign position based on absolute index */
+        var absIndex = totalLoaded + i;
+        card.style.setProperty('--col', absIndex % cols);
+        card.style.setProperty('--row', Math.floor(absIndex / cols));
+        grid.appendChild(card);
+      });
+
+      totalLoaded += moreCards.length;
+
+      /* Reveal new cards on next frame (after DOM insertion) */
+      requestAnimationFrame(function() {
+        var newCards = grid.querySelectorAll('.sg-card:not(.is-revealed)');
+        newCards.forEach(function(card) { card.classList.add('is-revealed'); });
+      });
+
+      /* Hide load-more (only one batch in this demo) */
+      loadMore.classList.add('is-hidden');
+    });
+
+    /* Recompute on resize (cols change) */
+    window.addEventListener('resize', function() {
+      cols = getCols();
+      var allCards = grid.querySelectorAll('.sg-card');
+      assignPositions(Array.from(allCards), 0);
+    }, { passive: true });
+
+  })();
+  </script>
+
+</body>
+</html>

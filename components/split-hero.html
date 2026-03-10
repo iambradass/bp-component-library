@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Split Screen Hero — Component Library</title>
+
+  <!--
+  /* COMPONENT: Split Screen Hero | COPY: style + html + script */
+  Full-viewport hero with two side-by-side panels.
+  Hovering a panel expands it to 65% via flex animation.
+  CSS transition on flex property (cubic-bezier spring feel).
+  Mobile: stacks vertically, no interaction.
+  A shimmer divider line runs between the panels.
+  -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+
+    /* ============================================================
+       CUSTOMIZE
+       ============================================================ */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --glow:           rgba(16,185,129,0.15);
+      --glow-strong:    rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --border-accent:  rgba(16,185,129,0.3);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+    }
+    /* ============================================================ */
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       SPLIT HERO — the main component
+       ═══════════════════════════════════════════════════════════ */
+    .sh-hero {
+      display: flex;
+      height: 100vh;
+      min-height: 500px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* ── Individual panel ── */
+    .sh-panel {
+      /* flex: 1 gives 50/50 default; transitions to 1.857 (65%) / 0.538 (35%)
+         via JS by setting flex on sibling panels */
+      flex: 1;
+      transition: flex 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    /* Panel background gradients — customize these for your brand */
+    .sh-panel-left {
+      background: linear-gradient(135deg, #0f1d2e 0%, #0a2d1a 40%, #0d1f0d 100%);
+    }
+    .sh-panel-right {
+      background: linear-gradient(135deg, #1a0a2e 0%, #0d0a2e 40%, #0a1028 100%);
+    }
+
+    /* ── Dark gradient overlay — ensures text readability ── */
+    .sh-panel::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      /* Gradient from center outward, darker at edges and bottom */
+      background: radial-gradient(ellipse at center, transparent 20%, rgba(0,0,0,0.4) 100%),
+                  linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 60%);
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    /* ── Background pattern overlay ── */
+    .sh-panel::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(circle, rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 28px 28px;
+      z-index: 0;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+    .sh-panel:hover::after,
+    .sh-panel.is-active::after { opacity: 1; }
+
+    /* ── Panel inner content ── */
+    .sh-panel-inner {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      padding: 2rem 3rem;
+      max-width: 460px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.25rem;
+    }
+
+    /* Icon badge */
+    .sh-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 6px 14px;
+      border-radius: 100px;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.4s ease 0.1s, transform 0.4s ease 0.1s;
+    }
+    .sh-panel-left .sh-badge {
+      color: var(--accent);
+      background: rgba(16,185,129,0.12);
+      border: 1px solid rgba(16,185,129,0.3);
+    }
+    .sh-panel-right .sh-badge {
+      color: #818CF8;
+      background: rgba(99,102,241,0.12);
+      border: 1px solid rgba(99,102,241,0.3);
+    }
+
+    .sh-panel.is-active .sh-badge {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Heading */
+    .sh-panel-title {
+      font-family: var(--font-heading);
+      font-size: clamp(2rem, 4vw, 3.25rem);
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.025em;
+      line-height: 1.1;
+    }
+
+    /* Subtitle — visible but fades in more on active */
+    .sh-panel-sub {
+      font-size: clamp(0.875rem, 1.5vw, 1rem);
+      color: rgba(248,250,252,0.65);
+      line-height: 1.65;
+      max-width: 320px;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.4s ease 0.2s, transform 0.4s ease 0.2s;
+    }
+    .sh-panel.is-active .sh-panel-sub {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* CTA button */
+    .sh-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-heading);
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: #fff;
+      padding: 13px 28px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.4s ease 0.3s, transform 0.4s ease 0.3s, box-shadow 0.2s;
+    }
+    .sh-panel-left .sh-cta {
+      background: var(--accent);
+      box-shadow: 0 0 0 0 rgba(16,185,129,0);
+    }
+    .sh-panel-left .sh-cta:hover {
+      box-shadow: 0 0 24px rgba(16,185,129,0.4);
+    }
+    .sh-panel-right .sh-cta {
+      background: #6366F1;
+      box-shadow: 0 0 0 0 rgba(99,102,241,0);
+    }
+    .sh-panel-right .sh-cta:hover {
+      box-shadow: 0 0 24px rgba(99,102,241,0.5);
+    }
+    .sh-panel.is-active .sh-cta {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Hover label (visible in non-active state to invite interaction) */
+    .sh-hover-hint {
+      position: absolute;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(0);
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: rgba(255,255,255,0.3);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      white-space: nowrap;
+      z-index: 2;
+      transition: opacity 0.3s;
+    }
+    .sh-panel.is-active .sh-hover-hint { opacity: 0; pointer-events: none; }
+
+    /* ── Vertical divider with shimmer ── */
+    .sh-divider {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      width: 1px;
+      z-index: 10;
+      background: linear-gradient(
+        to bottom,
+        transparent 0%,
+        rgba(16,185,129,0.2) 20%,
+        rgba(16,185,129,0.5) 50%,
+        rgba(16,185,129,0.2) 80%,
+        transparent 100%
+      );
+      pointer-events: none;
+      transition: left 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Shimmer dot on the divider */
+    .sh-divider::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 6px;
+      height: 60px;
+      background: linear-gradient(to bottom, transparent, rgba(16,185,129,0.8), transparent);
+      border-radius: 100px;
+      animation: sh-shimmer 2.5s ease-in-out infinite;
+    }
+    @keyframes sh-shimmer {
+      0%   { top: 0%; opacity: 0; }
+      10%  { opacity: 1; }
+      90%  { opacity: 1; }
+      100% { top: 100%; opacity: 0; }
+    }
+
+    /* ── Below the hero: info section ── */
+    .sh-info {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 4rem 1.5rem;
+      text-align: center;
+    }
+    .sh-info h2 {
+      font-family: var(--font-heading);
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+    .sh-info p {
+      color: var(--text-secondary);
+      font-size: 0.9375rem;
+      line-height: 1.7;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    /* ── Mobile: stack vertically ── */
+    @media (max-width: 700px) {
+      .sh-hero {
+        flex-direction: column;
+        height: auto;
+      }
+      .sh-panel {
+        /* On mobile, both panels are full width with fixed height */
+        flex: none !important;
+        height: 50vh;
+        min-height: 280px;
+        transition: none !important;
+      }
+      .sh-badge, .sh-panel-sub, .sh-cta {
+        opacity: 1 !important;
+        transform: none !important;
+        transition: none !important;
+      }
+      .sh-hover-hint { display: none; }
+      .sh-divider { display: none; }
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SPLIT SCREEN HERO — copy the .sh-hero element
+       ═══════════════════════════════════════════════════════════ -->
+  <section class="sh-hero" id="sh-hero">
+
+    <!-- Left panel -->
+    <div class="sh-panel sh-panel-left" id="sh-left">
+
+      <div class="sh-panel-inner">
+        <span class="sh-badge">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          For Businesses
+        </span>
+
+        <h1 class="sh-panel-title">Close more<br>deals, faster.</h1>
+
+        <p class="sh-panel-sub">A full marketing and analytics suite built for teams who need results — not another dashboard to manage.</p>
+
+        <a href="#" class="sh-cta">
+          Start free trial
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </a>
+      </div>
+
+      <span class="sh-hover-hint">hover to explore</span>
+    </div>
+
+    <!-- Animated divider line -->
+    <div class="sh-divider" id="sh-divider" aria-hidden="true"></div>
+
+    <!-- Right panel -->
+    <div class="sh-panel sh-panel-right" id="sh-right">
+
+      <div class="sh-panel-inner">
+        <span class="sh-badge">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          For Agencies
+        </span>
+
+        <h1 class="sh-panel-title">Scale client<br>results 10x.</h1>
+
+        <p class="sh-panel-sub">White-label the entire platform and deliver measurable growth to every client under your brand.</p>
+
+        <a href="#" class="sh-cta">
+          See agency plan
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </a>
+      </div>
+
+      <span class="sh-hover-hint">hover to explore</span>
+    </div>
+
+  </section>
+
+  <!-- Info section -->
+  <section class="sh-info">
+    <h2>How to use this component</h2>
+    <p>Hover over each panel above. The hovered panel expands to 65% while the other compresses to 35%. Built with CSS <code style="font-family:var(--font-mono);font-size:0.85em;color:var(--accent)">flex</code> transitions — no JS animation loops. Moving your cursor away returns both panels to 50/50.</p>
+  </section>
+
+
+  <script>
+  /* ── Split Hero Interaction ──
+     On mouseenter: set hovered panel flex to ~1.857 (65%) by adding 'is-active'
+     On mouseleave from the hero container: reset both panels
+     Also moves the divider line to track the split point
+  */
+  (function() {
+    var hero   = document.getElementById('sh-hero');
+    var left   = document.getElementById('sh-left');
+    var right  = document.getElementById('sh-right');
+    var div    = document.getElementById('sh-divider');
+
+    /* Panels start at flex:1 (50/50).
+       Active panel gets flex:1.857 ≈ 65%.
+       Inactive gets flex:0.538 ≈ 35%.
+       (1.857 / (1.857 + 0.538) = 0.775... actually let's do math:
+        to get 65%: flexA = 65, flexB = 35 → simplify → 13:7 ≈ 1.857:1
+       */
+    var EXPAND = '1.857';
+    var SHRINK = '0.538';
+
+    function activate(panel) {
+      if (panel === left) {
+        left.style.flex  = EXPAND;
+        right.style.flex = SHRINK;
+        left.classList.add('is-active');
+        right.classList.remove('is-active');
+        if (div) div.style.left = '65%';
+      } else {
+        right.style.flex = EXPAND;
+        left.style.flex  = SHRINK;
+        right.classList.add('is-active');
+        left.classList.remove('is-active');
+        if (div) div.style.left = '35%';
+      }
+    }
+
+    function reset() {
+      left.style.flex  = '1';
+      right.style.flex = '1';
+      left.classList.remove('is-active');
+      right.classList.remove('is-active');
+      if (div) div.style.left = '50%';
+    }
+
+    /* Use pointer events to avoid accidental triggers */
+    left.addEventListener('mouseenter',  function() { activate(left);  });
+    right.addEventListener('mouseenter', function() { activate(right); });
+    hero.addEventListener('mouseleave',  reset);
+
+    /* Touch: tap to activate, tap again to reset */
+    var lastTouched = null;
+    [left, right].forEach(function(panel) {
+      panel.addEventListener('click', function() {
+        if (lastTouched === panel) {
+          reset();
+          lastTouched = null;
+        } else {
+          activate(panel);
+          lastTouched = panel;
+        }
+      });
+    });
+
+  })();
+  </script>
+
+</body>
+</html>

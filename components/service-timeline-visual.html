@@ -1,0 +1,412 @@
+<!-- COMPONENT: Service Timeline Visual | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Service Timeline Visual</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: var(--font-body); min-height: 100vh;
+      padding: 3rem 1rem 5rem;
+    }
+
+    .stv-wrap { max-width: 960px; margin: 0 auto; }
+
+    /* ── Header ── */
+    .stv-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: var(--font-heading); font-size: 0.75rem; font-weight: 600;
+      color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em;
+      padding: 4px 14px; background: var(--accent-dim);
+      border: 1px solid var(--accent-border); border-radius: 100px;
+      margin-bottom: 1rem;
+    }
+    .stv-title {
+      font-family: var(--font-heading); font-size: clamp(1.75rem, 4vw, 2.5rem);
+      font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.4rem;
+    }
+    .stv-subtitle {
+      color: var(--text-secondary); font-size: 1rem; line-height: 1.6;
+      max-width: 520px; margin-bottom: 2.5rem;
+    }
+
+    /* ── "You Are Here" selector ── */
+    .stv-here-row {
+      display: flex; align-items: center; gap: 0.75rem; margin-bottom: 2rem; flex-wrap: wrap;
+    }
+    .stv-here-label { font-size: 0.875rem; color: var(--text-muted); }
+    .stv-here-select {
+      height: 34px; padding: 0 12px; border-radius: 8px;
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--text); font-family: var(--font-body); font-size: 0.875rem;
+      cursor: pointer; outline: none; transition: border-color 0.18s;
+    }
+    .stv-here-select:focus { border-color: var(--accent-border); }
+
+    /* ── Desktop horizontal timeline ── */
+    .stv-timeline-outer {
+      overflow-x: auto; scrollbar-width: none; padding-bottom: 1rem;
+    }
+    .stv-timeline-outer::-webkit-scrollbar { display: none; }
+
+    .stv-timeline {
+      display: flex; align-items: flex-start; min-width: max-content;
+      padding: 0.5rem 0.5rem 1rem; position: relative;
+      gap: 0;
+    }
+
+    /* Connecting track line behind nodes */
+    .stv-track {
+      position: absolute; top: 32px; /* center of node circles */
+      left: 2.5rem; right: 2.5rem; height: 2px;
+      background: var(--border);
+    }
+    .stv-track-fill {
+      height: 100%; background: var(--accent);
+      transition: width 0.4s ease;
+    }
+
+    /* ── Milestone node ── */
+    .stv-node {
+      display: flex; flex-direction: column; align-items: center;
+      width: 110px; cursor: pointer; gap: 0.625rem; flex-shrink: 0;
+      position: relative;
+    }
+
+    .stv-node-circle {
+      width: 64px; height: 64px; border-radius: 50%;
+      background: var(--surface); border: 2px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-muted); z-index: 1;
+      transition: all 0.25s ease;
+    }
+    .stv-node.past .stv-node-circle {
+      background: var(--elevated); border-color: var(--accent);
+      color: var(--accent);
+    }
+    .stv-node.current .stv-node-circle {
+      background: var(--accent); border-color: var(--accent);
+      color: var(--bg); box-shadow: 0 0 0 4px var(--accent-dim), 0 0 0 8px rgba(16,185,129,0.08);
+    }
+    .stv-node.current .stv-node-circle::after {
+      content: ''; position: absolute;
+      width: 10px; height: 10px; border-radius: 50%; background: var(--accent);
+      top: -14px; animation: nodeBlip 1.5s ease-in-out infinite;
+    }
+    @keyframes nodeBlip { 0%,100% { opacity:1; transform: scale(1); } 50% { opacity:0.3; transform: scale(0.7); } }
+
+    .stv-node-day {
+      font-family: var(--font-heading); font-size: 0.625rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted);
+    }
+    .stv-node.current .stv-node-day { color: var(--accent); }
+
+    .stv-node-name {
+      font-family: var(--font-heading); font-size: 0.75rem; font-weight: 600;
+      text-align: center; color: var(--text-secondary); line-height: 1.3;
+    }
+    .stv-node.current .stv-node-name { color: var(--text); }
+
+    /* "You Are Here" label */
+    .stv-here-pin {
+      position: absolute; top: -28px; left: 50%; transform: translateX(-50%);
+      background: var(--accent); color: var(--bg);
+      font-family: var(--font-heading); font-size: 0.5625rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      padding: 2px 7px; border-radius: 100px; white-space: nowrap;
+      opacity: 0; transition: opacity 0.25s; pointer-events: none;
+    }
+    .stv-node.current .stv-here-pin { opacity: 1; }
+
+    /* ── Detail panel below timeline ── */
+    .stv-detail {
+      margin-top: 1.5rem;
+      background: var(--surface); border: 1px solid var(--accent-border);
+      border-radius: var(--radius); padding: 1.5rem;
+      display: none;
+    }
+    .stv-detail.visible { display: block; }
+
+    .stv-detail-header {
+      display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem; flex-wrap: wrap;
+    }
+    .stv-detail-day {
+      font-family: var(--font-heading); font-size: 0.75rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent);
+      padding: 3px 10px; background: var(--accent-dim);
+      border: 1px solid var(--accent-border); border-radius: 100px;
+    }
+    .stv-detail-name {
+      font-family: var(--font-heading); font-size: 1.125rem; font-weight: 700; flex: 1;
+    }
+
+    .stv-detail-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;
+    }
+    @media (max-width: 600px) { .stv-detail-grid { grid-template-columns: 1fr; } }
+
+    .stv-detail-col { display: flex; flex-direction: column; gap: 0.375rem; }
+    .stv-detail-col-title {
+      font-family: var(--font-heading); font-size: 0.6875rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.25rem;
+    }
+    .stv-detail-col-title.who  { color: #3B82F6; }
+    .stv-detail-col-title.what { color: var(--accent); }
+    .stv-detail-col-title.recv { color: #F59E0B; }
+    .stv-detail-item { font-size: 0.875rem; color: var(--text-secondary); line-height: 1.45; }
+
+    /* ── After-launch section ── */
+    .stv-after {
+      margin-top: 2.5rem; padding-top: 2rem; border-top: 1px solid var(--border);
+    }
+    .stv-after-title {
+      font-family: var(--font-heading); font-size: 0.875rem; font-weight: 700;
+      color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.08em;
+      margin-bottom: 1rem;
+    }
+    .stv-after-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem;
+    }
+    @media (max-width: 600px) { .stv-after-grid { grid-template-columns: repeat(2, 1fr); } }
+
+    .stv-after-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 1rem; text-align: center;
+    }
+    .stv-after-icon { color: var(--accent); margin: 0 auto 0.5rem; }
+    .stv-after-name {
+      font-family: var(--font-heading); font-size: 0.8125rem; font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+    .stv-after-freq { font-size: 0.75rem; color: var(--text-muted); }
+  </style>
+</head>
+<body>
+
+<div class="stv-wrap">
+
+  <div class="stv-eyebrow">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    Your Journey
+  </div>
+  <h2 class="stv-title">Your Journey to Launch</h2>
+  <p class="stv-subtitle">Here's exactly what to expect — from the day you sign up to the day your site goes live.</p>
+
+  <!-- "You are here" selector — simulates a real client dashboard -->
+  <div class="stv-here-row">
+    <span class="stv-here-label">Simulate "You Are Here":</span>
+    <select class="stv-here-select" id="stvHereSelect"></select>
+  </div>
+
+  <!-- Horizontal timeline -->
+  <div class="stv-timeline-outer">
+    <div class="stv-timeline" id="stvTimeline">
+      <div class="stv-track"><div class="stv-track-fill" id="stvTrackFill"></div></div>
+    </div>
+  </div>
+
+  <!-- Detail panel — updated on click -->
+  <div class="stv-detail" id="stvDetail"></div>
+
+  <!-- After-launch recurring touchpoints -->
+  <div class="stv-after">
+    <div class="stv-after-title">After Launch — Ongoing Monthly Touchpoints</div>
+    <div class="stv-after-grid" id="stvAfterGrid"></div>
+  </div>
+
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  var milestones = [
+    {
+      day: 'Day 1', name: 'Welcome & Onboarding',
+      icon: '<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>',
+      who:  ['Your dedicated project lead assigned', 'Kickoff Zoom scheduled (30 min)'],
+      what: ['Join the kickoff call', 'Confirm your availability'],
+      recv: ['Brand questionnaire + access to the client portal'],
+    },
+    {
+      day: 'Day 3', name: 'Brand Questionnaire Due',
+      icon: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/>',
+      who:  ['We\'re researching your local market', 'Competitor analysis underway'],
+      what: ['Complete your brand questionnaire (15 min)', 'Send any logos or headshots you have'],
+      recv: ['Confirmation email with project roadmap and expected dates'],
+    },
+    {
+      day: 'Day 5', name: 'First Design Concept',
+      icon: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>',
+      who:  ['Homepage design mockup created', 'Desktop + mobile versions prepared'],
+      what: ['Nothing required from you today'],
+      recv: ['Design preview link in your inbox — ready to review'],
+    },
+    {
+      day: 'Day 6–7', name: 'Your Feedback',
+      icon: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+      who:  ['We review and implement your feedback', 'Changes typically applied within 24 hours'],
+      what: ['Review the design preview', 'Submit feedback via the form provided'],
+      recv: ['Revised design confirmation — build begins immediately after'],
+    },
+    {
+      day: 'Day 8', name: 'Build Begins',
+      icon: '<rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>',
+      who:  ['All 5 pages built live', 'CRM forms connected', 'SEO configured, Analytics installed'],
+      what: ['Available for quick questions if needed'],
+      recv: ['Build progress updates in your client portal'],
+    },
+    {
+      day: 'Day 10', name: 'Preview Link Sent',
+      icon: '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
+      who:  ['Full QA completed across all devices', 'Speed and SEO checks passed'],
+      what: ['Click through every page — tell us anything that needs adjusting'],
+      recv: ['Preview link to your complete site — exactly as it will look live'],
+    },
+    {
+      day: 'Day 11', name: 'Final Approval',
+      icon: '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>',
+      who:  ['Any final change requests implemented', 'DNS and hosting prepped for go-live'],
+      what: ['Give us the thumbs up — written "approved" in email is all it takes'],
+      recv: ['Launch confirmation with exact go-live time'],
+    },
+    {
+      day: 'Day 12', name: 'Site Goes Live!',
+      icon: '<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>',
+      who:  ['DNS pointed, SSL active', 'Google sitemap submitted', 'GBP connected'],
+      what: ['Share your new URL — you\'re live!'],
+      recv: ['Training video + monthly report setup + go-live celebration email'],
+    },
+  ];
+
+  var after = [
+    { name: 'Monthly Report', freq: 'Every month', icon: '<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/>' },
+    { name: 'SEO Check', freq: 'Every month', icon: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>' },
+    { name: 'Content Update', freq: 'On request', icon: '<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>' },
+    { name: 'Renewal Check', freq: 'Every 12 months', icon: '<polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>' },
+  ];
+
+  var timelineEl = document.getElementById('stvTimeline');
+  var detail     = document.getElementById('stvDetail');
+  var trackFill  = document.getElementById('stvTrackFill');
+  var hereSelect = document.getElementById('stvHereSelect');
+  var afterGrid  = document.getElementById('stvAfterGrid');
+
+  var activeIdx = 0;
+
+  /* ── Build "You Are Here" select ── */
+  milestones.forEach(function(m, i) {
+    var opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = m.day + ' — ' + m.name;
+    if (i === 0) opt.selected = true;
+    hereSelect.appendChild(opt);
+  });
+
+  /* ── Build milestone nodes ── */
+  function buildTimeline(hereIdx) {
+    /* Remove old nodes (keep track div) */
+    Array.from(timelineEl.querySelectorAll('.stv-node')).forEach(function(n) { n.remove(); });
+
+    milestones.forEach(function(m, i) {
+      var node = document.createElement('div');
+      var cls = 'stv-node';
+      if (i < hereIdx)  cls += ' past';
+      if (i === hereIdx) cls += ' current';
+      node.className = cls;
+
+      node.innerHTML =
+        '<div class="stv-here-pin">You Are Here</div>' +
+        '<div class="stv-node-circle">' +
+          '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">' + m.icon + '</svg>' +
+        '</div>' +
+        '<div class="stv-node-day">' + m.day + '</div>' +
+        '<div class="stv-node-name">' + m.name + '</div>';
+
+      node.addEventListener('click', function() { openDetail(i); });
+      timelineEl.appendChild(node);
+    });
+
+    /* Update track fill width proportional to "here" position */
+    var pct = (hereIdx / (milestones.length - 1)) * 100;
+    trackFill.style.width = pct + '%';
+
+    /* Auto-open detail for current milestone */
+    openDetail(hereIdx);
+  }
+
+  function openDetail(i) {
+    activeIdx = i;
+    var m = milestones[i];
+    detail.className = 'stv-detail visible';
+    detail.innerHTML =
+      '<div class="stv-detail-header">' +
+        '<span class="stv-detail-day">' + m.day + '</span>' +
+        '<div class="stv-detail-name">' + m.name + '</div>' +
+      '</div>' +
+      '<div class="stv-detail-grid">' +
+        '<div class="stv-detail-col">' +
+          '<div class="stv-detail-col-title who">Who Does It</div>' +
+          m.who.map(function(x) { return '<div class="stv-detail-item">' + x + '</div>'; }).join('') +
+        '</div>' +
+        '<div class="stv-detail-col">' +
+          '<div class="stv-detail-col-title what">What You Do</div>' +
+          m.what.map(function(x) { return '<div class="stv-detail-item">' + x + '</div>'; }).join('') +
+        '</div>' +
+        '<div class="stv-detail-col">' +
+          '<div class="stv-detail-col-title recv">What You Receive</div>' +
+          m.recv.map(function(x) { return '<div class="stv-detail-item">' + x + '</div>'; }).join('') +
+        '</div>' +
+      '</div>';
+
+    detail.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  /* ── After-launch cards ── */
+  after.forEach(function(a) {
+    var card = document.createElement('div');
+    card.className = 'stv-after-card';
+    card.innerHTML =
+      '<div class="stv-after-icon">' +
+        '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">' + a.icon + '</svg>' +
+      '</div>' +
+      '<div class="stv-after-name">' + a.name + '</div>' +
+      '<div class="stv-after-freq">' + a.freq + '</div>';
+    afterGrid.appendChild(card);
+  });
+
+  /* ── "You Are Here" select handler ── */
+  hereSelect.addEventListener('change', function() {
+    buildTimeline(parseInt(this.value, 10));
+  });
+
+  /* Initial render */
+  buildTimeline(0);
+
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>File Tab System — Component Library</title>
+
+  <!--
+  ============================================================
+  COMPONENT: File Tab System
+  COPY: <style> block + HTML block + <script> block into target site
+  SOURCE: Originally built for bradleypatterson.tech/services
+  ============================================================
+
+  HOW TO ADAPT TO A NEW SITE:
+  1. Find every comment marked "CUSTOMIZE" below and swap the value.
+  2. The ONE rule that must hold: .ftab--active background == .file-tabs__body background.
+     That's what makes the active tab appear to "connect" to the panel below.
+  3. Tab IDs and aria attributes must stay in sync:
+       tab  id="ftab-N"     aria-controls="fpanel-N"
+       panel id="fpanel-N"  aria-labelledby="ftab-N"
+     Increment N for each tab/panel pair.
+  4. You can have any number of tabs — just keep adding .ftab buttons and .ftab-panel divs.
+  ============================================================
+  -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+
+    /* ── CUSTOMIZE: swap these values for the target site ── */
+    :root {
+      --ft-bg-page:       #0D1117;   /* page background */
+      --ft-bg-inactive:   #111827;   /* inactive tab background */
+      --ft-bg-active:     #1E293B;   /* active tab bg AND panel body bg — MUST MATCH */
+      --ft-border:        rgba(148, 163, 184, 0.1);
+      --ft-border-accent: rgba(16, 185, 129, 0.3);
+      --ft-text-muted:    #475569;   /* inactive tab label color */
+      --ft-text-hover:    #94A3B8;
+      --ft-accent:        #10B981;   /* active tab label + icon color */
+      --ft-text-body:     #F8FAFC;   /* panel body text */
+      --ft-text-secondary:#94A3B8;
+      --ft-radius:        12px;
+      --ft-font-heading:  'Space Grotesk', system-ui, sans-serif;
+      --ft-font-body:     'Inter', system-ui, sans-serif;
+      --ft-font-mono:     ui-monospace, 'Cascadia Code', 'Fira Code', monospace;
+    }
+
+    /* ── Demo page wrapper (remove when embedding in production) ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--ft-bg-page);
+      color: var(--ft-text-body);
+      font-family: var(--ft-font-body);
+      padding: 2rem 1.5rem 4rem;
+      min-height: 100vh;
+    }
+    .demo-wrapper {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .demo-label {
+      font-family: var(--ft-font-mono);
+      font-size: 0.75rem;
+      color: var(--ft-accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.5rem;
+    }
+    .demo-title {
+      font-family: var(--ft-font-heading);
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--ft-text-body);
+      margin-bottom: 0.5rem;
+    }
+    .demo-subtitle {
+      color: var(--ft-text-secondary);
+      font-size: 0.9375rem;
+      margin-bottom: 2.5rem;
+      line-height: 1.6;
+    }
+
+
+    /* ════════════════════════════════════════════
+       COMPONENT STYLES — copy everything below
+       this line into your site's stylesheet
+    ════════════════════════════════════════════ */
+
+    /* Tab strip — horizontal row of file-folder style tabs */
+    .file-tabs__strip {
+      display: flex;
+      gap: 3px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      align-items: flex-end;
+    }
+    .file-tabs__strip::-webkit-scrollbar { display: none; }
+
+    /* Individual tab button */
+    .ftab {
+      flex: 1;
+      min-width: 72px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 4px;
+      padding: 14px 8px 16px;
+      background: var(--ft-bg-inactive);
+      border: 1px solid var(--ft-border);
+      border-radius: 10px 10px 0 0;
+      color: var(--ft-text-muted);
+      cursor: pointer;
+      transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+      position: relative;
+    }
+    .ftab:hover:not(.ftab--active) {
+      color: var(--ft-text-hover);
+      background: var(--ft-bg-active);
+    }
+
+    /* Active tab — margin-bottom: -1px overlaps the body's top border so there's no visible seam */
+    .ftab--active {
+      background: var(--ft-bg-active);
+      border-color: var(--ft-border-accent);
+      border-bottom: 2px solid var(--ft-bg-active); /* matches body bg to erase seam */
+      color: var(--ft-accent);
+      margin-bottom: -1px;
+      z-index: 2;
+    }
+
+    .ftab__icon { transition: inherit; flex-shrink: 0; }
+    .ftab__icon svg { width: 26px; height: 26px; }
+
+    .ftab__label {
+      font-family: var(--ft-font-mono);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      white-space: nowrap;
+      color: inherit;
+    }
+
+    /* Mobile: icons only to save space */
+    @media (max-width: 640px) {
+      .ftab__label { display: none; }
+      .ftab { padding: 12px 6px; min-width: 48px; }
+    }
+
+    /* Panel body — all panels stack in the same grid cell so they overlap */
+    .file-tabs__body {
+      display: grid;
+      background: var(--ft-bg-active);  /* MUST match .ftab--active background */
+      border: 1px solid var(--ft-border);
+      border-top: none;
+      border-radius: 0 0 var(--ft-radius) var(--ft-radius);
+      min-height: 400px;
+      overflow: hidden;
+      perspective: 900px;   /* enables 3D fold animation — do not remove */
+      position: relative;
+      z-index: 1;
+    }
+
+    /* All panels occupy grid-area 1/1 so they physically overlap each other */
+    .ftab-panel {
+      grid-area: 1 / 1;
+      padding: 2rem;
+      opacity: 0;
+      pointer-events: none;
+      transform-origin: center center;
+      backface-visibility: hidden;
+    }
+    .ftab-panel--active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* Fold-out: outgoing panel folds back (rotates away) */
+    .ftab-panel--exiting {
+      animation: ftab-fold-out 0.22s cubic-bezier(0.55, 0, 1, 0.45) forwards;
+      z-index: 2;
+    }
+    /* Fold-in: incoming panel rotates forward from behind */
+    .ftab-panel--entering {
+      animation: ftab-fold-in 0.30s cubic-bezier(0, 0.55, 0.45, 1) forwards;
+    }
+    @keyframes ftab-fold-out {
+      from { opacity: 1; transform: rotateX(0deg); }
+      to   { opacity: 0; transform: rotateX(-90deg); }
+    }
+    @keyframes ftab-fold-in {
+      from { opacity: 0; transform: rotateX(90deg); }
+      to   { opacity: 1; transform: rotateX(0deg); }
+    }
+
+    /* Reduced motion — skip animation for accessibility */
+    @media (prefers-reduced-motion: reduce) {
+      .ftab-panel--exiting,
+      .ftab-panel--entering { animation-duration: 0.01ms !important; }
+    }
+
+    /* ── Panel content styles (adapt to your site's design system) ── */
+    .ftp-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--ft-border);
+    }
+    .ftp-icon {
+      width: 56px; height: 56px;
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid var(--ft-border-accent);
+      border-radius: 10px;
+      color: var(--ft-accent);
+    }
+    .ftp-title {
+      font-family: var(--ft-font-heading);
+      font-size: 1.375rem;
+      font-weight: 700;
+      margin: 0 0 4px;
+      color: var(--ft-text-body);
+    }
+    .ftp-subtitle {
+      font-family: var(--ft-font-mono);
+      font-size: 0.8125rem;
+      color: var(--ft-accent);
+    }
+    .ftp-body p {
+      font-size: 0.9375rem;
+      line-height: 1.8;
+      color: var(--ft-text-secondary);
+      margin-bottom: 1rem;
+    }
+    .ftp-body p:last-child { margin-bottom: 0; }
+    .ftp-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+    .ftp-stat {
+      background: rgba(16, 185, 129, 0.04);
+      border: 1px solid var(--ft-border);
+      border-radius: 8px;
+      padding: 1rem;
+      text-align: center;
+    }
+    .ftp-stat-num {
+      font-family: var(--ft-font-heading);
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--ft-accent);
+      display: block;
+    }
+    .ftp-stat-label {
+      font-size: 0.75rem;
+      color: var(--ft-text-secondary);
+      margin-top: 2px;
+    }
+    .ftp-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+    .ftp-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.625rem;
+      font-size: 0.9375rem;
+      color: var(--ft-text-secondary);
+      line-height: 1.5;
+    }
+    .ftp-list li::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--ft-accent);
+      flex-shrink: 0;
+      margin-top: 0.45em;
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="demo-wrapper">
+    <div class="demo-label">Component Demo</div>
+    <h1 class="demo-title">File Tab System</h1>
+    <p class="demo-subtitle">Folder-style tabs with 3D fold animation. Active tab connects seamlessly to the panel body — no visible seam.</p>
+
+    <!--
+    ============================================================
+    HTML STRUCTURE
+    Rules:
+      - First tab gets class "ftab--active" and aria-selected="true"
+      - First panel gets class "ftab-panel--active"
+      - IDs must stay in sync: ftab-N ↔ fpanel-N
+      - data-file-tabs on the wrapper is what the JS looks for
+    ============================================================
+    -->
+    <div class="file-tabs" data-file-tabs>
+
+      <!-- Tab Strip -->
+      <div class="file-tabs__strip" role="tablist" aria-label="Service tabs">
+
+        <button class="ftab ftab--active" id="ftab-0" role="tab" aria-selected="true" aria-controls="fpanel-0">
+          <span class="ftab__icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          </span>
+          <span class="ftab__label">Overview</span>
+        </button>
+
+        <button class="ftab" id="ftab-1" role="tab" aria-selected="false" aria-controls="fpanel-1">
+          <span class="ftab__icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          </span>
+          <span class="ftab__label">Analytics</span>
+        </button>
+
+        <button class="ftab" id="ftab-2" role="tab" aria-selected="false" aria-controls="fpanel-2">
+          <span class="ftab__icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+          </span>
+          <span class="ftab__label">Settings</span>
+        </button>
+
+        <button class="ftab" id="ftab-3" role="tab" aria-selected="false" aria-controls="fpanel-3">
+          <span class="ftab__icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          </span>
+          <span class="ftab__label">Reports</span>
+        </button>
+
+      </div>
+
+      <!-- Panel Body — all panels stack here via CSS Grid -->
+      <div class="file-tabs__body">
+
+        <div class="ftab-panel ftab-panel--active" id="fpanel-0" role="tabpanel" aria-labelledby="ftab-0">
+          <div class="ftp-header">
+            <div class="ftp-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            </div>
+            <div>
+              <h2 class="ftp-title">Project Overview</h2>
+              <div class="ftp-subtitle">Last updated 2 hours ago</div>
+            </div>
+          </div>
+          <div class="ftp-body">
+            <p>Your project is running smoothly. All systems are operational and performance metrics are within expected ranges. Three new leads came in overnight from the organic search channel.</p>
+            <div class="ftp-stats">
+              <div class="ftp-stat"><span class="ftp-stat-num">247</span><div class="ftp-stat-label">Active Users</div></div>
+              <div class="ftp-stat"><span class="ftp-stat-num">98%</span><div class="ftp-stat-label">Uptime</div></div>
+              <div class="ftp-stat"><span class="ftp-stat-num">1.2s</span><div class="ftp-stat-label">Avg Load</div></div>
+              <div class="ftp-stat"><span class="ftp-stat-num">$4.1k</span><div class="ftp-stat-label">Revenue MoM</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ftab-panel" id="fpanel-1" role="tabpanel" aria-labelledby="ftab-1">
+          <div class="ftp-header">
+            <div class="ftp-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            </div>
+            <div>
+              <h2 class="ftp-title">Traffic Analytics</h2>
+              <div class="ftp-subtitle">Last 30 days</div>
+            </div>
+          </div>
+          <div class="ftp-body">
+            <p>Organic traffic is up 34% compared to last month, driven primarily by two long-form articles published in January. Paid campaigns are converting at 3.2%, above the 2.8% industry benchmark.</p>
+            <ul class="ftp-list">
+              <li>Organic search: 1,842 sessions (+34%)</li>
+              <li>Direct: 612 sessions (+8%)</li>
+              <li>Paid social: 394 sessions, 12 conversions</li>
+              <li>Referral: 218 sessions from 3 partner sites</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="ftab-panel" id="fpanel-2" role="tabpanel" aria-labelledby="ftab-2">
+          <div class="ftp-header">
+            <div class="ftp-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+            </div>
+            <div>
+              <h2 class="ftp-title">Site Settings</h2>
+              <div class="ftp-subtitle">Configuration &amp; preferences</div>
+            </div>
+          </div>
+          <div class="ftp-body">
+            <p>Manage your site's global configuration, notification preferences, and integration settings from this panel. Changes take effect immediately.</p>
+            <ul class="ftp-list">
+              <li>Domain: yoursite.com — SSL active, CDN enabled</li>
+              <li>Email notifications: weekly digest enabled</li>
+              <li>CRM integration: GoHighLevel — connected</li>
+              <li>Caching: Cloudflare proxy active, 4hr TTL</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="ftab-panel" id="fpanel-3" role="tabpanel" aria-labelledby="ftab-3">
+          <div class="ftp-header">
+            <div class="ftp-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            </div>
+            <div>
+              <h2 class="ftp-title">Monthly Reports</h2>
+              <div class="ftp-subtitle">Downloadable PDF summaries</div>
+            </div>
+          </div>
+          <div class="ftp-body">
+            <p>Your monthly performance reports are auto-generated on the 1st of each month and stored here for 12 months. Reports include traffic, conversion, and revenue data.</p>
+            <ul class="ftp-list">
+              <li>February 2026 — 8 pages — Generated Feb 1</li>
+              <li>January 2026 — 9 pages — Generated Jan 1</li>
+              <li>December 2025 — 7 pages — Generated Dec 1</li>
+              <li>November 2025 — 8 pages — Generated Nov 1</li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /data-file-tabs -->
+  </div><!-- /demo-wrapper -->
+
+
+  <!--
+  ============================================================
+  JAVASCRIPT — no dependencies, works on any site.
+  Drop this before </body> or in your shared JS file.
+  ============================================================
+  -->
+  <script>
+  document.querySelectorAll('[data-file-tabs]').forEach(function(container) {
+    var tabBtns = Array.from(container.querySelectorAll('.ftab'));
+    var panels  = Array.from(container.querySelectorAll('.ftab-panel'));
+    var current = 0;
+    var busy    = false;
+
+    tabBtns.forEach(function(btn, i) {
+      btn.addEventListener('click', function() {
+        if (busy || i === current) return;
+        gotoTab(i);
+      });
+    });
+
+    function gotoTab(target) {
+      busy = true;
+      var from = current;
+      current = target;
+
+      // Update tab strip UI immediately on click
+      tabBtns[from].classList.remove('ftab--active');
+      tabBtns[from].setAttribute('aria-selected', 'false');
+      tabBtns[target].classList.add('ftab--active');
+      tabBtns[target].setAttribute('aria-selected', 'true');
+      // Keep active tab visible if strip overflows (especially on mobile)
+      tabBtns[target].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+
+      // Start fold-out on outgoing panel
+      panels[from].classList.remove('ftab-panel--active');
+      panels[from].classList.add('ftab-panel--exiting');
+
+      // After exit animation completes, fold in the new panel
+      setTimeout(function() {
+        panels[from].classList.remove('ftab-panel--exiting');
+        panels[target].classList.add('ftab-panel--entering');
+        panels[target].classList.add('ftab-panel--active');
+        setTimeout(function() {
+          panels[target].classList.remove('ftab-panel--entering');
+          busy = false;
+        }, 320);
+      }, 240);
+    }
+  });
+  </script>
+
+</body>
+</html>

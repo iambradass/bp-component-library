@@ -1,0 +1,315 @@
+<!-- COMPONENT: How It Works Detailed | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>How It Works — Detailed</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: var(--font-body); min-height: 100vh;
+      padding: 3rem 1rem 5rem;
+    }
+
+    .hiw-wrap { max-width: 860px; margin: 0 auto; }
+
+    /* ── Header ── */
+    .hiw-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: var(--font-heading); font-size: 0.75rem; font-weight: 600;
+      color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em;
+      padding: 4px 14px; background: var(--accent-dim);
+      border: 1px solid var(--accent-border); border-radius: 100px;
+      margin-bottom: 1rem;
+    }
+    .hiw-title {
+      font-family: var(--font-heading); font-size: clamp(1.75rem, 4vw, 2.5rem);
+      font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.4rem;
+    }
+    .hiw-subtitle {
+      color: var(--text-secondary); font-size: 1rem; line-height: 1.6;
+      margin-bottom: 1.75rem;
+    }
+
+    /* ── Progress bar at top — shows how many steps expanded ── */
+    .hiw-progress-bar {
+      height: 3px; background: var(--border); border-radius: 3px;
+      margin-bottom: 2.5rem; overflow: hidden;
+    }
+    .hiw-progress-fill {
+      height: 100%; background: var(--accent); border-radius: 3px;
+      transition: width 0.4s ease;
+      width: 0%;
+    }
+
+    /* ── Timeline layout ── */
+    .hiw-timeline { position: relative; }
+
+    /* Vertical line */
+    .hiw-timeline::before {
+      content: ''; position: absolute; left: 28px; top: 0; bottom: 0;
+      width: 2px; background: var(--border);
+    }
+    @media (max-width: 540px) { .hiw-timeline::before { left: 20px; } }
+
+    /* ── Step item ── */
+    .hiw-step { display: flex; gap: 1.25rem; margin-bottom: 1rem; }
+    @media (max-width: 540px) { .hiw-step { gap: 0.875rem; } }
+
+    /* Step number bubble */
+    .hiw-step-num {
+      width: 58px; height: 58px; border-radius: 50%; flex-shrink: 0;
+      background: var(--surface); border: 2px solid var(--border);
+      display: flex; align-items: center; justify-content: center; z-index: 1;
+      position: relative;
+      font-family: var(--font-heading); font-size: 1rem; font-weight: 700;
+      color: var(--text-muted); transition: all 0.25s ease;
+    }
+    .hiw-step.open .hiw-step-num {
+      background: var(--accent); border-color: var(--accent);
+      color: var(--bg); box-shadow: 0 0 0 4px var(--accent-dim);
+    }
+    @media (max-width: 540px) { .hiw-step-num { width: 42px; height: 42px; font-size: 0.875rem; } }
+
+    /* Right side: header + body */
+    .hiw-step-right { flex: 1; min-width: 0; }
+
+    /* Collapsed header — always visible */
+    .hiw-step-header {
+      display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+      padding: 1rem 1.25rem; background: var(--surface);
+      border: 1px solid var(--border); border-radius: var(--radius);
+      cursor: pointer; transition: border-color 0.2s, background 0.2s;
+      user-select: none;
+    }
+    .hiw-step.open .hiw-step-header {
+      border-color: var(--accent-border); border-radius: var(--radius) var(--radius) 0 0;
+      background: var(--elevated);
+    }
+    .hiw-step-header:hover { border-color: rgba(148,163,184,0.25); }
+
+    .hiw-step-header-left { display: flex; align-items: center; gap: 0.75rem; min-width: 0; }
+    .hiw-step-name {
+      font-family: var(--font-heading); font-size: 0.9375rem; font-weight: 700;
+      color: var(--text); line-height: 1.2; min-width: 0;
+    }
+    .hiw-step-badge {
+      font-family: var(--font-heading); font-size: 0.6875rem; font-weight: 600;
+      padding: 2px 9px; border-radius: 100px; white-space: nowrap; flex-shrink: 0;
+      background: var(--elevated); color: var(--text-muted); border: 1px solid var(--border);
+      transition: all 0.2s;
+    }
+    .hiw-step.open .hiw-step-badge {
+      background: var(--accent-dim); color: var(--accent); border-color: var(--accent-border);
+    }
+    .hiw-chevron {
+      flex-shrink: 0; color: var(--text-muted); transition: transform 0.25s ease;
+    }
+    .hiw-step.open .hiw-chevron { transform: rotate(180deg); color: var(--accent); }
+
+    /* Expanded body */
+    .hiw-step-body {
+      background: var(--surface); border: 1px solid var(--accent-border);
+      border-top: none; border-radius: 0 0 var(--radius) var(--radius);
+      overflow: hidden; max-height: 0; transition: max-height 0.4s ease;
+    }
+    .hiw-step.open .hiw-step-body { max-height: 600px; }
+
+    /* 3-column mini table */
+    .hiw-table { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; }
+    @media (max-width: 600px) { .hiw-table { grid-template-columns: 1fr; } }
+
+    .hiw-col {
+      padding: 1.25rem; border-right: 1px solid var(--border);
+    }
+    .hiw-col:last-child { border-right: none; }
+    @media (max-width: 600px) {
+      .hiw-col { border-right: none; border-bottom: 1px solid var(--border); }
+      .hiw-col:last-child { border-bottom: none; }
+    }
+
+    .hiw-col-title {
+      font-family: var(--font-heading); font-size: 0.6875rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted);
+      margin-bottom: 0.75rem;
+    }
+    .hiw-col-title.we  { color: var(--accent); }
+    .hiw-col-title.you { color: #3B82F6; }
+    .hiw-col-title.get { color: #F59E0B; }
+
+    .hiw-bullets { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+    .hiw-bullet {
+      font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.45;
+      padding-left: 1rem; position: relative;
+    }
+    .hiw-bullet::before {
+      content: ''; position: absolute; left: 0; top: 6px;
+      width: 5px; height: 5px; border-radius: 50%; background: var(--text-muted);
+    }
+
+    /* Output / deliverable callout */
+    .hiw-output {
+      padding: 0.875rem 1.25rem; background: var(--elevated);
+      border-top: 1px solid var(--border);
+    }
+    .hiw-output-label {
+      font-family: var(--font-heading); font-size: 0.6875rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.08em; color: #F59E0B;
+      margin-bottom: 0.3rem;
+    }
+    .hiw-output-val {
+      font-size: 0.875rem; font-weight: 600; color: var(--text);
+    }
+  </style>
+</head>
+<body>
+
+<div class="hiw-wrap">
+
+  <div class="hiw-eyebrow">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    The Process
+  </div>
+  <h2 class="hiw-title">How It Works</h2>
+  <p class="hiw-subtitle">From signup to live site in 10 business days — here's exactly what happens.</p>
+
+  <!-- Progress bar -->
+  <div class="hiw-progress-bar">
+    <div class="hiw-progress-fill" id="hiwProgress"></div>
+  </div>
+
+  <!-- Steps rendered by JS -->
+  <div class="hiw-timeline" id="hiwTimeline"></div>
+
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  var steps = [
+    {
+      num: '01', name: 'Kickoff Call', timeline: 'Day 1',
+      we:  ['Schedule a 30-minute onboarding call', 'Walk you through the process end-to-end', 'Assign your dedicated project lead'],
+      you: ['Join a 30-min Zoom — that\'s it', 'Share your goals and preferences'],
+      get: 'Project roadmap + questionnaire sent to your inbox',
+    },
+    {
+      num: '02', name: 'Brand Discovery', timeline: 'Days 2–3',
+      we:  ['Review your completed questionnaire', 'Collect any logo/photo assets you have', 'Research your local market and competitors'],
+      you: ['Fill out the brand questionnaire (15 min)', 'Send your headshot and any brand assets'],
+      get: 'Site map with 5 pages outlined and approved by you',
+    },
+    {
+      num: '03', name: 'Design Mockup', timeline: 'Days 4–5',
+      we:  ['Design homepage and inner page layouts', 'Apply your brand colors and fonts', 'Present one design concept for review'],
+      you: ['Review the mockup — 1 round of feedback'],
+      get: 'Design concept with your feedback incorporated',
+    },
+    {
+      num: '04', name: 'Site Build', timeline: 'Days 6–8',
+      we:  ['Build all 5 pages live on your domain', 'Connect contact forms to your CRM', 'Configure SEO settings across all pages', 'Set up Google Analytics and Search Console'],
+      you: ['Available for quick questions via email'],
+      get: 'Fully functional site on your domain — ready for review',
+    },
+    {
+      num: '05', name: 'Your Review', timeline: 'Day 9',
+      we:  ['Send you a preview link with a feedback form', 'Implement all change requests within 24 hours'],
+      you: ['Review the live preview', 'Submit any change requests (text, photos, order)'],
+      get: 'Final version of your site incorporating all feedback',
+    },
+    {
+      num: '06', name: 'Launch', timeline: 'Day 10',
+      we:  ['Final QA across desktop, tablet, and mobile', 'Activate SEO, submit sitemap to Google', 'Send launch announcement resources'],
+      you: ['Say the word — we go live when you\'re ready'],
+      get: 'Your site is live. Welcome to the first page of Google.',
+    },
+  ];
+
+  var timeline  = document.getElementById('hiwTimeline');
+  var progress  = document.getElementById('hiwProgress');
+  var openCount = 0;
+
+  function updateProgress() {
+    var pct = (openCount / steps.length) * 100;
+    progress.style.width = pct + '%';
+  }
+
+  steps.forEach(function(step, i) {
+    var item = document.createElement('div');
+    item.className = 'hiw-step' + (i === 0 ? ' open' : '');
+
+    item.innerHTML =
+      '<div class="hiw-step-num">' + step.num + '</div>' +
+      '<div class="hiw-step-right">' +
+        '<div class="hiw-step-header">' +
+          '<div class="hiw-step-header-left">' +
+            '<div class="hiw-step-name">' + step.name + '</div>' +
+            '<span class="hiw-step-badge">' + step.timeline + '</span>' +
+          '</div>' +
+          '<svg class="hiw-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>' +
+        '</div>' +
+        '<div class="hiw-step-body">' +
+          '<div class="hiw-table">' +
+            '<div class="hiw-col">' +
+              '<div class="hiw-col-title we">What We Do</div>' +
+              '<ul class="hiw-bullets">' +
+                step.we.map(function(b) { return '<li class="hiw-bullet">' + b + '</li>'; }).join('') +
+              '</ul>' +
+            '</div>' +
+            '<div class="hiw-col">' +
+              '<div class="hiw-col-title you">What You Provide</div>' +
+              '<ul class="hiw-bullets">' +
+                step.you.map(function(b) { return '<li class="hiw-bullet">' + b + '</li>'; }).join('') +
+              '</ul>' +
+            '</div>' +
+            '<div class="hiw-col">' +
+              '<div class="hiw-col-title get">What You Get</div>' +
+              '<ul class="hiw-bullets"><li class="hiw-bullet">' + step.get + '</li></ul>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+
+    /* Toggle expand/collapse */
+    var header = item.querySelector('.hiw-step-header');
+    header.addEventListener('click', function() {
+      var wasOpen = item.classList.contains('open');
+      item.classList.toggle('open', !wasOpen);
+      openCount = document.querySelectorAll('.hiw-step.open').length;
+      updateProgress();
+    });
+
+    timeline.appendChild(item);
+  });
+
+  /* First step open by default — count it */
+  openCount = 1;
+  updateProgress();
+
+})();
+</script>
+</body>
+</html>

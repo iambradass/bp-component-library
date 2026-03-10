@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Problem / Solution</title>
+  <!-- COMPONENT: Problem / Solution | COPY: style + html + script -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── CUSTOMIZE ── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --glow:           rgba(16,185,129,0.15);
+      --glow-strong:    rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --border-accent:  rgba(16,185,129,0.3);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+
+      /* Problem / Solution semantic colors */
+      --problem-bg:     rgba(239,68,68,0.06);
+      --problem-border: rgba(239,68,68,0.2);
+      --problem-text:   #FCA5A5;
+      --solution-bg:    rgba(16,185,129,0.06);
+      --solution-border:rgba(16,185,129,0.25);
+      --solution-text:  #6EE7B7;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      padding: 2rem 1.5rem 4rem;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+    .page-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.75rem;
+    }
+    .page-title {
+      font-family: var(--font-heading);
+      font-size: clamp(1.75rem, 4vw, 2.5rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+    }
+    .page-desc {
+      color: var(--text-secondary);
+      font-size: 0.9375rem;
+      max-width: 560px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    .section {
+      max-width: 860px;
+      margin: 0 auto 3.5rem;
+    }
+    .section-label {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ───────────────────────────────────
+       FORMAT A — Split card with VS badge
+    ─────────────────────────────────── */
+    .split-card {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    @media (max-width: 600px) {
+      .split-card { grid-template-columns: 1fr; }
+      .vs-badge-col { display: none; }
+      .split-right { border-top: 1px solid var(--border); }
+    }
+
+    .split-left {
+      background: var(--problem-bg);
+      border-right: 1px solid var(--problem-border);
+      padding: 1.75rem;
+    }
+    .split-right {
+      background: var(--solution-bg);
+      padding: 1.75rem;
+    }
+    .vs-badge-col {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--surface);
+      border-left: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+      padding: 0 0.75rem;
+    }
+    .vs-badge {
+      font-family: var(--font-heading);
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 5px 10px;
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      letter-spacing: 0.05em;
+    }
+
+    .split-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-heading);
+      font-size: 0.875rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 1.25rem;
+    }
+    .split-header.problem { color: var(--problem-text); }
+    .split-header.solution { color: var(--solution-text); }
+
+    .split-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.625rem;
+    }
+    .split-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+    .split-list li::before {
+      content: attr(data-bullet);
+      flex-shrink: 0;
+      font-size: 0.9rem;
+      margin-top: 0.05em;
+    }
+
+    /* ───────────────────────────────────
+       FORMAT B — Stacked transformation
+    ─────────────────────────────────── */
+    .transform-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+    .transform-before,
+    .transform-after {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem 1.75rem;
+    }
+    .transform-before {
+      background: var(--surface);
+      opacity: 0.75;
+      margin-bottom: 0;
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+      border-bottom-color: transparent;
+    }
+    .transform-after {
+      background: var(--solution-bg);
+      border-color: var(--solution-border);
+      border-top-left-radius: 0;
+      border-top-right-radius: 0;
+    }
+    .transform-arrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      padding: 0.75rem;
+      background: var(--elevated);
+      border-left: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+      font-size: 0.8125rem;
+      color: var(--accent);
+      font-weight: 600;
+      font-family: var(--font-heading);
+    }
+    .transform-label {
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+    .transform-heading {
+      font-family: var(--font-heading);
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 0.875rem;
+    }
+    .transform-heading.before {
+      color: var(--text-secondary);
+      text-decoration: line-through;
+      text-decoration-color: rgba(239,68,68,0.4);
+    }
+    .transform-heading.after { color: var(--text); }
+    .transform-bullets {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .transform-bullets li {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 0.875rem;
+      line-height: 1.5;
+    }
+    .transform-bullets.before li { color: var(--text-muted); }
+    .transform-bullets.after  li { color: var(--text-secondary); }
+    .bullet-icon { flex-shrink: 0; margin-top: 0.05em; }
+
+    /* ───────────────────────────────────
+       FORMAT C — Scenario cards
+    ─────────────────────────────────── */
+    .scenario-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    @media (max-width: 600px) { .scenario-grid { grid-template-columns: 1fr; } }
+
+    .scenario-card {
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      border: 1px solid var(--border);
+    }
+    .scenario-card.without {
+      background: var(--surface);
+      border-color: rgba(239,68,68,0.15);
+    }
+    .scenario-card.with {
+      background: var(--solution-bg);
+      border-color: var(--solution-border);
+    }
+    .scenario-header {
+      font-family: var(--font-heading);
+      font-size: 0.9375rem;
+      font-weight: 700;
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .scenario-card.without .scenario-header { color: var(--problem-text); }
+    .scenario-card.with    .scenario-header { color: var(--solution-text); }
+
+    .scenario-timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 0.875rem;
+    }
+    .scenario-event {
+      display: flex;
+      gap: 0.75rem;
+      align-items: flex-start;
+    }
+    .scenario-time {
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      width: 56px;
+      flex-shrink: 0;
+      padding-top: 0.15em;
+    }
+    .scenario-icon {
+      font-size: 1.125rem;
+      flex-shrink: 0;
+      width: 22px;
+    }
+    .scenario-text {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="page-header">
+    <div class="page-eyebrow">Problem / Solution</div>
+    <h1 class="page-title">Before / After Comparison</h1>
+    <p class="page-desc">Three visual formats for showing the "old way" vs "the new way." The most persuasive information pattern in marketing — make the transformation impossible to ignore.</p>
+  </header>
+
+  <!-- Format A: Split card -->
+  <section class="section">
+    <div class="section-label">Format A — Split Card with VS Badge</div>
+    <div class="split-card">
+      <div class="split-left">
+        <div class="split-header problem">
+          <span>✗</span> Without a Website
+        </div>
+        <ul class="split-list">
+          <li data-bullet="✗">Customers can't find you after hours</li>
+          <li data-bullet="✗">No way to collect leads while you sleep</li>
+          <li data-bullet="✗">Competitors with websites win the trust game</li>
+          <li data-bullet="✗">Every sale depends on you personally being there</li>
+          <li data-bullet="✗">No proof of credibility — just a phone number</li>
+        </ul>
+      </div>
+      <div class="vs-badge-col">
+        <div class="vs-badge">VS</div>
+      </div>
+      <div class="split-right">
+        <div class="split-header solution">
+          <span>✓</span> With a Website
+        </div>
+        <ul class="split-list">
+          <li data-bullet="✓">Visible 24/7 — even while you're asleep</li>
+          <li data-bullet="✓">Lead capture forms work around the clock</li>
+          <li data-bullet="✓">Outrank competitors in local Google search</li>
+          <li data-bullet="✓">Sales happen without direct involvement</li>
+          <li data-bullet="✓">Testimonials, case studies, and portfolio build trust</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Format B: Stacked transformation -->
+  <section class="section">
+    <div class="section-label">Format B — Stacked Transformation</div>
+    <div class="transform-stack">
+      <div class="transform-before">
+        <div class="transform-label">Before Redesign</div>
+        <div class="transform-heading before">Your website is costing you clients</div>
+        <ul class="transform-bullets before">
+          <li><span class="bullet-icon">💀</span> 6.4 second load time on mobile</li>
+          <li><span class="bullet-icon">📉</span> 87% bounce rate — visitors leave immediately</li>
+          <li><span class="bullet-icon">🔕</span> No contact form — clients call and hang up</li>
+          <li><span class="bullet-icon">🖥️</span> Desktop-only layout breaks on phones</li>
+        </ul>
+      </div>
+      <div class="transform-arrow">
+        ↓ &nbsp; 90-Day Redesign &nbsp; ↓
+      </div>
+      <div class="transform-after">
+        <div class="transform-label">After Redesign</div>
+        <div class="transform-heading after">A website that sells while you sleep</div>
+        <ul class="transform-bullets after">
+          <li><span class="bullet-icon" style="color:var(--accent)">⚡</span> 1.1 second load time — top 5% of all sites</li>
+          <li><span class="bullet-icon" style="color:var(--accent)">📈</span> 34% bounce rate — visitors explore and convert</li>
+          <li><span class="bullet-icon" style="color:var(--accent)">📬</span> 74 leads/month — form works while you're busy</li>
+          <li><span class="bullet-icon" style="color:var(--accent)">📱</span> Mobile-first — perfect on every device</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Format C: Scenario cards -->
+  <section class="section">
+    <div class="section-label">Format C — Day-in-the-Life Scenarios</div>
+    <div class="scenario-grid">
+
+      <div class="scenario-card without">
+        <div class="scenario-header">Without a Web Presence</div>
+        <div class="scenario-timeline">
+          <div class="scenario-event">
+            <div class="scenario-time">Morning</div>
+            <div class="scenario-icon">😩</div>
+            <div class="scenario-text">Check voicemail — missed 4 calls overnight. No way to know how they found you or what they needed.</div>
+          </div>
+          <div class="scenario-event">
+            <div class="scenario-time">Midday</div>
+            <div class="scenario-icon">😤</div>
+            <div class="scenario-text">Competitor landed a $12k contract you didn't even know was available. Their Google profile had reviews and a site. Yours didn't.</div>
+          </div>
+          <div class="scenario-event">
+            <div class="scenario-time">Evening</div>
+            <div class="scenario-icon">😔</div>
+            <div class="scenario-text">Another slow month. Spend 2 hours manually following up leads. Most have already hired someone else.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="scenario-card with">
+        <div class="scenario-header">With a Professional Website</div>
+        <div class="scenario-timeline">
+          <div class="scenario-event">
+            <div class="scenario-time">Morning</div>
+            <div class="scenario-icon">😊</div>
+            <div class="scenario-text">Wake up to 3 new contact form submissions. Your site answered their questions overnight — they're already pre-sold.</div>
+          </div>
+          <div class="scenario-event">
+            <div class="scenario-time">Midday</div>
+            <div class="scenario-icon">🏆</div>
+            <div class="scenario-text">New client found you on Google for "roofing contractor [city]." Your site ranked #2. Proposal signed — $8,400 project.</div>
+          </div>
+          <div class="scenario-event">
+            <div class="scenario-time">Evening</div>
+            <div class="scenario-icon">🎉</div>
+            <div class="scenario-text">Best month on record — 74 leads, 11 converted. Site worked all day. You didn't lift a finger to get a single one.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</body>
+</html>

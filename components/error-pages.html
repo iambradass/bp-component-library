@@ -1,0 +1,568 @@
+<!-- COMPONENT: Error Page Designs | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Error Pages</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ── Customize ── */
+    :root {
+      --bg:            #0D1117;
+      --surface:       #111827;
+      --elevated:      #1E293B;
+      --accent:        #10B981;
+      --accent-dim:    rgba(16,185,129,0.15);
+      --accent-border: rgba(16,185,129,0.3);
+      --border:        rgba(148,163,184,0.1);
+      --text:          #F8FAFC;
+      --text-secondary:#94A3B8;
+      --text-muted:    #475569;
+      --radius:        12px;
+      --font-heading:  'Space Grotesk', sans-serif;
+      --font-body:     'Inter', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+    }
+
+    /* ── Tab switcher ── */
+    .tab-bar {
+      display: flex;
+      gap: 0.25rem;
+      padding: 1rem 1.5rem;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .tab-btn {
+      background: none;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      padding: 0.45rem 1rem;
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+
+    .tab-btn:hover { background: var(--elevated); color: var(--text); }
+
+    .tab-btn.active {
+      background: var(--accent-dim);
+      border-color: var(--accent-border);
+      color: var(--accent);
+    }
+
+    /* ── Error pages: each fills the viewport height minus tab bar ── */
+    .error-page {
+      display: none;
+      min-height: calc(100vh - 57px);
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      text-align: center;
+      padding: 3rem 1.5rem;
+    }
+
+    .error-page.active { display: flex; }
+
+    /* ── 404 ── */
+    .glitch-404 {
+      font-family: var(--font-heading);
+      font-size: clamp(5rem, 20vw, 10rem);
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1;
+      position: relative;
+      margin-bottom: 1rem;
+      letter-spacing: -0.04em;
+      /* CSS-only glitch: layered text-shadow that shifts on animation */
+      animation: glitch 3s infinite;
+    }
+
+    @keyframes glitch {
+      0%, 90%, 100% {
+        text-shadow: none;
+        clip-path: none;
+      }
+      92% {
+        text-shadow: 2px 0 #EF4444, -2px 0 #06B6D4;
+        clip-path: polygon(0 20%, 100% 20%, 100% 30%, 0 30%);
+      }
+      94% {
+        text-shadow: -3px 0 #EF4444, 3px 0 #06B6D4;
+        clip-path: polygon(0 65%, 100% 65%, 100% 75%, 0 75%);
+      }
+      96% {
+        text-shadow: 2px 0 #EF4444;
+        clip-path: none;
+      }
+    }
+
+    .error-subtitle {
+      font-family: var(--font-heading);
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+    }
+
+    .error-desc {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      max-width: 420px;
+      line-height: 1.6;
+      margin-bottom: 2rem;
+    }
+
+    .error-search {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.25rem;
+      max-width: 360px;
+      width: 100%;
+    }
+
+    .error-search input {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.65rem 0.9rem;
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      outline: none;
+    }
+
+    .error-search input:focus { border-color: var(--accent-border); }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      padding: 0.65rem 1.3rem;
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn-primary:hover { filter: brightness(1.1); }
+
+    .btn-secondary {
+      background: var(--elevated);
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.65rem 1.3rem;
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+    .btn-secondary:hover { border-color: var(--accent-border); color: var(--text); }
+
+    .btn-row {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    /* ── 500 spinning cog ── */
+    .cog-wrapper {
+      position: relative;
+      width: 100px;
+      height: 100px;
+      margin-bottom: 2rem;
+    }
+
+    .cog-outer {
+      width: 100px;
+      height: 100px;
+      color: var(--text-muted);
+      animation: cogSpin 4s linear infinite;
+    }
+
+    .cog-inner {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 50px;
+      height: 50px;
+      color: var(--accent);
+      animation: cogSpin 3s linear infinite reverse;
+    }
+
+    @keyframes cogSpin { to { transform: rotate(360deg); } }
+    .cog-inner-wrap {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      animation: cogSpin 3s linear infinite reverse;
+    }
+
+    .error-code-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.25);
+      border-radius: 999px;
+      padding: 0.3rem 0.9rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #EF4444;
+      margin-bottom: 1.25rem;
+    }
+
+    /* ── Maintenance progress bar ── */
+    .maint-icon {
+      font-size: 3.5rem;
+      margin-bottom: 1.25rem;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50%       { transform: translateY(-10px); }
+    }
+
+    .maint-progress-wrap {
+      width: 100%;
+      max-width: 400px;
+      margin-bottom: 1rem;
+    }
+
+    .maint-progress-track {
+      height: 8px;
+      background: var(--elevated);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 0.5rem;
+    }
+
+    .maint-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), #06B6D4);
+      border-radius: 999px;
+      animation: maintFill 12s ease-in-out infinite alternate;
+    }
+
+    @keyframes maintFill {
+      from { width: 10%; }
+      to   { width: 85%; }
+    }
+
+    .maint-progress-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .maint-eta {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.5rem 1rem;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin: 1rem 0 1.5rem;
+    }
+
+    .email-notify {
+      display: flex;
+      gap: 0.5rem;
+      max-width: 360px;
+      width: 100%;
+    }
+
+    .email-notify input {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.65rem 0.9rem;
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      outline: none;
+    }
+
+    .email-notify input:focus { border-color: var(--accent-border); }
+
+    /* ── Offline animated graphic ── */
+    .offline-wrap {
+      margin-bottom: 2rem;
+      position: relative;
+      width: 120px;
+      height: 120px;
+    }
+
+    .planet {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #1E3A5F, #0A1628);
+      border: 1px solid rgba(6,182,212,0.3);
+      box-shadow: 0 0 20px rgba(6,182,212,0.15);
+    }
+
+    .planet::after {
+      content: '';
+      position: absolute;
+      top: -8px;
+      left: -20px;
+      right: -20px;
+      bottom: -8px;
+      border: 1.5px solid rgba(6,182,212,0.25);
+      border-radius: 50%;
+      transform: rotateX(72deg);
+    }
+
+    .satellite {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      width: 24px;
+      height: 24px;
+      transform: translateX(-50%);
+      animation: satelliteOrbit 4s linear infinite;
+    }
+
+    @keyframes satelliteOrbit {
+      from { transform: translateX(-50%) rotate(0deg) translateY(-10px) rotate(0deg); }
+      to   { transform: translateX(-50%) rotate(360deg) translateY(-10px) rotate(-360deg); }
+    }
+
+    .signal-wave {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 40px;
+      height: 40px;
+      border: 2px solid rgba(6,182,212,0.4);
+      border-radius: 50%;
+      animation: signalPulse 2s ease-out infinite;
+    }
+
+    .signal-wave:nth-child(2) { animation-delay: 0.5s; }
+    .signal-wave:nth-child(3) { animation-delay: 1s; }
+
+    @keyframes signalPulse {
+      0%   { transform: translate(-50%,-50%) scale(0.5); opacity: 0.8; }
+      100% { transform: translate(-50%,-50%) scale(2.5); opacity: 0; }
+    }
+
+    .offline-x {
+      position: absolute;
+      top: 30%;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #EF4444;
+      font-size: 1.5rem;
+      animation: blink 1.5s ease-in-out infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.2; }
+    }
+
+    .offline-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.25);
+      border-radius: 999px;
+      padding: 0.3rem 0.9rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #EF4444;
+      margin-bottom: 1.25rem;
+    }
+
+    .offline-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #EF4444;
+      animation: blink 1.5s ease-in-out infinite;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Tab switcher ── -->
+  <nav class="tab-bar" role="tablist" aria-label="Error page examples">
+    <button class="tab-btn active" data-target="page404"    role="tab">404 Not Found</button>
+    <button class="tab-btn"        data-target="page500"    role="tab">500 Server Error</button>
+    <button class="tab-btn"        data-target="pageMaint"  role="tab">Maintenance</button>
+    <button class="tab-btn"        data-target="pageOffline" role="tab">Offline</button>
+  </nav>
+
+  <!-- ── 404 Page ── -->
+  <div class="error-page active" id="page404" role="tabpanel">
+    <div class="glitch-404" aria-label="404">404</div>
+    <h1 class="error-subtitle">Looks like this page went missing</h1>
+    <p class="error-desc">The page you're looking for might have been moved, deleted, or never existed in the first place.</p>
+    <div class="error-search">
+      <input type="text" placeholder="Search for what you need...">
+      <button class="btn-primary">Search</button>
+    </div>
+    <div class="btn-row">
+      <button class="btn-secondary" onclick="history.back()">← Go back</button>
+      <button class="btn-primary">Back to home</button>
+    </div>
+  </div>
+
+  <!-- ── 500 Page ── -->
+  <div class="error-page" id="page500" role="tabpanel">
+    <div class="cog-wrapper">
+      <!-- Outer cog -->
+      <svg class="cog-outer" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round">
+        <circle cx="50" cy="50" r="18" fill="none"/>
+        <path d="M50 18v8M50 74v8M18 50h8M74 50h8M27.1 27.1l5.7 5.7M67.2 67.2l5.7 5.7M27.1 72.9l5.7-5.7M67.2 32.8l5.7-5.7"/>
+        <circle cx="50" cy="50" r="32" fill="none" stroke-dasharray="4 8"/>
+      </svg>
+      <!-- Inner cog, counter-rotating -->
+      <div class="cog-inner-wrap" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent); animation: cogSpin 3s linear infinite reverse; display:block">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      </div>
+    </div>
+    <span class="error-code-badge">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      Error 500
+    </span>
+    <h1 class="error-subtitle">Something broke on our end</h1>
+    <p class="error-desc">Our servers ran into an unexpected problem. Our team has been notified and is working on a fix. Please try again in a few minutes.</p>
+    <div class="btn-row">
+      <button class="btn-secondary">View status page</button>
+      <button class="btn-primary" id="retryBtn500">Retry request</button>
+    </div>
+  </div>
+
+  <!-- ── Maintenance Page ── -->
+  <div class="error-page" id="pageMaint" role="tabpanel">
+    <div class="maint-icon">🔧</div>
+    <h1 class="error-subtitle">We're upgrading the experience</h1>
+    <p class="error-desc">We're performing scheduled maintenance to bring you a better, faster experience. We'll be back shortly.</p>
+    <div class="maint-progress-wrap">
+      <div class="maint-progress-track">
+        <div class="maint-progress-fill"></div>
+      </div>
+      <div class="maint-progress-label">
+        <span>Upgrade in progress</span>
+        <span id="maintPct">—</span>
+      </div>
+    </div>
+    <div class="maint-eta">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Estimated completion: <strong>~25 minutes</strong>
+    </div>
+    <div class="email-notify">
+      <input type="email" placeholder="Get notified when we're back...">
+      <button class="btn-primary">Notify me</button>
+    </div>
+  </div>
+
+  <!-- ── Offline Page ── -->
+  <div class="error-page" id="pageOffline" role="tabpanel">
+    <div class="offline-wrap">
+      <div class="planet"></div>
+      <div class="satellite">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="9" width="20" height="6" rx="2" transform="rotate(-45 12 12)"/><line x1="12" y1="4" x2="12" y2="2"/><line x1="18.5" y1="7" x2="19.5" y2="5.5"/><line x1="20" y1="12" x2="22" y2="12"/></svg>
+      </div>
+      <div class="signal-wave"></div>
+      <div class="signal-wave"></div>
+      <div class="offline-x">✕</div>
+    </div>
+    <span class="offline-status">
+      <span class="offline-dot"></span>
+      Disconnected
+    </span>
+    <h1 class="error-subtitle">Check your connection</h1>
+    <p class="error-desc">You appear to be offline. Check your Wi-Fi or mobile data, then try again. Your unsaved work has been cached locally.</p>
+    <div class="btn-row">
+      <button class="btn-secondary">View cached content</button>
+      <button class="btn-primary" id="retryOffline">
+        <span id="retryOfflineText">Try again</span>
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // ── Tab switcher ──
+    const tabBtns  = document.querySelectorAll('.tab-btn');
+    const tabPanes = document.querySelectorAll('.error-page');
+
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        tabBtns.forEach(b => b.classList.remove('active'));
+        tabPanes.forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.target).classList.add('active');
+      });
+    });
+
+    // ── 500 Retry animation ──
+    document.getElementById('retryBtn500').addEventListener('click', function() {
+      this.textContent = 'Retrying...';
+      this.disabled = true;
+      setTimeout(() => {
+        this.textContent = 'Retry request';
+        this.disabled = false;
+      }, 2000);
+    });
+
+    // ── Offline retry animation ──
+    document.getElementById('retryOffline').addEventListener('click', function() {
+      const txt = document.getElementById('retryOfflineText');
+      txt.textContent = 'Checking connection...';
+      this.disabled = true;
+      setTimeout(() => {
+        txt.textContent = 'Try again';
+        this.disabled = false;
+      }, 2000);
+    });
+
+    // ── Maintenance progress percentage (reads the animated fill width) ──
+    function updateMaintPct() {
+      const fill = document.querySelector('.maint-progress-fill');
+      const pct  = Math.round((fill.getBoundingClientRect().width / fill.parentElement.getBoundingClientRect().width) * 100);
+      document.getElementById('maintPct').textContent = pct + '%';
+    }
+    setInterval(updateMaintPct, 800);
+  </script>
+</body>
+</html>

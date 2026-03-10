@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Masonry Gallery</title>
+
+  <!--
+    COMPONENT: Masonry Photo Gallery
+    COPY: style + html + script
+    CSS columns masonry grid. Filter bar. Hover overlay. Lightbox with prev/next + keyboard nav.
+    No real images — CSS gradient placeholders with varied aspect ratios.
+    Mobile: 2-col → 1-col.
+  -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+
+    /* ── CUSTOMIZE ── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --glow:           rgba(16,185,129,0.15);
+      --border:         rgba(148,163,184,0.1);
+      --border-accent:  rgba(16,185,129,0.3);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+    }
+
+    .page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 4rem 1.5rem 6rem;
+    }
+
+    /* Header */
+    .page-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+    .eyebrow {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      padding: 4px 12px;
+      border: 1px solid var(--border-accent);
+      background: var(--glow);
+      border-radius: 100px;
+      margin-bottom: 1.25rem;
+    }
+    .page-title {
+      font-family: var(--font-heading);
+      font-size: clamp(2rem, 5vw, 3rem);
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      margin-bottom: 1rem;
+    }
+    .page-sub {
+      color: var(--text-secondary);
+      font-size: 1rem;
+      line-height: 1.7;
+    }
+
+
+    /* ══════════════════════════════════════
+       FILTER BAR
+    ══════════════════════════════════════ */
+    .filter-bar {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+    .filter-btn {
+      padding: 0.5rem 1rem;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      border-radius: 100px;
+      font-family: var(--font-heading);
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s, background 0.2s;
+      min-height: 44px;
+    }
+    .filter-btn:hover {
+      border-color: var(--border-accent);
+      color: var(--text);
+    }
+    .filter-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #0D1117;
+    }
+
+
+    /* ══════════════════════════════════════
+       MASONRY GRID (CSS columns)
+    ══════════════════════════════════════ */
+    .masonry {
+      columns: 3;
+      column-gap: 1rem;
+    }
+    @media (max-width: 768px) { .masonry { columns: 2; } }
+    @media (max-width: 480px) { .masonry { columns: 1; } }
+
+    /* ── Gallery item ── */
+    .gallery-item {
+      break-inside: avoid;          /* Prevent columns from splitting items */
+      margin-bottom: 1rem;
+      border-radius: var(--radius);
+      overflow: hidden;
+      position: relative;
+      cursor: pointer;
+      display: block;
+
+      /* Scroll reveal: hidden by default */
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.5s ease, transform 0.5s ease,
+                  border-color 0.2s;
+      border: 1px solid var(--border);
+    }
+    .gallery-item.revealed {
+      opacity: 1;
+      transform: none;
+    }
+
+    /* Filtered-out items: dim, not removed (layout stays stable) */
+    .gallery-item.filtered-out {
+      opacity: 0.08 !important;
+      pointer-events: none;
+      transform: none;
+    }
+
+    /* The colored placeholder (simulates an image) */
+    .gallery-thumb {
+      width: 100%;
+      display: block;
+      transition: transform 0.4s ease;
+    }
+    .gallery-item:hover .gallery-thumb {
+      transform: scale(1.04);
+    }
+
+    /* Hover overlay */
+    .gallery-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        to top,
+        rgba(0,0,0,0.85) 0%,
+        rgba(0,0,0,0.3) 50%,
+        transparent 80%
+      );
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 1rem;
+    }
+    .gallery-item:hover .gallery-overlay { opacity: 1; }
+
+    .overlay-title {
+      font-family: var(--font-heading);
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 0.25rem;
+      transform: translateY(8px);
+      transition: transform 0.3s ease;
+    }
+    .gallery-item:hover .overlay-title { transform: translateY(0); }
+
+    .overlay-tag {
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+      margin-bottom: 0.5rem;
+      transform: translateY(8px);
+      transition: transform 0.3s ease 0.05s;
+    }
+    .gallery-item:hover .overlay-tag { transform: translateY(0); }
+
+    .overlay-view {
+      font-family: var(--font-heading);
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transform: translateY(8px);
+      transition: transform 0.3s ease 0.08s;
+    }
+    .gallery-item:hover .overlay-view { transform: translateY(0); }
+
+
+    /* ══════════════════════════════════════
+       LIGHTBOX
+    ══════════════════════════════════════ */
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.92);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+
+      /* Hidden by default */
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .lightbox.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .lightbox-content {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      max-width: 700px;
+      width: 100%;
+      overflow: hidden;
+
+      transform: scale(0.92);
+      transition: transform 0.3s ease;
+    }
+    .lightbox.open .lightbox-content {
+      transform: scale(1);
+    }
+
+    /* The enlarged "image" panel */
+    .lightbox-img {
+      width: 100%;
+      height: 380px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3.5rem;
+      position: relative;
+    }
+    @media (max-width: 600px) { .lightbox-img { height: 220px; } }
+
+    .lightbox-footer {
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid var(--border);
+    }
+    .lightbox-meta {}
+    .lightbox-title {
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 1rem;
+    }
+    .lightbox-counter {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-top: 0.2rem;
+    }
+
+    .lightbox-nav {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .lb-nav-btn {
+      width: 40px;
+      height: 40px;
+      border: 1px solid var(--border);
+      background: var(--elevated);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text);
+      transition: border-color 0.2s, background 0.2s;
+      min-height: 44px;
+      min-width: 44px;
+    }
+    .lb-nav-btn:hover {
+      border-color: var(--border-accent);
+      background: var(--glow);
+    }
+
+    .lb-close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      width: 36px;
+      height: 36px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(0,0,0,0.5);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #fff;
+      transition: background 0.2s;
+      z-index: 2;
+    }
+    .lb-close:hover { background: rgba(0,0,0,0.8); }
+
+  </style>
+</head>
+<body>
+
+  <div class="page">
+
+    <header class="page-header">
+      <div class="eyebrow">Masonry Gallery</div>
+      <h1 class="page-title">Portfolio</h1>
+      <p class="page-sub">Filter by category, hover for details, click to open the lightbox. CSS columns masonry — no library needed.</p>
+    </header>
+
+    <!-- Filter bar -->
+    <div class="filter-bar" role="group" aria-label="Filter gallery">
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="branding">Branding</button>
+      <button class="filter-btn" data-filter="web">Web Design</button>
+      <button class="filter-btn" data-filter="seo">SEO</button>
+      <button class="filter-btn" data-filter="photography">Photography</button>
+    </div>
+
+    <!-- Masonry grid -->
+    <div class="masonry" id="masonry-grid">
+
+      <!-- Items: data-category for filtering, data-emoji for lightbox display, aspect-ratio varies naturally -->
+
+      <div class="gallery-item" data-category="branding" data-index="0" data-title="Altitude Brand System" data-category-label="Branding">
+        <div class="gallery-thumb" style="aspect-ratio:4/3;background:linear-gradient(135deg,#0f2a1e 0%,#1a4030 50%,#0a3020 100%);display:flex;align-items:center;justify-content:center;font-size:2.5rem;">✦</div>
+        <div class="gallery-overlay">
+          <span class="overlay-tag">Branding</span>
+          <span class="overlay-title">Altitude Brand System</span>
+          <span class="overlay-view">View →</span>
+        </div>
+      </div>
+
+      <div class="gallery-item" data-category="web" data-index="1" data-title="NexaFlow Dashboard" data-category-label="Web Design">
+        <div class="gallery-thumb" style="aspect-ratio:3/4;background:linear-gradient(160deg,#0f1a2e 0%,#1a2a4a 50%,#0a1530 100%);display:flex;align-items:center;justify-content:center;font-size:2.5rem;">⬡</div>
+        <div class="gallery-overlay">
+          <span class="overlay-tag">Web Design</span>
+          <span class="overlay-title">NexaFlow Dashboard</span>
+          <span class="overlay-view">View →</span>
+        </div>
+      </div>
+
+      <div class="gallery-item" data-category="seo" data-index="2" data-title="Organic Growth Campaign" data-category-label="SEO">
+        <div class="gallery-thumb" style="aspect-ratio:16/9;background:linear-gradient(135deg,#1a1030 0%,#2a1a50 50%,#150a30 100%);display:flex;align-items:center;justify-content:center;font-size:2.5rem;">◉</div>
+        <div class="gallery-overlay">
+          <span class="overlay-tag">SEO</span>
+          <span class="overlay-title">Organic Growth Campaign</span>
+          <span class="overlay-view">View →</span>
+        </div>
+      </div>
+
+      <div class="gallery-item" data-category="photography" data-index="3" data-title="Architecture Study I" data-category-label="Photography">
+        <div class="gallery-thumb" style="aspect-ratio:2/3;background:linear-gradient(180deg,#1a1008 0%,#2a1a0a 50%,#1a0f05 100%);display:flex;align-items:center;justify-content:center;font-size:2.5rem;">◈</div>
+        <div class="gallery-overlay">
+          <span class="overlay-tag">Photography</span>
+          <span class="overlay-title">Architecture Study I</span>
+          <span class="overlay-view">View →</span>
+        </div>
+      </div>
+
+      <div class="gallery-item" data-category="web" data-index="4" data-title="Solaris Landing Page" data-category-label="Web Design">
+        <div class="gallery-thumb" style="aspect-ratio:1/1;background:linear-gradient(135deg,#0f2018 0%,#1a3528 50%,#0a1f12 100%);display:flex;align-items:center;justify-content:center;font-size:2.5rem;">⬢</div>
+        <div class="gallery-overlay">
+          <span class="overlay-tag">Web Design</span>
+          <span class="overlay-title">Solaris Landing Page</span>
+          <span class="overlay-view">View →</span>
+        </div>
+      </div>
+
+      <div class="gallery-item" data-category="branding" data-index="5" data-title="Meridian Identity" data-category-label="Branding">
+        <div class="gallery-thumb" style="aspect-ratio:4/3;background:linear-gradient(135deg,#1a0f1e 0%,#2a1838 50%,#120a1a 100%);display:flex;align-items:center;justify-content:center;font-size:2.5rem;">✶</div>
+        <div class="gallery-overlay">
+          <span class="overlay-tag">Branding</span>
+          <span class="overlay-title">Meridian Identity</span>
+          <span class="overlay-view">View →</span>
+        </div>
+      </div>
+
+      <div class="gallery-item" data-category="photography" data-index="6" data-title="Urban Geometry" data-category-label="Photography">
+        <div class="gallery-thumb" style="aspect-ratio:4/3;background:linear-gradient(160deg,#0a1520 0%,#152030 50%,#0a1018 100%);display:flex;align-items:center;justify-content:center;font-size:2.5rem;">◆</div>
+        <div class="gallery-overlay">
+          <span class="overlay-tag">Photography</span>
+          <span class="overlay-title">Urban Geometry</span>
+          <span class="overlay-view">View →</span>
+        </div>
+      </div>
+
+      <div class="gallery-item" data-category="seo" data-index="7" data-title="Local Authority Build" data-category-label="SEO">
+        <div class="gallery-thumb" style="aspect-ratio:3/4;background:linear-gradient(135deg,#1a2010 0%,#283018 50%,#121808 100%);display:flex;align-items:center;justify-content:center;font-size:2.5rem;">⊕</div>
+        <div class="gallery-overlay">
+          <span class="overlay-tag">SEO</span>
+          <span class="overlay-title">Local Authority Build</span>
+          <span class="overlay-view">View →</span>
+        </div>
+      </div>
+
+      <div class="gallery-item" data-category="web" data-index="8" data-title="Prism Component Library" data-category-label="Web Design">
+        <div class="gallery-thumb" style="aspect-ratio:16/9;background:linear-gradient(135deg,#0f1828 0%,#182540 50%,#0a1220 100%);display:flex;align-items:center;justify-content:center;font-size:2.5rem;">⊞</div>
+        <div class="gallery-overlay">
+          <span class="overlay-tag">Web Design</span>
+          <span class="overlay-title">Prism Component Library</span>
+          <span class="overlay-view">View →</span>
+        </div>
+      </div>
+
+      <div class="gallery-item" data-category="branding" data-index="9" data-title="Fieldwork Co. Rebrand" data-category-label="Branding">
+        <div class="gallery-thumb" style="aspect-ratio:1/1;background:linear-gradient(160deg,#101818 0%,#1a2828 50%,#0a1010 100%);display:flex;align-items:center;justify-content:center;font-size:2.5rem;">⊛</div>
+        <div class="gallery-overlay">
+          <span class="overlay-tag">Branding</span>
+          <span class="overlay-title">Fieldwork Co. Rebrand</span>
+          <span class="overlay-view">View →</span>
+        </div>
+      </div>
+
+      <div class="gallery-item" data-category="photography" data-index="10" data-title="Minimalist Series II" data-category-label="Photography">
+        <div class="gallery-thumb" style="aspect-ratio:2/3;background:linear-gradient(180deg,#18180f 0%,#282820 50%,#101008 100%);display:flex;align-items:center;justify-content:center;font-size:2.5rem;">◎</div>
+        <div class="gallery-overlay">
+          <span class="overlay-tag">Photography</span>
+          <span class="overlay-title">Minimalist Series II</span>
+          <span class="overlay-view">View →</span>
+        </div>
+      </div>
+
+      <div class="gallery-item" data-category="seo" data-index="11" data-title="E-Commerce Revenue Sprint" data-category-label="SEO">
+        <div class="gallery-thumb" style="aspect-ratio:4/3;background:linear-gradient(135deg,#1e0f18 0%,#2e1a28 50%,#150a10 100%);display:flex;align-items:center;justify-content:center;font-size:2.5rem;">⬟</div>
+        <div class="gallery-overlay">
+          <span class="overlay-tag">SEO</span>
+          <span class="overlay-title">E-Commerce Revenue Sprint</span>
+          <span class="overlay-view">View →</span>
+        </div>
+      </div>
+
+    </div><!-- /masonry -->
+  </div><!-- /page -->
+
+
+  <!-- ══════════════════════════════════════
+       LIGHTBOX
+  ══════════════════════════════════════ -->
+  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Image lightbox">
+    <div class="lightbox-content" id="lb-content">
+      <div class="lightbox-img" id="lb-img">
+        <button class="lb-close" id="lb-close" aria-label="Close lightbox">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="lightbox-footer">
+        <div class="lightbox-meta">
+          <div class="lightbox-title" id="lb-title"></div>
+          <div class="lightbox-counter" id="lb-counter"></div>
+        </div>
+        <div class="lightbox-nav">
+          <button class="lb-nav-btn" id="lb-prev" aria-label="Previous">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <button class="lb-nav-btn" id="lb-next" aria-label="Next">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <script>
+  /* ─────────────────────────────────────────────────
+     Scroll reveal (IntersectionObserver)
+     Stagger delay based on which column the item falls in —
+     we approximate this by item index % 3.
+  ───────────────────────────────────────────────── */
+  const items = Array.from(document.querySelectorAll('.gallery-item'));
+
+  const revealObs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        const idx   = items.indexOf(entry.target);
+        const col   = idx % 3;  // approximate column
+        entry.target.style.transitionDelay = (col * 80) + 'ms';
+        entry.target.classList.add('revealed');
+        revealObs.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1 });
+
+  items.forEach(function(item) { revealObs.observe(item); });
+
+
+  /* ─────────────────────────────────────────────────
+     Filter bar
+  ───────────────────────────────────────────────── */
+  document.querySelectorAll('.filter-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      // Update active state
+      document.querySelectorAll('.filter-btn').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+
+      const filter = btn.dataset.filter;
+      items.forEach(function(item) {
+        if (filter === 'all' || item.dataset.category === filter) {
+          item.classList.remove('filtered-out');
+        } else {
+          item.classList.add('filtered-out');
+        }
+      });
+    });
+  });
+
+
+  /* ─────────────────────────────────────────────────
+     Lightbox
+  ───────────────────────────────────────────────── */
+  const lightbox  = document.getElementById('lightbox');
+  const lbImg     = document.getElementById('lb-img');
+  const lbTitle   = document.getElementById('lb-title');
+  const lbCounter = document.getElementById('lb-counter');
+  const lbClose   = document.getElementById('lb-close');
+  const lbPrev    = document.getElementById('lb-prev');
+  const lbNext    = document.getElementById('lb-next');
+
+  let currentIndex = 0;
+
+  // Get currently visible items (not filtered out)
+  function visibleItems() {
+    return items.filter(function(i) { return !i.classList.contains('filtered-out'); });
+  }
+
+  function openLightbox(item) {
+    const visible = visibleItems();
+    currentIndex  = visible.indexOf(item);
+    renderLightbox(visible);
+    lightbox.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeLightbox() {
+    lightbox.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function renderLightbox(visible) {
+    const item = visible[currentIndex];
+    if (!item) return;
+
+    // Clone the thumb element for the lightbox image area
+    const thumb = item.querySelector('.gallery-thumb');
+    const clone  = thumb.cloneNode(true);
+    clone.style.width  = '100%';
+    clone.style.height = '380px';
+    clone.style.aspectRatio = 'unset';
+    clone.style.display = 'flex';
+    clone.style.alignItems = 'center';
+    clone.style.justifyContent = 'center';
+
+    // Clear previous content (keep the close button)
+    lbImg.innerHTML = '';
+    lbImg.appendChild(lbClose);
+    lbImg.appendChild(clone);
+
+    lbTitle.textContent   = item.dataset.title;
+    lbCounter.textContent = (currentIndex + 1) + ' of ' + visible.length + ' · ' + item.dataset.categoryLabel;
+
+    lbPrev.disabled = currentIndex === 0;
+    lbNext.disabled = currentIndex === visible.length - 1;
+  }
+
+  // Open on item click
+  items.forEach(function(item) {
+    item.addEventListener('click', function() {
+      if (!item.classList.contains('filtered-out')) {
+        openLightbox(item);
+      }
+    });
+  });
+
+  // Navigation
+  lbPrev.addEventListener('click', function() {
+    const visible = visibleItems();
+    if (currentIndex > 0) { currentIndex--; renderLightbox(visible); }
+  });
+  lbNext.addEventListener('click', function() {
+    const visible = visibleItems();
+    if (currentIndex < visible.length - 1) { currentIndex++; renderLightbox(visible); }
+  });
+
+  // Close handlers
+  lbClose.addEventListener('click', closeLightbox);
+  lightbox.addEventListener('click', function(e) {
+    if (e.target === lightbox) closeLightbox();
+  });
+
+  // Keyboard navigation
+  document.addEventListener('keydown', function(e) {
+    if (!lightbox.classList.contains('open')) return;
+    if (e.key === 'Escape')      closeLightbox();
+    if (e.key === 'ArrowLeft')   { lbPrev.disabled || lbPrev.click(); }
+    if (e.key === 'ArrowRight')  { lbNext.disabled || lbNext.click(); }
+  });
+  </script>
+
+</body>
+</html>

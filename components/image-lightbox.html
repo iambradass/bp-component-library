@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Image Lightbox — Component Library</title>
+
+  <!--
+  /* COMPONENT: Image Lightbox | COPY: style + html + script */
+  Click-to-open gallery with full-screen lightbox, prev/next navigation,
+  keyboard support (Left/Right/Escape), and caption with counter.
+  Thumbnails are CSS-generated gradient placeholders — swap in real <img> tags.
+  -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+
+    /* ============================================================
+       CUSTOMIZE — adjust these to match your project
+       ============================================================ */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --glow:           rgba(16,185,129,0.15);
+      --glow-strong:    rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --border-accent:  rgba(16,185,129,0.3);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+    }
+    /* ============================================================ */
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Page wrapper ── */
+    .lb-page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 5rem 1.5rem;
+    }
+
+    .lb-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+    .lb-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 5px 14px;
+      background: rgba(16,185,129,0.08);
+      border: 1px solid var(--border-accent);
+      border-radius: 100px;
+      margin-bottom: 1.25rem;
+    }
+    .lb-title {
+      font-family: var(--font-heading);
+      font-size: clamp(1.75rem, 4vw, 2.5rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.75rem;
+    }
+    .lb-subtitle {
+      color: var(--text-secondary);
+      font-size: 0.9375rem;
+      line-height: 1.6;
+    }
+
+
+    /* ── Thumbnail gallery grid ── */
+    .lb-gallery {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+    }
+    @media (max-width: 700px) {
+      .lb-gallery { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 420px) {
+      .lb-gallery { grid-template-columns: 1fr; }
+    }
+
+
+    /* ── Thumbnail item ── */
+    .lb-thumb {
+      position: relative;
+      aspect-ratio: 4 / 3;
+      border-radius: var(--radius);
+      overflow: hidden;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+    }
+    .lb-thumb:hover {
+      border-color: var(--border-accent);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+    }
+
+    /* The placeholder "image" — CSS gradient with icon overlay */
+    .lb-thumb-image {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      color: rgba(255,255,255,0.7);
+      font-family: var(--font-heading);
+      font-size: 0.9375rem;
+      font-weight: 600;
+      text-align: center;
+      padding: 1rem;
+    }
+
+    /* Each thumb gets a unique gradient — override with actual <img> in production */
+    .lb-thumb:nth-child(1) .lb-thumb-image { background: linear-gradient(135deg, #0f2027, #203a43, #2c5364); }
+    .lb-thumb:nth-child(2) .lb-thumb-image { background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460); }
+    .lb-thumb:nth-child(3) .lb-thumb-image { background: linear-gradient(135deg, #0d1b2a, #1b4332, #2d6a4f); }
+    .lb-thumb:nth-child(4) .lb-thumb-image { background: linear-gradient(135deg, #2d0028, #4a0045, #1a0033); }
+    .lb-thumb:nth-child(5) .lb-thumb-image { background: linear-gradient(135deg, #1a1200, #3d2b00, #5c3d11); }
+    .lb-thumb:nth-child(6) .lb-thumb-image { background: linear-gradient(135deg, #001a1a, #004040, #006060); }
+
+    .lb-thumb-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Hover overlay: dark scrim + "View" label */
+    .lb-thumb-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-family: var(--font-heading);
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: white;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .lb-thumb:hover .lb-thumb-overlay { opacity: 1; }
+
+
+    /* ══════════════════════════════════
+       LIGHTBOX OVERLAY
+       ══════════════════════════════════ */
+
+    /* Backdrop: fixed full-screen, blurred */
+    .lb-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      background: rgba(0,0,0,0.92);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+
+      /* Hidden by default */
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    .lb-overlay--visible {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+
+    /* Inner content area — centered, max 80vh tall */
+    .lb-content {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      max-width: min(90vw, 900px);
+      width: 100%;
+
+      /* Scale entrance */
+      transform: scale(0.9);
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .lb-overlay--visible .lb-content {
+      transform: scale(1);
+    }
+
+
+    /* The "image" display — same gradient placeholders as thumbnails */
+    .lb-display {
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      max-height: 70vh;
+      border-radius: 16px;
+      overflow: hidden;
+      position: relative;
+    }
+    .lb-display-inner {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      color: rgba(255,255,255,0.8);
+      font-family: var(--font-heading);
+      font-size: 1.25rem;
+      font-weight: 600;
+      text-align: center;
+      padding: 2rem;
+      transition: opacity 0.2s;
+    }
+    .lb-display-inner.--transitioning { opacity: 0; }
+    .lb-display-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+
+    /* Caption row: title + counter */
+    .lb-caption {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 0 0.25rem;
+    }
+    .lb-caption-title {
+      font-family: var(--font-heading);
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .lb-caption-counter {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+
+    /* Close button — top-right corner */
+    .lb-close {
+      position: absolute;
+      top: -48px;
+      right: 0;
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: var(--text);
+      font-size: 1.375rem;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.15s;
+      padding: 0;
+    }
+    .lb-close:hover { background: rgba(255,255,255,0.15); }
+
+
+    /* Prev / Next buttons — left and right edges */
+    .lb-nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.15s;
+      padding: 0;
+    }
+    .lb-nav:hover { background: rgba(255,255,255,0.18); }
+    .lb-nav--prev { left: -60px; }
+    .lb-nav--next { right: -60px; }
+
+    @media (max-width: 700px) {
+      /* On small screens, move nav buttons below the image */
+      .lb-nav--prev { left: -50px; }
+      .lb-nav--next { right: -50px; }
+    }
+    @media (max-width: 500px) {
+      .lb-nav--prev { left: 0; bottom: -56px; top: auto; transform: none; }
+      .lb-nav--next { right: 0; bottom: -56px; top: auto; transform: none; }
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="lb-page">
+
+    <!-- Header -->
+    <div class="lb-header">
+      <div class="lb-eyebrow">Portfolio Gallery</div>
+      <h2 class="lb-title">Recent Projects</h2>
+      <p class="lb-subtitle">Click any image to open the lightbox. Use arrow keys or buttons to navigate.</p>
+    </div>
+
+    <!-- Thumbnail grid — 6 items -->
+    <div class="lb-gallery" id="lb-gallery">
+
+      <div class="lb-thumb" data-index="0" tabindex="0" role="button" aria-label="Open Homepage Design">
+        <div class="lb-thumb-image">
+          <div class="lb-thumb-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+          </div>
+          Homepage Design
+        </div>
+        <div class="lb-thumb-overlay">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+          View
+        </div>
+      </div>
+
+      <div class="lb-thumb" data-index="1" tabindex="0" role="button" aria-label="Open Mobile View">
+        <div class="lb-thumb-image">
+          <div class="lb-thumb-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+          </div>
+          Mobile View
+        </div>
+        <div class="lb-thumb-overlay">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+          View
+        </div>
+      </div>
+
+      <div class="lb-thumb" data-index="2" tabindex="0" role="button" aria-label="Open Services Page">
+        <div class="lb-thumb-image">
+          <div class="lb-thumb-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          </div>
+          Services Page
+        </div>
+        <div class="lb-thumb-overlay">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+          View
+        </div>
+      </div>
+
+      <div class="lb-thumb" data-index="3" tabindex="0" role="button" aria-label="Open Pricing Page">
+        <div class="lb-thumb-image">
+          <div class="lb-thumb-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          </div>
+          Pricing Page
+        </div>
+        <div class="lb-thumb-overlay">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+          View
+        </div>
+      </div>
+
+      <div class="lb-thumb" data-index="4" tabindex="0" role="button" aria-label="Open Contact Form">
+        <div class="lb-thumb-image">
+          <div class="lb-thumb-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          </div>
+          Contact Form
+        </div>
+        <div class="lb-thumb-overlay">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+          View
+        </div>
+      </div>
+
+      <div class="lb-thumb" data-index="5" tabindex="0" role="button" aria-label="Open Dashboard UI">
+        <div class="lb-thumb-image">
+          <div class="lb-thumb-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          </div>
+          Dashboard UI
+        </div>
+        <div class="lb-thumb-overlay">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+          View
+        </div>
+      </div>
+
+    </div><!-- /lb-gallery -->
+  </div><!-- /lb-page -->
+
+
+  <!-- Lightbox overlay -->
+  <div class="lb-overlay" id="lb-overlay" role="dialog" aria-modal="true" aria-label="Image lightbox">
+    <div class="lb-content">
+
+      <!-- Close button -->
+      <button class="lb-close" id="lb-close" aria-label="Close lightbox">&times;</button>
+
+      <!-- Prev / Next navigation -->
+      <button class="lb-nav lb-nav--prev" id="lb-prev" aria-label="Previous image">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <button class="lb-nav lb-nav--next" id="lb-next" aria-label="Next image">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
+
+      <!-- Display area -->
+      <div class="lb-display" id="lb-display">
+        <div class="lb-display-inner" id="lb-display-inner">
+          <!-- Content injected by JS -->
+        </div>
+      </div>
+
+      <!-- Caption -->
+      <div class="lb-caption">
+        <span class="lb-caption-title" id="lb-caption-title"></span>
+        <span class="lb-caption-counter" id="lb-caption-counter"></span>
+      </div>
+
+    </div>
+  </div>
+
+
+  <script>
+  /* ── Lightbox data ──
+     Each item maps to a thumbnail by index.
+     In production, replace `gradient` with the actual image src. */
+  const GALLERY = [
+    { title: 'Homepage Design',  gradient: 'linear-gradient(135deg, #0f2027, #203a43, #2c5364)' },
+    { title: 'Mobile View',      gradient: 'linear-gradient(135deg, #1a1a2e, #16213e, #0f3460)' },
+    { title: 'Services Page',    gradient: 'linear-gradient(135deg, #0d1b2a, #1b4332, #2d6a4f)' },
+    { title: 'Pricing Page',     gradient: 'linear-gradient(135deg, #2d0028, #4a0045, #1a0033)' },
+    { title: 'Contact Form',     gradient: 'linear-gradient(135deg, #1a1200, #3d2b00, #5c3d11)' },
+    { title: 'Dashboard UI',     gradient: 'linear-gradient(135deg, #001a1a, #004040, #006060)' },
+  ];
+
+  let currentIndex = 0;
+
+  const overlay      = document.getElementById('lb-overlay');
+  const displayInner = document.getElementById('lb-display-inner');
+  const captionTitle = document.getElementById('lb-caption-title');
+  const captionCount = document.getElementById('lb-caption-counter');
+
+  /* Open lightbox at a given index */
+  function openLightbox(index) {
+    currentIndex = index;
+    renderSlide(index);
+    overlay.classList.add('lb-overlay--visible');
+    document.body.style.overflow = 'hidden'; // prevent background scroll
+    document.getElementById('lb-close').focus();
+  }
+
+  /* Close lightbox */
+  function closeLightbox() {
+    overlay.classList.remove('lb-overlay--visible');
+    document.body.style.overflow = '';
+  }
+
+  /* Render the current slide (with a quick opacity transition) */
+  function renderSlide(index) {
+    const item = GALLERY[index];
+
+    // Brief fade-out for transition feel
+    displayInner.classList.add('--transitioning');
+
+    setTimeout(() => {
+      displayInner.style.background = item.gradient;
+      displayInner.innerHTML = `
+        <div class="lb-display-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        </div>
+        ${item.title}
+      `;
+      captionTitle.textContent = item.title;
+      captionCount.textContent = `${index + 1} / ${GALLERY.length}`;
+      displayInner.classList.remove('--transitioning');
+    }, 150);
+  }
+
+  /* Navigate prev / next (wraps around) */
+  function navigate(dir) {
+    currentIndex = (currentIndex + dir + GALLERY.length) % GALLERY.length;
+    renderSlide(currentIndex);
+  }
+
+  /* ── Event listeners ── */
+
+  // Open from thumbnail clicks
+  document.querySelectorAll('.lb-thumb').forEach((thumb) => {
+    thumb.addEventListener('click', () => openLightbox(parseInt(thumb.dataset.index)));
+    // Keyboard: Enter or Space
+    thumb.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        openLightbox(parseInt(thumb.dataset.index));
+      }
+    });
+  });
+
+  // Close button
+  document.getElementById('lb-close').addEventListener('click', closeLightbox);
+
+  // Click backdrop to close (not the content)
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) closeLightbox();
+  });
+
+  // Prev / Next buttons
+  document.getElementById('lb-prev').addEventListener('click', () => navigate(-1));
+  document.getElementById('lb-next').addEventListener('click', () => navigate(1));
+
+  // Keyboard navigation
+  document.addEventListener('keydown', (e) => {
+    if (!overlay.classList.contains('lb-overlay--visible')) return;
+    if (e.key === 'Escape')     closeLightbox();
+    if (e.key === 'ArrowLeft')  navigate(-1);
+    if (e.key === 'ArrowRight') navigate(1);
+  });
+  </script>
+
+</body>
+</html>

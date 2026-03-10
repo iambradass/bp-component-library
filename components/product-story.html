@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product Story — Component Library</title>
+  <!-- COMPONENT: Product Story | COPY: style + html + script -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── CUSTOMIZE ─────────────────────────────────────────────── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.12);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --danger:         #EF4444;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+    }
+    /* ── END CUSTOMIZE ─────────────────────────────────────────── */
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: auto; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font-body); overflow-x: hidden; }
+
+    /* ── Reusable section base ───────────────────────────────── */
+    .ps-section {
+      position: relative;
+      padding: 6rem 2rem;
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .ps-inner { max-width: 760px; width: 100%; margin: 0 auto; }
+
+    /* Scroll-reveal: elements start invisible, JS makes them visible */
+    .reveal {
+      opacity: 0;
+      transform: translateY(32px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .reveal.in { opacity: 1; transform: none; }
+
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       SECTION 1 — HOOK
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+    #s1 {
+      text-align: center;
+      background: radial-gradient(ellipse at 50% 60%, rgba(16,185,129,0.06) 0%, transparent 70%);
+    }
+    .hook-q {
+      font-family: var(--font-heading);
+      font-size: clamp(2.5rem, 8vw, 5.5rem);
+      font-weight: 700; letter-spacing: -0.03em;
+      line-height: 1.1;
+    }
+    .hook-q em { color: var(--accent); font-style: normal; }
+    .hook-sub {
+      font-size: 1.125rem; color: var(--text-secondary);
+      margin-top: 1.5rem; max-width: 520px; margin-inline: auto;
+    }
+    .scroll-hint {
+      margin-top: 3rem; font-size: 0.75rem;
+      color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em;
+      animation: bob 2s ease-in-out infinite;
+    }
+    @keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(6px)} }
+
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       SECTION 2 — AGITATE
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+    #s2 { background: var(--surface); }
+    .agitate-label {
+      font-family: ui-monospace, monospace;
+      font-size: 0.6875rem; color: var(--danger);
+      text-transform: uppercase; letter-spacing: 0.1em;
+      margin-bottom: 1rem;
+    }
+    .agitate-title {
+      font-family: var(--font-heading);
+      font-size: clamp(1.75rem, 4vw, 2.75rem);
+      font-weight: 700; letter-spacing: -0.02em;
+      margin-bottom: 2.5rem;
+    }
+    .pain-card {
+      display: flex; align-items: flex-start; gap: 1rem;
+      background: var(--elevated); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.25rem 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .pain-icon { font-size: 1.5rem; flex-shrink: 0; margin-top: 2px; }
+    .pain-title { font-family: var(--font-heading); font-size: 1rem; font-weight: 600; margin-bottom: 0.25rem; }
+    .pain-desc  { font-size: 0.875rem; color: var(--text-secondary); line-height: 1.6; }
+
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       SECTION 3 — SOLUTION REVEAL
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+    #s3 {
+      text-align: center;
+      background: var(--bg);
+    }
+    .solution-sweep {
+      display: inline-block;
+      font-family: var(--font-heading);
+      font-size: clamp(2.5rem, 7vw, 5rem);
+      font-weight: 700; letter-spacing: -0.03em;
+      position: relative;
+      overflow: hidden;
+    }
+    .solution-sweep::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: var(--bg);
+      transform: translateX(0%);
+      transition: transform 1s cubic-bezier(0.4,0,0.2,1);
+    }
+    .solution-sweep.revealed::after { transform: translateX(101%); }
+    .solution-tagline {
+      font-size: 1.125rem; color: var(--text-secondary);
+      margin-top: 1.5rem; max-width: 520px; margin-inline: auto;
+    }
+
+    /* Logo/brand reveal circle */
+    .brand-circle {
+      width: 100px; height: 100px;
+      border-radius: 50%;
+      background: var(--accent);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 2rem;
+      font-family: var(--font-heading); font-weight: 700; font-size: 1.5rem;
+      color: #0D1117;
+      transform: scale(0); opacity: 0;
+      transition: transform 0.6s cubic-bezier(0.34,1.56,0.64,1), opacity 0.3s ease;
+    }
+    .brand-circle.in { transform: scale(1); opacity: 1; }
+
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       SECTION 4 — FEATURE SHOWCASE (sticky split)
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+    #s4-outer { position: relative; height: 300vh; background: var(--surface); }
+    #s4-sticky {
+      position: sticky; top: 0; height: 100vh;
+      display: grid; grid-template-columns: 1fr 1fr;
+      overflow: hidden;
+    }
+    @media (max-width: 640px) { #s4-sticky { grid-template-columns: 1fr; } }
+
+    /* Left col: visual panel (stays sticky) */
+    #s4-visual {
+      background: var(--elevated);
+      border-right: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      padding: 2rem; position: relative; overflow: hidden;
+    }
+
+    .feat-visual {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 1rem;
+      padding: 2rem;
+      opacity: 0; transition: opacity 0.5s ease;
+    }
+    .feat-visual.active { opacity: 1; }
+    .feat-visual .vis-icon {
+      width: 80px; height: 80px; border-radius: 20px;
+      background: var(--accent-dim); border: 1px solid var(--accent-border);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--accent); font-size: 2rem;
+    }
+    .feat-visual .vis-title { font-family: var(--font-heading); font-size: 1.125rem; font-weight: 600; text-align: center; }
+    .feat-visual .vis-sub   { font-size: 0.875rem; color: var(--text-secondary); text-align: center; }
+
+    /* Right col: scroll-driven feature panels */
+    #s4-panels {
+      overflow: hidden;
+      display: grid; grid-template-rows: 1fr; position: relative;
+    }
+    .feat-panel {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column; justify-content: center;
+      padding: 3rem 2.5rem;
+      opacity: 0; transform: translateY(30px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    .feat-panel.active { opacity: 1; transform: none; }
+    .feat-num   { font-family: ui-monospace, monospace; font-size: 0.6875rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 1rem; }
+    .feat-title { font-family: var(--font-heading); font-size: 1.75rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 1rem; }
+    .feat-desc  { font-size: 0.9375rem; color: var(--text-secondary); line-height: 1.7; }
+
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       SECTION 5 — SOCIAL PROOF
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+    #s5 { background: var(--bg); }
+    .proof-title {
+      font-family: var(--font-heading);
+      font-size: clamp(1.75rem, 4vw, 2.75rem);
+      font-weight: 700; letter-spacing: -0.02em;
+      margin-bottom: 2rem; text-align: center;
+    }
+    .proof-counter {
+      text-align: center;
+      font-family: var(--font-heading);
+      font-size: clamp(3rem, 10vw, 6rem);
+      font-weight: 700; color: var(--accent);
+      margin-bottom: 0.25rem;
+    }
+    .proof-counter-label {
+      text-align: center; font-size: 0.875rem;
+      color: var(--text-secondary); margin-bottom: 2.5rem;
+    }
+    .testimonials { display: flex; flex-direction: column; gap: 1rem; }
+    .testi {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.25rem 1.5rem;
+      opacity: 0; transform: translateY(16px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    .testi.in { opacity: 1; transform: none; }
+    .testi-text  { font-size: 0.9375rem; line-height: 1.6; color: var(--text-secondary); margin-bottom: 0.75rem; }
+    .testi-author{ font-family: var(--font-heading); font-size: 0.875rem; font-weight: 600; color: var(--accent); }
+
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       SECTION 6 — PRICING TEASE
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+    #s6 { background: var(--surface); }
+    .price-card {
+      background: var(--elevated); border: 1px solid var(--accent-border);
+      border-radius: 16px; padding: 2.5rem;
+      max-width: 480px; margin: 0 auto;
+      box-shadow: 0 0 40px rgba(16,185,129,0.1);
+    }
+    .price-label { font-family: ui-monospace, monospace; font-size: 0.6875rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.75rem; }
+    .price-num   { font-family: var(--font-heading); font-size: 3.5rem; font-weight: 700; letter-spacing: -0.03em; }
+    .price-period{ font-size: 1rem; color: var(--text-secondary); }
+    .price-desc  { font-size: 0.9375rem; color: var(--text-secondary); margin: 1rem 0 1.75rem; line-height: 1.6; }
+    .price-cta {
+      display: block; text-align: center;
+      background: var(--accent); color: #0D1117;
+      font-family: var(--font-heading); font-size: 1rem; font-weight: 700;
+      padding: 14px; border-radius: 8px; text-decoration: none;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .price-cta:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(16,185,129,0.3); }
+
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       SECTION 7 — FINAL CTA + PARTICLE/GLOW BG
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+    #s7 {
+      background: #060A0F;
+      min-height: 100vh;
+      position: relative; overflow: hidden;
+    }
+    #glow-orb {
+      position: absolute;
+      width: 600px; height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(16,185,129,0.15) 0%, transparent 70%);
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      animation: orb-drift 6s ease-in-out infinite;
+    }
+    @keyframes orb-drift {
+      0%,100% { transform: translate(-50%,-50%) scale(1); }
+      50%      { transform: translate(-50%,-54%) scale(1.1); }
+    }
+    .final-text {
+      text-align: center; position: relative; z-index: 1;
+    }
+    .final-eyebrow {
+      font-family: ui-monospace, monospace; font-size: 0.6875rem;
+      color: var(--accent); text-transform: uppercase;
+      letter-spacing: 0.12em; margin-bottom: 1.5rem;
+    }
+    .final-headline {
+      font-family: var(--font-heading);
+      font-size: clamp(2.5rem, 8vw, 5rem);
+      font-weight: 700; letter-spacing: -0.03em;
+      line-height: 1.1; margin-bottom: 2rem;
+    }
+    .final-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--accent); color: #0D1117;
+      font-family: var(--font-heading); font-size: 1.0625rem; font-weight: 700;
+      padding: 16px 40px; border-radius: 8px; text-decoration: none;
+      box-shadow: 0 0 40px rgba(16,185,129,0.25);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .final-btn:hover { transform: translateY(-3px); box-shadow: 0 16px 50px rgba(16,185,129,0.4); }
+  </style>
+</head>
+<body>
+
+  <!-- ── S1: HOOK ──────────────────────────────────────────── -->
+  <section class="ps-section" id="s1">
+    <div class="ps-inner" style="text-align:center;">
+      <h1 class="hook-q reveal in">What if your website<br>actually <em>worked?</em></h1>
+      <p class="hook-sub reveal in" style="transition-delay:0.15s">Most don't. We fix that — for businesses who are done pretending a bad site is good enough.</p>
+      <div class="scroll-hint">↓ scroll</div>
+    </div>
+  </section>
+
+  <!-- ── S2: AGITATE ───────────────────────────────────────── -->
+  <section class="ps-section" id="s2">
+    <div class="ps-inner">
+      <div class="agitate-label reveal">The real problem</div>
+      <h2 class="agitate-title reveal">Your website is costing you clients every day.</h2>
+      <div class="pain-card reveal" style="transition-delay:0.1s">
+        <span class="pain-icon">😤</span>
+        <div>
+          <div class="pain-title">They visit and disappear</div>
+          <p class="pain-desc">High bounce rate, low time-on-site. People arrive, feel nothing, and leave. No contact. No follow-up. Gone.</p>
+        </div>
+      </div>
+      <div class="pain-card reveal" style="transition-delay:0.2s">
+        <span class="pain-icon">🤷</span>
+        <div>
+          <div class="pain-title">It says nothing specific</div>
+          <p class="pain-desc">"We help businesses achieve their goals" — that's every business on earth. Generic messaging is invisible messaging.</p>
+        </div>
+      </div>
+      <div class="pain-card reveal" style="transition-delay:0.3s">
+        <span class="pain-icon">📱</span>
+        <div>
+          <div class="pain-title">Mobile is broken</div>
+          <p class="pain-desc">60% of your traffic is on a phone. If it's slow, cramped, or clunky on mobile, you're handing leads to competitors.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── S3: SOLUTION REVEAL ───────────────────────────────── -->
+  <section class="ps-section" id="s3">
+    <div class="ps-inner" style="text-align:center;">
+      <div class="brand-circle" id="brand-circle">BD</div>
+      <div class="solution-sweep reveal" id="sol-sweep">Enter BuildRight</div>
+      <p class="solution-tagline reveal" style="transition-delay:0.3s">
+        We build sites that convert, rank, and represent your business the way it actually deserves to be represented.
+      </p>
+    </div>
+  </section>
+
+  <!-- ── S4: FEATURE SHOWCASE ──────────────────────────────── -->
+  <div id="s4-outer">
+    <div id="s4-sticky">
+
+      <!-- Left visual panel -->
+      <div id="s4-visual">
+        <div class="feat-visual active" id="fv-0">
+          <div class="vis-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          </div>
+          <div class="vis-title">Speed-first build</div>
+          <div class="vis-sub">Under 2s on 3G mobile</div>
+        </div>
+        <div class="feat-visual" id="fv-1">
+          <div class="vis-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </div>
+          <div class="vis-title">SEO foundation</div>
+          <div class="vis-sub">Technical + on-page from day one</div>
+        </div>
+        <div class="feat-visual" id="fv-2">
+          <div class="vis-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          </div>
+          <div class="vis-title">Conversion copy</div>
+          <div class="vis-sub">Words that earn action</div>
+        </div>
+      </div>
+
+      <!-- Right panels -->
+      <div id="s4-panels">
+        <div class="feat-panel active" id="fp-0">
+          <div class="feat-num">01 — Performance</div>
+          <div class="feat-title">Built for speed, not just looks</div>
+          <p class="feat-desc">Every build is optimized from the ground up — compressed images, deferred scripts, minimal dependencies. Real-world speed that Google rewards and users feel.</p>
+        </div>
+        <div class="feat-panel" id="fp-1">
+          <div class="feat-num">02 — Visibility</div>
+          <div class="feat-title">Show up when it matters</div>
+          <p class="feat-desc">Technical SEO is baked in from page one — structured data, clean URLs, semantic HTML, and a content architecture that ranks. We don't bolt it on after the fact.</p>
+        </div>
+        <div class="feat-panel" id="fp-2">
+          <div class="feat-num">03 — Conversion</div>
+          <div class="feat-title">Copy that earns the click</div>
+          <p class="feat-desc">We write the words too — headlines that hook, CTAs that feel obvious, and microcopy that removes hesitation at every step. Good design without good copy is half a job.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── S5: SOCIAL PROOF ──────────────────────────────────── -->
+  <section class="ps-section" id="s5">
+    <div class="ps-inner">
+      <div class="proof-counter reveal" id="proof-num">0</div>
+      <p class="proof-counter-label reveal">client sites launched in 2025</p>
+      <h2 class="proof-title reveal">They made the call. So did their clients.</h2>
+      <div class="testimonials">
+        <div class="testi reveal" style="transition-delay:0.1s">
+          <p class="testi-text">"We went from 2 inbound leads per month to 11 in 60 days. The new site does the selling before I even get on a call."</p>
+          <div class="testi-author">— Marcus D., Plumbing &amp; HVAC</div>
+        </div>
+        <div class="testi reveal" style="transition-delay:0.2s">
+          <p class="testi-text">"I was embarrassed to share my old website. Now I send people there first. Complete 180."</p>
+          <div class="testi-author">— Jamie L., Interior Design Studio</div>
+        </div>
+        <div class="testi reveal" style="transition-delay:0.3s">
+          <p class="testi-text">"Ranked page 1 for our main service keyword within 3 months. Not magic — just solid fundamentals done right."</p>
+          <div class="testi-author">— Chen W., Legal Services</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── S6: PRICING TEASE ─────────────────────────────────── -->
+  <section class="ps-section" id="s6">
+    <div class="ps-inner">
+      <div class="price-card reveal">
+        <div class="price-label">Starter project</div>
+        <div>
+          <span class="price-num">$2,400</span>
+          <span class="price-period"> flat</span>
+        </div>
+        <p class="price-desc">5-page site, full copywriting, SEO setup, mobile-first build, and 30 days of post-launch support. No recurring fees. No surprises. Delivered in 3 weeks.</p>
+        <a href="#" class="price-cta">See what's included →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── S7: FINAL CTA ─────────────────────────────────────── -->
+  <section class="ps-section" id="s7">
+    <div id="glow-orb"></div>
+    <div class="ps-inner final-text">
+      <div class="final-eyebrow reveal in">The work speaks for itself</div>
+      <h2 class="final-headline reveal in">Let's build<br><em style="color:var(--accent); font-style:normal;">something real.</em></h2>
+      <a href="#" class="final-btn reveal in" style="transition-delay:0.2s">Start the conversation →</a>
+    </div>
+  </section>
+
+<script>
+(function() {
+  /* ── IntersectionObserver for .reveal elements ───────────── */
+  var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      if (e.isIntersecting) {
+        e.target.classList.add('in');
+        // Once revealed, brand circle also triggers
+        if (e.target.id === 'sol-sweep') {
+          e.target.classList.add('revealed');
+          document.getElementById('brand-circle').classList.add('in');
+        }
+      }
+    });
+  }, { threshold: 0.2 });
+
+  document.querySelectorAll('.reveal').forEach(function(el) { observer.observe(el); });
+
+  /* ── Testimonials observer ─────────────────────────────── */
+  var testiObs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) { if (e.isIntersecting) e.target.classList.add('in'); });
+  }, { threshold: 0.15 });
+  document.querySelectorAll('.testi').forEach(function(t) { testiObs.observe(t); });
+
+  /* ── Proof counter animation ─────────────────────────────── */
+  var counterFired = false;
+  var counterObs   = new IntersectionObserver(function(entries) {
+    if (entries[0].isIntersecting && !counterFired) {
+      counterFired = true;
+      var el    = document.getElementById('proof-num');
+      var start = performance.now();
+      var dur   = 1800;
+      var end   = 84;
+      (function step(ts) {
+        var p    = Math.min((ts - start) / dur, 1);
+        var ease = 1 - Math.pow(1 - p, 4);
+        el.textContent = Math.floor(ease * end);
+        if (p < 1) requestAnimationFrame(step);
+      })(performance.now());
+    }
+  }, { threshold: 0.5 });
+  counterObs.observe(document.getElementById('proof-num'));
+
+  /* ── Section 4: sticky split scroll panels ────────────────── */
+  var s4Outer = document.getElementById('s4-outer');
+  var panels  = ['fp-0','fp-1','fp-2'].map(function(id) { return document.getElementById(id); });
+  var visuals = ['fv-0','fv-1','fv-2'].map(function(id) { return document.getElementById(id); });
+  var curFeat = 0;
+
+  function setFeature(i) {
+    if (i === curFeat) return;
+    panels[curFeat].classList.remove('active');
+    visuals[curFeat].classList.remove('active');
+    curFeat = i;
+    panels[curFeat].classList.add('active');
+    visuals[curFeat].classList.add('active');
+  }
+
+  var ticking = false;
+  function onScroll() {
+    if (!ticking) { requestAnimationFrame(updateScroll); ticking = true; }
+  }
+  function updateScroll() {
+    ticking = false;
+    var rect   = s4Outer.getBoundingClientRect();
+    if (rect.top > 0 || rect.bottom < 0) return;
+    var scrolled   = -rect.top;
+    var scrollable = s4Outer.offsetHeight - window.innerHeight;
+    var p = Math.min(Math.max(scrolled / scrollable, 0), 1);
+    var idx = Math.min(Math.floor(p * panels.length), panels.length - 1);
+    setFeature(idx);
+  }
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+  updateScroll();
+})();
+</script>
+</body>
+</html>

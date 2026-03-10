@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Custom Form Elements — Component Library</title>
+
+  <!--
+  /* COMPONENT: Custom Form Elements | COPY: style + html + script */
+  Complete set of beautifully styled dark-theme form controls:
+  1. Text input with floating label (rises on focus/fill)
+  2. Textarea with floating label + character counter
+  3. Custom checkbox with animated SVG checkmark draw
+  4. Custom radio buttons with animated inner dot
+  5. Toggle switch with sliding thumb
+  6. Custom select with styled focus ring
+  7. Range slider with custom thumb + moving value tooltip
+  8. Password field with show/hide + strength meter
+  9. Search input with icon + clear button
+  10. Submit button with loading + success states
+  -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+
+    /* ============================================================
+       CUSTOMIZE
+       ============================================================ */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --glow:           rgba(16,185,129,0.15);
+      --glow-strong:    rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --border-accent:  rgba(16,185,129,0.3);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+
+      /* Semantic states */
+      --color-error:   #EF4444;
+      --color-success: #10B981;
+      --color-warning: #F59E0B;
+    }
+    /* ============================================================ */
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 3rem 1rem 5rem;
+    }
+
+    /* ── Page wrapper ── */
+    .fe-page {
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    /* ── Page header ── */
+    .fe-page-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+    .fe-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.75rem;
+    }
+    .fe-page-title {
+      font-family: var(--font-heading);
+      font-size: clamp(1.75rem, 4vw, 2.5rem);
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      margin-bottom: 0.5rem;
+    }
+    .fe-page-sub {
+      color: var(--text-secondary);
+      font-size: 0.9375rem;
+    }
+
+    /* ── Section headers ── */
+    .fe-section {
+      margin-bottom: 2.5rem;
+    }
+    .fe-section-label {
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* ── Common field wrapper ── */
+    .fe-field {
+      margin-bottom: 1.25rem;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       1. FLOATING LABEL INPUT
+       ═══════════════════════════════════════════════════════════ */
+    .fe-float-wrap {
+      position: relative;
+    }
+
+    .fe-float-input {
+      width: 100%;
+      padding: 22px 16px 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-family: var(--font-body);
+      font-size: 1rem;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      /* min touch height */
+      min-height: 56px;
+    }
+    .fe-float-input::placeholder { color: transparent; }
+    .fe-float-input:focus {
+      border-color: var(--border-accent);
+      box-shadow: 0 0 0 3px var(--glow);
+    }
+
+    /* Error state */
+    .fe-float-input.is-error {
+      border-color: var(--color-error);
+      box-shadow: 0 0 0 3px rgba(239,68,68,0.12);
+    }
+    /* Success state */
+    .fe-float-input.is-success {
+      border-color: var(--color-success);
+      box-shadow: 0 0 0 3px var(--glow);
+    }
+
+    /* The floating label */
+    .fe-float-label {
+      position: absolute;
+      top: 50%;
+      left: 16px;
+      transform: translateY(-50%);
+      font-size: 1rem;
+      color: var(--text-muted);
+      pointer-events: none;
+      transition: top 0.18s ease, transform 0.18s ease, font-size 0.18s ease, color 0.18s ease;
+      line-height: 1;
+    }
+    /* Label rises when input is focused or has value */
+    .fe-float-input:focus ~ .fe-float-label,
+    .fe-float-input:not(:placeholder-shown) ~ .fe-float-label {
+      top: 10px;
+      transform: translateY(0);
+      font-size: 0.6875rem;
+      color: var(--accent);
+      letter-spacing: 0.04em;
+    }
+    .fe-float-input.is-error:focus ~ .fe-float-label,
+    .fe-float-input.is-error:not(:placeholder-shown) ~ .fe-float-label {
+      color: var(--color-error);
+    }
+
+    /* Inline icon for success/error */
+    .fe-float-status {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 20px;
+      height: 20px;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .fe-float-wrap.has-error .fe-float-status.is-error,
+    .fe-float-wrap.has-success .fe-float-status.is-success {
+      opacity: 1;
+    }
+
+    .fe-error-msg {
+      font-size: 0.75rem;
+      color: var(--color-error);
+      margin-top: 5px;
+      padding-left: 2px;
+      display: none;
+    }
+    .fe-float-wrap.has-error .fe-error-msg { display: block; }
+
+    /* ─── Textarea variant ─── */
+    .fe-float-textarea {
+      resize: vertical;
+      min-height: 100px;
+      padding-top: 22px;
+      line-height: 1.5;
+    }
+    .fe-float-textarea ~ .fe-float-label {
+      top: 20px;
+      transform: none;
+    }
+    .fe-float-textarea:focus ~ .fe-float-label,
+    .fe-float-textarea:not(:placeholder-shown) ~ .fe-float-label {
+      top: 8px;
+      transform: none;
+      font-size: 0.6875rem;
+    }
+    .fe-char-count {
+      text-align: right;
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       2. CUSTOM CHECKBOX
+       ═══════════════════════════════════════════════════════════ */
+    .fe-check-label {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      cursor: pointer;
+      font-size: 0.9375rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      margin-bottom: 10px;
+      padding: 2px 0;
+      /* min 44px touch target via min-height */
+      min-height: 24px;
+    }
+    .fe-check-label:hover .fe-check-box { border-color: var(--border-accent); }
+
+    /* Hide native checkbox */
+    .fe-check-input {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    /* Custom box */
+    .fe-check-box {
+      width: 20px;
+      height: 20px;
+      border-radius: 5px;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.18s, border-color 0.18s, box-shadow 0.18s;
+      margin-top: 1px;
+    }
+
+    /* Checked state */
+    .fe-check-input:checked + .fe-check-box {
+      background: var(--accent);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--glow);
+    }
+
+    /* SVG checkmark draw animation */
+    .fe-check-svg {
+      width: 12px;
+      height: 12px;
+      stroke: #fff;
+      stroke-width: 2.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+    }
+    .fe-check-path {
+      stroke-dasharray: 20;
+      stroke-dashoffset: 20;
+      transition: stroke-dashoffset 0.2s ease 0.05s;
+    }
+    .fe-check-input:checked ~ .fe-check-box .fe-check-path {
+      stroke-dashoffset: 0;
+    }
+
+    /* Focus ring */
+    .fe-check-input:focus-visible + .fe-check-box {
+      box-shadow: 0 0 0 3px var(--glow-strong);
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       3. CUSTOM RADIO BUTTONS
+       ═══════════════════════════════════════════════════════════ */
+    .fe-radio-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      font-size: 0.9375rem;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      min-height: 44px;
+    }
+    .fe-radio-label:hover .fe-radio-box { border-color: var(--border-accent); }
+
+    .fe-radio-input {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .fe-radio-box {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: border-color 0.18s, box-shadow 0.18s;
+    }
+
+    /* Inner dot: scale from 0 to 1 on select */
+    .fe-radio-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      transform: scale(0);
+      transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1);
+    }
+
+    .fe-radio-input:checked + .fe-radio-box {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--glow);
+    }
+    .fe-radio-input:checked + .fe-radio-box .fe-radio-dot {
+      transform: scale(1);
+    }
+    .fe-radio-input:focus-visible + .fe-radio-box {
+      box-shadow: 0 0 0 3px var(--glow-strong);
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       4. TOGGLE SWITCH
+       ═══════════════════════════════════════════════════════════ */
+    .fe-toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .fe-toggle-row:last-child { border-bottom: none; }
+
+    .fe-toggle-text {
+      flex: 1;
+    }
+    .fe-toggle-name {
+      font-size: 0.9375rem;
+      font-weight: 500;
+      color: var(--text);
+      display: block;
+    }
+    .fe-toggle-desc {
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+    }
+
+    /* The toggle track */
+    .fe-toggle-label {
+      position: relative;
+      display: inline-block;
+      width: 48px;
+      height: 26px;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+    .fe-toggle-input {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .fe-toggle-track {
+      position: absolute;
+      inset: 0;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+    }
+    .fe-toggle-thumb {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      transition: transform 0.22s cubic-bezier(0.34,1.2,0.64,1), background 0.2s;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+    }
+    .fe-toggle-input:checked ~ .fe-toggle-track {
+      background: var(--accent);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--glow);
+    }
+    .fe-toggle-input:checked ~ .fe-toggle-track .fe-toggle-thumb {
+      transform: translateX(22px);
+      background: #fff;
+    }
+    .fe-toggle-input:focus-visible ~ .fe-toggle-track {
+      box-shadow: 0 0 0 3px var(--glow-strong);
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       5. CUSTOM SELECT
+       ═══════════════════════════════════════════════════════════ */
+    .fe-select-wrap {
+      position: relative;
+    }
+    .fe-select {
+      width: 100%;
+      padding: 13px 40px 13px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-family: var(--font-body);
+      font-size: 1rem;
+      color: var(--text);
+      outline: none;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      min-height: 48px;
+    }
+    .fe-select:focus {
+      border-color: var(--border-accent);
+      box-shadow: 0 0 0 3px var(--glow);
+    }
+    .fe-select option {
+      background: var(--elevated);
+      color: var(--text);
+    }
+    /* Custom arrow */
+    .fe-select-arrow {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      pointer-events: none;
+      color: var(--text-muted);
+      transition: transform 0.2s;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       6. RANGE SLIDER
+       ═══════════════════════════════════════════════════════════ */
+    .fe-range-wrap {
+      position: relative;
+      padding-top: 2rem;
+    }
+
+    /* Tooltip above thumb */
+    .fe-range-tooltip {
+      position: absolute;
+      top: 0;
+      left: var(--thumb-pct, 50%); /* set by JS */
+      transform: translateX(-50%);
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #fff;
+      background: var(--accent);
+      padding: 3px 8px;
+      border-radius: 6px;
+      white-space: nowrap;
+      pointer-events: none;
+      transition: left 0.05s linear;
+    }
+    .fe-range-tooltip::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 4px solid transparent;
+      border-top-color: var(--accent);
+    }
+
+    .fe-range {
+      width: 100%;
+      height: 6px;
+      background: var(--elevated);
+      border-radius: 100px;
+      outline: none;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      /* Filled track up to thumb value using gradient */
+      background-image: linear-gradient(var(--accent), var(--accent));
+      background-size: var(--fill-pct, 50%) 100%;
+      background-repeat: no-repeat;
+      border: none;
+    }
+    /* Thumb styles */
+    .fe-range::-webkit-slider-thumb {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 4px var(--bg), 0 0 12px rgba(16,185,129,0.5);
+      cursor: pointer;
+      transition: box-shadow 0.15s;
+    }
+    .fe-range::-moz-range-thumb {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: none;
+      box-shadow: 0 0 0 4px var(--bg), 0 0 12px rgba(16,185,129,0.5);
+      cursor: pointer;
+    }
+    .fe-range:focus-visible::-webkit-slider-thumb {
+      box-shadow: 0 0 0 4px var(--bg), 0 0 0 7px var(--glow-strong);
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       7. PASSWORD FIELD
+       ═══════════════════════════════════════════════════════════ */
+    .fe-pw-wrap {
+      position: relative;
+    }
+    .fe-pw-input {
+      width: 100%;
+      padding: 22px 48px 8px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-family: var(--font-body);
+      font-size: 1rem;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      min-height: 56px;
+    }
+    .fe-pw-input::placeholder { color: transparent; }
+    .fe-pw-input:focus {
+      border-color: var(--border-accent);
+      box-shadow: 0 0 0 3px var(--glow);
+    }
+    /* Show/hide toggle button */
+    .fe-pw-toggle {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-muted);
+      padding: 6px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.15s, background 0.15s;
+      min-width: 32px;
+      min-height: 32px;
+    }
+    .fe-pw-toggle:hover { color: var(--text); background: rgba(148,163,184,0.08); }
+
+    /* Password strength meter */
+    .fe-pw-strength {
+      margin-top: 8px;
+    }
+    .fe-pw-strength-track {
+      height: 4px;
+      background: var(--elevated);
+      border-radius: 100px;
+      overflow: hidden;
+      margin-bottom: 5px;
+    }
+    .fe-pw-strength-fill {
+      height: 100%;
+      border-radius: 100px;
+      width: 0%;
+      transition: width 0.3s ease, background 0.3s ease;
+    }
+    .fe-pw-strength-label {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--text-muted);
+      transition: color 0.2s;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       8. SEARCH INPUT
+       ═══════════════════════════════════════════════════════════ */
+    .fe-search-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .fe-search-icon {
+      position: absolute;
+      left: 14px;
+      color: var(--text-muted);
+      pointer-events: none;
+      display: flex;
+    }
+    .fe-search-input {
+      width: 100%;
+      padding: 13px 44px 13px 44px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-family: var(--font-body);
+      font-size: 1rem;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      min-height: 48px;
+    }
+    .fe-search-input::placeholder { color: var(--text-muted); }
+    .fe-search-input:focus {
+      border-color: var(--border-accent);
+      box-shadow: 0 0 0 3px var(--glow);
+    }
+    /* Animated underline on focus */
+    .fe-search-underline {
+      position: absolute;
+      bottom: 1px;
+      left: 10px;
+      right: 10px;
+      height: 2px;
+      background: var(--accent);
+      border-radius: 0 0 8px 8px;
+      transform: scaleX(0);
+      transition: transform 0.2s ease;
+    }
+    .fe-search-input:focus ~ .fe-search-underline { transform: scaleX(1); }
+
+    /* Clear button */
+    .fe-search-clear {
+      position: absolute;
+      right: 10px;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 6px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s, color 0.15s;
+      min-width: 32px;
+      min-height: 32px;
+      justify-content: center;
+    }
+    .fe-search-clear.is-visible { opacity: 1; pointer-events: auto; }
+    .fe-search-clear:hover { color: var(--text); }
+
+    /* ═══════════════════════════════════════════════════════════
+       9. SUBMIT BUTTON
+       ═══════════════════════════════════════════════════════════ */
+    .fe-submit-btn {
+      width: 100%;
+      padding: 14px;
+      background: var(--accent);
+      border: none;
+      border-radius: 10px;
+      font-family: var(--font-heading);
+      font-size: 1rem;
+      font-weight: 600;
+      color: #fff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 52px;
+      transition: opacity 0.15s, transform 0.15s;
+    }
+    .fe-submit-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+    .fe-submit-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    /* Loading spinner */
+    .fe-spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: fe-spin 0.7s linear infinite;
+      display: none;
+    }
+    @keyframes fe-spin { to { transform: rotate(360deg); } }
+
+    .fe-submit-btn.is-loading .fe-spinner { display: block; }
+    .fe-submit-btn.is-loading .fe-btn-text { display: none; }
+    .fe-submit-btn.is-loading .fe-btn-icon { display: none; }
+
+    .fe-submit-btn.is-success {
+      background: var(--accent);
+      animation: fe-success-pop 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    @keyframes fe-success-pop {
+      0%   { transform: scale(0.96); }
+      100% { transform: scale(1); }
+    }
+    .fe-submit-btn.is-success .fe-btn-text::before { content: 'Submitted!'; }
+
+  </style>
+</head>
+<body>
+
+  <div class="fe-page">
+
+    <div class="fe-page-header">
+      <p class="fe-eyebrow">Form System</p>
+      <h1 class="fe-page-title">Custom Form Elements</h1>
+      <p class="fe-page-sub">A complete set of dark-theme form controls with animations, states, and accessibility baked in.</p>
+    </div>
+
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SECTION 1: Text Inputs
+         ═══════════════════════════════════════════════════════════ -->
+    <div class="fe-section">
+      <p class="fe-section-label">01 / Text Inputs &amp; Textarea</p>
+
+      <div class="fe-field">
+        <div class="fe-float-wrap" id="fw-name">
+          <input class="fe-float-input" id="fe-name" type="text" placeholder="Full Name" autocomplete="name">
+          <label class="fe-float-label" for="fe-name">Full Name</label>
+          <!-- Success icon -->
+          <svg class="fe-float-status is-success" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          <!-- Error icon -->
+          <svg class="fe-float-status is-error" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <p class="fe-error-msg">Please enter your full name</p>
+        </div>
+      </div>
+
+      <div class="fe-field">
+        <div class="fe-float-wrap has-error" id="fw-email">
+          <input class="fe-float-input is-error" id="fe-email" type="email" placeholder="Email address" value="notanemail" autocomplete="email">
+          <label class="fe-float-label" for="fe-email">Email Address</label>
+          <svg class="fe-float-status is-success" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          <svg class="fe-float-status is-error" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <p class="fe-error-msg">Please enter a valid email address</p>
+        </div>
+      </div>
+
+      <div class="fe-field">
+        <div class="fe-float-wrap">
+          <textarea class="fe-float-input fe-float-textarea" id="fe-message" placeholder="Your message" rows="4" maxlength="300"></textarea>
+          <label class="fe-float-label" for="fe-message">Your Message</label>
+        </div>
+        <div class="fe-char-count"><span id="fe-char-count">0</span>/300</div>
+      </div>
+    </div>
+
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SECTION 2: Checkboxes
+         ═══════════════════════════════════════════════════════════ -->
+    <div class="fe-section">
+      <p class="fe-section-label">02 / Custom Checkboxes</p>
+
+      <label class="fe-check-label">
+        <input class="fe-check-input" type="checkbox" name="agree" checked>
+        <span class="fe-check-box">
+          <svg class="fe-check-svg" viewBox="0 0 12 10">
+            <path class="fe-check-path" d="M1.5 5l3 3 6-6"/>
+          </svg>
+        </span>
+        I agree to the Terms of Service and Privacy Policy
+      </label>
+
+      <label class="fe-check-label">
+        <input class="fe-check-input" type="checkbox" name="marketing">
+        <span class="fe-check-box">
+          <svg class="fe-check-svg" viewBox="0 0 12 10">
+            <path class="fe-check-path" d="M1.5 5l3 3 6-6"/>
+          </svg>
+        </span>
+        Send me product updates and tips via email
+      </label>
+
+      <label class="fe-check-label">
+        <input class="fe-check-input" type="checkbox" name="sms">
+        <span class="fe-check-box">
+          <svg class="fe-check-svg" viewBox="0 0 12 10">
+            <path class="fe-check-path" d="M1.5 5l3 3 6-6"/>
+          </svg>
+        </span>
+        Send me important account alerts via SMS
+      </label>
+    </div>
+
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SECTION 3: Radio Buttons
+         ═══════════════════════════════════════════════════════════ -->
+    <div class="fe-section">
+      <p class="fe-section-label">03 / Radio Buttons</p>
+
+      <label class="fe-radio-label">
+        <input class="fe-radio-input" type="radio" name="plan" value="starter" checked>
+        <span class="fe-radio-box"><span class="fe-radio-dot"></span></span>
+        Starter — $29/month
+      </label>
+      <label class="fe-radio-label">
+        <input class="fe-radio-input" type="radio" name="plan" value="pro">
+        <span class="fe-radio-box"><span class="fe-radio-dot"></span></span>
+        Pro — $79/month (most popular)
+      </label>
+      <label class="fe-radio-label">
+        <input class="fe-radio-input" type="radio" name="plan" value="agency">
+        <span class="fe-radio-box"><span class="fe-radio-dot"></span></span>
+        Agency — $199/month
+      </label>
+    </div>
+
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SECTION 4: Toggle Switches
+         ═══════════════════════════════════════════════════════════ -->
+    <div class="fe-section">
+      <p class="fe-section-label">04 / Toggle Switches</p>
+
+      <div class="fe-toggle-row">
+        <div class="fe-toggle-text">
+          <span class="fe-toggle-name">Email notifications</span>
+          <span class="fe-toggle-desc">Receive email alerts for important account events</span>
+        </div>
+        <label class="fe-toggle-label" aria-label="Toggle email notifications">
+          <input class="fe-toggle-input" type="checkbox" checked>
+          <span class="fe-toggle-track">
+            <span class="fe-toggle-thumb"></span>
+          </span>
+        </label>
+      </div>
+
+      <div class="fe-toggle-row">
+        <div class="fe-toggle-text">
+          <span class="fe-toggle-name">Two-factor authentication</span>
+          <span class="fe-toggle-desc">Require a code from your phone when signing in</span>
+        </div>
+        <label class="fe-toggle-label" aria-label="Toggle 2FA">
+          <input class="fe-toggle-input" type="checkbox">
+          <span class="fe-toggle-track">
+            <span class="fe-toggle-thumb"></span>
+          </span>
+        </label>
+      </div>
+
+      <div class="fe-toggle-row">
+        <div class="fe-toggle-text">
+          <span class="fe-toggle-name">Public profile</span>
+          <span class="fe-toggle-desc">Allow others to view your profile and projects</span>
+        </div>
+        <label class="fe-toggle-label" aria-label="Toggle public profile">
+          <input class="fe-toggle-input" type="checkbox" checked>
+          <span class="fe-toggle-track">
+            <span class="fe-toggle-thumb"></span>
+          </span>
+        </label>
+      </div>
+    </div>
+
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SECTION 5: Select + Range
+         ═══════════════════════════════════════════════════════════ -->
+    <div class="fe-section">
+      <p class="fe-section-label">05 / Select &amp; Range Slider</p>
+
+      <div class="fe-field">
+        <div class="fe-select-wrap">
+          <select class="fe-select" id="fe-country" aria-label="Select your country">
+            <option value="">Select your country</option>
+            <option value="us">United States</option>
+            <option value="ca">Canada</option>
+            <option value="gb">United Kingdom</option>
+            <option value="au">Australia</option>
+            <option value="de">Germany</option>
+            <option value="other">Other</option>
+          </select>
+          <svg class="fe-select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </div>
+
+      <div class="fe-field">
+        <div class="fe-range-wrap">
+          <div class="fe-range-tooltip" id="fe-range-tooltip">$5,000/mo</div>
+          <input class="fe-range" id="fe-range" type="range" min="1000" max="50000" step="1000" value="5000" aria-label="Monthly budget">
+        </div>
+        <div style="display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:0.6875rem;color:var(--text-muted);margin-top:8px;">
+          <span>$1,000/mo</span><span>Monthly Budget</span><span>$50,000/mo</span>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SECTION 6: Password + Search
+         ═══════════════════════════════════════════════════════════ -->
+    <div class="fe-section">
+      <p class="fe-section-label">06 / Password &amp; Search</p>
+
+      <div class="fe-field">
+        <div class="fe-pw-wrap">
+          <input class="fe-float-input fe-pw-input" id="fe-password" type="password" placeholder="Create a password" autocomplete="new-password">
+          <label class="fe-float-label" for="fe-password">Create a Password</label>
+          <button class="fe-pw-toggle" id="fe-pw-toggle" type="button" aria-label="Show password">
+            <!-- Eye icon — swapped to eye-off by JS -->
+            <svg id="fe-eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <div class="fe-pw-strength" id="fe-pw-strength" style="display:none;">
+          <div class="fe-pw-strength-track"><div class="fe-pw-strength-fill" id="fe-pw-strength-fill"></div></div>
+          <span class="fe-pw-strength-label" id="fe-pw-strength-label">Enter a password</span>
+        </div>
+      </div>
+
+      <div class="fe-field">
+        <div class="fe-search-wrap">
+          <span class="fe-search-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </span>
+          <input class="fe-search-input" id="fe-search" type="search" placeholder="Search for anything..." aria-label="Search">
+          <button class="fe-search-clear" id="fe-search-clear" type="button" aria-label="Clear search">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+          <span class="fe-search-underline" aria-hidden="true"></span>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- Submit button -->
+    <button class="fe-submit-btn" id="fe-submit" type="submit">
+      <span class="fe-btn-text">Submit form</span>
+      <svg class="fe-btn-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+      <div class="fe-spinner"></div>
+    </button>
+
+  </div><!-- /fe-page -->
+
+
+  <script>
+  /* ── Form Elements Interactivity ── */
+  (function() {
+
+    /* 1. Floating label: validate name field on blur */
+    var nameInput = document.getElementById('fe-name');
+    var nameWrap  = document.getElementById('fw-name');
+    nameInput.addEventListener('blur', function() {
+      if (nameInput.value.trim().length < 2) {
+        nameWrap.classList.add('has-error');
+        nameInput.classList.add('is-error');
+        nameInput.classList.remove('is-success');
+        nameWrap.classList.remove('has-success');
+      } else {
+        nameWrap.classList.remove('has-error');
+        nameWrap.classList.add('has-success');
+        nameInput.classList.remove('is-error');
+        nameInput.classList.add('is-success');
+      }
+    });
+
+    /* 2. Textarea character counter */
+    var textarea   = document.getElementById('fe-message');
+    var charCount  = document.getElementById('fe-char-count');
+    textarea.addEventListener('input', function() {
+      charCount.textContent = textarea.value.length;
+    });
+
+    /* 3. Range slider: update tooltip position and value */
+    var range   = document.getElementById('fe-range');
+    var tooltip = document.getElementById('fe-range-tooltip');
+
+    function updateRange() {
+      var min  = Number(range.min);
+      var max  = Number(range.max);
+      var val  = Number(range.value);
+      var pct  = ((val - min) / (max - min)) * 100;
+
+      /* Account for thumb width (~11px each side) */
+      var offset = 11 - (pct * 0.22);
+      var pos    = 'calc(' + pct + '% + ' + offset + 'px)';
+
+      tooltip.style.left = pos;
+      tooltip.textContent = '$' + val.toLocaleString() + '/mo';
+      range.style.setProperty('--fill-pct', pct + '%');
+    }
+
+    range.addEventListener('input', updateRange);
+    updateRange(); /* init */
+
+    /* 4. Password show/hide + strength meter */
+    var pwInput    = document.getElementById('fe-password');
+    var pwToggle   = document.getElementById('fe-pw-toggle');
+    var eyeIcon    = document.getElementById('fe-eye-icon');
+    var pwStrength = document.getElementById('fe-pw-strength');
+    var pwFill     = document.getElementById('fe-pw-strength-fill');
+    var pwLabel    = document.getElementById('fe-pw-strength-label');
+
+    var EYE_ON  = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+    var EYE_OFF = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>';
+
+    pwToggle.addEventListener('click', function() {
+      var isText = pwInput.type === 'text';
+      pwInput.type = isText ? 'password' : 'text';
+      eyeIcon.innerHTML = isText ? EYE_ON : EYE_OFF;
+      pwToggle.setAttribute('aria-label', isText ? 'Show password' : 'Hide password');
+    });
+
+    /* Password strength scoring */
+    pwInput.addEventListener('input', function() {
+      var val = pwInput.value;
+      if (!val) { pwStrength.style.display = 'none'; return; }
+      pwStrength.style.display = 'block';
+
+      var score = 0;
+      if (val.length >= 8)       score++;
+      if (/[A-Z]/.test(val))     score++;
+      if (/[0-9]/.test(val))     score++;
+      if (/[^A-Za-z0-9]/.test(val)) score++;
+
+      var configs = [
+        { pct: '25%', color: '#EF4444', label: 'Weak' },
+        { pct: '50%', color: '#F59E0B', label: 'Fair' },
+        { pct: '75%', color: '#3B82F6', label: 'Good' },
+        { pct: '100%', color: '#10B981', label: 'Strong' }
+      ];
+      var cfg = configs[Math.max(0, score - 1)] || configs[0];
+      pwFill.style.width  = cfg.pct;
+      pwFill.style.background = cfg.color;
+      pwLabel.textContent = cfg.label;
+      pwLabel.style.color = cfg.color;
+    });
+
+    /* 5. Search clear button */
+    var searchInput = document.getElementById('fe-search');
+    var searchClear = document.getElementById('fe-search-clear');
+
+    searchInput.addEventListener('input', function() {
+      searchClear.classList.toggle('is-visible', searchInput.value.length > 0);
+    });
+    searchClear.addEventListener('click', function() {
+      searchInput.value = '';
+      searchClear.classList.remove('is-visible');
+      searchInput.focus();
+    });
+
+    /* 6. Submit button: loading → success */
+    var submitBtn = document.getElementById('fe-submit');
+    submitBtn.addEventListener('click', function() {
+      if (submitBtn.classList.contains('is-loading') || submitBtn.classList.contains('is-success')) return;
+      submitBtn.classList.add('is-loading');
+      submitBtn.disabled = true;
+
+      setTimeout(function() {
+        submitBtn.classList.remove('is-loading');
+        submitBtn.classList.add('is-success');
+        submitBtn.querySelector('.fe-btn-text').style.display = '';
+        submitBtn.querySelector('.fe-btn-icon').style.display = 'none';
+        submitBtn.querySelector('.fe-btn-text').textContent = 'Submitted!';
+
+        /* Reset after 3 seconds */
+        setTimeout(function() {
+          submitBtn.classList.remove('is-success');
+          submitBtn.disabled = false;
+          submitBtn.querySelector('.fe-btn-text').textContent = 'Submit form';
+          submitBtn.querySelector('.fe-btn-icon').style.display = '';
+        }, 3000);
+      }, 2000);
+    });
+
+  })();
+  </script>
+
+</body>
+</html>

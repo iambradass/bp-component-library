@@ -1,0 +1,405 @@
+<!-- COMPONENT: Feature Highlight Grid | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feature Highlight Grid</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── Customize these tokens to match your brand ── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+
+      /* Category dot colors — one per filter tab */
+      --cat-website:    #3B82F6;
+      --cat-seo:        #8B5CF6;
+      --cat-support:    #F59E0B;
+      --cat-marketing:  #EC4899;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      padding: 3rem 1rem 5rem;
+    }
+
+    /* ── Section header ── */
+    .fhg-wrap { max-width: 960px; margin: 0 auto; }
+
+    .fhg-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: var(--font-heading); font-size: 0.75rem; font-weight: 600;
+      color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em;
+      padding: 4px 14px; background: var(--accent-dim);
+      border: 1px solid var(--accent-border); border-radius: 100px;
+      margin-bottom: 1rem;
+    }
+
+    .fhg-title {
+      font-family: var(--font-heading); font-size: clamp(1.75rem, 4vw, 2.5rem);
+      font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.5rem;
+    }
+
+    .fhg-subtitle {
+      color: var(--text-secondary); font-size: 1rem; line-height: 1.6;
+      max-width: 540px; margin-bottom: 2rem;
+    }
+
+    /* ── Filter tabs ── */
+    .fhg-tabs {
+      display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 1.75rem;
+    }
+
+    .fhg-tab {
+      height: 34px; padding: 0 16px; border-radius: 100px; border: 1px solid var(--border);
+      background: var(--surface); color: var(--text-muted);
+      font-family: var(--font-heading); font-size: 0.8125rem; font-weight: 600;
+      cursor: pointer; transition: all 0.18s ease; white-space: nowrap;
+    }
+    .fhg-tab:hover { color: var(--text-secondary); border-color: rgba(148,163,184,0.25); }
+    .fhg-tab.active {
+      background: var(--accent-dim); border-color: var(--accent-border);
+      color: var(--accent);
+    }
+
+    /* ── Feature grid — 4-col desktop, 2-col tablet, 1-col mobile ── */
+    .fhg-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    @media (max-width: 768px) { .fhg-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 480px) { .fhg-grid { grid-template-columns: 1fr; } }
+
+    /* Each feature cell */
+    .fhg-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.125rem 1rem 1rem;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+      cursor: default;
+      /* Hidden class = not matching filter */
+    }
+    .fhg-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px var(--accent-border);
+      border-color: var(--accent-border);
+    }
+    .fhg-card.fhg-hidden { display: none; }
+
+    /* Icon row: SVG + category dot */
+    .fhg-card-top {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      margin-bottom: 0.75rem;
+    }
+    .fhg-icon {
+      width: 36px; height: 36px; border-radius: 8px;
+      background: var(--accent-dim); border: 1px solid var(--accent-border);
+      display: flex; align-items: center; justify-content: center; color: var(--accent);
+    }
+    /* Category indicator dot */
+    .fhg-dot {
+      width: 8px; height: 8px; border-radius: 50%; margin-top: 4px; flex-shrink: 0;
+    }
+    .fhg-dot[data-cat="Website"]   { background: var(--cat-website); }
+    .fhg-dot[data-cat="SEO"]       { background: var(--cat-seo); }
+    .fhg-dot[data-cat="Support"]   { background: var(--cat-support); }
+    .fhg-dot[data-cat="Marketing"] { background: var(--cat-marketing); }
+
+    .fhg-name {
+      font-family: var(--font-heading); font-size: 0.875rem; font-weight: 700;
+      color: var(--text); margin-bottom: 0.35rem; line-height: 1.3;
+    }
+    .fhg-desc {
+      font-size: 0.75rem; color: var(--text-muted); line-height: 1.55;
+    }
+
+    /* ── Show-more toggle ── */
+    .fhg-toggle-wrap { text-align: center; margin-top: 0.5rem; }
+    .fhg-toggle {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-family: var(--font-heading); font-size: 0.875rem; font-weight: 600;
+      color: var(--accent); cursor: pointer; padding: 10px 20px;
+      border: 1px solid var(--accent-border); border-radius: 100px;
+      background: var(--accent-dim); transition: all 0.18s ease;
+    }
+    .fhg-toggle:hover { background: rgba(16,185,129,0.22); }
+    .fhg-toggle svg { transition: transform 0.25s ease; }
+    .fhg-toggle.expanded svg { transform: rotate(180deg); }
+
+    /* Cards beyond the initial 12 are "extra" — hidden until toggle */
+    .fhg-extra { display: none; }
+    .fhg-extra.visible { display: flex; flex-direction: column; }
+  </style>
+</head>
+<body>
+
+<div class="fhg-wrap">
+
+  <!-- Section header -->
+  <div class="fhg-eyebrow">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+    Complete Package
+  </div>
+  <h2 class="fhg-title">Everything Included</h2>
+  <p class="fhg-subtitle">Your complete web presence — every feature, fully managed. No a-la-carte surprises.</p>
+
+  <!-- Filter tabs — JS populates "All (24)" count -->
+  <div class="fhg-tabs" id="fhgTabs">
+    <button class="fhg-tab active" data-filter="all">All</button>
+    <button class="fhg-tab" data-filter="Website">Website</button>
+    <button class="fhg-tab" data-filter="SEO">SEO</button>
+    <button class="fhg-tab" data-filter="Support">Support</button>
+    <button class="fhg-tab" data-filter="Marketing">Marketing</button>
+  </div>
+
+  <!-- Feature grid — JS renders cards here -->
+  <div class="fhg-grid" id="fhgGrid"></div>
+
+  <!-- Show-more toggle — JS updates label -->
+  <div class="fhg-toggle-wrap">
+    <button class="fhg-toggle" id="fhgToggle" aria-expanded="false">
+      <span id="fhgToggleLabel">See all 24 features</span>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+    </button>
+  </div>
+
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  /* ── Feature data — 24 features across 4 categories ── */
+  var features = [
+    /* Website (8) */
+    {
+      cat: 'Website', name: 'Custom Design',
+      desc: 'Professionally designed to reflect your brand — not a template anyone else is using.',
+      icon: '<path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>'
+    },
+    {
+      cat: 'Website', name: 'Mobile Optimization',
+      desc: 'Looks sharp and works perfectly on every phone, tablet, and screen size.',
+      icon: '<rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>'
+    },
+    {
+      cat: 'Website', name: 'Contact Forms',
+      desc: 'Lead-capture forms that route directly to your email and CRM inbox.',
+      icon: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/>'
+    },
+    {
+      cat: 'Website', name: 'CRM Integration',
+      desc: 'New leads automatically enter your GoHighLevel pipeline — zero manual entry.',
+      icon: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/>'
+    },
+    {
+      cat: 'Website', name: 'Speed Optimization',
+      desc: 'Optimized images, clean code, and CDN delivery for sub-2-second load times.',
+      icon: '<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>'
+    },
+    {
+      cat: 'Website', name: 'SSL Certificate',
+      desc: 'HTTPS security active from day one — required for trust and Google ranking.',
+      icon: '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>'
+    },
+    {
+      cat: 'Website', name: 'Hosting Setup',
+      desc: 'Fully managed hosting configured and handed off — no cPanel nightmares for you.',
+      icon: '<rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/>'
+    },
+    {
+      cat: 'Website', name: 'Custom Domain Setup',
+      desc: 'Your .com connected, DNS configured, and email matching your domain.',
+      icon: '<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>'
+    },
+
+    /* SEO (6) */
+    {
+      cat: 'SEO', name: 'SEO Foundation',
+      desc: 'Title tags, meta descriptions, and structured data set up correctly from the start.',
+      icon: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>'
+    },
+    {
+      cat: 'SEO', name: 'Google Analytics',
+      desc: 'GA4 property created and integrated — you can see exactly who visits your site.',
+      icon: '<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/>'
+    },
+    {
+      cat: 'SEO', name: 'Google Business Profile',
+      desc: 'Your GBP claimed, optimized, and connected to your new site for local rankings.',
+      icon: '<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>'
+    },
+    {
+      cat: 'SEO', name: 'Local Keyword Targeting',
+      desc: 'Your city and service area woven naturally into every page — how local search works.',
+      icon: '<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>'
+    },
+    {
+      cat: 'SEO', name: 'Image Alt Text',
+      desc: 'Every photo and graphic tagged with descriptive alt text for accessibility and ranking.',
+      icon: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>'
+    },
+    {
+      cat: 'SEO', name: 'Schema Markup',
+      desc: 'Structured data that tells Google exactly what your business does and where you are.',
+      icon: '<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>'
+    },
+
+    /* Support (5) */
+    {
+      cat: 'Support', name: 'Monthly Reports',
+      desc: 'A concise monthly email showing your traffic, leads, and keyword rankings.',
+      icon: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>'
+    },
+    {
+      cat: 'Support', name: 'Priority Support',
+      desc: 'Direct access to your web team — changes and fixes addressed within 24 hours.',
+      icon: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>'
+    },
+    {
+      cat: 'Support', name: 'Content Updates',
+      desc: 'Text and image updates handled for you — no login, no hassle, just email us.',
+      icon: '<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>'
+    },
+    {
+      cat: 'Support', name: 'Uptime Monitoring',
+      desc: 'Your site monitored 24/7 — you\'re alerted the moment anything goes down.',
+      icon: '<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>'
+    },
+    {
+      cat: 'Support', name: 'Training Video',
+      desc: 'A recorded walkthrough of your site so you\'re never lost when you log in.',
+      icon: '<polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>'
+    },
+
+    /* Marketing (5) */
+    {
+      cat: 'Marketing', name: 'Lead Magnet Page',
+      desc: 'A dedicated landing page to capture emails — newsletter, checklist, or free guide.',
+      icon: '<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22 6 12 13 2 6"/>'
+    },
+    {
+      cat: 'Marketing', name: 'Testimonials Section',
+      desc: 'Social proof built into your homepage — real quotes that build trust instantly.',
+      icon: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>'
+    },
+    {
+      cat: 'Marketing', name: 'Review Funnel',
+      desc: 'Automated follow-up that routes happy clients to Google reviews — builds your rating.',
+      icon: '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>'
+    },
+    {
+      cat: 'Marketing', name: 'Social Media Links',
+      desc: 'LinkedIn, Facebook, and Instagram connected and prominently displayed.',
+      icon: '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>'
+    },
+    {
+      cat: 'Marketing', name: 'Email Signature Kit',
+      desc: 'Branded email signature HTML to reinforce your web presence in every message.',
+      icon: '<polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/>'
+    },
+  ];
+
+  var SHOW_INITIAL = 12; /* first N cards visible before "see all" toggle */
+  var currentFilter = 'all';
+  var expanded = false;
+
+  var grid    = document.getElementById('fhgGrid');
+  var toggle  = document.getElementById('fhgToggle');
+  var label   = document.getElementById('fhgToggleLabel');
+  var tabs    = document.querySelectorAll('.fhg-tab');
+
+  /* ── Build SVG icon ── */
+  function iconSVG(paths) {
+    return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">' + paths + '</svg>';
+  }
+
+  /* ── Render all cards into the grid ── */
+  function render() {
+    grid.innerHTML = '';
+
+    var filtered = currentFilter === 'all'
+      ? features
+      : features.filter(function(f) { return f.cat === currentFilter; });
+
+    filtered.forEach(function(f, i) {
+      var card = document.createElement('div');
+      card.className = 'fhg-card' + (!expanded && i >= SHOW_INITIAL ? ' fhg-hidden' : '');
+      card.dataset.cat = f.cat;
+      card.innerHTML =
+        '<div class="fhg-card-top">' +
+          '<div class="fhg-icon">' + iconSVG(f.icon) + '</div>' +
+          '<span class="fhg-dot" data-cat="' + f.cat + '" title="' + f.cat + '"></span>' +
+        '</div>' +
+        '<div class="fhg-name">' + f.name + '</div>' +
+        '<div class="fhg-desc">' + f.desc + '</div>';
+      grid.appendChild(card);
+    });
+
+    /* Update toggle label */
+    var total = filtered.length;
+    if (total <= SHOW_INITIAL) {
+      toggle.style.display = 'none';
+    } else {
+      toggle.style.display = '';
+      if (!expanded) {
+        label.textContent = 'See all ' + total + ' features';
+        toggle.setAttribute('aria-expanded', 'false');
+        toggle.classList.remove('expanded');
+      } else {
+        label.textContent = 'Show fewer';
+        toggle.setAttribute('aria-expanded', 'true');
+        toggle.classList.add('expanded');
+      }
+    }
+  }
+
+  /* ── Tab filter ── */
+  tabs.forEach(function(tab) {
+    tab.addEventListener('click', function() {
+      tabs.forEach(function(t) { t.classList.remove('active'); });
+      tab.classList.add('active');
+      currentFilter = tab.dataset.filter;
+      expanded = false; /* reset expansion on filter change */
+      render();
+    });
+  });
+
+  /* ── Show-more toggle ── */
+  toggle.addEventListener('click', function() {
+    expanded = !expanded;
+    render();
+    if (!expanded) {
+      /* scroll back up to grid on collapse */
+      grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
+
+  /* Initial render */
+  render();
+
+})();
+</script>
+</body>
+</html>

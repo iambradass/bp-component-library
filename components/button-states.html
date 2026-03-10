@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Button States — Component Library</title>
+  <!-- COMPONENT: Button States | COPY: style + html + script -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── CUSTOMIZE ────────────────────────────────────────────── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --danger:         #EF4444;
+      --warn:           #F59E0B;
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+    }
+    /* ── END CUSTOMIZE ────────────────────────────────────────── */
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      padding: 2rem 1.5rem 4rem;
+    }
+
+    h1 {
+      font-family: var(--font-heading);
+      font-size: clamp(1.5rem, 4vw, 2.25rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+    }
+    .page-sub {
+      color: var(--text-secondary);
+      font-size: 0.9375rem;
+      margin-bottom: 3rem;
+    }
+
+    /* Section label */
+    .section-label {
+      font-family: var(--font-heading);
+      font-size: 0.6875rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* Grid: 3 col desktop, 2 col tablet, 1 col mobile */
+    .btn-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+    @media (max-width: 700px) { .btn-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 480px) { .btn-grid { grid-template-columns: 1fr; } }
+
+    /* Individual button demo cell */
+    .btn-cell {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem 1rem;
+    }
+    .btn-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-align: center;
+      line-height: 1.4;
+    }
+
+    /* ── BASE BUTTON STYLE ───────────────────────────────────── */
+    .btn {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      height: 44px;
+      padding: 0 1.5rem;
+      font-family: var(--font-heading);
+      font-size: 0.9375rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      overflow: hidden;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      white-space: nowrap;
+      min-width: 130px;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #0D1117;
+    }
+    .btn-outline {
+      background: transparent;
+      color: var(--accent);
+      border: 1.5px solid var(--accent-border);
+    }
+    .btn-ghost {
+      background: var(--elevated);
+      color: var(--text);
+    }
+
+    /* ── 1. RIPPLE ────────────────────────────────────────────── */
+    .btn-ripple { background: var(--accent); color: #0D1117; }
+    .ripple-wave {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.35);
+      transform: scale(0);
+      animation: ripple-anim 0.55s ease-out forwards;
+      pointer-events: none;
+    }
+    @keyframes ripple-anim {
+      to { transform: scale(4); opacity: 0; }
+    }
+
+    /* ── 2. MORPH TO LOADER ───────────────────────────────────── */
+    .btn-morph {
+      background: var(--accent);
+      color: #0D1117;
+      transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                  border-radius 0.35s ease,
+                  background 0.2s ease;
+    }
+    .btn-morph.loading {
+      width: 44px !important;
+      min-width: unset;
+      border-radius: 50%;
+      padding: 0;
+      pointer-events: none;
+    }
+    .btn-morph.success { background: #059669; }
+    .morph-text { transition: opacity 0.2s ease; }
+    .morph-spinner {
+      display: none;
+      width: 18px; height: 18px;
+      border: 2px solid rgba(13,17,23,0.3);
+      border-top-color: #0D1117;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    .btn-morph.loading .morph-text { display: none; }
+    .btn-morph.loading .morph-spinner { display: block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── 3. CHECKMARK SUCCESS ─────────────────────────────────── */
+    .btn-check { background: var(--accent); color: #0D1117; }
+    .btn-check.done { background: #059669; pointer-events: none; }
+    .check-text { transition: opacity 0.15s ease; }
+    .check-svg {
+      display: none;
+      position: absolute;
+    }
+    .btn-check.done .check-text { opacity: 0; }
+    .btn-check.done .check-svg { display: block; }
+    .check-path {
+      stroke-dasharray: 20;
+      stroke-dashoffset: 20;
+      animation: draw-check 0.4s ease forwards 0.1s;
+    }
+    @keyframes draw-check {
+      to { stroke-dashoffset: 0; }
+    }
+
+    /* ── 4. SHAKE ON ERROR ────────────────────────────────────── */
+    .btn-shake { background: var(--danger); color: #fff; }
+    .btn-shake.shaking { animation: shake 0.45s ease; pointer-events: none; }
+    @keyframes shake {
+      0%  { transform: translateX(0); }
+      15% { transform: translateX(-8px); }
+      30% { transform: translateX(8px); }
+      45% { transform: translateX(-6px); }
+      60% { transform: translateX(6px); }
+      75% { transform: translateX(-2px); }
+      90% { transform: translateX(2px); }
+      100%{ transform: translateX(0); }
+    }
+
+    /* ── 5. FILL FROM LEFT ────────────────────────────────────── */
+    .btn-fill {
+      background: transparent;
+      color: var(--accent);
+      border: 1.5px solid var(--accent-border);
+      overflow: hidden;
+    }
+    .btn-fill::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--accent);
+      transform: scaleX(0);
+      transform-origin: left center;
+      transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 0;
+    }
+    .btn-fill:hover::before { transform: scaleX(1); }
+    .btn-fill:hover { color: #0D1117; }
+    .btn-fill span { position: relative; z-index: 1; transition: color 0.35s ease; }
+
+    /* ── 6. BORDER TRACE ──────────────────────────────────────── */
+    .btn-trace {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+      overflow: visible;
+    }
+    .btn-trace svg.trace-svg {
+      position: absolute;
+      inset: -2px;
+      width: calc(100% + 4px);
+      height: calc(100% + 4px);
+      pointer-events: none;
+      border-radius: 8px;
+    }
+    .btn-trace .trace-rect {
+      fill: none;
+      stroke: var(--accent);
+      stroke-width: 2;
+      stroke-dasharray: 300;
+      stroke-dashoffset: 300;
+      transition: stroke-dashoffset 0.5s ease;
+      rx: 8; ry: 8;
+    }
+    .btn-trace:hover .trace-rect { stroke-dashoffset: 0; }
+
+    /* ── 7. MAGNETIC PULL ─────────────────────────────────────── */
+    .btn-magnetic-wrap {
+      width: 160px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn-magnetic {
+      background: var(--elevated);
+      color: var(--text);
+      border: 1px solid var(--border);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      will-change: transform;
+    }
+    .btn-magnetic:hover {
+      box-shadow: 0 8px 30px rgba(16,185,129,0.2);
+      border-color: var(--accent-border);
+    }
+
+    /* ── 8. BOUNCE PRESS ──────────────────────────────────────── */
+    .btn-bounce {
+      background: var(--accent);
+      color: #0D1117;
+      transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .btn-bounce:active { transform: scale(0.92); }
+    /* Spring-back is handled by the transition cubic-bezier */
+
+    /* ── 9. PARTICLE BURST ────────────────────────────────────── */
+    .btn-particle {
+      background: var(--accent);
+      color: #0D1117;
+    }
+    .particle {
+      position: fixed;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      pointer-events: none;
+      animation: particle-fly var(--dur, 0.7s) ease-out forwards;
+    }
+    @keyframes particle-fly {
+      0%   { transform: translate(0,0) scale(1); opacity: 1; }
+      100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
+    }
+
+    /* ── 10. TYPE REVEAL ──────────────────────────────────────── */
+    .btn-type {
+      background: var(--elevated);
+      color: var(--text);
+      border: 1px solid var(--border);
+      font-family: ui-monospace, monospace;
+      font-size: 0.875rem;
+      letter-spacing: 0.05em;
+    }
+
+    /* ── 11. SPLIT TEXT SLIDE ─────────────────────────────────── */
+    .btn-split {
+      background: var(--accent);
+      color: #0D1117;
+      overflow: hidden;
+    }
+    .split-front, .split-back {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      transition: transform 0.3s ease;
+    }
+    .split-front { transform: translateY(0); }
+    .split-back {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transform: translateY(100%);
+      background: #059669;
+      color: #fff;
+    }
+    .btn-split:hover .split-front { transform: translateY(-100%); }
+    .btn-split:hover .split-back  { transform: translateY(0); }
+
+    /* ── 12. NEON PULSE ───────────────────────────────────────── */
+    .btn-neon {
+      background: var(--accent-dim);
+      color: var(--accent);
+      border: 1.5px solid var(--accent-border);
+      animation: neon-pulse-idle 2.5s ease-in-out infinite;
+    }
+    .btn-neon:hover {
+      animation: neon-pulse-hover 1s ease-in-out infinite;
+      background: var(--accent);
+      color: #0D1117;
+    }
+    @keyframes neon-pulse-idle {
+      0%,100% { box-shadow: 0 0 10px rgba(16,185,129,0.2), 0 0 20px rgba(16,185,129,0.1); }
+      50%      { box-shadow: 0 0 20px rgba(16,185,129,0.4), 0 0 40px rgba(16,185,129,0.2); }
+    }
+    @keyframes neon-pulse-hover {
+      0%,100% { box-shadow: 0 0 20px rgba(16,185,129,0.5), 0 0 40px rgba(16,185,129,0.3), 0 0 60px rgba(16,185,129,0.1); }
+      50%      { box-shadow: 0 0 30px rgba(16,185,129,0.7), 0 0 60px rgba(16,185,129,0.4), 0 0 90px rgba(16,185,129,0.2); }
+    }
+  </style>
+</head>
+<body>
+
+  <div style="max-width:960px; margin:0 auto;">
+    <h1>Button States</h1>
+    <p class="page-sub">12 interactive button effects — click each one to see the interaction.</p>
+
+    <div class="section-label">Micro-interaction Reference</div>
+
+    <div class="btn-grid">
+
+      <!-- 1. Ripple -->
+      <div class="btn-cell">
+        <button class="btn btn-ripple" id="btn-ripple">Click Me</button>
+        <span class="btn-label">Ripple — material ink from click point</span>
+      </div>
+
+      <!-- 2. Morph to Loader -->
+      <div class="btn-cell">
+        <button class="btn btn-morph" id="btn-morph" style="width:130px;">
+          <span class="morph-text">Submit</span>
+          <div class="morph-spinner"></div>
+        </button>
+        <span class="btn-label">Morph Loader — shrinks to spinner, expands to success</span>
+      </div>
+
+      <!-- 3. Checkmark Success -->
+      <div class="btn-cell">
+        <button class="btn btn-check" id="btn-check">
+          <span class="check-text">Confirm</span>
+          <svg class="check-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0D1117" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <polyline class="check-path" points="4 12 9 17 20 6"/>
+          </svg>
+        </button>
+        <span class="btn-label">Checkmark — SVG draws on confirm</span>
+      </div>
+
+      <!-- 4. Shake on Error -->
+      <div class="btn-cell">
+        <button class="btn btn-shake" id="btn-shake">Wrong Password</button>
+        <span class="btn-label">Shake — wrong-password error animation</span>
+      </div>
+
+      <!-- 5. Fill From Left -->
+      <div class="btn-cell">
+        <button class="btn btn-fill"><span>Hover Me</span></button>
+        <span class="btn-label">Fill Left — accent sweeps in on hover</span>
+      </div>
+
+      <!-- 6. Border Trace -->
+      <div class="btn-cell">
+        <button class="btn btn-trace">
+          Hover Trace
+          <svg class="trace-svg" viewBox="0 0 134 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect class="trace-rect" x="1" y="1" width="132" height="42" rx="8" ry="8"/>
+          </svg>
+        </button>
+        <span class="btn-label">Border Trace — glowing outline draws on hover</span>
+      </div>
+
+      <!-- 7. Magnetic Pull -->
+      <div class="btn-cell">
+        <div class="btn-magnetic-wrap" id="magnetic-wrap">
+          <button class="btn btn-magnetic" id="btn-magnetic">Magnetic</button>
+        </div>
+        <span class="btn-label">Magnetic — pulls toward cursor within 60px</span>
+      </div>
+
+      <!-- 8. Bounce Press -->
+      <div class="btn-cell">
+        <button class="btn btn-bounce">Press Me</button>
+        <span class="btn-label">Bounce Press — spring easing on active</span>
+      </div>
+
+      <!-- 9. Particle Burst -->
+      <div class="btn-cell">
+        <button class="btn btn-particle" id="btn-particle">Burst!</button>
+        <span class="btn-label">Particle Burst — 10 particles fly from click</span>
+      </div>
+
+      <!-- 10. Type Reveal -->
+      <div class="btn-cell">
+        <button class="btn btn-type" id="btn-type" data-original="Hover Me" data-reveal="Loading...">Hover Me</button>
+        <span class="btn-label">Type Reveal — re-types itself on hover</span>
+      </div>
+
+      <!-- 11. Split Text Slide -->
+      <div class="btn-cell">
+        <button class="btn btn-split">
+          <span class="split-front">Get Started</span>
+          <span class="split-back">Let's Go!</span>
+        </button>
+        <span class="btn-label">Split Slide — top half up, reveal underneath</span>
+      </div>
+
+      <!-- 12. Neon Pulse -->
+      <div class="btn-cell">
+        <button class="btn btn-neon">Neon Glow</button>
+        <span class="btn-label">Neon Pulse — glow intensifies on hover</span>
+      </div>
+
+    </div>
+  </div>
+
+<script>
+/* ── 1. Ripple — spawn a circle at click coords ──────────────── */
+document.getElementById('btn-ripple').addEventListener('click', function(e) {
+  var btn = this;
+  var rect = btn.getBoundingClientRect();
+  var size = Math.max(rect.width, rect.height) * 1.5;
+  var x = e.clientX - rect.left - size / 2;
+  var y = e.clientY - rect.top  - size / 2;
+
+  var ripple = document.createElement('span');
+  ripple.className = 'ripple-wave';
+  ripple.style.cssText = 'width:'+size+'px;height:'+size+'px;left:'+x+'px;top:'+y+'px;';
+  btn.appendChild(ripple);
+
+  // Clean up after animation completes
+  ripple.addEventListener('animationend', function() { ripple.remove(); });
+});
+
+/* ── 2. Morph to Loader ───────────────────────────────────────── */
+document.getElementById('btn-morph').addEventListener('click', function() {
+  var btn = this;
+  if (btn.classList.contains('loading') || btn.classList.contains('success')) return;
+
+  btn.classList.add('loading');
+
+  // After 2s: expand back with success state
+  setTimeout(function() {
+    btn.classList.remove('loading');
+    btn.classList.add('success');
+    btn.querySelector('.morph-text').textContent = 'Done!';
+
+    // Reset after 2s
+    setTimeout(function() {
+      btn.classList.remove('success');
+      btn.querySelector('.morph-text').textContent = 'Submit';
+    }, 2000);
+  }, 2000);
+});
+
+/* ── 3. Checkmark Success ─────────────────────────────────────── */
+document.getElementById('btn-check').addEventListener('click', function() {
+  var btn = this;
+  if (btn.classList.contains('done')) return;
+
+  btn.classList.add('done');
+  // Reset the path so animation can re-run cleanly on next click
+  var path = btn.querySelector('.check-path');
+
+  setTimeout(function() {
+    btn.classList.remove('done');
+    // Force reflow to restart the CSS animation next time
+    path.style.animation = 'none';
+    path.getBoundingClientRect();
+    path.style.animation = '';
+  }, 2500);
+});
+
+/* ── 4. Shake on Error ────────────────────────────────────────── */
+document.getElementById('btn-shake').addEventListener('click', function() {
+  var btn = this;
+  btn.classList.add('shaking');
+  btn.addEventListener('animationend', function() {
+    btn.classList.remove('shaking');
+  }, { once: true });
+});
+
+/* ── 7. Magnetic Pull ─────────────────────────────────────────── */
+(function() {
+  var wrap = document.getElementById('magnetic-wrap');
+  var btn  = document.getElementById('btn-magnetic');
+  var STRENGTH = 0.35; // fraction of offset to apply
+  var RANGE    = 80;   // px — magnetic field radius
+
+  document.addEventListener('mousemove', function(e) {
+    var rect = wrap.getBoundingClientRect();
+    var cx = rect.left + rect.width  / 2;
+    var cy = rect.top  + rect.height / 2;
+    var dx = e.clientX - cx;
+    var dy = e.clientY - cy;
+    var dist = Math.sqrt(dx * dx + dy * dy);
+
+    if (dist < RANGE) {
+      btn.style.transform = 'translate(' + (dx * STRENGTH) + 'px, ' + (dy * STRENGTH) + 'px)';
+    } else {
+      btn.style.transform = '';
+    }
+  });
+
+  wrap.addEventListener('mouseleave', function() {
+    btn.style.transform = '';
+  });
+})();
+
+/* ── 9. Particle Burst ────────────────────────────────────────── */
+document.getElementById('btn-particle').addEventListener('click', function(e) {
+  var colors = ['#10B981','#34D399','#6EE7B7','#FCD34D','#F87171'];
+  var count  = 10;
+
+  for (var i = 0; i < count; i++) {
+    var angle = (360 / count) * i + (Math.random() * 30 - 15);
+    var rad   = (angle * Math.PI) / 180;
+    var dist  = 60 + Math.random() * 50;
+    var dx    = Math.cos(rad) * dist;
+    var dy    = Math.sin(rad) * dist + 40; // gravity offset downward
+
+    var p = document.createElement('span');
+    p.className = 'particle';
+    p.style.cssText = [
+      'left:' + e.clientX + 'px',
+      'top:'  + e.clientY + 'px',
+      'background:' + colors[Math.floor(Math.random() * colors.length)],
+      '--dx:' + dx + 'px',
+      '--dy:' + dy + 'px',
+      '--dur:' + (0.5 + Math.random() * 0.4) + 's',
+      'margin-left:-4px',
+      'margin-top:-4px'
+    ].join(';');
+    document.body.appendChild(p);
+    p.addEventListener('animationend', function() { this.remove(); });
+  }
+});
+
+/* ── 10. Type Reveal — scramble on hover ──────────────────────── */
+(function() {
+  var btn    = document.getElementById('btn-type');
+  var orig   = btn.dataset.original;
+  var reveal = btn.dataset.reveal;
+  var chars  = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#';
+  var timer  = null;
+  var active = false;
+
+  function scramble(target) {
+    var steps = 0;
+    var maxSteps = target.length * 4;
+    clearInterval(timer);
+    timer = setInterval(function() {
+      var result = '';
+      for (var i = 0; i < target.length; i++) {
+        var locked = i < Math.floor(steps / 4);
+        result += locked ? target[i] : chars[Math.floor(Math.random() * chars.length)];
+      }
+      btn.textContent = result;
+      steps++;
+      if (steps > maxSteps) {
+        clearInterval(timer);
+        btn.textContent = target;
+        active = false;
+      }
+    }, 35);
+  }
+
+  btn.addEventListener('mouseenter', function() {
+    if (active) return;
+    active = true;
+    scramble(reveal);
+  });
+  btn.addEventListener('mouseleave', function() {
+    if (active) return;
+    active = true;
+    scramble(orig);
+  });
+})();
+</script>
+</body>
+</html>

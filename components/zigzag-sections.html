@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zigzag Alternating Sections</title>
+
+  <!--
+    COMPONENT: Zigzag Alternating Sections
+    COPY: style + html + script
+    Classic marketing site alternating layout: text-left/visual-right, then flipped.
+    4 sections. Between sections: step badge connector. IntersectionObserver scroll reveal.
+    Mobile: always single column, visual first.
+  -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+
+    /* ── CUSTOMIZE ── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --glow:           rgba(16,185,129,0.15);
+      --border:         rgba(148,163,184,0.1);
+      --border-accent:  rgba(16,185,129,0.3);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+    }
+
+    /* Page wrapper */
+    .page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 4rem 1.5rem 6rem;
+    }
+
+    /* Page header */
+    .page-header {
+      text-align: center;
+      margin-bottom: 5rem;
+    }
+    .eyebrow {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      padding: 4px 12px;
+      border: 1px solid var(--border-accent);
+      background: var(--glow);
+      border-radius: 100px;
+      margin-bottom: 1.25rem;
+    }
+    .page-title {
+      font-family: var(--font-heading);
+      font-size: clamp(2rem, 5vw, 3rem);
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      margin-bottom: 1rem;
+    }
+    .page-sub {
+      color: var(--text-secondary);
+      font-size: 1rem;
+      line-height: 1.7;
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+
+    /* ══════════════════════════════════════
+       STEP CONNECTOR between sections
+    ══════════════════════════════════════ */
+    .step-connector {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      margin: 0.5rem 0;
+    }
+    .step-line {
+      width: 1px;
+      height: 48px;
+      background: linear-gradient(to bottom, transparent, var(--border-accent));
+    }
+    .step-badge {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--surface);
+      border: 1px solid var(--border-accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-heading);
+      font-size: 0.8125rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .step-line-bottom {
+      width: 1px;
+      height: 48px;
+      background: linear-gradient(to bottom, var(--border-accent), transparent);
+    }
+
+
+    /* ══════════════════════════════════════
+       ZIGZAG SECTION
+    ══════════════════════════════════════ */
+    .zz-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+      align-items: center;
+      padding: 3rem 0;
+
+      /* Scroll reveal initial state */
+      opacity: 0;
+      transform: translateY(32px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .zz-section.revealed {
+      opacity: 1;
+      transform: none;
+    }
+
+    /* Even sections flip: visual goes left, text goes right */
+    .zz-section:nth-child(even) .zz-text  { order: 2; }
+    .zz-section:nth-child(even) .zz-visual { order: 1; }
+
+    /* Subtle alternating section backgrounds */
+    .zz-section:nth-child(odd) {
+      background: transparent;
+    }
+    .zz-section:nth-child(even) {
+      background: rgba(255,255,255,0.01);
+      border-radius: var(--radius);
+      padding: 3rem 2rem;
+    }
+
+    /* Mobile: always single column, visual on top */
+    @media (max-width: 768px) {
+      .zz-section {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+        padding: 2rem 0;
+      }
+      .zz-section .zz-text,
+      .zz-section .zz-visual { order: unset !important; }
+      .zz-section .zz-visual { order: -1 !important; } /* visual always first on mobile */
+    }
+
+
+    /* ── Text column ── */
+    .zz-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 0.75rem;
+    }
+    .zz-heading {
+      font-family: var(--font-heading);
+      font-size: clamp(1.5rem, 3vw, 2.125rem);
+      font-weight: 700;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+      margin-bottom: 1rem;
+    }
+    .zz-body {
+      color: var(--text-secondary);
+      line-height: 1.7;
+      font-size: 0.9375rem;
+      margin-bottom: 1.5rem;
+    }
+
+    /* Feature bullet points */
+    .zz-features {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-bottom: 1.75rem;
+    }
+    .zz-feature {
+      display: flex;
+      gap: 0.75rem;
+      align-items: flex-start;
+    }
+    .zz-feat-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      flex-shrink: 0;
+      margin-top: 7px;
+    }
+    .zz-feat-text {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+    .zz-feat-text strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    /* CTA link */
+    .zz-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--accent);
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 0.9375rem;
+      text-decoration: none;
+      transition: gap 0.2s;
+    }
+    .zz-link:hover { gap: 10px; }
+
+
+    /* ── Visual column ── */
+    .zz-visual {
+      position: relative;
+    }
+
+    /* Shared visual panel frame */
+    .visual-frame {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* ── Visual 1: Browser mockup ── */
+    .browser-chrome {
+      background: var(--elevated);
+      padding: 0.75rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .browser-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    .browser-dot:nth-child(1) { background: #FF5F56; }
+    .browser-dot:nth-child(2) { background: #FFBD2E; }
+    .browser-dot:nth-child(3) { background: #27C93F; }
+    .browser-url {
+      flex: 1;
+      background: var(--bg);
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-left: 0.5rem;
+    }
+    .browser-body {
+      padding: 1.5rem;
+    }
+    .browser-placeholder-row {
+      height: 12px;
+      background: var(--elevated);
+      border-radius: 4px;
+      margin-bottom: 10px;
+    }
+    .browser-placeholder-row:nth-child(2) { width: 75%; }
+    .browser-placeholder-row:nth-child(3) { width: 90%; }
+    .browser-placeholder-row:nth-child(4) { width: 60%; }
+    .browser-placeholder-img {
+      height: 100px;
+      background: linear-gradient(135deg, var(--elevated), rgba(16,185,129,0.1));
+      border-radius: 8px;
+      margin-bottom: 1rem;
+    }
+
+    /* ── Visual 2: Metrics dashboard card ── */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      padding: 1.5rem;
+    }
+    .metric-item {
+      background: var(--elevated);
+      border-radius: 8px;
+      padding: 1rem;
+    }
+    .metric-label {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.4rem;
+    }
+    .metric-value {
+      font-family: var(--font-heading);
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .metric-change {
+      font-size: 0.7rem;
+      color: var(--accent);
+      margin-top: 0.2rem;
+    }
+    .metric-change.down { color: #F87171; }
+    .mini-bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
+      height: 30px;
+      margin-top: 0.5rem;
+    }
+    .mini-bar {
+      width: 6px;
+      background: var(--accent);
+      border-radius: 2px;
+      opacity: 0.5;
+    }
+    .mini-bar:last-child { opacity: 1; }
+
+    /* ── Visual 3: Phone mockup ── */
+    .phone-frame {
+      width: 160px;
+      margin: 0 auto;
+      background: var(--elevated);
+      border: 2px solid rgba(148,163,184,0.15);
+      border-radius: 28px;
+      padding: 16px 12px;
+      position: relative;
+    }
+    .phone-notch {
+      width: 40px;
+      height: 6px;
+      background: var(--bg);
+      border-radius: 3px;
+      margin: 0 auto 12px;
+    }
+    .phone-screen {
+      background: var(--bg);
+      border-radius: 12px;
+      padding: 10px;
+    }
+    .phone-row {
+      height: 8px;
+      background: var(--surface);
+      border-radius: 3px;
+      margin-bottom: 6px;
+    }
+    .phone-row:nth-child(2) { width: 70%; }
+    .phone-row:nth-child(3) { width: 85%; }
+    .phone-cta-row {
+      height: 28px;
+      background: linear-gradient(90deg, var(--accent), #34D399);
+      border-radius: 6px;
+      margin-top: 10px;
+    }
+    .phone-wrapper {
+      padding: 1.5rem;
+      display: flex;
+      justify-content: center;
+    }
+
+    /* ── Visual 4: Terminal window ── */
+    .terminal-chrome {
+      background: #0a0f1a;
+      padding: 0.75rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .terminal-body {
+      background: #0a0f1a;
+      padding: 1.25rem 1.25rem 1.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      line-height: 1.8;
+    }
+    .t-prompt { color: var(--accent); }
+    .t-cmd    { color: #F8FAFC; }
+    .t-comment{ color: var(--text-muted); }
+    .t-out    { color: #60A5FA; }
+    .t-success{ color: #34D399; }
+
+  </style>
+</head>
+<body>
+
+  <div class="page">
+
+    <header class="page-header">
+      <div class="eyebrow">Zigzag Sections</div>
+      <h1 class="page-title">A platform built for scale</h1>
+      <p class="page-sub">Everything you need to plan, build, launch, and maintain world-class web experiences — in one cohesive toolkit.</p>
+    </header>
+
+
+    <!-- ── SECTION 1: text left, visual right ── -->
+    <section class="zz-section" data-reveal>
+      <div class="zz-text">
+        <div class="zz-eyebrow">Step 01 / Strategy</div>
+        <h2 class="zz-heading">Start with a solid plan, not a blank page</h2>
+        <p class="zz-body">Before writing a line of code, map the user journey, competitive landscape, and conversion goals. A strong strategy is what separates sites that look good from sites that perform.</p>
+        <ul class="zz-features">
+          <li class="zz-feature">
+            <span class="zz-feat-dot"></span>
+            <span class="zz-feat-text"><strong>Discovery sprint</strong> — 3 working days to map goals, personas, and KPIs</span>
+          </li>
+          <li class="zz-feature">
+            <span class="zz-feat-dot"></span>
+            <span class="zz-feat-text"><strong>Competitor audit</strong> — benchmark 5 direct competitors on design and copy</span>
+          </li>
+          <li class="zz-feature">
+            <span class="zz-feat-dot"></span>
+            <span class="zz-feat-text"><strong>Sitemap + wireframes</strong> — every page planned before design begins</span>
+          </li>
+        </ul>
+        <a class="zz-link" href="#">
+          Learn about discovery
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </a>
+      </div>
+
+      <!-- Visual: Browser mockup -->
+      <div class="zz-visual">
+        <div class="visual-frame">
+          <div class="browser-chrome">
+            <div class="browser-dot"></div>
+            <div class="browser-dot"></div>
+            <div class="browser-dot"></div>
+            <div class="browser-url">yoursite.com — wireframe</div>
+          </div>
+          <div class="browser-body">
+            <div class="browser-placeholder-img"></div>
+            <div class="browser-placeholder-row"></div>
+            <div class="browser-placeholder-row"></div>
+            <div class="browser-placeholder-row"></div>
+            <div class="browser-placeholder-row"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- Connector -->
+    <div class="step-connector">
+      <div class="step-line"></div>
+      <div class="step-badge">02</div>
+      <div class="step-line-bottom"></div>
+    </div>
+
+
+    <!-- ── SECTION 2: visual left, text right ── -->
+    <section class="zz-section" data-reveal>
+      <div class="zz-text">
+        <div class="zz-eyebrow">Step 02 / Design & Build</div>
+        <h2 class="zz-heading">Designs that convert, code that doesn't break</h2>
+        <p class="zz-body">Pixel-perfect Figma → code handoffs. Mobile-first builds tested across 12 devices. Performance budgets enforced before launch.</p>
+        <ul class="zz-features">
+          <li class="zz-feature">
+            <span class="zz-feat-dot"></span>
+            <span class="zz-feat-text"><strong>Mobile-first</strong> — 375px baseline, breakpoints at 768px and 1024px+</span>
+          </li>
+          <li class="zz-feature">
+            <span class="zz-feat-dot"></span>
+            <span class="zz-feat-text"><strong>Performance budgets</strong> — under 2s LCP on average 4G connection</span>
+          </li>
+          <li class="zz-feature">
+            <span class="zz-feat-dot"></span>
+            <span class="zz-feat-text"><strong>WCAG 2.1 AA</strong> — accessibility baked in, not bolted on</span>
+          </li>
+        </ul>
+        <a class="zz-link" href="#">
+          View build process
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </a>
+      </div>
+
+      <!-- Visual: Metrics dashboard -->
+      <div class="zz-visual">
+        <div class="visual-frame">
+          <div class="metrics-grid">
+            <div class="metric-item">
+              <div class="metric-label">Lighthouse</div>
+              <div class="metric-value">98</div>
+              <div class="metric-change">↑ Performance</div>
+              <div class="mini-bars">
+                <div class="mini-bar" style="height:12px"></div>
+                <div class="mini-bar" style="height:20px"></div>
+                <div class="mini-bar" style="height:16px"></div>
+                <div class="mini-bar" style="height:24px"></div>
+                <div class="mini-bar" style="height:28px"></div>
+                <div class="mini-bar" style="height:30px"></div>
+              </div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-label">LCP</div>
+              <div class="metric-value">1.2s</div>
+              <div class="metric-change">Top 10%</div>
+              <div class="mini-bars">
+                <div class="mini-bar" style="height:22px"></div>
+                <div class="mini-bar" style="height:18px"></div>
+                <div class="mini-bar" style="height:25px"></div>
+                <div class="mini-bar" style="height:14px"></div>
+                <div class="mini-bar" style="height:10px"></div>
+                <div class="mini-bar" style="height:12px"></div>
+              </div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-label">Conversion</div>
+              <div class="metric-value">4.7%</div>
+              <div class="metric-change">↑ 2.1% MoM</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-label">Bounce Rate</div>
+              <div class="metric-value">31%</div>
+              <div class="metric-change down">↓ 8% MoM</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- Connector -->
+    <div class="step-connector">
+      <div class="step-line"></div>
+      <div class="step-badge">03</div>
+      <div class="step-line-bottom"></div>
+    </div>
+
+
+    <!-- ── SECTION 3: text left, visual right ── -->
+    <section class="zz-section" data-reveal>
+      <div class="zz-text">
+        <div class="zz-eyebrow">Step 03 / Mobile</div>
+        <h2 class="zz-heading">52% of your visitors are on a phone</h2>
+        <p class="zz-body">Mobile isn't an afterthought — it's the primary design surface. Every layout, tap target, and form field is tested on real devices before anything else.</p>
+        <ul class="zz-features">
+          <li class="zz-feature">
+            <span class="zz-feat-dot"></span>
+            <span class="zz-feat-text"><strong>44px minimum touch targets</strong> — every button, link, and interactive element</span>
+          </li>
+          <li class="zz-feature">
+            <span class="zz-feat-dot"></span>
+            <span class="zz-feat-text"><strong>Correct input types</strong> — numeric keyboards for phone fields, email for email</span>
+          </li>
+          <li class="zz-feature">
+            <span class="zz-feat-dot"></span>
+            <span class="zz-feat-text"><strong>No horizontal overflow</strong> — tested on 320px viewport minimum</span>
+          </li>
+        </ul>
+        <a class="zz-link" href="#">
+          Mobile audit checklist
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </a>
+      </div>
+
+      <!-- Visual: Phone mockup -->
+      <div class="zz-visual">
+        <div class="visual-frame">
+          <div class="phone-wrapper">
+            <div class="phone-frame">
+              <div class="phone-notch"></div>
+              <div class="phone-screen">
+                <div class="phone-row"></div>
+                <div class="phone-row"></div>
+                <div class="phone-row"></div>
+                <div class="phone-row" style="height:50px; background:linear-gradient(135deg,#0f3123,#0a2818); border-radius:6px;"></div>
+                <div class="phone-row" style="margin-top:8px;"></div>
+                <div class="phone-row"></div>
+                <div class="phone-cta-row"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- Connector -->
+    <div class="step-connector">
+      <div class="step-line"></div>
+      <div class="step-badge">04</div>
+      <div class="step-line-bottom"></div>
+    </div>
+
+
+    <!-- ── SECTION 4: visual left, text right ── -->
+    <section class="zz-section" data-reveal>
+      <div class="zz-text">
+        <div class="zz-eyebrow">Step 04 / Launch</div>
+        <h2 class="zz-heading">Deploy in one command, monitor from day one</h2>
+        <p class="zz-body">Git-push deploys via webhook, CDN cache flush on every build, and automated uptime monitoring — all configured before you go live.</p>
+        <ul class="zz-features">
+          <li class="zz-feature">
+            <span class="zz-feat-dot"></span>
+            <span class="zz-feat-text"><strong>CI/CD pipeline</strong> — push to main → auto-deploy in under 60 seconds</span>
+          </li>
+          <li class="zz-feature">
+            <span class="zz-feat-dot"></span>
+            <span class="zz-feat-text"><strong>CDN pre-configured</strong> — global edge nodes, sub-100ms TTFB</span>
+          </li>
+          <li class="zz-feature">
+            <span class="zz-feat-dot"></span>
+            <span class="zz-feat-text"><strong>Uptime monitoring</strong> — instant SMS + email alerts on any downtime</span>
+          </li>
+        </ul>
+        <a class="zz-link" href="#">
+          Deployment guide
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </a>
+      </div>
+
+      <!-- Visual: Terminal -->
+      <div class="zz-visual">
+        <div class="visual-frame">
+          <div class="terminal-chrome">
+            <div class="browser-dot"></div>
+            <div class="browser-dot"></div>
+            <div class="browser-dot"></div>
+          </div>
+          <div class="terminal-body">
+            <div><span class="t-prompt">$ </span><span class="t-cmd">git push origin main</span></div>
+            <div><span class="t-comment">→ Triggering deploy webhook...</span></div>
+            <div><span class="t-comment">→ Building production bundle</span></div>
+            <div><span class="t-out">✓ Build complete (12.4s)</span></div>
+            <div><span class="t-out">✓ CDN cache flushed</span></div>
+            <div><span class="t-out">✓ SSL certificate valid</span></div>
+            <div><span class="t-success">✓ Live at yoursite.com</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- /page -->
+
+
+  <script>
+  /* Scroll reveal — IntersectionObserver on [data-reveal] sections */
+  const observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('revealed');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15 });
+
+  document.querySelectorAll('[data-reveal]').forEach(function(el) {
+    observer.observe(el);
+  });
+  </script>
+
+</body>
+</html>

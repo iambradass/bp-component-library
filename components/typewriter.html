@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Typewriter Hero — Component Library</title>
+
+  <!--
+  ============================================================
+  COMPONENT: Typewriter / Cycling Text Hero
+  COPY: <style> block + HTML block + <script> block into target site
+  EFFECT: Part of the headline cycles through words with realistic typing animation.
+          Animated dot-grid background adds depth.
+  CUSTOMIZE: Edit the CONFIG object at the top of the <script> block.
+  ============================================================
+  -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+
+    /* ── CUSTOMIZE: swap these variables ── */
+    :root {
+      --tw-bg-page:       #0D1117;
+      --tw-bg-surface:    #111827;
+      --tw-accent:        #10B981;
+      --tw-accent-glow:   rgba(16, 185, 129, 0.3);
+      --tw-accent-border: rgba(16, 185, 129, 0.3);
+      --tw-text:          #F8FAFC;
+      --tw-text-secondary:#94A3B8;
+      --tw-text-muted:    #475569;
+      --tw-border:        rgba(148, 163, 184, 0.1);
+      --tw-radius:        12px;
+      --tw-font-heading:  'Space Grotesk', system-ui, sans-serif;
+      --tw-font-body:     'Inter', system-ui, sans-serif;
+      --tw-font-mono:     ui-monospace, monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      height: 100%;
+    }
+    body {
+      background: var(--tw-bg-page);
+      color: var(--tw-text);
+      font-family: var(--tw-font-body);
+      min-height: 100vh;
+    }
+
+
+    /* ════════════════════════════════════════════
+       COMPONENT STYLES
+    ════════════════════════════════════════════ */
+
+    /* Hero section — full viewport height */
+    .tw-hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4rem 1.5rem;
+      overflow: hidden;
+    }
+
+    /* ── Animated dot-grid background ──
+       Uses a CSS radial-gradient as a repeating dot pattern.
+       Moves slowly via CSS keyframe animation. */
+    .tw-bg-grid {
+      position: absolute;
+      inset: -20%;        /* oversized so moving doesn't reveal edges */
+      background-image: radial-gradient(circle, rgba(148, 163, 184, 0.12) 1px, transparent 1px);
+      background-size: 32px 32px;
+      animation: tw-grid-drift 20s linear infinite;
+      pointer-events: none;
+      z-index: 0;
+    }
+    @keyframes tw-grid-drift {
+      0%   { transform: translate(0, 0); }
+      50%  { transform: translate(16px, 8px); }
+      100% { transform: translate(0, 0); }
+    }
+
+    /* Radial fade: dark center so the grid doesn't compete with text */
+    .tw-bg-fade {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+        ellipse 80% 70% at 50% 50%,
+        transparent 20%,
+        rgba(13, 17, 23, 0.8) 70%,
+        var(--tw-bg-page) 100%
+      );
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Subtle accent glow bloom behind heading */
+    .tw-bg-glow {
+      position: absolute;
+      top: 30%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 600px;
+      height: 300px;
+      background: radial-gradient(ellipse, rgba(16, 185, 129, 0.06) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Content sits above backgrounds */
+    .tw-content {
+      position: relative;
+      z-index: 2;
+      max-width: 800px;
+      text-align: center;
+    }
+
+    /* Category label */
+    .tw-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--tw-font-mono);
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--tw-accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 1.5rem;
+      padding: 6px 16px;
+      background: rgba(16, 185, 129, 0.06);
+      border: 1px solid var(--tw-accent-border);
+      border-radius: 100px;
+    }
+    .tw-label-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--tw-accent);
+      animation: tw-pulse 2s ease-in-out infinite;
+    }
+    @keyframes tw-pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    /* Main headline */
+    .tw-headline {
+      font-family: var(--tw-font-heading);
+      font-size: clamp(2.25rem, 5vw, 3.75rem);
+      font-weight: 700;
+      color: var(--tw-text);
+      line-height: 1.15;
+      margin-bottom: 1.5rem;
+      letter-spacing: -0.02em;
+    }
+
+    /* The static part of the headline */
+    .tw-static-text {
+      display: block;
+    }
+
+    /* Row containing the cycling word */
+    .tw-cycling-row {
+      display: block;
+      color: var(--tw-accent);
+    }
+
+    /* The word that gets typed/deleted */
+    #tw-word {
+      /* No styling needed — inherits from .tw-cycling-row */
+    }
+
+    /* Blinking cursor */
+    .tw-cursor {
+      display: inline-block;
+      width: 3px;
+      height: 0.9em;
+      background: var(--tw-accent);
+      border-radius: 1px;
+      margin-left: 2px;
+      vertical-align: baseline;
+      position: relative;
+      top: 0.05em;
+      animation: tw-blink 1s step-end infinite;
+    }
+    /* Cursor stops blinking while typing/deleting (JS adds .tw-typing class to hero) */
+    .tw-hero.tw-typing .tw-cursor {
+      animation: none;
+      opacity: 1;
+    }
+    @keyframes tw-blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0; }
+    }
+
+    /* Subtitle */
+    .tw-subtitle {
+      font-size: clamp(1rem, 2vw, 1.125rem);
+      color: var(--tw-text-secondary);
+      line-height: 1.7;
+      margin-bottom: 2.5rem;
+      max-width: 560px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* CTA buttons row */
+    .tw-ctas {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      justify-content: center;
+    }
+    .tw-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0.875rem 1.75rem;
+      border-radius: 8px;
+      font-family: var(--tw-font-heading);
+      font-size: 0.9375rem;
+      font-weight: 600;
+      text-decoration: none;
+      min-height: 48px;
+      transition: opacity 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+      cursor: pointer;
+      border: none;
+    }
+    .tw-btn--primary {
+      background: var(--tw-accent);
+      color: #0D1117;
+    }
+    .tw-btn--primary:hover {
+      opacity: 0.9;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px var(--tw-accent-glow);
+    }
+    .tw-btn--secondary {
+      background: transparent;
+      border: 1px solid var(--tw-border);
+      color: var(--tw-text-secondary);
+    }
+    .tw-btn--secondary:hover {
+      border-color: var(--tw-accent-border);
+      color: var(--tw-accent);
+    }
+    .tw-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+    @media (max-width: 480px) {
+      .tw-ctas { flex-direction: column; align-items: center; }
+      .tw-btn { width: 100%; max-width: 280px; justify-content: center; }
+    }
+
+  </style>
+</head>
+<body>
+
+  <section class="tw-hero" id="tw-hero">
+    <!-- Animated background layers -->
+    <div class="tw-bg-grid" aria-hidden="true"></div>
+    <div class="tw-bg-fade" aria-hidden="true"></div>
+    <div class="tw-bg-glow" aria-hidden="true"></div>
+
+    <div class="tw-content">
+      <!-- Label badge -->
+      <div class="tw-label">
+        <span class="tw-label-dot"></span>
+        Available for new projects
+      </div>
+
+      <!-- Headline with cycling word -->
+      <h1 class="tw-headline">
+        <span class="tw-static-text">We build</span>
+        <span class="tw-cycling-row">
+          <span id="tw-word"></span><span class="tw-cursor" aria-hidden="true"></span>
+        </span>
+      </h1>
+
+      <!-- Subtitle -->
+      <p class="tw-subtitle">
+        Premium websites, funnels, and automations that turn traffic into revenue. From concept to deployed in 4 weeks.
+      </p>
+
+      <!-- CTA buttons -->
+      <div class="tw-ctas">
+        <a href="#" class="tw-btn tw-btn--primary">
+          Start a Project
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </a>
+        <a href="#" class="tw-btn tw-btn--secondary">
+          View Portfolio
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+        </a>
+      </div>
+    </div>
+  </section>
+
+
+  <script>
+  /*
+  ════════════════════════════════════════
+  CUSTOMIZE: Edit CONFIG to change behavior
+  ════════════════════════════════════════
+  */
+  var CONFIG = {
+    words:         ['websites.', 'funnels.', 'automations.', 'landing pages.', 'lead engines.'],
+    typeSpeed:     80,    // ms per character while typing
+    deleteSpeed:   45,    // ms per character while deleting
+    pauseAfterType: 2200, // ms to wait after fully typed
+    pauseAfterDelete: 400 // ms to wait after fully deleted
+  };
+
+  /* ── Typewriter state machine ── */
+  var wordEl   = document.getElementById('tw-word');
+  var heroEl   = document.getElementById('tw-hero');
+  var wordIndex  = 0;
+  var charIndex  = 0;
+  var isDeleting = false;
+
+  function tick() {
+    var currentWord = CONFIG.words[wordIndex];
+    var displayed   = currentWord.substring(0, charIndex);
+    wordEl.textContent = displayed;
+
+    var delay;
+
+    if (!isDeleting) {
+      // Typing: add a character
+      charIndex++;
+      heroEl.classList.add('tw-typing'); // stops cursor blink while typing
+
+      if (charIndex > currentWord.length) {
+        // Word fully typed — pause then start deleting
+        charIndex = currentWord.length;
+        isDeleting = true;
+        heroEl.classList.remove('tw-typing');
+        delay = CONFIG.pauseAfterType;
+      } else {
+        // Add slight randomness to typing speed for realism
+        delay = CONFIG.typeSpeed + (Math.random() * 40 - 20);
+      }
+
+    } else {
+      // Deleting: remove a character
+      charIndex--;
+      heroEl.classList.add('tw-typing');
+
+      if (charIndex < 0) {
+        // Word fully deleted — move to next word and pause
+        charIndex = 0;
+        isDeleting = false;
+        heroEl.classList.remove('tw-typing');
+        wordIndex = (wordIndex + 1) % CONFIG.words.length;
+        delay = CONFIG.pauseAfterDelete;
+      } else {
+        delay = CONFIG.deleteSpeed;
+      }
+    }
+
+    setTimeout(tick, delay);
+  }
+
+  // Start with a short delay after page load
+  setTimeout(tick, 600);
+
+  // Respect reduced-motion: if user prefers reduced motion, just show the first word statically
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    wordEl.textContent = CONFIG.words[0];
+    heroEl.classList.remove('tw-typing');
+  }
+  </script>
+
+</body>
+</html>

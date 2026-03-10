@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sortable Data Table</title>
+
+  <!--
+    COMPONENT: Sortable Data Table
+    COPY: style + html + script
+    25 rows of client/project data. Sort by any column (asc/desc).
+    Real-time search filter. Pagination (8 rows per page).
+    Status badges. Progress bar column. Mobile: horizontal scroll wrapper.
+  -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+
+    /* ── CUSTOMIZE ── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --glow:           rgba(16,185,129,0.15);
+      --border:         rgba(148,163,184,0.1);
+      --border-accent:  rgba(16,185,129,0.3);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+
+      /* ── CUSTOMIZE: rows per page ── */
+      --rows-per-page: 8;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+    }
+
+    .page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 3rem 1.5rem 5rem;
+    }
+
+    /* Header */
+    .page-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+    .page-heading {
+      font-family: var(--font-heading);
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .page-sub {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+    }
+
+    /* Search input */
+    .table-search {
+      position: relative;
+    }
+    .table-search input {
+      padding: 0.625rem 0.875rem 0.625rem 2.4rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 0.875rem;
+      width: 240px;
+      min-height: 44px;
+      transition: border-color 0.2s;
+      outline: none;
+    }
+    .table-search input:focus { border-color: var(--border-accent); }
+    .table-search input::placeholder { color: var(--text-muted); }
+    .search-icon {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+    @media (max-width: 600px) {
+      .table-search input { width: 100%; }
+    }
+
+
+    /* ══════════════════════════════════════
+       TABLE WRAPPER
+    ══════════════════════════════════════ */
+    .table-wrapper {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .table-scroll {
+      overflow-x: auto;    /* Horizontal scroll on mobile */
+      -webkit-overflow-scrolling: touch;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 680px;     /* Forces horizontal scroll before this width */
+      font-size: 0.875rem;
+    }
+
+    /* Sticky header */
+    thead {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+
+    th {
+      background: var(--elevated);
+      padding: 0.875rem 1rem;
+      text-align: left;
+      font-family: var(--font-heading);
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      white-space: nowrap;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      user-select: none;
+      transition: color 0.15s, background 0.15s;
+    }
+    th:hover { color: var(--text); background: var(--bg); }
+    th.sort-active { color: var(--accent); }
+
+    /* Sort direction chevrons */
+    .th-inner {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .sort-icon {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      opacity: 0.3;
+      transition: opacity 0.15s;
+    }
+    th.sort-active .sort-icon { opacity: 1; }
+    .sort-icon svg { display: block; }
+    .sort-icon .up   { color: inherit; }
+    .sort-icon .down { color: inherit; opacity: 0.35; }
+    th.sort-asc  .sort-icon .up   { opacity: 1;   }
+    th.sort-asc  .sort-icon .down { opacity: 0.25; }
+    th.sort-desc .sort-icon .up   { opacity: 0.25; }
+    th.sort-desc .sort-icon .down { opacity: 1;    }
+
+    td {
+      padding: 0.875rem 1rem;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-secondary);
+      vertical-align: middle;
+    }
+    /* Odd rows get a very subtle tint */
+    tbody tr:nth-child(even) td { background: rgba(255,255,255,0.012); }
+    tbody tr:hover td { background: var(--elevated); color: var(--text); }
+    tbody tr:last-child td { border-bottom: none; }
+
+    /* Client name column */
+    .td-client {
+      font-family: var(--font-heading);
+      font-weight: 600;
+      color: var(--text) !important;
+      white-space: nowrap;
+    }
+
+    /* Status badge */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      border-radius: 100px;
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      white-space: nowrap;
+    }
+    .status-badge::before {
+      content: '';
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+    .status-active    { background: rgba(16,185,129,0.12); color: #10B981; }
+    .status-completed { background: rgba(96,165,250,0.12); color: #60A5FA; }
+    .status-onhold    { background: rgba(251,191,36,0.12); color: #FBBF24; }
+    .status-inreview  { background: rgba(167,139,250,0.12);color: #A78BFA; }
+
+    /* Progress bar */
+    .progress-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      min-width: 100px;
+    }
+    .progress-track {
+      flex: 1;
+      height: 5px;
+      background: var(--elevated);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 3px;
+      transition: width 0.4s ease;
+    }
+    .progress-pct {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    /* Budget */
+    .td-budget {
+      font-family: var(--font-mono);
+      font-size: 0.8125rem;
+      white-space: nowrap;
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1.5rem;
+      display: none;
+    }
+    .empty-state.visible { display: block; }
+    .empty-icon { font-size: 2rem; margin-bottom: 0.75rem; opacity: 0.4; }
+    .empty-text {
+      font-family: var(--font-heading);
+      color: var(--text-muted);
+      font-size: 0.875rem;
+    }
+
+
+    /* ══════════════════════════════════════
+       PAGINATION
+    ══════════════════════════════════════ */
+    .table-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.875rem 1rem;
+      border-top: 1px solid var(--border);
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+    .pag-info {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+    .pag-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .pag-btn {
+      padding: 0.4rem 0.875rem;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-secondary);
+      font-family: var(--font-heading);
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+      min-height: 36px;
+    }
+    .pag-btn:hover:not(:disabled) {
+      border-color: var(--border-accent);
+      color: var(--text);
+    }
+    .pag-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+    .pag-page {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      padding: 0 0.25rem;
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="page">
+
+    <div class="page-header">
+      <div>
+        <div class="page-heading">Client Projects</div>
+        <div class="page-sub">Click any column header to sort · Search to filter</div>
+      </div>
+      <div class="table-search">
+        <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="search" id="table-search" placeholder="Search clients, projects…" aria-label="Search table">
+      </div>
+    </div>
+
+    <div class="table-wrapper">
+      <div class="table-scroll">
+        <table id="data-table" aria-label="Client projects table">
+          <thead>
+            <tr>
+              <th data-col="client" class="sort-active sort-asc">
+                <div class="th-inner">Client <span class="sort-icon"><svg class="up" width="8" height="5" viewBox="0 0 8 5"><path d="M0 5L4 0L8 5" fill="currentColor"/></svg><svg class="down" width="8" height="5" viewBox="0 0 8 5"><path d="M0 0L4 5L8 0" fill="currentColor"/></svg></span></div>
+              </th>
+              <th data-col="type">
+                <div class="th-inner">Project Type <span class="sort-icon"><svg class="up" width="8" height="5" viewBox="0 0 8 5"><path d="M0 5L4 0L8 5" fill="currentColor"/></svg><svg class="down" width="8" height="5" viewBox="0 0 8 5"><path d="M0 0L4 5L8 0" fill="currentColor"/></svg></span></div>
+              </th>
+              <th data-col="status">
+                <div class="th-inner">Status <span class="sort-icon"><svg class="up" width="8" height="5" viewBox="0 0 8 5"><path d="M0 5L4 0L8 5" fill="currentColor"/></svg><svg class="down" width="8" height="5" viewBox="0 0 8 5"><path d="M0 0L4 5L8 0" fill="currentColor"/></svg></span></div>
+              </th>
+              <th data-col="date">
+                <div class="th-inner">Start Date <span class="sort-icon"><svg class="up" width="8" height="5" viewBox="0 0 8 5"><path d="M0 5L4 0L8 5" fill="currentColor"/></svg><svg class="down" width="8" height="5" viewBox="0 0 8 5"><path d="M0 0L4 5L8 0" fill="currentColor"/></svg></span></div>
+              </th>
+              <th data-col="budget">
+                <div class="th-inner">Budget <span class="sort-icon"><svg class="up" width="8" height="5" viewBox="0 0 8 5"><path d="M0 5L4 0L8 5" fill="currentColor"/></svg><svg class="down" width="8" height="5" viewBox="0 0 8 5"><path d="M0 0L4 5L8 0" fill="currentColor"/></svg></span></div>
+              </th>
+              <th data-col="progress">
+                <div class="th-inner">Progress <span class="sort-icon"><svg class="up" width="8" height="5" viewBox="0 0 8 5"><path d="M0 5L4 0L8 5" fill="currentColor"/></svg><svg class="down" width="8" height="5" viewBox="0 0 8 5"><path d="M0 0L4 5L8 0" fill="currentColor"/></svg></span></div>
+              </th>
+            </tr>
+          </thead>
+          <tbody id="table-body"></tbody>
+        </table>
+        <div class="empty-state" id="empty-state">
+          <div class="empty-icon">⊘</div>
+          <div class="empty-text">No results match your search</div>
+        </div>
+      </div>
+
+      <div class="table-footer">
+        <div class="pag-info" id="pag-info"></div>
+        <div class="pag-controls">
+          <button class="pag-btn" id="pag-prev" disabled>← Prev</button>
+          <span class="pag-page" id="pag-label"></span>
+          <button class="pag-btn" id="pag-next">Next →</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /page -->
+
+
+  <script>
+  /* ─────────────────────────────────────────────────
+     CUSTOMIZE: data rows
+  ───────────────────────────────────────────────── */
+  const RAW_DATA = [
+    { client:'Meridian Group',     type:'Brand Identity',    status:'Active',     date:'2025-01-08', budget:18500, progress:72 },
+    { client:'Solaris Tech',       type:'Web Design',        status:'Active',     date:'2025-02-14', budget:12000, progress:55 },
+    { client:'Fieldwork Co.',      type:'SEO Campaign',      status:'Completed',  date:'2024-10-01', budget:5400,  progress:100 },
+    { client:'NexaFlow',           type:'Dashboard UI',      status:'In Review',  date:'2025-03-03', budget:24000, progress:90 },
+    { client:'Altitude Partners',  type:'Landing Page',      status:'Active',     date:'2025-02-28', budget:4200,  progress:38 },
+    { client:'Prism Studio',       type:'E-Commerce',        status:'On Hold',    date:'2024-12-15', budget:31000, progress:42 },
+    { client:'Caldera Inc.',       type:'Content Strategy',  status:'Active',     date:'2025-01-20', budget:7800,  progress:65 },
+    { client:'Thornfield Media',   type:'Web Design',        status:'Completed',  date:'2024-09-05', budget:9500,  progress:100 },
+    { client:'Vertex Analytics',   type:'Dashboard UI',      status:'Active',     date:'2025-03-01', budget:28000, progress:20 },
+    { client:'Granite Bay Labs',   type:'Brand Identity',    status:'In Review',  date:'2025-02-10', budget:14000, progress:88 },
+    { client:'Nomad Creative',     type:'SEO Campaign',      status:'Active',     date:'2025-01-15', budget:3600,  progress:48 },
+    { client:'Opal Ventures',      type:'Landing Page',      status:'Completed',  date:'2024-11-22', budget:3800,  progress:100 },
+    { client:'Helix Systems',      type:'Web Design',        status:'On Hold',    date:'2024-12-01', budget:16000, progress:35 },
+    { client:'Ironclad Digital',   type:'E-Commerce',        status:'Active',     date:'2025-02-05', budget:42000, progress:60 },
+    { client:'Sapphire Health',    type:'Content Strategy',  status:'In Review',  date:'2025-01-30', budget:11000, progress:82 },
+    { client:'Dune Capital',       type:'Brand Identity',    status:'Completed',  date:'2024-08-18', budget:22000, progress:100 },
+    { client:'Horizon Labs',       type:'Web Design',        status:'Active',     date:'2025-03-05', budget:8800,  progress:15 },
+    { client:'Cascade Digital',   type:'SEO Campaign',      status:'Active',     date:'2025-02-20', budget:4900,  progress:30 },
+    { client:'Sterling & Co.',    type:'Dashboard UI',      status:'On Hold',    date:'2025-01-10', budget:19500, progress:58 },
+    { client:'Ember Creative',    type:'Landing Page',      status:'Completed',  date:'2024-10-30', budget:2800,  progress:100 },
+    { client:'Crestline Brands',  type:'E-Commerce',        status:'Active',     date:'2025-02-01', budget:38000, progress:77 },
+    { client:'Foundry Studio',    type:'Content Strategy',  status:'In Review',  date:'2025-03-02', budget:6200,  progress:70 },
+    { client:'Keystone Group',    type:'Brand Identity',    status:'Active',     date:'2025-01-25', budget:15800, progress:44 },
+    { client:'Aurora Digital',    type:'Web Design',        status:'Completed',  date:'2024-07-14', budget:10500, progress:100 },
+    { client:'Bastion Works',     type:'SEO Campaign',      status:'On Hold',    date:'2024-11-05', budget:3200,  progress:22 },
+  ];
+
+  const ROWS_PER_PAGE = 8;  /* ← CUSTOMIZE */
+
+  /* ── State ── */
+  let filteredData = [...RAW_DATA];
+  let sortCol      = 'client';
+  let sortDir      = 'asc';
+  let currentPage  = 1;
+
+  /* ── Status badge markup ── */
+  function statusBadge(status) {
+    const cls = {
+      'Active':    'status-active',
+      'Completed': 'status-completed',
+      'On Hold':   'status-onhold',
+      'In Review': 'status-inreview'
+    }[status] || '';
+    return '<span class="status-badge ' + cls + '">' + status + '</span>';
+  }
+
+  /* ── Progress bar markup ── */
+  function progressBar(pct) {
+    return '<div class="progress-wrap"><div class="progress-track"><div class="progress-fill" style="width:' + pct + '%"></div></div><span class="progress-pct">' + pct + '%</span></div>';
+  }
+
+  /* ── Format budget ── */
+  function fmtBudget(n) { return '$' + n.toLocaleString(); }
+
+  /* ── Format date ── */
+  function fmtDate(d) {
+    const parts = d.split('-');
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return months[parseInt(parts[1]) - 1] + ' ' + parseInt(parts[2]) + ', ' + parts[0];
+  }
+
+  /* ── Render current page ── */
+  function render() {
+    const tbody   = document.getElementById('table-body');
+    const empty   = document.getElementById('empty-state');
+    const total   = filteredData.length;
+    const pages   = Math.ceil(total / ROWS_PER_PAGE) || 1;
+    currentPage   = Math.min(currentPage, pages);
+
+    const start   = (currentPage - 1) * ROWS_PER_PAGE;
+    const end     = Math.min(start + ROWS_PER_PAGE, total);
+    const pageRows = filteredData.slice(start, end);
+
+    if (pageRows.length === 0) {
+      tbody.innerHTML = '';
+      empty.classList.add('visible');
+    } else {
+      empty.classList.remove('visible');
+      tbody.innerHTML = pageRows.map(function(row) {
+        return '<tr>' +
+          '<td class="td-client">' + row.client + '</td>' +
+          '<td>' + row.type + '</td>' +
+          '<td>' + statusBadge(row.status) + '</td>' +
+          '<td>' + fmtDate(row.date) + '</td>' +
+          '<td class="td-budget">' + fmtBudget(row.budget) + '</td>' +
+          '<td>' + progressBar(row.progress) + '</td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    /* Pagination */
+    document.getElementById('pag-info').textContent =
+      'Showing ' + (total === 0 ? 0 : start + 1) + '–' + end + ' of ' + total + ' projects';
+    document.getElementById('pag-label').textContent = 'Page ' + currentPage + ' of ' + pages;
+    document.getElementById('pag-prev').disabled = currentPage <= 1;
+    document.getElementById('pag-next').disabled = currentPage >= pages;
+  }
+
+  /* ── Sort ── */
+  function sortData(col) {
+    if (sortCol === col) {
+      sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+    } else {
+      sortCol = col;
+      sortDir = 'asc';
+    }
+
+    filteredData.sort(function(a, b) {
+      let va = a[col], vb = b[col];
+      if (typeof va === 'string') va = va.toLowerCase();
+      if (typeof vb === 'string') vb = vb.toLowerCase();
+      if (va < vb) return sortDir === 'asc' ? -1 : 1;
+      if (va > vb) return sortDir === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    /* Update header classes */
+    document.querySelectorAll('th').forEach(function(th) {
+      th.classList.remove('sort-active', 'sort-asc', 'sort-desc');
+    });
+    const activeTh = document.querySelector('th[data-col="' + col + '"]');
+    if (activeTh) {
+      activeTh.classList.add('sort-active', 'sort-' + sortDir);
+    }
+
+    currentPage = 1;
+    render();
+  }
+
+  /* ── Column header click ── */
+  document.querySelectorAll('th[data-col]').forEach(function(th) {
+    th.addEventListener('click', function() { sortData(th.dataset.col); });
+  });
+
+  /* ── Search filter ── */
+  document.getElementById('table-search').addEventListener('input', function() {
+    const q = this.value.toLowerCase().trim();
+    filteredData = RAW_DATA.filter(function(row) {
+      return Object.values(row).some(function(v) { return String(v).toLowerCase().includes(q); });
+    });
+    /* Re-apply sort to filtered data */
+    if (sortCol) {
+      filteredData.sort(function(a, b) {
+        let va = a[sortCol], vb = b[sortCol];
+        if (typeof va === 'string') va = va.toLowerCase();
+        if (typeof vb === 'string') vb = vb.toLowerCase();
+        if (va < vb) return sortDir === 'asc' ? -1 : 1;
+        if (va > vb) return sortDir === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+    currentPage = 1;
+    render();
+  });
+
+  /* ── Pagination buttons ── */
+  document.getElementById('pag-prev').addEventListener('click', function() {
+    currentPage--;
+    render();
+  });
+  document.getElementById('pag-next').addEventListener('click', function() {
+    currentPage++;
+    render();
+  });
+
+  /* ── Initial render ── */
+  sortData('client');
+  </script>
+
+</body>
+</html>

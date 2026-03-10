@@ -1,0 +1,252 @@
+<!-- COMPONENT: Objection Handler | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Objection Handler</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: var(--font-body); min-height: 100vh;
+      padding: 3rem 1rem 5rem;
+    }
+
+    .oh-wrap { max-width: 960px; margin: 0 auto; }
+
+    /* ── Header ── */
+    .oh-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: var(--font-heading); font-size: 0.75rem; font-weight: 600;
+      color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em;
+      padding: 4px 14px; background: var(--accent-dim);
+      border: 1px solid var(--accent-border); border-radius: 100px;
+      margin-bottom: 1rem;
+    }
+    .oh-title {
+      font-family: var(--font-heading); font-size: clamp(1.75rem, 4vw, 2.5rem);
+      font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.5rem;
+    }
+    .oh-subtitle {
+      color: var(--text-secondary); font-size: 1rem; line-height: 1.6;
+      max-width: 520px; margin-bottom: 2rem;
+    }
+
+    /* ── Objection list — full width accordion on all sizes ── */
+    .oh-list { display: flex; flex-direction: column; gap: 0.625rem; }
+
+    .oh-item {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden;
+      transition: border-color 0.2s;
+    }
+    .oh-item.active { border-color: var(--accent-border); }
+
+    /* Objection trigger row */
+    .oh-trigger {
+      display: flex; align-items: flex-start; gap: 1rem;
+      padding: 1.125rem 1.25rem; cursor: pointer;
+      transition: background 0.15s; user-select: none;
+    }
+    .oh-trigger:hover { background: var(--elevated); }
+    .oh-item.active .oh-trigger { background: rgba(16,185,129,0.06); }
+
+    /* Thought bubble icon */
+    .oh-bubble {
+      width: 36px; height: 36px; flex-shrink: 0; border-radius: 50%;
+      background: var(--elevated); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-muted); transition: all 0.2s;
+    }
+    .oh-item.active .oh-bubble {
+      background: var(--accent-dim); border-color: var(--accent-border); color: var(--accent);
+    }
+
+    .oh-trigger-right { flex: 1; min-width: 0; }
+    .oh-objection-label {
+      font-family: var(--font-heading); font-size: 0.625rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted);
+      margin-bottom: 0.3rem;
+    }
+    .oh-item.active .oh-objection-label { color: var(--accent); }
+    .oh-objection-text {
+      font-family: var(--font-heading); font-size: 0.9375rem; font-weight: 600;
+      color: var(--text); line-height: 1.3; font-style: italic;
+    }
+
+    .oh-chevron {
+      flex-shrink: 0; color: var(--text-muted); margin-top: 6px;
+      transition: transform 0.25s, color 0.2s;
+    }
+    .oh-item.active .oh-chevron { transform: rotate(180deg); color: var(--accent); }
+
+    /* Answer panel */
+    .oh-answer {
+      max-height: 0; overflow: hidden;
+      transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .oh-item.active .oh-answer { max-height: 400px; }
+
+    .oh-answer-inner {
+      padding: 0 1.25rem 1.25rem 1.25rem;
+      display: grid; grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+    /* On tablet+ split into answer left + proof right */
+    @media (min-width: 640px) {
+      .oh-answer-inner { grid-template-columns: 3fr 2fr; }
+    }
+
+    .oh-answer-text {
+      font-size: 0.9375rem; color: var(--text-secondary); line-height: 1.7;
+    }
+
+    /* Proof element — stat, quote, or badge */
+    .oh-proof {
+      background: var(--elevated); border-radius: 10px; padding: 1rem;
+      border: 1px solid var(--border); display: flex; flex-direction: column;
+      gap: 0.5rem; align-self: start;
+    }
+    .oh-proof-type {
+      font-family: var(--font-heading); font-size: 0.6rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent);
+    }
+    .oh-proof-content {
+      font-size: 0.875rem; color: var(--text); font-weight: 500; line-height: 1.5;
+    }
+    .oh-proof-sub { font-size: 0.75rem; color: var(--text-muted); }
+  </style>
+</head>
+<body>
+
+<div class="oh-wrap">
+
+  <div class="oh-eyebrow">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    Common Questions
+  </div>
+  <h2 class="oh-title">Common Questions (And Honest Answers)</h2>
+  <p class="oh-subtitle">The questions we hear before every new client says yes. Answered directly, without the spin.</p>
+
+  <div class="oh-list" id="ohList"></div>
+
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  var objections = [
+    {
+      objection: '"I already have a website through my broker..."',
+      answer: 'Your broker\'s site was built to promote the company — not you. It has the same design as every other rep at your firm, your name buried on a profile page with no individual SEO value. When someone Googles your name or "title rep [your city]", that page does almost nothing. A personal site gives you a URL that\'s yours, rankings that belong to you, and a first impression that separates you from everyone else in the office.',
+      proof: { type: 'Industry Data', content: '91% of consumers research service providers online before making contact.', sub: 'A broker profile page isn\'t enough to rank individually.' }
+    },
+    {
+      objection: '"$97 a month feels like a lot for something I\'m not sure will work..."',
+      answer: 'At $97/month and an average title commission of $900–$1,200, your site pays for itself with a single new closing. One new client per year — at minimum — makes this ROI positive. Most of our clients see 8–15 inbound leads within 90 days of launch. The question isn\'t whether it works. The question is whether you can afford to keep depending entirely on people you already know.',
+      proof: { type: 'The Math', content: '1 extra closing = $900+ commission.', sub: '$97 × 12 months = $1,164/year. Break-even: 1.3 closings.' }
+    },
+    {
+      objection: '"I\'m not tech-savvy — I won\'t know how to manage it..."',
+      answer: 'You don\'t have to. We handle everything — design, build, updates, and monthly reporting. You review a preview link and tell us if anything needs changing. That\'s the most technical thing you\'ll ever do. We even send you a recorded walkthrough video after launch. Our most successful clients never log into anything.',
+      proof: { type: 'Client Reality', content: '"I haven\'t touched the backend once. It just works."', sub: 'Title rep, Austin TX — client since 2023' }
+    },
+    {
+      objection: '"I get enough leads from social media already..."',
+      answer: 'Social media and a website do fundamentally different things. Social keeps you visible to people who already follow you. A website captures people who don\'t know you yet — the agent who just moved to your market, the buyer who Googled "title company near me," the lender looking for a new closing partner. These are new relationships that referrals and LinkedIn posts never reach. Both are valuable. A website is the piece most title reps are missing.',
+      proof: { type: 'Data Point', content: '67% of title decisions start with a Google search — not social.', sub: 'Search intent = someone ready to buy, not just browsing.' }
+    },
+    {
+      objection: '"I don\'t have time to deal with setting this up..."',
+      answer: 'The only time you spend is a 30-minute kickoff call and 15 minutes filling out a brand questionnaire. We do everything else — design, build, SEO, hosting configuration, Google setup. Your site is live in 10 business days. After that, changes are handled by emailing us. The setup cost to you is less than a single prospecting afternoon.',
+      proof: { type: 'Timeline', content: 'Live in 10 business days.', sub: 'Your time investment: 1 call + 1 form = ~45 minutes total' }
+    },
+    {
+      objection: '"I\'m not sure it\'ll actually generate leads in my market..."',
+      answer: 'Fair question — and the honest answer is: it depends on your market size and competition. What we can tell you is that 34 of our clients currently rank on page one for their target keyword, and the average across all clients is 8–15 monthly form submissions by month three. We do a market analysis before building to confirm SEO viability — and we\'ll tell you upfront if expectations need to be adjusted.',
+      proof: { type: 'Client Average', content: '8–15 inbound form submissions per month', sub: 'Measured 90 days post-launch, across all active clients' }
+    },
+    {
+      objection: '"I don\'t have professional photos or content ready..."',
+      answer: 'You don\'t need them to start. We build with placeholder-quality stock imagery initially, and most clients update with real photos within the first 30 days at no extra cost. For content, your brand questionnaire provides everything we need — we write the copy for all 5 pages based on your answers. You review and approve it. No writing required on your end.',
+      proof: { type: 'Included', content: 'Copywriting for all 5 pages included', sub: 'Stock photography included. Real photo swap = free update.' }
+    },
+    {
+      objection: '"What if I want to cancel? Am I locked into a contract?"',
+      answer: 'No long-term contract, no cancellation fee, no run-around. Month-to-month from day one. Cancel anytime with 30 days notice. We keep your site live during the final 30 days. The only thing you\'d lose is the ongoing SEO and support work — the website itself is yours. We\'d even help you transfer hosting if you wanted to keep the site independently.',
+      proof: { type: 'Our Policy', content: 'Cancel anytime. 30-day notice. Zero penalty.', sub: '30-day satisfaction guarantee on new signups.' }
+    },
+  ];
+
+  var list = document.getElementById('ohList');
+  var activeItem = null;
+
+  objections.forEach(function(obj, i) {
+    var item = document.createElement('div');
+    item.className = 'oh-item';
+    item.innerHTML =
+      '<div class="oh-trigger">' +
+        '<div class="oh-bubble">' +
+          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>' +
+        '</div>' +
+        '<div class="oh-trigger-right">' +
+          '<div class="oh-objection-label">They\'re thinking...</div>' +
+          '<div class="oh-objection-text">' + obj.objection + '</div>' +
+        '</div>' +
+        '<svg class="oh-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>' +
+      '</div>' +
+      '<div class="oh-answer">' +
+        '<div class="oh-answer-inner">' +
+          '<p class="oh-answer-text">' + obj.answer + '</p>' +
+          '<div class="oh-proof">' +
+            '<div class="oh-proof-type">' + obj.proof.type + '</div>' +
+            '<div class="oh-proof-content">' + obj.proof.content + '</div>' +
+            '<div class="oh-proof-sub">' + obj.proof.sub + '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+
+    var trigger = item.querySelector('.oh-trigger');
+    trigger.addEventListener('click', function() {
+      var isOpen = item.classList.contains('active');
+      /* Close any currently open item */
+      if (activeItem && activeItem !== item) {
+        activeItem.classList.remove('active');
+      }
+      item.classList.toggle('active', !isOpen);
+      activeItem = isOpen ? null : item;
+    });
+
+    list.appendChild(item);
+  });
+
+  /* Open first by default */
+  list.firstChild.classList.add('active');
+  activeItem = list.firstChild;
+
+})();
+</script>
+</body>
+</html>

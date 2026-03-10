@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Parallax Layers</title>
+
+  <!--
+    COMPONENT: Parallax Layers
+    COPY: style + html + script
+    Two parallax modes: mouse-driven hero and scroll-speed sections.
+    Mode 1: Each layer moves at a different depth multiplier on mousemove.
+    Mode 2: Background gradients scroll slower than content, creating depth.
+  -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+
+    /* ── CUSTOMIZE: adjust depth multipliers below in the JS CONFIG block ── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --glow:           rgba(16,185,129,0.15);
+      --glow-strong:    rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --border-accent:  rgba(16,185,129,0.3);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      overflow-x: hidden;
+    }
+
+    /* ── Section labels ── */
+    .mode-label {
+      text-align: center;
+      padding: 2rem 1.5rem 0;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+    .mode-label strong {
+      display: block;
+      font-family: var(--font-heading);
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: none;
+      letter-spacing: 0;
+      margin-top: 0.4rem;
+    }
+
+    /* ──────────────────────────────────────────
+       MODE 1: Mouse Parallax Hero
+    ────────────────────────────────────────── */
+    .parallax-hero {
+      position: relative;
+      height: 100vh;
+      min-height: 600px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      /* Disable on touch devices */
+    }
+
+    /* Background gradient layer — moves slowest */
+    .p-layer-bg {
+      position: absolute;
+      inset: -80px;  /* oversized so edges never show during movement */
+      background: radial-gradient(ellipse 70% 60% at 50% 50%,
+        rgba(16,185,129,0.12) 0%,
+        rgba(59,130,246,0.06) 40%,
+        transparent 70%
+      );
+      pointer-events: none;
+      will-change: transform;
+    }
+
+    /* Decorative shape layer — medium depth */
+    .p-layer-shape {
+      position: absolute;
+      width: 400px;
+      height: 400px;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      background: conic-gradient(
+        from 0deg,
+        rgba(16,185,129,0.05),
+        rgba(59,130,246,0.05),
+        rgba(139,92,246,0.05),
+        rgba(16,185,129,0.05)
+      );
+      border: 1px solid rgba(16,185,129,0.08);
+      pointer-events: none;
+      will-change: transform;
+    }
+    .p-layer-shape::after {
+      content: '';
+      position: absolute;
+      inset: 40px;
+      border-radius: 50%;
+      border: 1px solid rgba(148,163,184,0.06);
+    }
+
+    /* Floating card layer — moves more */
+    .p-layer-card {
+      position: absolute;
+      will-change: transform;
+    }
+    .p-layer-card.card-tl {
+      top: 18%;
+      left: 8%;
+    }
+    .p-layer-card.card-br {
+      bottom: 18%;
+      right: 8%;
+    }
+    .p-layer-card.card-tr {
+      top: 22%;
+      right: 10%;
+    }
+
+    .float-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+      min-width: 160px;
+      backdrop-filter: blur(8px);
+    }
+    .float-card-label {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.4rem;
+    }
+    .float-card-value {
+      font-family: var(--font-heading);
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .float-card-sub {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 0.2rem;
+    }
+
+    /* Headline — foreground, moves most */
+    .p-layer-headline {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      padding: 2rem;
+      will-change: transform;
+    }
+    .p-eyebrow {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      padding: 4px 12px;
+      border: 1px solid var(--border-accent);
+      background: var(--glow);
+      border-radius: 100px;
+      margin-bottom: 1.25rem;
+    }
+    .p-headline {
+      font-family: var(--font-heading);
+      font-size: clamp(2.5rem, 6vw, 4.5rem);
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      margin-bottom: 1rem;
+    }
+    .p-headline span { color: var(--accent); }
+    .p-sub {
+      font-size: 1.125rem;
+      color: var(--text-secondary);
+      max-width: 480px;
+      margin: 0 auto 2rem;
+      line-height: 1.6;
+    }
+    .p-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0.75rem 1.75rem;
+      background: var(--accent);
+      color: #0D1117;
+      border-radius: 8px;
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 0.9375rem;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .p-cta:hover { opacity: 0.88; }
+
+    /* Move-disabled on mobile */
+    @media (max-width: 768px) {
+      .p-layer-card { display: none; }
+      .p-layer-bg, .p-layer-shape { transform: none !important; }
+      .p-layer-headline { transform: none !important; }
+    }
+
+
+    /* ──────────────────────────────────────────
+       Divider between the two modes
+    ────────────────────────────────────────── */
+    .section-divider {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      max-width: 700px;
+      margin: 3rem auto;
+      padding: 0 1.5rem;
+    }
+    .section-divider::before,
+    .section-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+    .divider-text {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      white-space: nowrap;
+    }
+
+
+    /* ──────────────────────────────────────────
+       MODE 2: Scroll Parallax Sections
+    ────────────────────────────────────────── */
+    .scroll-sections {
+      padding-bottom: 4rem;
+    }
+
+    .scroll-section {
+      position: relative;
+      min-height: 80vh;
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    /* The background layer that moves slower than the page scroll */
+    .scroll-bg {
+      position: absolute;
+      inset: -30%;      /* oversized so parallax travel doesn't show edges */
+      pointer-events: none;
+      will-change: transform;
+    }
+
+    /* Three distinct gradient bg palettes */
+    .scroll-section:nth-child(1) .scroll-bg {
+      background:
+        radial-gradient(ellipse 80% 60% at 20% 40%, rgba(16,185,129,0.10) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 80% at 80% 60%, rgba(59,130,246,0.08) 0%, transparent 60%),
+        linear-gradient(180deg, #0f1923 0%, #0D1117 100%);
+    }
+    .scroll-section:nth-child(2) .scroll-bg {
+      background:
+        radial-gradient(ellipse 70% 70% at 80% 30%, rgba(139,92,246,0.10) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 60% at 20% 70%, rgba(16,185,129,0.07) 0%, transparent 60%),
+        linear-gradient(180deg, #0D1117 0%, #0f1520 100%);
+    }
+    .scroll-section:nth-child(3) .scroll-bg {
+      background:
+        radial-gradient(ellipse 90% 50% at 50% 60%, rgba(245,158,11,0.08) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 80% at 30% 20%, rgba(16,185,129,0.07) 0%, transparent 60%),
+        linear-gradient(180deg, #0f1923 0%, #0D1117 100%);
+    }
+
+    /* Section content scrolls at normal speed */
+    .scroll-content {
+      position: relative;
+      z-index: 2;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 5rem 2rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+      align-items: center;
+    }
+    @media (max-width: 768px) {
+      .scroll-content { grid-template-columns: 1fr; gap: 2rem; padding: 3rem 1.5rem; }
+    }
+
+    .scroll-section:nth-child(even) .scroll-content {
+      direction: rtl;
+    }
+    .scroll-section:nth-child(even) .scroll-content > * {
+      direction: ltr;
+    }
+
+    .ss-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 0.75rem;
+    }
+    .ss-heading {
+      font-family: var(--font-heading);
+      font-size: clamp(1.5rem, 3vw, 2.25rem);
+      font-weight: 700;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+      margin-bottom: 1rem;
+    }
+    .ss-body {
+      color: var(--text-secondary);
+      line-height: 1.7;
+      font-size: 1rem;
+    }
+
+    /* Visual panel */
+    .ss-visual {
+      aspect-ratio: 4/3;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .ss-visual-inner {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-align: center;
+    }
+    .ss-visual-icon {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+
+    /* Grid lines inside the visual panels for a "dashboard" feel */
+    .ss-visual::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(var(--border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 40px 40px;
+      opacity: 0.4;
+    }
+    .ss-visual .bar-chart {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      height: 80px;
+    }
+    .ss-visual .bar {
+      width: 18px;
+      background: var(--accent);
+      border-radius: 4px 4px 0 0;
+      opacity: 0.7;
+    }
+
+    .parallax-label {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      color: var(--text-muted);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      pointer-events: none;
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════
+       MODE 1: MOUSE PARALLAX HERO
+  ════════════════════════════════════════ -->
+
+  <div class="mode-label">
+    Mode 1 / 2
+    <strong>Mouse Parallax Hero</strong>
+  </div>
+
+  <section class="parallax-hero" id="mouse-hero">
+
+    <!-- Deepest layer: bg gradient — depth 0.01 -->
+    <div class="p-layer-bg" data-depth="0.01"></div>
+
+    <!-- Mid layer: decorative ring shape — depth 0.03 -->
+    <div class="p-layer-shape" data-depth="0.03"></div>
+
+    <!-- Floating cards — depth 0.09 (moves the most) -->
+    <div class="p-layer-card card-tl" data-depth="0.09">
+      <div class="float-card">
+        <div class="float-card-label">Avg. Load Time</div>
+        <div class="float-card-value">0.34s</div>
+        <div class="float-card-sub">Top 1% globally</div>
+      </div>
+    </div>
+
+    <div class="p-layer-card card-tr" data-depth="0.07">
+      <div class="float-card">
+        <div class="float-card-label">Uptime</div>
+        <div class="float-card-value">99.99%</div>
+        <div class="float-card-sub">Last 12 months</div>
+      </div>
+    </div>
+
+    <div class="p-layer-card card-br" data-depth="0.08">
+      <div class="float-card">
+        <div class="float-card-label">Deployments</div>
+        <div class="float-card-value">12,847</div>
+        <div class="float-card-sub">This month</div>
+      </div>
+    </div>
+
+    <!-- Foreground: headline — depth 0.06 -->
+    <div class="p-layer-headline" data-depth="0.06">
+      <div class="p-eyebrow">Mouse parallax</div>
+      <h1 class="p-headline">Ship faster.<br><span>Ship smarter.</span></h1>
+      <p class="p-sub">Move your cursor around — each layer responds at a different depth. Foreground elements move most, background shifts least.</p>
+      <a href="#" class="p-cta">
+        Get started
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+      </a>
+    </div>
+
+  </section>
+
+
+  <!-- ═══════════════════════════════════════
+       DIVIDER
+  ════════════════════════════════════════ -->
+  <div class="section-divider">
+    <span class="divider-text">Scroll down for Mode 2</span>
+  </div>
+
+  <div class="mode-label">
+    Mode 2 / 2
+    <strong>Scroll Parallax Sections</strong>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════
+       MODE 2: SCROLL PARALLAX SECTIONS
+  ════════════════════════════════════════ -->
+  <div class="scroll-sections">
+
+    <!-- Section 1 -->
+    <section class="scroll-section">
+      <div class="scroll-bg" data-scroll-depth="0.4"></div>
+      <div class="scroll-content">
+        <div>
+          <div class="ss-eyebrow">Scroll parallax — section 01</div>
+          <h2 class="ss-heading">Background drifts slower than you scroll</h2>
+          <p class="ss-body">The gradient behind this text moves at 40% of your scroll speed. Content scrolls normally. The difference in speed creates a sense of layered depth — no images needed.</p>
+        </div>
+        <div class="ss-visual">
+          <div class="ss-visual-inner">
+            <span class="ss-visual-icon">🌊</span>
+            Parallax layer 1
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 2 -->
+    <section class="scroll-section">
+      <div class="scroll-bg" data-scroll-depth="0.4"></div>
+      <div class="scroll-content">
+        <div>
+          <div class="ss-eyebrow">Scroll parallax — section 02</div>
+          <h2 class="ss-heading">Alternating layout, consistent effect</h2>
+          <p class="ss-body">Even sections flip to right-text/left-visual. Each section uses a different gradient palette — green, violet, amber — for visual variety as the user scrolls.</p>
+        </div>
+        <div class="ss-visual">
+          <div class="ss-visual-inner">
+            <div class="bar-chart">
+              <div class="bar" style="height:30px"></div>
+              <div class="bar" style="height:55px"></div>
+              <div class="bar" style="height:42px"></div>
+              <div class="bar" style="height:70px"></div>
+              <div class="bar" style="height:48px"></div>
+              <div class="bar" style="height:62px"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 3 -->
+    <section class="scroll-section">
+      <div class="scroll-bg" data-scroll-depth="0.4"></div>
+      <div class="scroll-content">
+        <div>
+          <div class="ss-eyebrow">Scroll parallax — section 03</div>
+          <h2 class="ss-heading">Pure CSS gradients, zero image dependency</h2>
+          <p class="ss-body">No background photos, no CDN images. Each parallax section is powered entirely by CSS radial gradients and JS scroll position. Drop it anywhere, it just works.</p>
+        </div>
+        <div class="ss-visual">
+          <div class="ss-visual-inner">
+            <span class="ss-visual-icon">✦</span>
+            Parallax layer 3
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Corner hint label -->
+  <div class="parallax-label">Scroll + Move cursor</div>
+
+
+  <script>
+  /* ──────────────────────────────────────────
+     JAVASCRIPT CONFIG — adjust these values
+  ────────────────────────────────────────── */
+  const LERP_FACTOR = 0.08; // How quickly layers chase the target (0 = instant, 1 = never)
+
+  /* ──────────────────────────────────────────
+     MODE 1: Mouse parallax via rAF lerp
+     Each element's data-depth attribute controls
+     how far it moves relative to the mouse center offset.
+  ────────────────────────────────────────── */
+  (function() {
+    const hero    = document.getElementById('mouse-hero');
+    const layers  = hero.querySelectorAll('[data-depth]');
+
+    // Current interpolated position for each layer
+    const state   = Array.from(layers).map(() => ({ x: 0, y: 0 }));
+    // Target positions
+    const target  = { x: 0, y: 0 };
+    let rafId     = null;
+    let active    = false;
+
+    // Only run on non-touch devices
+    if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+
+    hero.addEventListener('mousemove', function(e) {
+      const r    = hero.getBoundingClientRect();
+      // Offset from center, in pixels
+      target.x   = e.clientX - r.left - r.width  / 2;
+      target.y   = e.clientY - r.top  - r.height / 2;
+      if (!active) { active = true; tick(); }
+    });
+
+    hero.addEventListener('mouseleave', function() {
+      // Ease back to center
+      target.x = 0;
+      target.y = 0;
+    });
+
+    function tick() {
+      layers.forEach(function(el, i) {
+        const depth  = parseFloat(el.dataset.depth);
+        // Lerp toward target
+        state[i].x += (target.x - state[i].x) * LERP_FACTOR;
+        state[i].y += (target.y - state[i].y) * LERP_FACTOR;
+        const moveX  = (state[i].x * depth).toFixed(2);
+        const moveY  = (state[i].y * depth).toFixed(2);
+        el.style.transform = 'translate(' + moveX + 'px, ' + moveY + 'px)';
+      });
+      rafId = requestAnimationFrame(tick);
+    }
+  })();
+
+
+  /* ──────────────────────────────────────────
+     MODE 2: Scroll parallax backgrounds
+     Each .scroll-bg moves at (scrollY - sectionTop) * -depth.
+     Negative because the bg should lag behind (appear to move up slower).
+  ────────────────────────────────────────── */
+  (function() {
+    const sections = document.querySelectorAll('.scroll-section');
+    let ticking = false;
+
+    function updateParallax() {
+      sections.forEach(function(section) {
+        const bg    = section.querySelector('.scroll-bg');
+        if (!bg) return;
+        const depth = parseFloat(bg.dataset.scrollDepth) || 0.4;
+        const rect  = section.getBoundingClientRect();
+        // How far the section has scrolled relative to the viewport center
+        const offset = (rect.top + rect.height / 2 - window.innerHeight / 2) * -depth;
+        bg.style.transform = 'translateY(' + offset.toFixed(2) + 'px)';
+      });
+      ticking = false;
+    }
+
+    window.addEventListener('scroll', function() {
+      if (!ticking) {
+        requestAnimationFrame(updateParallax);
+        ticking = true;
+      }
+    }, { passive: true });
+
+    // Run once on load
+    updateParallax();
+  })();
+  </script>
+
+</body>
+</html>

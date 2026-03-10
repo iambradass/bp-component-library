@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Drag & Drop Upload — Component Library</title>
+
+  <!--
+  /* COMPONENT: Drag & Drop Upload | COPY: style + html + script */
+  5-state file upload zone: idle, drag-over, selected, uploading, complete.
+  Hidden <input type="file"> triggered on click. Drag events on the zone div.
+  Simulated upload progress via setInterval. Multiple file type icons.
+  -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+
+    /* ============================================================
+       CUSTOMIZE
+       ============================================================ */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --glow:           rgba(16,185,129,0.15);
+      --glow-strong:    rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --border-accent:  rgba(16,185,129,0.3);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+    }
+    /* ============================================================ */
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    /* ── Page wrapper ── */
+    .dnd-wrap {
+      width: 100%;
+      max-width: 560px;
+    }
+
+    .dnd-page-header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+    .dnd-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.75rem;
+    }
+    .dnd-page-title {
+      font-family: var(--font-heading);
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+    }
+    .dnd-page-sub {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       UPLOAD ZONE — the main component
+       ═══════════════════════════════════════════════════════════ */
+    .dnd-zone {
+      background: var(--surface);
+      border: 2px dashed var(--border);
+      border-radius: 16px;
+      padding: 3rem 2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s, transform 0.15s;
+      position: relative;
+      overflow: hidden;
+      /* min-height ensures consistent size across all states */
+      min-height: 240px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      outline: none;
+    }
+    .dnd-zone:focus-visible {
+      box-shadow: 0 0 0 3px var(--glow-strong);
+    }
+
+    /* STATE: drag-over */
+    .dnd-zone.is-over {
+      border-color: var(--accent);
+      border-style: solid;
+      background: rgba(16,185,129,0.05);
+      transform: scale(1.01);
+    }
+    /* STATE: uploading */
+    .dnd-zone.is-uploading {
+      cursor: default;
+      border-style: solid;
+      border-color: var(--border-accent);
+    }
+    /* STATE: complete */
+    .dnd-zone.is-complete {
+      border-color: var(--accent);
+      border-style: solid;
+      background: rgba(16,185,129,0.04);
+    }
+
+    /* ── Upload cloud icon ── */
+    .dnd-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+      margin: 0 auto 1.25rem;
+      transition: transform 0.2s, color 0.2s, background 0.2s, border-color 0.2s;
+    }
+    .dnd-zone.is-over .dnd-icon {
+      transform: translateY(-4px);
+      color: var(--accent);
+      border-color: var(--border-accent);
+      background: var(--glow);
+    }
+
+    /* ── Zone text ── */
+    .dnd-primary-text {
+      font-family: var(--font-heading);
+      font-size: 1.0625rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 0.375rem;
+    }
+    .dnd-secondary-text {
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .dnd-secondary-text em {
+      color: var(--accent);
+      font-style: normal;
+    }
+
+    /* ── Hidden file input ── */
+    #dnd-input {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      /* pointer-events: none when not in idle state, set by JS */
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       STATE PANELS — only one visible at a time
+       ═══════════════════════════════════════════════════════════ */
+    .dnd-state {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      gap: 0;
+    }
+    .dnd-state.is-active { display: flex; }
+
+    /* ── File selected state ── */
+    .dnd-file-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      width: 100%;
+      max-width: 400px;
+      text-align: left;
+      margin-bottom: 1.5rem;
+    }
+    .dnd-file-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      background: var(--glow);
+      border: 1px solid var(--border-accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+    .dnd-file-name {
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: var(--text);
+      margin-bottom: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 240px;
+    }
+    .dnd-file-size {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+    .dnd-file-remove {
+      margin-left: auto;
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
+    }
+    .dnd-file-remove:hover { color: #EF4444; border-color: rgba(239,68,68,0.4); background: rgba(239,68,68,0.08); }
+
+    /* Upload button */
+    .dnd-upload-btn {
+      font-family: var(--font-heading);
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: #fff;
+      background: var(--accent);
+      border: none;
+      border-radius: 10px;
+      padding: 12px 32px;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.15s;
+    }
+    .dnd-upload-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+
+    /* ── Uploading state ── */
+    .dnd-progress-filename {
+      font-family: var(--font-heading);
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 1.5rem;
+    }
+
+    .dnd-progress-wrap {
+      width: 100%;
+      max-width: 360px;
+      margin-bottom: 1rem;
+    }
+    .dnd-progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .dnd-progress-label {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .dnd-progress-pct {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--accent);
+      font-weight: 600;
+    }
+    /* Progress bar track */
+    .dnd-progress-track {
+      width: 100%;
+      height: 6px;
+      background: var(--elevated);
+      border-radius: 100px;
+      overflow: hidden;
+    }
+    /* Progress bar fill */
+    .dnd-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), #34D399);
+      border-radius: 100px;
+      width: 0%;
+      transition: width 0.1s linear;
+      box-shadow: 0 0 8px rgba(16,185,129,0.4);
+    }
+
+    /* ── Complete state ── */
+    .dnd-complete-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: var(--glow);
+      border: 2px solid var(--border-accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+      margin-bottom: 1rem;
+      animation: dnd-pop 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+    @keyframes dnd-pop {
+      from { transform: scale(0.5); opacity: 0; }
+      to   { transform: scale(1);   opacity: 1; }
+    }
+    .dnd-complete-title {
+      font-family: var(--font-heading);
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 0.375rem;
+    }
+    .dnd-complete-filename {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-bottom: 1.25rem;
+    }
+    .dnd-another-btn {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--accent);
+      background: none;
+      border: 1px solid var(--border-accent);
+      border-radius: 8px;
+      padding: 7px 16px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .dnd-another-btn:hover { background: var(--glow); }
+
+  </style>
+</head>
+<body>
+
+  <div class="dnd-wrap">
+
+    <div class="dnd-page-header">
+      <p class="dnd-eyebrow">Form Components</p>
+      <h1 class="dnd-page-title">Drag &amp; Drop Upload</h1>
+      <p class="dnd-page-sub">Drag a file onto the zone below, or click to browse. Progress is simulated.</p>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         UPLOAD ZONE — copy everything from here
+         ═══════════════════════════════════════════════════════════ -->
+    <div class="dnd-zone" id="dnd-zone" tabindex="0" role="button" aria-label="Drop files here or click to browse">
+
+      <!-- Hidden file input — triggered on zone click -->
+      <input type="file" id="dnd-input" aria-hidden="true">
+
+      <!-- STATE 1: Idle -->
+      <div class="dnd-state is-active" id="dnd-idle">
+        <div class="dnd-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+        </div>
+        <p class="dnd-primary-text">Drop your file here</p>
+        <p class="dnd-secondary-text">or <em>click to browse</em><br><span style="margin-top:4px;display:inline-block;">PDF, PNG, JPG, SVG up to 20MB</span></p>
+      </div>
+
+      <!-- STATE 2: Drag over (icon + text change handled by JS class on zone) -->
+      <div class="dnd-state" id="dnd-over">
+        <div class="dnd-icon" style="color:var(--accent);background:var(--glow);border-color:var(--border-accent);">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+        </div>
+        <p class="dnd-primary-text">Drop to upload</p>
+        <p class="dnd-secondary-text" style="color:var(--accent);">Release to start upload</p>
+      </div>
+
+      <!-- STATE 3: File selected (waiting to upload) -->
+      <div class="dnd-state" id="dnd-selected">
+        <div class="dnd-file-card">
+          <div class="dnd-file-icon" id="dnd-file-icon-display">
+            <!-- Icon injected by JS based on file type -->
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div class="dnd-file-name" id="dnd-file-name">filename.pdf</div>
+            <div class="dnd-file-size" id="dnd-file-size">2.4 MB</div>
+          </div>
+          <button class="dnd-file-remove" id="dnd-remove-btn" aria-label="Remove file">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+        <button class="dnd-upload-btn" id="dnd-start-btn">
+          Upload file
+        </button>
+      </div>
+
+      <!-- STATE 4: Uploading -->
+      <div class="dnd-state" id="dnd-uploading">
+        <p class="dnd-progress-filename" id="dnd-progress-name">Uploading...</p>
+        <div class="dnd-progress-wrap">
+          <div class="dnd-progress-header">
+            <span class="dnd-progress-label">Progress</span>
+            <span class="dnd-progress-pct" id="dnd-pct">0%</span>
+          </div>
+          <div class="dnd-progress-track">
+            <div class="dnd-progress-fill" id="dnd-progress-fill"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STATE 5: Complete -->
+      <div class="dnd-state" id="dnd-complete">
+        <div class="dnd-complete-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="dnd-complete-title">Upload complete</div>
+        <p class="dnd-complete-filename" id="dnd-complete-name">filename.pdf</p>
+        <button class="dnd-another-btn" id="dnd-another-btn">Upload another file</button>
+      </div>
+
+    </div>
+    <!-- ═════════════════ end upload zone ═════════════════ -->
+
+  </div>
+
+
+  <script>
+  /* ── Drag & Drop Upload Zone ──
+     State machine: idle → over → selected → uploading → complete → idle
+     All DOM manipulations go through setState() for clarity.
+  */
+  (function() {
+    var zone      = document.getElementById('dnd-zone');
+    var input     = document.getElementById('dnd-input');
+    var states    = {
+      idle:      document.getElementById('dnd-idle'),
+      over:      document.getElementById('dnd-over'),
+      selected:  document.getElementById('dnd-selected'),
+      uploading: document.getElementById('dnd-uploading'),
+      complete:  document.getElementById('dnd-complete')
+    };
+
+    /* File info elements */
+    var fileNameEl  = document.getElementById('dnd-file-name');
+    var fileSizeEl  = document.getElementById('dnd-file-size');
+    var fileIconEl  = document.getElementById('dnd-file-icon-display');
+    var removeBtn   = document.getElementById('dnd-remove-btn');
+    var startBtn    = document.getElementById('dnd-start-btn');
+    var progressFil = document.getElementById('dnd-progress-fill');
+    var progressPct = document.getElementById('dnd-pct');
+    var progressNm  = document.getElementById('dnd-progress-name');
+    var completeNm  = document.getElementById('dnd-complete-name');
+    var anotherBtn  = document.getElementById('dnd-another-btn');
+
+    var currentFile = null;
+    var uploadTimer = null;
+
+    /* ── setState: shows one panel, hides others ── */
+    function setState(name) {
+      zone.className = 'dnd-zone';
+      if (name === 'over')      zone.classList.add('is-over');
+      if (name === 'uploading') zone.classList.add('is-uploading');
+      if (name === 'complete')  zone.classList.add('is-complete');
+
+      Object.keys(states).forEach(function(key) {
+        states[key].classList.toggle('is-active', key === name);
+      });
+
+      /* Disable file input during upload/complete */
+      input.style.pointerEvents = (name === 'idle' || name === 'selected') ? '' : 'none';
+    }
+
+    /* ── Format bytes to human-readable ── */
+    function formatBytes(bytes) {
+      if (bytes < 1024)       return bytes + ' B';
+      if (bytes < 1024*1024)  return (bytes/1024).toFixed(1) + ' KB';
+      return (bytes/1024/1024).toFixed(1) + ' MB';
+    }
+
+    /* ── Get file type icon SVG ── */
+    function getFileIcon(type) {
+      if (type.startsWith('image/')) {
+        return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>';
+      }
+      if (type === 'application/pdf') {
+        return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>';
+      }
+      /* Default file icon */
+      return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>';
+    }
+
+    /* ── Handle file selection ── */
+    function handleFile(file) {
+      if (!file) return;
+      currentFile = file;
+      fileNameEl.textContent   = file.name;
+      fileSizeEl.textContent   = formatBytes(file.size);
+      fileIconEl.innerHTML     = getFileIcon(file.type);
+      setState('selected');
+    }
+
+    /* ── Simulate upload progress ── */
+    function startUpload() {
+      if (!currentFile) return;
+      progressNm.textContent = currentFile.name;
+      progressFil.style.width = '0%';
+      progressPct.textContent = '0%';
+      setState('uploading');
+
+      var pct = 0;
+      /* Random step size for a realistic-feeling progress bar */
+      uploadTimer = setInterval(function() {
+        var step = 3 + Math.random() * 7;
+        pct = Math.min(100, pct + step);
+        progressFil.style.width = pct + '%';
+        progressPct.textContent = Math.round(pct) + '%';
+
+        if (pct >= 100) {
+          clearInterval(uploadTimer);
+          setTimeout(function() {
+            completeNm.textContent = currentFile.name;
+            setState('complete');
+          }, 300);
+        }
+      }, 80);
+    }
+
+    /* ── Reset to idle ── */
+    function reset() {
+      currentFile = null;
+      input.value = '';
+      setState('idle');
+    }
+
+    /* ── Drag events ── */
+    var dragCounter = 0; /* counter prevents flicker on nested elements */
+
+    zone.addEventListener('dragenter', function(e) {
+      e.preventDefault();
+      dragCounter++;
+      setState('over');
+    });
+
+    zone.addEventListener('dragleave', function(e) {
+      e.preventDefault();
+      dragCounter--;
+      if (dragCounter === 0) setState('idle');
+    });
+
+    zone.addEventListener('dragover', function(e) {
+      e.preventDefault(); /* required to allow drop */
+    });
+
+    zone.addEventListener('drop', function(e) {
+      e.preventDefault();
+      dragCounter = 0;
+      var file = e.dataTransfer.files[0];
+      handleFile(file);
+    });
+
+    /* ── Click to open file picker ── */
+    zone.addEventListener('click', function(e) {
+      /* Only trigger input in idle state */
+      if (zone.classList.contains('is-uploading') || zone.classList.contains('is-complete')) return;
+      if (e.target === input || e.target === removeBtn || e.target.closest('#dnd-remove-btn') ||
+          e.target === startBtn || e.target === anotherBtn) return;
+      if (!document.getElementById('dnd-selected').classList.contains('is-active')) {
+        input.click();
+      }
+    });
+
+    /* Keyboard accessible */
+    zone.addEventListener('keydown', function(e) {
+      if ((e.key === 'Enter' || e.key === ' ') &&
+          !document.getElementById('dnd-selected').classList.contains('is-active')) {
+        e.preventDefault();
+        input.click();
+      }
+    });
+
+    input.addEventListener('change', function() {
+      handleFile(input.files[0]);
+    });
+
+    removeBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      reset();
+    });
+
+    startBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      startUpload();
+    });
+
+    anotherBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      reset();
+    });
+
+  })();
+  </script>
+
+</body>
+</html>

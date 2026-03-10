@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Waffle Proportions</title>
+  <!-- COMPONENT: Waffle Proportions | COPY: style + html + script -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── CUSTOMIZE ── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --glow:           rgba(16,185,129,0.15);
+      --glow-strong:    rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --border-accent:  rgba(16,185,129,0.3);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      padding: 2rem 1.5rem 4rem;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+    .page-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.75rem;
+    }
+    .page-title {
+      font-family: var(--font-heading);
+      font-size: clamp(1.75rem, 4vw, 2.5rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+    }
+    .page-desc {
+      color: var(--text-secondary);
+      font-size: 0.9375rem;
+      max-width: 560px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.5rem;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    @media (max-width: 700px) { .charts-grid { grid-template-columns: 1fr; } }
+
+    .chart-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.75rem;
+    }
+    .chart-label {
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.5rem;
+    }
+    .chart-title {
+      font-family: var(--font-heading);
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 0.375rem;
+    }
+    .chart-caption {
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+      line-height: 1.5;
+      margin-bottom: 1.25rem;
+    }
+
+    /* Hover tooltip */
+    .cell-tooltip {
+      position: fixed;
+      background: var(--elevated);
+      border: 1px solid var(--border-accent);
+      border-radius: 8px;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      pointer-events: none;
+      opacity: 0;
+      z-index: 100;
+      transition: opacity 0.15s ease;
+      white-space: nowrap;
+    }
+    .cell-tooltip.visible { opacity: 1; }
+
+    /* ── 1. Standard Waffle (10×10 = 100 cells) ── */
+    .waffle-grid {
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      gap: 3px;
+      margin-bottom: 1rem;
+    }
+    .waf-cell {
+      aspect-ratio: 1;
+      border-radius: 2px;
+      cursor: default;
+      transition: transform 0.12s ease, filter 0.12s ease;
+    }
+    .waf-cell:hover { transform: scale(1.5); z-index: 2; position: relative; filter: brightness(1.3); }
+
+    .waffle-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem 1rem;
+    }
+    .wleg-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+    .wleg-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+    .wleg-pct {
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      color: var(--text-muted);
+    }
+
+    /* ── 2. Icon Array (people) ── */
+    .icon-row-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-bottom: 1rem;
+    }
+    .icon-person {
+      width: 26px;
+      height: 26px;
+      flex-shrink: 0;
+      transition: transform 0.15s;
+    }
+    .icon-person:hover { transform: scale(1.4); }
+    .icon-person.on  { color: var(--accent); }
+    .icon-person.off { color: var(--text-muted); opacity: 0.3; }
+    .icon-stat {
+      font-family: var(--font-heading);
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .icon-context {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+      line-height: 1.5;
+    }
+
+    /* ── 3. Dot Matrix ── */
+    .dot-grid {
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      gap: 4px;
+      margin-bottom: 1rem;
+    }
+    .dot-cell {
+      aspect-ratio: 1;
+      border-radius: 50%;
+      cursor: default;
+      transition: transform 0.12s;
+    }
+    .dot-cell:hover { transform: scale(1.5); z-index: 2; position: relative; }
+    .dot-cell.accent-dot {
+      background: var(--accent);
+      box-shadow: 0 0 5px var(--glow-strong);
+    }
+    .dot-cell.muted-dot { background: var(--elevated); border: 1px solid var(--border); }
+
+    /* ── 4. Progress Constellation ── */
+    .constellation-grid {
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      gap: 4px;
+      margin-bottom: 1rem;
+    }
+    .star-cell {
+      aspect-ratio: 1;
+      border-radius: 3px;
+      background: var(--elevated);
+      border: 1px solid rgba(148,163,184,0.05);
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.15s;
+      cursor: default;
+    }
+    .star-cell:hover { transform: scale(1.4); z-index: 2; position: relative; }
+    .star-cell.lit {
+      background: var(--accent);
+      border-color: var(--glow-strong);
+      box-shadow: 0 0 6px var(--glow);
+      animation: starGlow 3s ease-in-out infinite;
+    }
+    /* Each lit cell gets a slightly different animation delay — set by JS */
+    @keyframes starGlow {
+      0%, 100% { opacity: 1; box-shadow: 0 0 4px var(--glow-strong); }
+      50%       { opacity: 0.7; box-shadow: 0 0 10px var(--glow-strong); }
+    }
+    .constellation-label {
+      font-family: var(--font-heading);
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .constellation-sub {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+    /* Progress slider for constellation demo */
+    .const-slider {
+      width: 100%;
+      margin-top: 1rem;
+      accent-color: var(--accent);
+    }
+    .const-slider-label {
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="page-header">
+    <div class="page-eyebrow">Waffle Proportions</div>
+    <h1 class="page-title">Waffle & Proportional Charts</h1>
+    <p class="page-desc">Grid-based charts that show proportions visually. Humans read counts better than angles — these are more intuitive than pie charts. All animate on scroll.</p>
+  </header>
+
+  <div class="charts-grid">
+
+    <!-- 1. Standard waffle -->
+    <div class="chart-card">
+      <div class="chart-label">Waffle Chart</div>
+      <div class="chart-title">How Businesses Get Leads</div>
+      <p class="chart-caption">Each square = 1% of leads across 500 businesses surveyed. Hover any cell.</p>
+      <div class="waffle-grid" id="waffle-1"></div>
+      <div class="waffle-legend" id="waffle-1-legend"></div>
+    </div>
+
+    <!-- 2. Icon array -->
+    <div class="chart-card">
+      <div class="chart-label">Icon Array</div>
+      <div class="chart-title">Online Business Failure Rate</div>
+      <p class="chart-caption">Each person represents 1 of 10 businesses. Filled = failed within 3 years.</p>
+      <div class="icon-row-grid" id="icon-array-2"></div>
+      <div class="icon-stat">6 out of 10</div>
+      <div class="icon-context">small businesses that go online without a strategy fail to gain consistent web-generated revenue within 3 years.</div>
+    </div>
+
+    <!-- 3. Dot matrix -->
+    <div class="chart-card">
+      <div class="chart-label">Dot Matrix</div>
+      <div class="chart-title">Website Conversion Rate</div>
+      <p class="chart-caption">Out of 100 visitors represented, only 3.7 convert on average. Each lit dot = a conversion.</p>
+      <div class="dot-grid" id="dot-matrix-3"></div>
+      <div class="icon-stat">3.7%</div>
+      <div class="icon-context">is the average website conversion rate. Optimized sites reach 7–12%.</div>
+    </div>
+
+    <!-- 4. Progress constellation -->
+    <div class="chart-card">
+      <div class="chart-label">Progress Constellation</div>
+      <div class="chart-title">Monthly Goal Progress</div>
+      <p class="chart-caption">Stars light up as the metric climbs. Drag the slider to see how it works.</p>
+      <div class="constellation-grid" id="constellation-4"></div>
+      <div class="constellation-label" id="const-value">74%</div>
+      <div class="constellation-sub">of monthly lead goal reached</div>
+      <input type="range" class="const-slider" id="const-slider" min="0" max="100" value="74">
+      <div class="const-slider-label">Drag to simulate progress</div>
+    </div>
+
+  </div>
+
+  <!-- Shared tooltip -->
+  <div class="cell-tooltip" id="cell-tooltip"></div>
+
+
+  <script>
+  /* ──────────────────────────────────────────
+     WAFFLE PROPORTIONS — Script
+     1. Build standard waffle with segments
+     2. Build icon array
+     3. Build dot matrix
+     4. Build constellation + slider
+     5. Animate on scroll (IntersectionObserver)
+  ────────────────────────────────────────── */
+
+  var tooltip = document.getElementById('cell-tooltip');
+
+  function showTip(e, text) {
+    tooltip.textContent = text;
+    tooltip.classList.add('visible');
+    moveTip(e);
+  }
+  function moveTip(e) {
+    var x = e.clientX + 14, y = e.clientY + 14;
+    if (x + 160 > window.innerWidth)  x = e.clientX - 160;
+    if (y + 40  > window.innerHeight) y = e.clientY - 40;
+    tooltip.style.left = x + 'px';
+    tooltip.style.top  = y + 'px';
+  }
+  function hideTip() { tooltip.classList.remove('visible'); }
+
+  /* ── 1. Waffle ── */
+  var waffleData = [
+    { label: 'Word of Mouth', pct: 38, color: 'rgba(16,185,129,0.9)' },
+    { label: 'Google Search',  pct: 27, color: 'rgba(59,130,246,0.8)' },
+    { label: 'Social Media',   pct: 19, color: 'rgba(139,92,246,0.8)' },
+    { label: 'Paid Ads',       pct: 11, color: 'rgba(251,146,60,0.8)' },
+    { label: 'Other',          pct:  5, color: 'rgba(148,163,184,0.4)' }
+  ];
+
+  var waffleEl = document.getElementById('waffle-1');
+  var legendEl = document.getElementById('waffle-1-legend');
+  var wCells = [];
+
+  /* Build cell data array */
+  waffleData.forEach(function(seg) {
+    for (var i = 0; i < seg.pct; i++) {
+      wCells.push({ color: seg.color, label: seg.label });
+    }
+  });
+
+  /* Render with opacity:0, animate on scroll */
+  wCells.forEach(function(cell, i) {
+    var div = document.createElement('div');
+    div.className = 'waf-cell';
+    div.style.background = cell.color;
+    div.style.opacity = '0.06';
+    div.dataset.color = cell.color;
+    div.dataset.label = cell.label;
+    div.dataset.i = i;
+
+    div.addEventListener('mouseenter', function(e) { showTip(e, cell.label + ' — ' + Math.round(i / wCells.length * 100) + '%+'); div.style.filter = 'brightness(1.3)'; });
+    div.addEventListener('mousemove',  moveTip);
+    div.addEventListener('mouseleave', function() { hideTip(); div.style.filter = ''; });
+
+    waffleEl.appendChild(div);
+  });
+
+  /* Legend */
+  waffleData.forEach(function(seg) {
+    var item = document.createElement('div');
+    item.className = 'wleg-item';
+    item.innerHTML = '<div class="wleg-dot" style="background:' + seg.color + '"></div>'
+      + seg.label + '<span class="wleg-pct">' + seg.pct + '%</span>';
+    legendEl.appendChild(item);
+  });
+
+  /* Scroll animate */
+  new IntersectionObserver(function(entries) {
+    if (entries[0].isIntersecting) {
+      var cells = waffleEl.querySelectorAll('.waf-cell');
+      cells.forEach(function(c, i) {
+        setTimeout(function() { c.style.opacity = '1'; c.style.transition = 'opacity 0.3s ease'; }, i * 10);
+      });
+    }
+  }, { threshold: 0.2 }).observe(waffleEl);
+
+  /* ── 2. Icon Array ── */
+  var iconEl = document.getElementById('icon-array-2');
+  var ON = 6, TOTAL = 10;
+
+  function personSVG(on) {
+    return '<svg class="icon-person ' + (on ? 'on' : 'off') + '" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">'
+      + '<circle cx="12" cy="7" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>';
+  }
+
+  var iconHtml = '';
+  for (var ii = 0; ii < TOTAL; ii++) iconHtml += personSVG(ii < ON);
+  iconEl.innerHTML = iconHtml;
+
+  /* ── 3. Dot Matrix ── */
+  var dotEl = document.getElementById('dot-matrix-3');
+  var DOT_TOTAL = 100, DOT_ON = 4; /* ~3.7 rounded to 4 for visibility */
+
+  for (var di = 0; di < DOT_TOTAL; di++) {
+    var dot = document.createElement('div');
+    dot.className = 'dot-cell ' + (di < DOT_ON ? 'accent-dot' : 'muted-dot');
+    dot.style.opacity = '0';
+
+    var label = di < DOT_ON ? 'Converted visitor' : 'Did not convert';
+    (function(d, l) {
+      d.addEventListener('mouseenter', function(e) { showTip(e, l); });
+      d.addEventListener('mousemove',  moveTip);
+      d.addEventListener('mouseleave', hideTip);
+    })(dot, label);
+
+    dotEl.appendChild(dot);
+  }
+
+  new IntersectionObserver(function(entries) {
+    if (entries[0].isIntersecting) {
+      var dots = dotEl.querySelectorAll('.dot-cell');
+      dots.forEach(function(d, i) {
+        setTimeout(function() { d.style.opacity = '1'; d.style.transition = 'opacity 0.25s ease'; }, i * 8);
+      });
+    }
+  }, { threshold: 0.2 }).observe(dotEl);
+
+  /* ── 4. Constellation ── */
+  var constEl  = document.getElementById('constellation-4');
+  var slider   = document.getElementById('const-slider');
+  var constVal = document.getElementById('const-value');
+  var CONST_TOTAL = 100;
+
+  /* Build 100 star cells */
+  for (var si = 0; si < CONST_TOTAL; si++) {
+    var star = document.createElement('div');
+    star.className = 'star-cell';
+    star.dataset.idx = si;
+    /* Randomize glow animation delay slightly so they don't all pulse together */
+    star.style.animationDelay = (Math.random() * 3).toFixed(2) + 's';
+    constEl.appendChild(star);
+  }
+
+  function updateConstellation(pct) {
+    constVal.textContent = pct + '%';
+    var stars = constEl.querySelectorAll('.star-cell');
+    var lit = Math.round(pct);
+    stars.forEach(function(s, i) {
+      if (i < lit) s.classList.add('lit');
+      else          s.classList.remove('lit');
+    });
+  }
+
+  slider.addEventListener('input', function() {
+    updateConstellation(parseInt(this.value));
+  });
+
+  /* Animate on scroll */
+  new IntersectionObserver(function(entries) {
+    if (entries[0].isIntersecting) {
+      var target = parseInt(slider.value);
+      var cur = 0;
+      var step = setInterval(function() {
+        cur++;
+        updateConstellation(cur);
+        if (cur >= target) clearInterval(step);
+      }, 20);
+    }
+  }, { threshold: 0.3 }).observe(constEl);
+  </script>
+
+</body>
+</html>

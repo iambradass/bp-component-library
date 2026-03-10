@@ -1,0 +1,536 @@
+<!-- COMPONENT: Founder Origin Story | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Story: Founder Origin — Brad Patterson</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── CUSTOMIZE BLOCK ─────────────────────────────────────────────────
+       --accent:         brand highlight color
+       --column-width:   reading width (680px keeps it personal/blog-like)
+       --journal-bg:     background for the "journal entry" section
+       --drop-cap-color: large opening letter color
+       ─────────────────────────────────────────────────────────────────── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+
+      /* CUSTOMIZE */
+      --column-width:   700px;
+      --journal-bg:     #0f1923;
+      --drop-cap-color: #10B981;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 1.0625rem;
+      line-height: 1.8;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Progress bar ── */
+    #progress-bar {
+      position: fixed; top: 0; left: 0;
+      height: 3px; background: var(--accent); width: 0%;
+      z-index: 100; transition: width 0.1s linear;
+      box-shadow: 0 0 8px rgba(16,185,129,0.5);
+    }
+
+    /* ── Layout ── */
+    .story-wrap {
+      max-width: var(--column-width);
+      margin: 0 auto;
+      padding: 80px 2rem 100px;
+    }
+
+    /* ── Scroll reveal ── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* ── Hero opener ── */
+    .story-hero {
+      margin-bottom: 4rem;
+      text-align: center;
+    }
+    .story-eyebrow {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 1.25rem;
+    }
+    h1.story-title {
+      font-family: var(--font-heading);
+      font-size: clamp(2rem, 5vw, 3rem);
+      font-weight: 700;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      margin-bottom: 1rem;
+    }
+    .story-meta {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+    }
+
+    /* ── Drop cap on first paragraph ── */
+    .drop-cap::first-letter {
+      float: left;
+      font-family: var(--font-heading);
+      font-size: 4.5rem;
+      line-height: 0.85;
+      margin: 0.1em 0.12em 0 0;
+      color: var(--drop-cap-color);
+      font-weight: 700;
+    }
+
+    /* ── Body text ── */
+    .prose p {
+      color: var(--text-secondary);
+      margin-bottom: 1.5rem;
+    }
+    .prose strong { color: var(--text); font-weight: 600; }
+    .prose .accent-word { color: var(--accent); font-weight: 600; }
+
+    h2.section-h {
+      font-family: var(--font-heading);
+      font-size: 1.625rem;
+      font-weight: 700;
+      color: var(--text);
+      margin: 3rem 0 1rem;
+      letter-spacing: -0.01em;
+    }
+
+    /* ── Pull quote ── */
+    .pull-quote {
+      border-left: 3px solid var(--accent);
+      padding: 1.25rem 1.5rem;
+      margin: 2.5rem 0;
+      background: var(--accent-dim);
+      border-radius: 0 var(--radius) var(--radius) 0;
+    }
+    .pull-quote p {
+      font-family: var(--font-heading);
+      font-size: 1.3rem;
+      font-style: italic;
+      color: var(--text);
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    /* ── Journey timeline ── */
+    .timeline {
+      position: relative;
+      margin: 3rem 0;
+      padding-left: 2rem;
+    }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 2px;
+      background: linear-gradient(to bottom, var(--accent), transparent);
+    }
+    .timeline-item {
+      position: relative;
+      margin-bottom: 2.5rem;
+      opacity: 0;
+      transform: translateX(-16px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    .timeline-item.visible {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: -2.5rem;
+      top: 6px;
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: 2px solid var(--bg);
+      box-shadow: 0 0 0 3px var(--accent-dim);
+    }
+    .timeline-year {
+      font-family: var(--font-heading);
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      margin-bottom: 0.25rem;
+    }
+    .timeline-event {
+      font-family: var(--font-heading);
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 0.4rem;
+    }
+    .timeline-desc {
+      font-size: 0.9375rem;
+      color: var(--text-secondary);
+    }
+
+    /* ── Journal entry section ── */
+    .journal-section {
+      background: var(--journal-bg);
+      border: 1px solid rgba(16,185,129,0.15);
+      border-radius: var(--radius);
+      padding: 2rem;
+      margin: 3rem 0;
+      position: relative;
+    }
+    .journal-section::before {
+      content: 'Personal Journal';
+      position: absolute;
+      top: -11px;
+      left: 1.5rem;
+      background: var(--journal-bg);
+      padding: 0 0.75rem;
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .journal-date {
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      margin-bottom: 1.25rem;
+      font-style: italic;
+    }
+    .journal-entry {
+      font-style: italic;
+      color: var(--text-secondary);
+      font-size: 0.9375rem;
+      line-height: 1.8;
+      border-left: 2px solid var(--elevated);
+      padding-left: 1.25rem;
+    }
+    .journal-entry p { margin-bottom: 1rem; }
+    .journal-entry p:last-child { margin-bottom: 0; }
+
+    /* ── Handwritten-style key quote ── */
+    .handwritten-quote {
+      text-align: center;
+      margin: 3rem 0;
+    }
+    .handwritten-quote blockquote {
+      font-family: 'Georgia', 'Times New Roman', cursive;
+      font-style: italic;
+      font-size: 1.75rem;
+      color: var(--accent);
+      line-height: 1.4;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    /* ── Who it's for ── */
+    .for-who-list {
+      list-style: none;
+      margin: 1rem 0;
+    }
+    .for-who-list li {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-secondary);
+      font-size: 0.9375rem;
+    }
+    .for-who-list li:last-child { border-bottom: none; }
+    .for-who-check {
+      color: var(--accent);
+      margin-top: 1px;
+      flex-shrink: 0;
+    }
+
+    /* ── Letter to reader closing ── */
+    .letter-to-reader {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2.5rem;
+      margin: 3rem 0;
+    }
+    .letter-salutation {
+      font-family: var(--font-heading);
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 1rem;
+    }
+    .signature-wrap {
+      margin-top: 1.5rem;
+    }
+    .sig-name {
+      font-family: cursive;
+      font-size: 2.25rem;
+      color: var(--accent);
+    }
+    .sig-role {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+    }
+
+    /* ── CTA ── */
+    .cta-section {
+      text-align: center;
+      margin: 3rem 0;
+    }
+    .cta-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--accent);
+      color: #0D1117;
+      font-family: var(--font-heading);
+      font-size: 1.0625rem;
+      font-weight: 700;
+      padding: 0.9rem 2.25rem;
+      border-radius: 100px;
+      text-decoration: none;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 20px rgba(16,185,129,0.3);
+    }
+    .cta-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(16,185,129,0.4); }
+
+    @media (max-width: 600px) {
+      .story-wrap { padding: 60px 1.25rem 80px; }
+      h1.story-title { font-size: 1.75rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="progress-bar"></div>
+
+  <div class="story-wrap">
+
+    <!-- ── Hero ── -->
+    <div class="story-hero reveal">
+      <div class="story-eyebrow">Founder Story</div>
+      <h1 class="story-title">I Was the Title Rep Nobody Could Find Online.<br>So I Fixed It — Then Realized Every Rep Had the Same Problem.</h1>
+      <div class="story-meta">Brad Patterson &nbsp;·&nbsp; Founder &nbsp;·&nbsp; March 2026 &nbsp;·&nbsp; 8 min read</div>
+    </div>
+
+    <!-- ── Opening scene with drop cap ── -->
+    <div class="prose reveal">
+      <p class="drop-cap">It was a Tuesday in 2019. I'd been a title rep for four years, had a solid book of business, and genuinely loved the work. But I had this nagging feeling that I was leaving opportunity on the table — not from lack of hustle, but from something I couldn't quite name.</p>
+      <p>A colleague — a newer rep with half my experience — closed 22 more transactions than me that year. When I finally asked him how, he pulled out his phone and showed me his website. Clean, professional, came up first when you searched his name and our city. He said, "Agents Google me before they call."</p>
+      <p>I Googled myself that night. <strong>Nothing came up except an old LinkedIn profile and a company page that barely mentioned my name.</strong> I had been invisible the whole time.</p>
+    </div>
+
+    <!-- ── Who I was before ── -->
+    <h2 class="section-h reveal">Who I Was Before I Built This</h2>
+    <div class="prose reveal">
+      <p>I wasn't a developer. I wasn't a marketer. I was a title rep who knew how to work a closing table, build relationships, and keep transactions moving when they got complicated. I was good at the job. I just had no idea how to market myself.</p>
+      <p>I tried making a website on Wix once. Spent a weekend on it, got frustrated with the templates, published something that looked embarrassing, and quietly forgot about it. I tried posting on LinkedIn more consistently. Got some likes, no leads. I asked my company's marketing team for help. They gave me a one-pager with the company logo on it.</p>
+      <p>None of it moved the needle. <strong class="accent-word">And I didn't know why.</strong></p>
+    </div>
+
+    <!-- ── Timeline: the journey ── -->
+    <h2 class="section-h reveal">The Journey</h2>
+
+    <div class="timeline reveal">
+      <div class="timeline-item">
+        <div class="timeline-year">2019</div>
+        <div class="timeline-event">The moment I realized I was invisible</div>
+        <div class="timeline-desc">Googled myself, found nothing. Watched a less experienced rep close 22 more deals thanks to a professional website.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-year">2020</div>
+        <div class="timeline-event">The failed DIY experiments</div>
+        <div class="timeline-desc">Tried Wix, hired a freelancer on Fiverr, attempted LinkedIn marketing. Spent $800 and 40 hours — got zero inbound leads.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-year">2021</div>
+        <div class="timeline-event">Started learning the pieces</div>
+        <div class="timeline-desc">Took a course on local SEO. Hired a marketing consultant for one month. Started understanding what actually makes a local professional web presence work.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-year">2022</div>
+        <div class="timeline-event">Built my own site — and got my first inbound lead</div>
+        <div class="timeline-desc">Rebuilt my web presence from scratch using everything I'd learned. First inbound inquiry came 19 days after launch. A Keller Williams agent I'd never met. She became a client worth $14,000 in commissions.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-year">2023</div>
+        <div class="timeline-event">Other reps started asking for help</div>
+        <div class="timeline-desc">Word got around. Reps in my office wanted what I had built. I helped three of them. They each got results. I realized this was bigger than just me.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-year">2024–Present</div>
+        <div class="timeline-event">Formalized the service</div>
+        <div class="timeline-desc">Left my title rep role to build this full-time. Now helping reps across Texas establish complete, professional digital presences — done for them, fast.</div>
+      </div>
+    </div>
+
+    <!-- ── The problem I couldn't ignore ── -->
+    <h2 class="section-h reveal">The Problem I Couldn't Stop Thinking About</h2>
+    <div class="prose reveal">
+      <p>Once I built my own site and started getting leads, I couldn't stop noticing how many reps were exactly where I had been. Talented, hardworking, good at their jobs — and completely invisible online.</p>
+      <p>I started doing research. Pulled up 50 title rep websites across Texas. Of those, 31 didn't have their own domain — they were just pages on their company's site. 11 hadn't been updated in over two years. 6 had broken links or missing contact forms. <strong>Only 2 showed up on page one of Google for their city.</strong></p>
+    </div>
+
+    <div class="pull-quote reveal">
+      <p>"The problem wasn't that reps didn't care about their digital presence. It was that nobody had shown them exactly how to build one — or offered to just do it for them."</p>
+    </div>
+
+    <!-- ── Journal entry ── -->
+    <div class="journal-section reveal">
+      <div class="journal-date">September 14, 2023 — Fort Worth, TX</div>
+      <div class="journal-entry">
+        <p>Had coffee with Marcus today. He's been in title for 9 years. Genuinely one of the best closers I know — agents love working with him because he never lets a deal fall apart. But when I searched his name after we said goodbye, nothing. Not a single useful result.</p>
+        <p>I kept thinking: Marcus is losing business right now, and he doesn't even know it. Someone is searching for a title rep in his city today, and a rep with half his experience is going to get that call because they have a website and he doesn't.</p>
+        <p>I have to figure out how to help people like him. This can't just be something I did for myself.</p>
+      </div>
+    </div>
+
+    <!-- ── The breakthrough ── -->
+    <h2 class="section-h reveal">The Breakthrough Moment</h2>
+    <div class="prose reveal">
+      <p>After helping Marcus and two other reps, I realized something important: the process I had figured out was repeatable. The same elements worked every time — a well-structured personal domain, SEO-optimized copy written in plain language, a Google Business Profile configured correctly, a lead capture system that actually converted, and content that told their story credibly.</p>
+      <p>None of the individual pieces were complicated. The breakthrough was understanding <span class="accent-word">how they fit together</span>, in what order, and what actually moved the needle versus what just looked good.</p>
+      <p>And once I had that, I could build it for anyone in about three weeks.</p>
+    </div>
+
+    <div class="handwritten-quote reveal">
+      <blockquote>"The best referral you'll ever get is from Google. It never forgets to mention your name."</blockquote>
+    </div>
+
+    <!-- ── Who it's for ── -->
+    <h2 class="section-h reveal">Who I Built This For</h2>
+    <div class="prose reveal">
+      <p>This is for a very specific person. You'll know immediately if it's you.</p>
+    </div>
+
+    <ul class="for-who-list reveal">
+      <li>
+        <svg class="for-who-check" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        You're a title rep with at least 2 years of experience — you're not new to the industry
+      </li>
+      <li>
+        <svg class="for-who-check" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        You know you need a professional digital presence — you just haven't made it happen yet
+      </li>
+      <li>
+        <svg class="for-who-check" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        You want it done right the first time — not pieced together from tutorials and YouTube videos
+      </li>
+      <li>
+        <svg class="for-who-check" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        You're serious about growing your business and willing to invest in the right infrastructure
+      </li>
+      <li>
+        <svg class="for-who-check" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        You've tried DIY solutions and they haven't worked — and you're done spending time on it yourself
+      </li>
+    </ul>
+
+    <!-- ── Invitation / letter closing ── -->
+    <div class="letter-to-reader reveal">
+      <div class="letter-salutation">To the title rep who's still reading:</div>
+      <div class="prose">
+        <p>You found this page for a reason. You're already thinking about your digital presence — and the fact that you read this far tells me you take your business seriously.</p>
+        <p>I don't know exactly where you are in your career. But I know that wherever you are, <strong>visibility is an unfair advantage</strong> — and it's available to anyone willing to build it. I built it for myself when nobody handed it to me. Then I built a service so you don't have to figure it out the hard way like I did.</p>
+        <p>If you want to talk, I'm easy to find. Schedule a call below. Bring your questions. Bring your skepticism. Bring your goals. I'll show you exactly what I'd build for you and why.</p>
+      </div>
+      <div class="signature-wrap">
+        <div class="sig-name">Brad</div>
+        <div class="sig-role">Brad Patterson — Former Title Rep, Now Your Digital Presence Guy</div>
+      </div>
+    </div>
+
+    <!-- ── CTA ── -->
+    <div class="cta-section reveal">
+      <a class="cta-btn" href="#">
+        Schedule a Free 20-Min Strategy Call
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+      </a>
+      <p style="margin-top: 0.75rem; font-size: 0.8125rem; color: var(--text-muted);">No pitch. Just a real conversation about your digital presence.</p>
+    </div>
+
+  </div><!-- /story-wrap -->
+
+  <script>
+  (function() {
+    'use strict';
+
+    /* ── Progress bar ── */
+    var bar = document.getElementById('progress-bar');
+    function updateProgress() {
+      var total = document.documentElement.scrollHeight - window.innerHeight;
+      bar.style.width = (total > 0 ? (window.scrollY / total) * 100 : 0) + '%';
+    }
+    window.addEventListener('scroll', updateProgress, { passive: true });
+    updateProgress();
+
+    /* ── Scroll reveal for .reveal elements ── */
+    var observer = new IntersectionObserver(function(entries) {
+      entries.forEach(function(e) {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          observer.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.reveal').forEach(function(el) {
+      observer.observe(el);
+      if (el.getBoundingClientRect().top < window.innerHeight) el.classList.add('visible');
+    });
+
+    /* ── Timeline items animate with stagger ── */
+    var tlObserver = new IntersectionObserver(function(entries) {
+      entries.forEach(function(e) {
+        if (e.isIntersecting) {
+          // Stagger each item within the observed timeline container
+          e.target.querySelectorAll('.timeline-item').forEach(function(item, i) {
+            setTimeout(function() { item.classList.add('visible'); }, i * 120);
+          });
+          tlObserver.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.05 });
+
+    document.querySelectorAll('.timeline').forEach(function(el) {
+      tlObserver.observe(el);
+    });
+
+  })();
+  </script>
+
+</body>
+</html>

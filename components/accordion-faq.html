@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Accordion FAQ — Component Library</title>
+
+  <!--
+  ============================================================
+  COMPONENT: Accordion / FAQ
+  COPY: <style> block + HTML block + <script> block into target site
+  FEATURES:
+    - Smooth max-height animation (no display:none flicker)
+    - Rotating chevron on open
+    - Accent left border on open item
+    - One-open-at-a-time mode (configurable via allowMultiple)
+    - Real-time search filter — questions that don't match fade out
+  ============================================================
+  -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+
+    /* ── CUSTOMIZE: swap these variables ── */
+    :root {
+      --ac-bg-page:       #0D1117;
+      --ac-bg-surface:    #111827;
+      --ac-bg-elevated:   #1E293B;
+      --ac-accent:        #10B981;
+      --ac-accent-bg:     rgba(16, 185, 129, 0.06);
+      --ac-accent-border: rgba(16, 185, 129, 0.3);
+      --ac-text:          #F8FAFC;
+      --ac-text-secondary:#94A3B8;
+      --ac-text-muted:    #475569;
+      --ac-border:        rgba(148, 163, 184, 0.1);
+      --ac-radius:        12px;
+      --ac-font-heading:  'Space Grotesk', system-ui, sans-serif;
+      --ac-font-body:     'Inter', system-ui, sans-serif;
+      --ac-font-mono:     ui-monospace, monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--ac-bg-page);
+      color: var(--ac-text);
+      font-family: var(--ac-font-body);
+      min-height: 100vh;
+      padding: 3rem 1.5rem 5rem;
+    }
+    .demo-label {
+      font-family: var(--ac-font-mono);
+      font-size: 0.75rem;
+      color: var(--ac-accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+    .demo-title {
+      font-family: var(--ac-font-heading);
+      font-size: 2rem;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+    .demo-subtitle {
+      color: var(--ac-text-secondary);
+      text-align: center;
+      font-size: 0.9375rem;
+      margin-bottom: 2.5rem;
+    }
+
+
+    /* ════════════════════════════════════════════
+       COMPONENT STYLES
+    ════════════════════════════════════════════ */
+
+    .ac-wrapper {
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    /* ── Search input ── */
+    .ac-search-wrap {
+      position: relative;
+      margin-bottom: 1.5rem;
+    }
+    .ac-search-icon {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--ac-text-muted);
+      pointer-events: none;
+    }
+    .ac-search {
+      width: 100%;
+      padding: 0.875rem 1rem 0.875rem 3rem;
+      background: var(--ac-bg-surface);
+      border: 1px solid var(--ac-border);
+      border-radius: var(--ac-radius);
+      color: var(--ac-text);
+      font-family: var(--ac-font-body);
+      font-size: 0.9375rem;
+      outline: none;
+      transition: border-color 0.2s ease;
+      min-height: 48px;
+    }
+    .ac-search::placeholder { color: var(--ac-text-muted); }
+    .ac-search:focus { border-color: var(--ac-accent-border); }
+
+    /* "No results" message */
+    .ac-no-results {
+      text-align: center;
+      padding: 2rem;
+      color: var(--ac-text-muted);
+      font-size: 0.9375rem;
+      display: none;
+    }
+    .ac-no-results.visible { display: block; }
+
+    /* ── Accordion container ── */
+    .ac-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    /* Individual accordion item */
+    .ac-item {
+      background: var(--ac-bg-surface);
+      border: 1px solid var(--ac-border);
+      border-radius: var(--ac-radius);
+      overflow: hidden;
+      /* Filtered-out items fade out */
+      transition: opacity 0.25s ease, transform 0.25s ease, max-height 0.01s,
+                  border-left-color 0.3s ease, border-left-width 0.3s ease;
+      border-left: 3px solid transparent;
+    }
+
+    /* Open state: accent left border */
+    .ac-item.ac-open {
+      border-left-color: var(--ac-accent);
+      background: var(--ac-bg-elevated);
+    }
+
+    /* Items hidden by search filter */
+    .ac-item.ac-filtered {
+      opacity: 0;
+      pointer-events: none;
+      max-height: 0 !important;
+      overflow: hidden;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* ── Question button (the clickable row) ── */
+    .ac-question {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1.25rem 1.5rem;
+      background: none;
+      border: none;
+      color: var(--ac-text);
+      font-family: var(--ac-font-heading);
+      font-size: 1rem;
+      font-weight: 600;
+      text-align: left;
+      cursor: pointer;
+      transition: color 0.2s ease, background 0.2s ease;
+      min-height: 56px;
+    }
+    .ac-question:hover { color: var(--ac-accent); }
+    .ac-item.ac-open .ac-question { color: var(--ac-accent); }
+
+    /* Highlight matched search text */
+    .ac-question mark {
+      background: rgba(16, 185, 129, 0.2);
+      color: var(--ac-accent);
+      border-radius: 2px;
+      padding: 0 1px;
+    }
+
+    /* Chevron icon — rotates 180deg on open */
+    .ac-chevron {
+      flex-shrink: 0;
+      width: 20px;
+      height: 20px;
+      color: var(--ac-text-muted);
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), color 0.2s ease;
+    }
+    .ac-item.ac-open .ac-chevron {
+      transform: rotate(180deg);
+      color: var(--ac-accent);
+    }
+
+    /* ── Answer panel ── */
+    /*
+    MAX-HEIGHT ANIMATION TRICK:
+    We can't animate height: auto, so we animate max-height instead.
+    Closed: max-height: 0 (collapsed)
+    Open:   max-height: a large value (e.g. 600px) that's bigger than the content
+    The transition creates the smooth expand/collapse effect.
+    Use a slightly slow ease-out for expand, faster ease-in for collapse.
+    */
+    .ac-answer {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .ac-item.ac-open .ac-answer {
+      max-height: 600px;  /* must be larger than any possible content height */
+    }
+
+    .ac-answer-inner {
+      padding: 0 1.5rem 1.5rem;
+      font-size: 0.9375rem;
+      color: var(--ac-text-secondary);
+      line-height: 1.8;
+      border-top: 1px solid var(--ac-border);
+      padding-top: 1.25rem;
+      margin: 0 1.5rem;
+    }
+
+    /* Reduce left margin padding on mobile */
+    @media (max-width: 480px) {
+      .ac-question { padding: 1rem 1.25rem; font-size: 0.9375rem; }
+      .ac-answer-inner { margin: 0 1.25rem; padding: 1rem 0 1.25rem; }
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="demo-label">Component Demo</div>
+  <h1 class="demo-title">Accordion FAQ</h1>
+  <p class="demo-subtitle">Click any question to expand. Search to filter questions in real time.</p>
+
+  <div class="ac-wrapper">
+
+    <!-- Search filter input -->
+    <div class="ac-search-wrap">
+      <span class="ac-search-icon" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      </span>
+      <input
+        type="search"
+        class="ac-search"
+        id="ac-search"
+        placeholder="Search questions..."
+        aria-label="Filter FAQ questions"
+        autocomplete="off"
+      >
+    </div>
+
+    <div class="ac-no-results" id="ac-no-results">No questions match your search.</div>
+
+    <!-- Accordion list — add/remove .ac-item blocks to change questions -->
+    <div class="ac-list" id="ac-list">
+
+      <div class="ac-item">
+        <button class="ac-question" aria-expanded="false">
+          <span class="ac-question-text">How long does a typical project take from kickoff to launch?</span>
+          <svg class="ac-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="ac-answer" role="region">
+          <div class="ac-answer-inner">
+            Most projects launch in 3–4 weeks from the discovery call. The timeline depends on how quickly you can provide feedback during the review stage — clients who respond within 48 hours consistently see the fastest turnarounds. Complex multi-funnel projects with CRM integrations may take 5–6 weeks.
+          </div>
+        </div>
+      </div>
+
+      <div class="ac-item">
+        <button class="ac-question" aria-expanded="false">
+          <span class="ac-question-text">Do I need to provide all the content before you start?</span>
+          <svg class="ac-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="ac-answer" role="region">
+          <div class="ac-answer-inner">
+            No — we'll provide a content brief after the discovery call that outlines exactly what we need. If you're missing copy, we can write first-draft content as an add-on. You'll need to supply any specific brand assets (logo, photos, testimonials) but we can source stock imagery if needed.
+          </div>
+        </div>
+      </div>
+
+      <div class="ac-item">
+        <button class="ac-question" aria-expanded="false">
+          <span class="ac-question-text">What platform do you build on? Do I get the source files?</span>
+          <svg class="ac-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="ac-answer" role="region">
+          <div class="ac-answer-inner">
+            Yes — you own everything. Sites are hand-coded HTML/CSS/JS deployed to your hosting account. Funnels are built in your own GoHighLevel sub-account. You receive all source files, credentials, and a walkthrough video at handoff. Nothing is locked to proprietary software.
+          </div>
+        </div>
+      </div>
+
+      <div class="ac-item">
+        <button class="ac-question" aria-expanded="false">
+          <span class="ac-question-text">How many revision rounds are included?</span>
+          <svg class="ac-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="ac-answer" role="region">
+          <div class="ac-answer-inner">
+            All packages include two full revision rounds after the initial build is delivered. Revisions cover layout, copy, and functionality changes. Scope additions (new sections, new pages, new integrations) are quoted separately. After the two included rounds, additional revisions are billed at an hourly rate.
+          </div>
+        </div>
+      </div>
+
+      <div class="ac-item">
+        <button class="ac-question" aria-expanded="false">
+          <span class="ac-question-text">Do you offer ongoing support after the site launches?</span>
+          <svg class="ac-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="ac-answer" role="region">
+          <div class="ac-answer-inner">
+            Yes — all projects include 30 days of post-launch support at no additional charge. For ongoing maintenance, updates, and priority support, the Pro and Enterprise monthly plans include this as a core benefit. You can also purchase a standalone maintenance retainer if you want coverage on a Basic plan.
+          </div>
+        </div>
+      </div>
+
+      <div class="ac-item">
+        <button class="ac-question" aria-expanded="false">
+          <span class="ac-question-text">What's the difference between the Pro and Enterprise plans?</span>
+          <svg class="ac-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="ac-answer" role="region">
+          <div class="ac-answer-inner">
+            The core difference is scale and support speed. Pro covers up to 5 pages, 3 automation workflows, and standard response times (1–2 business days). Enterprise removes all page and workflow limits, includes weekly reporting instead of monthly, and guarantees same-day response on business days. Most solo operators start on Pro and upgrade as their pipeline grows.
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /ac-list -->
+  </div><!-- /ac-wrapper -->
+
+
+  <script>
+  /*
+  ════════════════════════════════════════
+  CUSTOMIZE: accordion behavior settings
+  ════════════════════════════════════════
+  */
+  var ALLOW_MULTIPLE = false;  // true = multiple items can be open simultaneously
+
+  /* ── Accordion click handling ── */
+  var items = Array.from(document.querySelectorAll('.ac-item'));
+
+  items.forEach(function(item) {
+    var btn = item.querySelector('.ac-question');
+    btn.addEventListener('click', function() {
+      var isOpen = item.classList.contains('ac-open');
+
+      if (!ALLOW_MULTIPLE) {
+        // Close all other items before opening this one
+        items.forEach(function(other) {
+          if (other !== item && other.classList.contains('ac-open')) {
+            closeItem(other);
+          }
+        });
+      }
+
+      if (isOpen) {
+        closeItem(item);
+      } else {
+        openItem(item);
+      }
+    });
+  });
+
+  function openItem(item) {
+    item.classList.add('ac-open');
+    item.querySelector('.ac-question').setAttribute('aria-expanded', 'true');
+  }
+
+  function closeItem(item) {
+    item.classList.remove('ac-open');
+    item.querySelector('.ac-question').setAttribute('aria-expanded', 'false');
+  }
+
+
+  /* ── Search / filter ── */
+  var searchInput  = document.getElementById('ac-search');
+  var noResults    = document.getElementById('ac-no-results');
+
+  searchInput.addEventListener('input', function() {
+    var query = this.value.trim().toLowerCase();
+    var visibleCount = 0;
+
+    items.forEach(function(item) {
+      var questionEl = item.querySelector('.ac-question-text');
+      var originalText = questionEl.getAttribute('data-original') || questionEl.textContent;
+
+      // Store original text on first run so we can restore it after highlight
+      if (!questionEl.getAttribute('data-original')) {
+        questionEl.setAttribute('data-original', originalText);
+      }
+
+      if (!query) {
+        // No filter — show everything, clear highlights
+        item.classList.remove('ac-filtered');
+        questionEl.innerHTML = originalText;
+        visibleCount++;
+      } else {
+        var matchIndex = originalText.toLowerCase().indexOf(query);
+        if (matchIndex === -1) {
+          // No match — hide item
+          item.classList.add('ac-filtered');
+          closeItem(item);
+        } else {
+          // Match — show item and highlight the matching substring
+          item.classList.remove('ac-filtered');
+          var before  = originalText.substring(0, matchIndex);
+          var match   = originalText.substring(matchIndex, matchIndex + query.length);
+          var after   = originalText.substring(matchIndex + query.length);
+          questionEl.innerHTML = before + '<mark>' + match + '</mark>' + after;
+          visibleCount++;
+        }
+      }
+    });
+
+    // Show "no results" message if nothing matched
+    noResults.classList.toggle('visible', visibleCount === 0 && query.length > 0);
+  });
+  </script>
+
+</body>
+</html>

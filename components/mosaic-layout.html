@@ -1,0 +1,424 @@
+<!-- COMPONENT: Asymmetric Editorial Mosaic Grid | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mosaic Editorial Layout</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ── Customize ── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.12);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      padding: 2.5rem 1rem 5rem;
+    }
+
+    .page-wrap { max-width: 960px; margin: 0 auto; }
+
+    h1 { font-family: var(--font-heading); font-size: 1.75rem; font-weight: 700; margin-bottom: 0.375rem; }
+    .page-desc { color: var(--text-secondary); margin-bottom: 3rem; font-size: 0.9375rem; }
+
+    .section-label {
+      font-family: ui-monospace, monospace;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    /* ── Article card base ── */
+    .art-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: border-color 0.2s, transform 0.2s;
+      cursor: pointer;
+    }
+
+    .art-card:hover {
+      border-color: rgba(148,163,184,0.25);
+      transform: translateY(-2px);
+    }
+
+    /* Thumbnail placeholder — gradient rect */
+    .art-thumb {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      flex-shrink: 0;
+    }
+
+    .art-body { padding: 1.25rem; flex: 1; display: flex; flex-direction: column; }
+
+    .art-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.625rem;
+    }
+
+    .art-tag {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      padding: 2px 8px;
+      border-radius: 100px;
+      background: var(--accent-dim);
+      color: var(--accent);
+      border: 1px solid var(--accent-border);
+    }
+
+    .art-read-time { font-size: 0.75rem; color: var(--text-muted); }
+
+    .art-title {
+      font-family: var(--font-heading);
+      font-size: 1rem;
+      font-weight: 600;
+      line-height: 1.35;
+      margin-bottom: 0.5rem;
+    }
+
+    .art-excerpt {
+      font-size: 0.8375rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      flex: 1;
+      margin-bottom: 0.875rem;
+    }
+
+    .art-footer {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .art-author-dot {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* ─────────────────────────────────────
+       MOSAIC 1: Hero mosaic — asymmetric grid
+       Featured spans 2 rows on left; 2 smaller on right
+    ──────────────────────────────────────*/
+    .mosaic-hero {
+      display: grid;
+      gap: 0.75rem;
+      margin-bottom: 3.5rem;
+    }
+
+    /* Mobile: single column */
+    @media (min-width: 640px) {
+      .mosaic-hero {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto auto;
+      }
+
+      /* Featured card spans 2 rows */
+      .mosaic-hero .art-card:first-child {
+        grid-row: span 2;
+      }
+
+      /* Featured card thumb is taller */
+      .mosaic-hero .art-card:first-child .art-thumb {
+        aspect-ratio: 4 / 5;
+      }
+    }
+
+    /* ─────────────────────────────────────
+       MOSAIC 2: Editorial row — 60/40 split
+    ──────────────────────────────────────*/
+    .mosaic-editorial {
+      display: grid;
+      gap: 0.75rem;
+      margin-bottom: 3.5rem;
+    }
+
+    @media (min-width: 640px) {
+      .mosaic-editorial {
+        grid-template-columns: 1.5fr 1fr;
+        grid-template-rows: 1fr 1fr;
+      }
+
+      /* Large piece spans 2 rows on left */
+      .mosaic-editorial .art-card:first-child {
+        grid-row: span 2;
+      }
+
+      .mosaic-editorial .art-card:first-child .art-thumb {
+        aspect-ratio: 3 / 2;
+      }
+    }
+
+    /* ─────────────────────────────────────
+       MOSAIC 3: Reverse — dominant bottom-right
+    ──────────────────────────────────────*/
+    .mosaic-reverse {
+      display: grid;
+      gap: 0.75rem;
+      margin-bottom: 3.5rem;
+    }
+
+    @media (min-width: 640px) {
+      .mosaic-reverse {
+        grid-template-columns: 1fr 1fr 1fr;
+        grid-template-rows: auto auto;
+      }
+
+      /* Last card spans col 2-3 and rows 1-2 */
+      .mosaic-reverse .art-card:last-child {
+        grid-column: 2 / 4;
+        grid-row: 1 / 3;
+      }
+
+      .mosaic-reverse .art-card:last-child .art-thumb {
+        aspect-ratio: 4 / 3;
+      }
+
+      /* First two cards stack in col 1 */
+      .mosaic-reverse .art-card:nth-child(1) { grid-column: 1; grid-row: 1; }
+      .mosaic-reverse .art-card:nth-child(2) { grid-column: 1; grid-row: 2; }
+    }
+
+    /* ─────────────────────────────────────
+       INTERRUPT: Full-bleed stat + quote
+    ──────────────────────────────────────*/
+    .interrupt {
+      background: linear-gradient(135deg, var(--elevated), var(--surface));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 3rem 2rem;
+      text-align: center;
+      margin-bottom: 3.5rem;
+    }
+
+    .interrupt-stat {
+      font-family: var(--font-heading);
+      font-size: clamp(3rem, 8vw, 5rem);
+      font-weight: 700;
+      color: var(--accent);
+      line-height: 1;
+      margin-bottom: 0.5rem;
+    }
+
+    .interrupt-label {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 2rem;
+    }
+
+    .interrupt-quote {
+      font-family: var(--font-heading);
+      font-size: clamp(1.125rem, 2.5vw, 1.5rem);
+      font-weight: 500;
+      color: var(--text);
+      max-width: 580px;
+      margin: 0 auto;
+      line-height: 1.5;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <div class="page-wrap">
+
+    <h1>Mosaic Editorial Layout</h1>
+    <p class="page-desc">Magazine-style asymmetric grids — hero mosaic, editorial split, reverse dominant, and a full-bleed interrupt section.</p>
+
+    <!-- ── Mosaic 1: Hero ── -->
+    <div class="section-label">Hero Mosaic — Featured spans 2 rows</div>
+    <div class="mosaic-hero">
+      <!-- Featured — large -->
+      <article class="art-card">
+        <div class="art-thumb" style="background: linear-gradient(135deg, #0f4c35, #1a3a5c)"></div>
+        <div class="art-body">
+          <div class="art-meta">
+            <span class="art-tag">Design Systems</span>
+            <span class="art-read-time">12 min</span>
+          </div>
+          <div class="art-title">Why Your Design System Needs a Token Layer Before Anything Else</div>
+          <p class="art-excerpt">Before components, before patterns, before documentation — the hardest and most important work is defining your semantic token vocabulary.</p>
+          <div class="art-footer">
+            <div class="art-author-dot" style="background: linear-gradient(135deg, #6366F1, #10B981)"></div>
+            <span>Jordan Alvarez · Mar 4, 2026</span>
+          </div>
+        </div>
+      </article>
+      <!-- Supporting items -->
+      <article class="art-card">
+        <div class="art-thumb" style="background: linear-gradient(135deg, #1a1040, #3b1f6e)"></div>
+        <div class="art-body">
+          <div class="art-meta">
+            <span class="art-tag">Typography</span>
+            <span class="art-read-time">5 min</span>
+          </div>
+          <div class="art-title">The Case for a Three-Font System</div>
+          <p class="art-excerpt">Heading, body, and mono. That's all you need. Here's why — and how to choose them.</p>
+          <div class="art-footer">
+            <div class="art-author-dot" style="background: linear-gradient(135deg, #EC4899, #F59E0B)"></div>
+            <span>Priya Nair · Feb 28, 2026</span>
+          </div>
+        </div>
+      </article>
+      <article class="art-card">
+        <div class="art-thumb" style="background: linear-gradient(135deg, #0c2a1a, #1a4a2e)"></div>
+        <div class="art-body">
+          <div class="art-meta">
+            <span class="art-tag">Performance</span>
+            <span class="art-read-time">7 min</span>
+          </div>
+          <div class="art-title">Measuring What Users Actually Feel</div>
+          <p class="art-excerpt">INP is replacing FID in the Core Web Vitals suite. Here's what that means for your site and how to improve it.</p>
+          <div class="art-footer">
+            <div class="art-author-dot" style="background: linear-gradient(135deg, #F59E0B, #EF4444)"></div>
+            <span>Marcus Chen · Mar 1, 2026</span>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <!-- ── Interrupt ── -->
+    <div class="interrupt">
+      <div class="interrupt-stat">73%</div>
+      <div class="interrupt-label">of users judge credibility by design alone</div>
+      <p class="interrupt-quote">"You only get one chance to make a first impression — and on the web, that chance lasts about 50 milliseconds."</p>
+    </div>
+
+    <!-- ── Mosaic 2: Editorial split ── -->
+    <div class="section-label">Editorial Row — 60 / 40 Split</div>
+    <div class="mosaic-editorial">
+      <!-- Large left piece -->
+      <article class="art-card">
+        <div class="art-thumb" style="background: linear-gradient(135deg, #1a2040, #2d1060)"></div>
+        <div class="art-body">
+          <div class="art-meta">
+            <span class="art-tag">Motion</span>
+            <span class="art-read-time">8 min</span>
+          </div>
+          <div class="art-title">Purposeful Animation: A Framework for When — and When Not — to Move</div>
+          <p class="art-excerpt">Animation is one of the most powerful tools in the UI designer's kit, and one of the most frequently misused. This framework helps you decide quickly.</p>
+          <div class="art-footer">
+            <div class="art-author-dot" style="background: linear-gradient(135deg, #8B5CF6, #EC4899)"></div>
+            <span>Sasha Kim · Mar 2, 2026</span>
+          </div>
+        </div>
+      </article>
+      <!-- Two stacked right pieces -->
+      <article class="art-card">
+        <div class="art-thumb" style="background: linear-gradient(135deg, #1a0c0c, #3d1515)"></div>
+        <div class="art-body">
+          <div class="art-meta">
+            <span class="art-tag">Color</span>
+            <span class="art-read-time">4 min</span>
+          </div>
+          <div class="art-title">OKLCH: The Color Space Designers Have Been Waiting For</div>
+          <div class="art-footer">
+            <div class="art-author-dot" style="background: linear-gradient(135deg, #EF4444, #F97316)"></div>
+            <span>Devon Okafor · Feb 25, 2026</span>
+          </div>
+        </div>
+      </article>
+      <article class="art-card">
+        <div class="art-thumb" style="background: linear-gradient(135deg, #0a1f1a, #0f3028)"></div>
+        <div class="art-body">
+          <div class="art-meta">
+            <span class="art-tag">Accessibility</span>
+            <span class="art-read-time">6 min</span>
+          </div>
+          <div class="art-title">Writing ARIA Labels That Actually Help Screen Reader Users</div>
+          <div class="art-footer">
+            <div class="art-author-dot" style="background: linear-gradient(135deg, #10B981, #06B6D4)"></div>
+            <span>Lena Hoffmann · Feb 22, 2026</span>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <!-- ── Mosaic 3: Reverse ── -->
+    <div class="section-label">Reverse Mosaic — Dominant bottom-right</div>
+    <div class="mosaic-reverse">
+      <article class="art-card">
+        <div class="art-thumb" style="background: linear-gradient(135deg, #1a1a0a, #2a2a15)"></div>
+        <div class="art-body">
+          <div class="art-meta">
+            <span class="art-tag">CSS</span>
+            <span class="art-read-time">5 min</span>
+          </div>
+          <div class="art-title">Container Queries Are Finally Here</div>
+          <div class="art-footer">
+            <div class="art-author-dot" style="background: linear-gradient(135deg, #D97706, #FBBF24)"></div>
+            <span>Tyler Brooks</span>
+          </div>
+        </div>
+      </article>
+      <article class="art-card">
+        <div class="art-thumb" style="background: linear-gradient(135deg, #0f1a2a, #1a2d40)"></div>
+        <div class="art-body">
+          <div class="art-meta">
+            <span class="art-tag">Layout</span>
+            <span class="art-read-time">4 min</span>
+          </div>
+          <div class="art-title">Subgrid Changes Everything About Alignment</div>
+          <div class="art-footer">
+            <div class="art-author-dot" style="background: linear-gradient(135deg, #3B82F6, #8B5CF6)"></div>
+            <span>Mia Santos</span>
+          </div>
+        </div>
+      </article>
+      <!-- Dominant piece — bottom right, spans 2 columns and 2 rows -->
+      <article class="art-card">
+        <div class="art-thumb" style="background: linear-gradient(135deg, #0f3d2a, #1a5c40)"></div>
+        <div class="art-body">
+          <div class="art-meta">
+            <span class="art-tag">Featured</span>
+            <span class="art-read-time">10 min</span>
+          </div>
+          <div class="art-title">The Grid-Based Design System: Building UI From Constraint, Not Freedom</div>
+          <p class="art-excerpt">Constraint is a feature, not a bug. When designers work within a tight grid system, decisions become faster, outputs become more consistent, and the product becomes more coherent — all at the same time.</p>
+          <div class="art-footer">
+            <div class="art-author-dot" style="background: linear-gradient(135deg, #10B981, #059669)"></div>
+            <span>Raj Patel · Mar 5, 2026</span>
+          </div>
+        </div>
+      </article>
+    </div>
+
+  </div>
+</body>
+</html>

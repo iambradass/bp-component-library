@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Animated Charts — Component Library</title>
+
+  <!--
+  ============================================================
+  COMPONENT: Animated Bar + Donut Charts
+  COPY: <style> block + HTML block + <script> block into target site
+  FEATURES:
+    - Horizontal bar chart: 6 bars, labels, percentage values
+    - CSS-only bar animations triggered by IntersectionObserver
+    - Gradient-fill bars with accent color
+    - Donut/ring chart: CSS conic-gradient, 4 segments
+    - Donut animates from 0 to full on scroll
+    - Donut legend with color swatches + labels
+    - Desktop: side-by-side layout. Mobile: stacked
+    - No chart library — pure CSS + vanilla JS
+  ============================================================
+  -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+
+    /* ── CUSTOMIZE: swap these variables ── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-2:       #34D399;
+      --border:         rgba(148, 163, 184, 0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+
+      /* Donut segment colors */
+      --d1: #10B981;   /* accent */
+      --d2: #3B82F6;   /* blue */
+      --d3: #8B5CF6;   /* purple */
+      --d4: #F59E0B;   /* amber */
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      padding: 3rem 1.5rem 5rem;
+    }
+
+    .demo-label {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+    .demo-title {
+      font-family: var(--font-heading);
+      font-size: 2rem;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+    .demo-subtitle {
+      color: var(--text-secondary);
+      text-align: center;
+      font-size: 0.9375rem;
+      margin-bottom: 3rem;
+    }
+
+
+    /* ════════════════════════════════════════════
+       CHARTS LAYOUT WRAPPER
+    ════════════════════════════════════════════ */
+
+    .charts-wrapper {
+      max-width: 1000px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    @media (max-width: 700px) {
+      .charts-wrapper { grid-template-columns: 1fr; }
+    }
+
+    /* Shared card style */
+    .chart-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+    }
+
+    .chart-card-title {
+      font-family: var(--font-heading);
+      font-size: 1.0625rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .chart-card-subtitle {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+    }
+
+
+    /* ════════════════════════════════════════════
+       BAR CHART
+    ════════════════════════════════════════════ */
+
+    .bar-list {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .bar-item {
+      display: grid;
+      grid-template-columns: 130px 1fr 44px;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .bar-label {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      text-align: right;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Track behind the bar */
+    .bar-track {
+      height: 10px;
+      background: var(--elevated);
+      border-radius: 100px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* The fill bar — transitions from 0 to --bar-w when visible */
+    .bar-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 100px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+
+    /* Subtle shimmer overlay */
+    .bar-fill::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.15) 50%, transparent 100%);
+      transform: translateX(-100%);
+      animation: shimmer 2s ease 1.5s forwards;
+    }
+    @keyframes shimmer {
+      to { transform: translateX(200%); }
+    }
+
+    /* Percentage label at end of bar */
+    .bar-pct {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--accent);
+      text-align: left;
+    }
+
+    /* Mobile: narrower label column */
+    @media (max-width: 500px) {
+      .bar-item { grid-template-columns: 90px 1fr 40px; gap: 8px; }
+      .bar-label { font-size: 0.6875rem; }
+    }
+
+
+    /* ════════════════════════════════════════════
+       DONUT CHART
+    ════════════════════════════════════════════ */
+
+    .donut-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 28px;
+    }
+
+    /* The ring — drawn with conic-gradient */
+    .donut-ring {
+      position: relative;
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      /* conic-gradient value is built and updated by JS */
+      background: conic-gradient(var(--d1) 0deg, var(--d1) 0deg);
+    }
+
+    /* Inner hole — creates the "donut" appearance */
+    .donut-hole {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 120px;
+      height: 120px;
+      background: var(--surface);
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .donut-center-value {
+      font-family: var(--font-heading);
+      font-size: 1.5rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .donut-center-label {
+      font-family: var(--font-mono);
+      font-size: 0.5625rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-top: 4px;
+    }
+
+    /* Legend */
+    .donut-legend {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    .legend-label {
+      flex: 1;
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+    }
+
+    .legend-pct {
+      font-family: var(--font-mono);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    /* Small bar under legend item showing proportion */
+    .legend-bar-wrap {
+      width: 100%;
+      height: 3px;
+      background: var(--elevated);
+      border-radius: 100px;
+      overflow: hidden;
+      margin-top: -4px;
+      margin-left: 20px;
+    }
+    .legend-bar-fill {
+      height: 100%;
+      border-radius: 100px;
+      width: 0%;
+      transition: width 1s cubic-bezier(0.4, 0, 0.2, 1) 0.3s;
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="demo-label">Component Demo</div>
+  <h1 class="demo-title">Animated Charts</h1>
+  <p class="demo-subtitle">Bar chart and donut ring. CSS animations triggered on scroll. No chart library.</p>
+
+
+  <!-- ════════════════════════════════════════════
+       CHARTS
+  ════════════════════════════════════════════ -->
+  <div class="charts-wrapper" id="charts-wrapper">
+
+    <!-- ── BAR CHART ── -->
+    <div class="chart-card">
+      <div class="chart-card-title">Traffic sources</div>
+      <div class="chart-card-subtitle">Website sessions by acquisition channel, last 30 days</div>
+
+      <div class="bar-list" id="bar-chart">
+
+        <!-- Each .bar-fill gets data-target as its final width percentage -->
+
+        <div class="bar-item">
+          <div class="bar-label">Organic Search</div>
+          <div class="bar-track"><div class="bar-fill" data-target="68"></div></div>
+          <div class="bar-pct">68%</div>
+        </div>
+
+        <div class="bar-item">
+          <div class="bar-label">Direct</div>
+          <div class="bar-track"><div class="bar-fill" data-target="52"></div></div>
+          <div class="bar-pct">52%</div>
+        </div>
+
+        <div class="bar-item">
+          <div class="bar-label">Referral</div>
+          <div class="bar-track"><div class="bar-fill" data-target="41"></div></div>
+          <div class="bar-pct">41%</div>
+        </div>
+
+        <div class="bar-item">
+          <div class="bar-label">Social</div>
+          <div class="bar-track"><div class="bar-fill" data-target="38"></div></div>
+          <div class="bar-pct">38%</div>
+        </div>
+
+        <div class="bar-item">
+          <div class="bar-label">Email</div>
+          <div class="bar-track"><div class="bar-fill" data-target="29"></div></div>
+          <div class="bar-pct">29%</div>
+        </div>
+
+        <div class="bar-item">
+          <div class="bar-label">Paid</div>
+          <div class="bar-track"><div class="bar-fill" data-target="22"></div></div>
+          <div class="bar-pct">22%</div>
+        </div>
+
+      </div>
+    </div><!-- /bar chart card -->
+
+
+    <!-- ── DONUT CHART ── -->
+    <div class="chart-card">
+      <div class="chart-card-title">Revenue by service</div>
+      <div class="chart-card-subtitle">Percentage of total billed revenue across service lines</div>
+
+      <div class="donut-wrap">
+
+        <!-- The ring — JS sets its conic-gradient -->
+        <div class="donut-ring" id="donut-ring">
+          <div class="donut-hole">
+            <div class="donut-center-value">$4.2M</div>
+            <div class="donut-center-label">Total billed</div>
+          </div>
+        </div>
+
+        <!-- Legend — colors match CSS vars --d1 through --d4 -->
+        <div class="donut-legend">
+
+          <div>
+            <div class="legend-item">
+              <div class="legend-dot" style="background: var(--d1)"></div>
+              <span class="legend-label">Web Design &amp; Dev</span>
+              <span class="legend-pct">45%</span>
+            </div>
+            <div class="legend-bar-wrap">
+              <div class="legend-bar-fill" style="background: var(--d1)" data-target="45"></div>
+            </div>
+          </div>
+
+          <div>
+            <div class="legend-item">
+              <div class="legend-dot" style="background: var(--d2)"></div>
+              <span class="legend-label">SEO &amp; Content</span>
+              <span class="legend-pct">28%</span>
+            </div>
+            <div class="legend-bar-wrap">
+              <div class="legend-bar-fill" style="background: var(--d2)" data-target="28"></div>
+            </div>
+          </div>
+
+          <div>
+            <div class="legend-item">
+              <div class="legend-dot" style="background: var(--d3)"></div>
+              <span class="legend-label">Paid Ads</span>
+              <span class="legend-pct">18%</span>
+            </div>
+            <div class="legend-bar-wrap">
+              <div class="legend-bar-fill" style="background: var(--d3)" data-target="18"></div>
+            </div>
+          </div>
+
+          <div>
+            <div class="legend-item">
+              <div class="legend-dot" style="background: var(--d4)"></div>
+              <span class="legend-label">Maintenance &amp; Retainer</span>
+              <span class="legend-pct">9%</span>
+            </div>
+            <div class="legend-bar-wrap">
+              <div class="legend-bar-fill" style="background: var(--d4)" data-target="9"></div>
+            </div>
+          </div>
+
+        </div><!-- /legend -->
+      </div><!-- /donut-wrap -->
+    </div><!-- /donut card -->
+
+  </div><!-- /charts-wrapper -->
+
+
+  <script>
+  /*
+  ════════════════════════════════════════
+  CHARTS — scroll-triggered animation
+  ════════════════════════════════════════
+  */
+
+  var animated = false;  /* prevent re-firing on scroll */
+
+  /*
+  Donut chart segments — must sum to 100.
+  Order matches --d1, --d2, --d3, --d4 CSS variables.
+  */
+  var donutSegments = [
+    { pct: 45, color: getComputedStyle(document.documentElement).getPropertyValue('--d1').trim() || '#10B981' },
+    { pct: 28, color: getComputedStyle(document.documentElement).getPropertyValue('--d2').trim() || '#3B82F6' },
+    { pct: 18, color: getComputedStyle(document.documentElement).getPropertyValue('--d3').trim() || '#8B5CF6' },
+    { pct:  9, color: getComputedStyle(document.documentElement).getPropertyValue('--d4').trim() || '#F59E0B' },
+  ];
+
+  /* Build the conic-gradient string from cumulative percentages */
+  function buildConicGradient(progress) {
+    /* progress: 0 → 1 */
+    var stops = [];
+    var cursor = 0;
+
+    donutSegments.forEach(function(seg) {
+      var endDeg = cursor + (seg.pct * 3.6 * progress);  /* 3.6deg per percent */
+      stops.push(seg.color + ' ' + cursor + 'deg');
+      stops.push(seg.color + ' ' + endDeg + 'deg');
+      cursor = endDeg;
+    });
+
+    /* Fill remainder with dark color so incomplete animation looks clean */
+    if (progress < 1) {
+      stops.push('rgba(30,41,59,1) ' + cursor + 'deg');
+      stops.push('rgba(30,41,59,1) 360deg');
+    }
+
+    return 'conic-gradient(' + stops.join(', ') + ')';
+  }
+
+  /* Animate donut from 0 to full */
+  function animateDonut() {
+    var ring     = document.getElementById('donut-ring');
+    var duration = 1400;
+    var start    = null;
+
+    function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+
+    function step(ts) {
+      if (!start) start = ts;
+      var progress = Math.min((ts - start) / duration, 1);
+      ring.style.background = buildConicGradient(easeOutCubic(progress));
+      if (progress < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  /* Animate bar fills */
+  function animateBars() {
+    document.querySelectorAll('.bar-fill').forEach(function(bar, i) {
+      var target = parseInt(bar.getAttribute('data-target'), 10);
+      /* Stagger each bar by 80ms */
+      setTimeout(function() {
+        bar.style.width = target + '%';
+      }, i * 80);
+    });
+  }
+
+  /* Animate legend mini-bars */
+  function animateLegendBars() {
+    document.querySelectorAll('.legend-bar-fill').forEach(function(bar) {
+      var target = parseInt(bar.getAttribute('data-target'), 10);
+      bar.style.width = target + '%';
+    });
+  }
+
+  /* Fire all animations once when wrapper enters viewport */
+  var wrapper = document.getElementById('charts-wrapper');
+
+  var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting && !animated) {
+        animated = true;
+        animateBars();
+        animateDonut();
+        animateLegendBars();
+        observer.disconnect();
+      }
+    });
+  }, { threshold: 0.25 });
+
+  observer.observe(wrapper);
+
+  /* Fallback: fire immediately if already in view (e.g. no scroll needed) */
+  setTimeout(function() {
+    if (!animated) {
+      var rect = wrapper.getBoundingClientRect();
+      if (rect.top < window.innerHeight) {
+        animated = true;
+        animateBars();
+        animateDonut();
+        animateLegendBars();
+      }
+    }
+  }, 300);
+  </script>
+
+</body>
+</html>

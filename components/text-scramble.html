@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Text Scramble</title>
+
+  <!--
+    COMPONENT: Text Scramble / Glitch
+    COPY: style + html + script
+    Characters iterate through random chars before locking into the correct letter,
+    left to right. Three demo variants: hover trigger, auto-cycle, scroll trigger.
+  -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+
+    /* ── CUSTOMIZE ── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --glow:           rgba(16,185,129,0.15);
+      --border:         rgba(148,163,184,0.1);
+      --border-accent:  rgba(16,185,129,0.3);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+    }
+
+    /* Page layout */
+    .page {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 4rem 1.5rem 6rem;
+    }
+
+    /* Page header */
+    .page-header {
+      text-align: center;
+      margin-bottom: 5rem;
+    }
+    .eyebrow {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      padding: 4px 12px;
+      border: 1px solid var(--border-accent);
+      background: var(--glow);
+      border-radius: 100px;
+      margin-bottom: 1.25rem;
+    }
+    .page-title {
+      font-family: var(--font-heading);
+      font-size: clamp(2rem, 5vw, 3rem);
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      margin-bottom: 1rem;
+    }
+    .page-sub {
+      color: var(--text-secondary);
+      font-size: 1rem;
+      line-height: 1.7;
+    }
+
+    /* Individual demo sections */
+    .demo-section {
+      margin-bottom: 4rem;
+    }
+    .demo-label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .demo-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .demo-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 3rem 2rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    /* Subtle scanline texture on the cards */
+    .demo-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.04) 2px,
+        rgba(0,0,0,0.04) 4px
+      );
+      pointer-events: none;
+    }
+
+    /* ── SCRAMBLE TARGET TEXT ──
+       .sc-char elements are created by JS.
+       - .sc-char.locked  → final color (white)
+       - .sc-char.active  → scrambling (accent green)
+       The whole heading gets a subtle flicker during scramble. */
+    .scramble-heading {
+      font-family: var(--font-heading);
+      font-weight: 700;
+      cursor: default;
+      display: inline-block;
+      position: relative;
+    }
+    .scramble-heading.scrambling {
+      /* Subtle opacity flicker — JS adds/removes this class */
+      animation: sc-flicker 0.08s ease infinite alternate;
+    }
+    @keyframes sc-flicker {
+      from { opacity: 1; }
+      to   { opacity: 0.92; }
+    }
+
+    /* Individual character spans */
+    .sc-char {
+      display: inline-block;
+      transition: color 0.05s ease;
+      color: var(--text);
+    }
+    .sc-char.active {
+      /* In-progress: neon green */
+      color: var(--accent);
+      text-shadow: 0 0 12px rgba(16,185,129,0.5);
+    }
+
+    /* ── Variant 1: Hover scramble ── */
+    .v1-heading {
+      font-size: clamp(2.5rem, 6vw, 4rem);
+      letter-spacing: -0.03em;
+    }
+    .v1-hint {
+      margin-top: 1rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    /* ── Variant 2: Auto-cycle ── */
+    .v2-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .v2-prefix {
+      font-family: var(--font-heading);
+      font-size: clamp(1.75rem, 4vw, 2.75rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text-secondary);
+    }
+    .v2-heading {
+      font-size: clamp(1.75rem, 4vw, 2.75rem);
+      letter-spacing: -0.02em;
+      color: var(--accent);
+    }
+
+    /* ── Variant 3: Scroll trigger ── */
+    .v3-heading {
+      font-size: clamp(1.75rem, 4vw, 2.75rem);
+      letter-spacing: -0.02em;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .v3-heading.revealed {
+      opacity: 1;
+    }
+    .v3-hint {
+      margin-top: 1rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="page">
+
+    <!-- Page header -->
+    <header class="page-header">
+      <div class="eyebrow">Text Scramble / Glitch</div>
+      <h1 class="page-title">Characters resolve from noise</h1>
+      <p class="page-sub">Each character iterates through random symbols before locking in. Active characters glow accent green. Three trigger modes demonstrated below.</p>
+    </header>
+
+
+    <!-- ── VARIANT 1: Hover scramble ── -->
+    <div class="demo-section">
+      <div class="demo-label">Variant 01 — Hover to scramble</div>
+      <div class="demo-card">
+        <h2 class="scramble-heading v1-heading" id="v1" data-text="Hello World.">Hello World.</h2>
+        <p class="v1-hint">Hover over the heading above to trigger</p>
+      </div>
+    </div>
+
+
+    <!-- ── VARIANT 2: Auto-cycle ── -->
+    <div class="demo-section">
+      <div class="demo-label">Variant 02 — Auto-cycle through words</div>
+      <div class="demo-card">
+        <div class="v2-wrapper">
+          <span class="v2-prefix">We build</span>
+          <h2 class="scramble-heading v2-heading" id="v2" data-text="Websites."></h2>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ── VARIANT 3: Scroll trigger ── -->
+    <div class="demo-section">
+      <div class="demo-label">Variant 03 — Scroll into view (fires once)</div>
+      <div class="demo-card">
+        <h2 class="scramble-heading v3-heading" id="v3" data-text="Scroll Triggered.">Scroll Triggered.</h2>
+        <p class="v3-hint">Scroll this card into view to trigger — fires once only</p>
+      </div>
+    </div>
+
+  </div><!-- /page -->
+
+
+  <script>
+  /* ─────────────────────────────────────────────────
+     SCRAMBLE ENGINE
+     Chars lock in left→right, each cycling through
+     ~8 random characters before revealing the correct one.
+  ───────────────────────────────────────────────── */
+
+  // ── CUSTOMIZE: characters used during scramble ──
+  const CHARS     = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*<>/\\|{}[]';
+  const LOCK_DELAY   = 40;   // ms between each character locking in
+  const ITERS_PER    = 8;    // how many random chars shown before locking
+  const FRAME_RATE   = 40;   // ms per random char swap (≈25fps)
+
+  function randomChar() {
+    return CHARS[Math.floor(Math.random() * CHARS.length)];
+  }
+
+  /**
+   * Scramble `el` to display `targetText`.
+   * @param {HTMLElement} el - The heading element (contains .sc-char spans)
+   * @param {string} targetText - The final text to resolve to
+   * @param {function} [onDone] - Optional callback when done
+   */
+  function scramble(el, targetText, onDone) {
+    // Prepare char spans
+    el.innerHTML = '';
+    const chars = targetText.split('');
+    const spans = chars.map(function(ch) {
+      const span = document.createElement('span');
+      span.className = 'sc-char active';
+      // Preserve spaces
+      span.textContent = ch === ' ' ? '\u00A0' : randomChar();
+      el.appendChild(span);
+      return span;
+    });
+
+    el.classList.add('scrambling');
+
+    let frame      = 0;           // current animation frame tick
+    let lockCount  = 0;           // number of chars already locked in
+    let rafId;
+
+    function tick() {
+      // How many chars should be locked at this point
+      const targetLocked = Math.floor(frame / (LOCK_DELAY / FRAME_RATE));
+
+      // Lock any newly due characters
+      while (lockCount < targetLocked && lockCount < spans.length) {
+        const span = spans[lockCount];
+        span.textContent = chars[lockCount] === ' ' ? '\u00A0' : chars[lockCount];
+        span.classList.remove('active');
+        lockCount++;
+      }
+
+      // Scramble still-active characters
+      spans.forEach(function(span, i) {
+        if (i >= lockCount) {
+          span.textContent = chars[i] === ' ' ? '\u00A0' : randomChar();
+        }
+      });
+
+      frame++;
+
+      if (lockCount < spans.length) {
+        rafId = setTimeout(tick, FRAME_RATE);
+      } else {
+        // All locked — done
+        el.classList.remove('scrambling');
+        if (onDone) onDone();
+      }
+    }
+
+    tick();
+
+    // Return cancel function
+    return function cancel() {
+      clearTimeout(rafId);
+      el.classList.remove('scrambling');
+    };
+  }
+
+
+  /* ─────────────────────────────────────────────────
+     VARIANT 1: Hover scramble on V1 heading
+  ───────────────────────────────────────────────── */
+  (function() {
+    const el   = document.getElementById('v1');
+    const text = el.dataset.text;
+    let cancel = null;
+    let timeout = null;
+
+    el.addEventListener('mouseenter', function() {
+      clearTimeout(timeout);
+      if (cancel) cancel();
+      cancel = scramble(el, text, function() {
+        // Auto-restore after 2s
+        timeout = setTimeout(function() {
+          cancel = scramble(el, text);
+        }, 2000);
+      });
+    });
+  })();
+
+
+  /* ─────────────────────────────────────────────────
+     VARIANT 2: Auto-cycle through word list
+  ───────────────────────────────────────────────── */
+  (function() {
+    const el    = document.getElementById('v2');
+    // ── CUSTOMIZE: words to cycle through ──
+    const words = ['Websites.', 'Landing Pages.', 'Dashboards.', 'Funnels.', 'Apps.', 'Brands.'];
+    let idx     = 0;
+    let cancel  = null;
+
+    function next() {
+      if (cancel) cancel();
+      cancel = scramble(el, words[idx], function() {
+        // Pause 2s then cycle to next word
+        setTimeout(function() {
+          idx = (idx + 1) % words.length;
+          next();
+        }, 2000);
+      });
+    }
+
+    // Start after a short delay so the page has settled
+    setTimeout(next, 600);
+  })();
+
+
+  /* ─────────────────────────────────────────────────
+     VARIANT 3: Scroll trigger — fires once
+  ───────────────────────────────────────────────── */
+  (function() {
+    const el   = document.getElementById('v3');
+    const text = el.dataset.text;
+    let fired  = false;
+
+    const observer = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting && !fired) {
+          fired = true;
+          observer.disconnect();
+          el.classList.add('revealed');
+          scramble(el, text);
+        }
+      });
+    }, { threshold: 0.5 });
+
+    observer.observe(el);
+  })();
+  </script>
+
+</body>
+</html>

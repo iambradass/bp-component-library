@@ -1,0 +1,468 @@
+<!-- COMPONENT: Article + Sticky Sidebar Layout | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sticky Sidebar Layout</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ── Customize ── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.12);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 1.0625rem;
+      line-height: 1.8;
+    }
+
+    /* ── Progress bar ── */
+    .read-progress {
+      position: fixed;
+      top: 0; left: 0;
+      height: 3px;
+      background: var(--accent);
+      width: 0%;
+      z-index: 1000;
+      box-shadow: 0 0 8px var(--accent);
+    }
+
+    /* ── Page layout ── */
+    .page-outer { max-width: 1080px; margin: 0 auto; padding: 3rem 1.5rem 6rem; }
+
+    .page-layout {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 3rem;
+    }
+
+    @media (min-width: 900px) {
+      .page-layout {
+        grid-template-columns: 1fr 280px;
+        align-items: start;
+      }
+    }
+
+    /* ── Article ── */
+    .article { max-width: 68ch; }
+
+    .article-meta {
+      display: flex; align-items: center; gap: 0.5rem;
+      font-size: 0.8125rem; color: var(--text-muted);
+      margin-bottom: 1.5rem; flex-wrap: wrap;
+    }
+
+    .article-tag {
+      background: var(--accent-dim); color: var(--accent);
+      border: 1px solid var(--accent-border);
+      border-radius: 100px; padding: 2px 10px;
+      font-size: 0.75rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.06em;
+    }
+
+    .article-title {
+      font-family: var(--font-heading);
+      font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+      font-weight: 700; line-height: 1.15;
+      margin-bottom: 1.5rem;
+    }
+
+    .article-lead {
+      font-size: 1.125rem; color: var(--text-secondary);
+      line-height: 1.7; margin-bottom: 2.5rem;
+      padding-bottom: 2.5rem; border-bottom: 1px solid var(--border);
+    }
+
+    .article h2 {
+      font-family: var(--font-heading);
+      font-size: 1.375rem; font-weight: 700;
+      margin: 2.5rem 0 1rem;
+    }
+
+    .article p { margin-bottom: 1.5rem; }
+
+    /* Drop cap */
+    .article > p:first-of-type::first-letter {
+      float: left;
+      font-family: var(--font-heading);
+      font-size: 4.5rem; font-weight: 700;
+      line-height: 0.8; color: var(--accent);
+      margin-right: 0.1em; margin-top: 0.1em;
+    }
+
+    /* Pull quote */
+    .pull-quote {
+      margin: 2rem -1rem;
+      padding: 1.5rem 2rem;
+      border-left: 3px solid var(--accent);
+      background: var(--surface);
+      border-radius: 0 12px 12px 0;
+    }
+
+    @media (min-width: 600px) { .pull-quote { margin: 2rem -3rem; } }
+
+    .pull-quote p {
+      font-family: var(--font-heading);
+      font-size: 1.125rem; font-weight: 500;
+      line-height: 1.5; font-style: italic;
+      color: var(--text); margin: 0;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    @media (min-width: 900px) {
+      .sidebar {
+        position: sticky;
+        top: 1.5rem;
+      }
+    }
+
+    .sidebar-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+    }
+
+    .sidebar-title {
+      font-family: ui-monospace, monospace;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+    }
+
+    /* ── Author card ── */
+    .author-row { display: flex; align-items: center; gap: 0.875rem; margin-bottom: 0.875rem; }
+
+    .author-avatar {
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #6366F1, #10B981);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    .author-name  { font-family: var(--font-heading); font-weight: 600; font-size: 0.9375rem; }
+    .author-role  { font-size: 0.8rem; color: var(--text-muted); }
+    .author-bio   { font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 1rem; }
+
+    .author-socials { display: flex; gap: 0.5rem; }
+
+    .social-link {
+      width: 32px; height: 32px;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .social-link:hover { border-color: var(--accent-border); color: var(--accent); }
+
+    /* ── TOC ── */
+    .toc-list { list-style: none; }
+    .toc-list li { margin-bottom: 2px; }
+
+    .toc-list a {
+      display: block;
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      text-decoration: none;
+      padding: 0.3rem 0.625rem;
+      border-left: 2px solid transparent;
+      border-radius: 0 6px 6px 0;
+      transition: color 0.2s, border-color 0.2s, background 0.2s;
+      line-height: 1.4;
+    }
+
+    .toc-list a:hover { color: var(--text); }
+    .toc-list a.active { color: var(--accent); border-left-color: var(--accent); background: var(--accent-dim); }
+
+    /* ── Share buttons ── */
+    .share-buttons { display: flex; flex-direction: column; gap: 0.5rem; }
+
+    .share-btn {
+      display: flex; align-items: center; gap: 0.625rem;
+      padding: 0.5625rem 0.875rem;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+      cursor: pointer;
+      font-family: var(--font-body);
+      transition: border-color 0.2s, color 0.2s, background 0.2s;
+      min-height: 44px;
+    }
+
+    .share-btn:hover { border-color: var(--accent-border); color: var(--accent); background: var(--accent-dim); }
+
+    .share-feedback {
+      font-size: 0.75rem;
+      color: var(--accent);
+      height: 1em;
+      margin-top: 0.25rem;
+      transition: opacity 0.3s;
+    }
+
+    /* ── Related articles ── */
+    .related-section { margin-top: 4rem; padding-top: 2.5rem; border-top: 1px solid var(--border); }
+
+    .related-title {
+      font-family: var(--font-heading);
+      font-size: 1.25rem; font-weight: 700;
+      margin-bottom: 1.5rem;
+    }
+
+    .related-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 1rem;
+    }
+
+    .related-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: border-color 0.2s;
+      cursor: pointer;
+    }
+
+    .related-card:hover { border-color: rgba(148,163,184,0.25); }
+
+    .related-thumb { height: 120px; }
+
+    .related-body { padding: 1rem; }
+    .related-tag  { font-size: 0.7rem; color: var(--accent); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.375rem; }
+    .related-name { font-family: var(--font-heading); font-size: 0.9375rem; font-weight: 600; margin-bottom: 0.25rem; line-height: 1.35; }
+    .related-meta { font-size: 0.75rem; color: var(--text-muted); }
+  </style>
+</head>
+<body>
+
+  <div class="read-progress" id="read-progress"></div>
+
+  <div class="page-outer">
+    <div class="page-layout">
+
+      <!-- ── Article column ── -->
+      <article class="article">
+
+        <div class="article-meta">
+          <span class="article-tag">Engineering</span>
+          <span>·</span>
+          <span>11 min read</span>
+          <span>·</span>
+          <span>March 5, 2026</span>
+        </div>
+
+        <h1 class="article-title">Building Design Systems That Don't Collapse Under Their Own Weight</h1>
+
+        <p class="article-lead">Design systems are supposed to make teams faster. But somewhere around version 3.0, many teams find themselves maintaining a second product that's harder to change than the one it's supposed to serve. Here's what to do differently from day one.</p>
+
+        <p>The warning signs come early. A designer requests a "one-time exception" to the spacing scale. An engineer adds a custom component because the existing ones "don't quite fit." Six months later, the design system has 14 button variants, three separate spacing scales, and a Figma library that bears little resemblance to the codebase. The system meant to accelerate the team is now a weight they drag.</p>
+
+        <p>This is not a failure of tooling. It is a failure of architecture — specifically, a failure to treat the design system as a living product with users, versioning, and a product roadmap of its own.</p>
+
+        <h2 id="tokens-first">Start with tokens, not components</h2>
+
+        <p>The single biggest mistake teams make is building components before establishing a token system. Tokens are the semantic layer between raw design decisions and their implementations: color-intent-primary maps to #10B981, spacing-content-gap maps to 1.5rem. This layer allows the entire system to be rethemed or updated in one place.</p>
+
+        <p>Without tokens, changing a brand color means finding every hex value in every component. With tokens, it means changing one variable. The investment in a three-tier token architecture — global values, semantic aliases, component-specific overrides — pays for itself the first time a rebrand lands in your roadmap.</p>
+
+        <blockquote class="pull-quote">
+          <p>A design system without a token layer is just a collection of components that happen to look similar today. Tokens are what make it a system.</p>
+        </blockquote>
+
+        <h2 id="governance">Governance is a design problem</h2>
+
+        <p>Most design system documentation covers components exhaustively and governance not at all. How does a new component get added? Who approves a change to an existing one? What constitutes a breaking change versus an enhancement? Without clear answers, the system accumulates debt silently, each small deviation justified in isolation, catastrophic in aggregate.</p>
+
+        <p>The teams with the healthiest systems treat these as design questions, not process questions. The contribution workflow should be as considered as the button component. The RFC template should be as polished as the documentation site. Every part of the system that teams interact with shapes their relationship to it.</p>
+
+        <h2 id="versioning">Version aggressively, break things deliberately</h2>
+
+        <p>Semantic versioning exists for a reason. A design system that never has breaking changes is either perfect (impossible) or is accumulating backward-compatible workarounds that make the whole thing increasingly incoherent. Teams that are afraid to increment a major version end up shipping a v1.47.0 that bears no conceptual relationship to v1.0.0.</p>
+
+        <p>Breaking changes are not failures. They are the mechanism by which a system improves. Document them clearly, provide migration guides, give adopters a reasonable runway, and then make the change. The teams downstream will thank you for the integrity, even if they grumble about the migration work.</p>
+
+        <h2 id="measuring">Measuring what matters</h2>
+
+        <p>How do you know if your design system is working? Most teams measure adoption rates — percentage of components from the system versus custom-built — and stop there. This is a necessary but insufficient metric. A team could have 100% adoption while still shipping slowly and inconsistently if the system doesn't serve their actual use cases.</p>
+
+        <p>The metrics that matter more: time from design handoff to implementation for a new page type, number of visual regressions per release, time spent per quarter on "design debt" remediation. These measure the outcomes the system exists to produce, not just the inputs.</p>
+
+        <!-- Related articles section (outside 68ch constraint) -->
+        <div class="related-section">
+          <div class="related-title">Related Reading</div>
+          <div class="related-grid">
+            <div class="related-card">
+              <div class="related-thumb" style="background: linear-gradient(135deg, #0f4c35, #1a3a5c)"></div>
+              <div class="related-body">
+                <div class="related-tag">Tokens</div>
+                <div class="related-name">The Three-Tier Token Model</div>
+                <div class="related-meta">6 min · Mar 1, 2026</div>
+              </div>
+            </div>
+            <div class="related-card">
+              <div class="related-thumb" style="background: linear-gradient(135deg, #2d1060, #1a204c)"></div>
+              <div class="related-body">
+                <div class="related-tag">Process</div>
+                <div class="related-name">Writing Design System RFCs That Get Approved</div>
+                <div class="related-meta">8 min · Feb 20, 2026</div>
+              </div>
+            </div>
+            <div class="related-card">
+              <div class="related-thumb" style="background: linear-gradient(135deg, #1a1040, #0f3028)"></div>
+              <div class="related-body">
+                <div class="related-tag">Engineering</div>
+                <div class="related-name">Semantic Versioning for UI Libraries</div>
+                <div class="related-meta">5 min · Feb 12, 2026</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </article>
+
+      <!-- ── Sidebar ── -->
+      <aside class="sidebar">
+
+        <!-- Author card -->
+        <div class="sidebar-card">
+          <div class="sidebar-title">Author</div>
+          <div class="author-row">
+            <div class="author-avatar">AW</div>
+            <div>
+              <div class="author-name">Aisha Williams</div>
+              <div class="author-role">Design Systems Lead</div>
+            </div>
+          </div>
+          <p class="author-bio">Aisha leads design systems at Vertex Studio. She's been building component libraries since before Storybook existed and has opinions about token naming conventions.</p>
+          <div class="author-socials">
+            <a href="#" class="social-link" aria-label="Twitter">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"/></svg>
+            </a>
+            <a href="#" class="social-link" aria-label="GitHub">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+            </a>
+            <a href="#" class="social-link" aria-label="LinkedIn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/></svg>
+            </a>
+          </div>
+        </div>
+
+        <!-- Table of contents -->
+        <div class="sidebar-card">
+          <div class="sidebar-title">Contents</div>
+          <ul class="toc-list">
+            <li><a href="#tokens-first" data-target="tokens-first">Start with tokens</a></li>
+            <li><a href="#governance" data-target="governance">Governance</a></li>
+            <li><a href="#versioning" data-target="versioning">Version aggressively</a></li>
+            <li><a href="#measuring" data-target="measuring">Measuring what matters</a></li>
+          </ul>
+        </div>
+
+        <!-- Share buttons -->
+        <div class="sidebar-card">
+          <div class="sidebar-title">Share this article</div>
+          <div class="share-buttons">
+            <button class="share-btn" onclick="shareTwitter()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"/></svg>
+              Share on X (Twitter)
+            </button>
+            <button class="share-btn" onclick="shareLinkedIn()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/></svg>
+              Share on LinkedIn
+            </button>
+            <button class="share-btn" id="copy-link-btn" onclick="copyLink()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+              Copy link
+            </button>
+          </div>
+          <div class="share-feedback" id="share-feedback"></div>
+        </div>
+
+      </aside>
+    </div>
+  </div>
+
+  <script>
+    /* ── Reading progress bar ── */
+    var progressBar = document.getElementById('read-progress');
+    window.addEventListener('scroll', function() {
+      var doc  = document.documentElement;
+      var pct  = (window.scrollY / (doc.scrollHeight - window.innerHeight)) * 100;
+      progressBar.style.width = Math.min(pct, 100) + '%';
+    }, { passive: true });
+
+    /* ── TOC scroll spy ── */
+    var headings = document.querySelectorAll('h2[id]');
+    var tocLinks = document.querySelectorAll('.toc-list a');
+
+    var headingObserver = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          var id = entry.target.id;
+          tocLinks.forEach(function(link) {
+            link.classList.toggle('active', link.dataset.target === id);
+          });
+        }
+      });
+    }, { rootMargin: '-10% 0px -75% 0px' });
+
+    headings.forEach(function(h) { headingObserver.observe(h); });
+
+    /* ── Share handlers ── */
+    function shareTwitter() {
+      var url  = encodeURIComponent(window.location.href);
+      var text = encodeURIComponent(document.title);
+      window.open('https://twitter.com/intent/tweet?url=' + url + '&text=' + text, '_blank');
+    }
+
+    function shareLinkedIn() {
+      var url = encodeURIComponent(window.location.href);
+      window.open('https://www.linkedin.com/sharing/share-offsite/?url=' + url, '_blank');
+    }
+
+    function copyLink() {
+      navigator.clipboard.writeText(window.location.href).then(function() {
+        var fb = document.getElementById('share-feedback');
+        fb.textContent = 'Link copied to clipboard!';
+        setTimeout(function() { fb.textContent = ''; }, 2500);
+      });
+    }
+  </script>
+</body>
+</html>

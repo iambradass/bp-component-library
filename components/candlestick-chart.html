@@ -1,0 +1,428 @@
+<!-- COMPONENT: Candlestick Chart | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Candlestick Chart</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+      --green:          #10B981;
+      --red:            #EF4444;
+      --amber:          #F59E0B;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 13px;
+      padding: 24px;
+      min-height: 100vh;
+    }
+    .chart-wrap { max-width: 1100px; margin: 0 auto; }
+
+    /* ── Stats bar ── */
+    .stats-bar {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .ticker { font-family: var(--font-heading); font-size: 1.25rem; font-weight: 700; }
+    .price  { font-family: var(--font-mono); font-size: 1.5rem; font-weight: 700; }
+    .day-change { font-size: 0.875rem; font-weight: 600; padding: 3px 8px; border-radius: 6px; }
+    .day-change.up   { background: rgba(16,185,129,0.15); color: #10B981; }
+    .day-change.down { background: rgba(239,68,68,0.15);  color: #EF4444; }
+    .mkt-cap { font-size: 0.8125rem; color: var(--text-muted); }
+
+    /* ── Controls ── */
+    .controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .timeframe-tabs {
+      display: flex;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .timeframe-tabs button {
+      padding: 6px 14px;
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-family: var(--font-body);
+      font-size: 0.8125rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .timeframe-tabs button.active { background: var(--accent); color: #000; font-weight: 600; }
+    .timeframe-tabs button:hover:not(.active) { color: var(--text); background: var(--elevated); }
+
+    .ma-toggles {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .ma-toggle {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8125rem;
+      cursor: pointer;
+      user-select: none;
+    }
+    .ma-toggle input { accent-color: var(--accent); width:14px; height:14px; }
+    .ma-line { width:20px; height:2px; border-radius:1px; }
+
+    /* ── Canvas card ── */
+    .canvas-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      position: relative;
+      cursor: crosshair;
+    }
+    canvas#mainChart { display: block; width: 100%; }
+    canvas#volChart  { display: block; width: 100%; }
+
+    /* ── OHLC Tooltip ── */
+    .ohlc-tooltip {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 0.8125rem;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.1s;
+      font-family: var(--font-mono);
+    }
+    .ohlc-tooltip.visible { opacity: 1; }
+    .ohlc-row { display: flex; gap: 12px; }
+    .ohlc-label { color: var(--text-muted); }
+    .ohlc-val   { font-weight: 600; }
+  </style>
+</head>
+<body>
+<div class="chart-wrap">
+
+  <!-- Stats bar -->
+  <div class="stats-bar">
+    <div class="ticker">ACME</div>
+    <div class="price" id="priceDisplay">—</div>
+    <div class="day-change" id="dayChange">—</div>
+    <div class="mkt-cap">Market Cap: $24.8B &nbsp;·&nbsp; Vol: 3.2M</div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <div class="timeframe-tabs" id="tfTabs">
+      <button data-tf="1D">1D</button>
+      <button data-tf="1W">1W</button>
+      <button data-tf="1M" class="active">1M</button>
+      <button data-tf="3M">3M</button>
+    </div>
+    <div class="ma-toggles">
+      <label class="ma-toggle">
+        <input type="checkbox" id="ma10check" checked>
+        <div class="ma-line" style="background:#94A3B8"></div>
+        MA 10
+      </label>
+      <label class="ma-toggle">
+        <input type="checkbox" id="ma20check" checked>
+        <div class="ma-line" style="background:#F59E0B"></div>
+        MA 20
+      </label>
+    </div>
+  </div>
+
+  <!-- Chart card -->
+  <div class="canvas-card" id="canvasCard">
+    <canvas id="mainChart" height="340"></canvas>
+    <canvas id="volChart"  height="80"></canvas>
+    <div class="ohlc-tooltip" id="ohlcTooltip">
+      <div class="ohlc-row">
+        <span class="ohlc-label">O</span><span class="ohlc-val" id="oO">—</span>
+        <span class="ohlc-label">H</span><span class="ohlc-val" id="oH">—</span>
+        <span class="ohlc-label">L</span><span class="ohlc-val" id="oL">—</span>
+        <span class="ohlc-label">C</span><span class="ohlc-val" id="oC">—</span>
+        <span class="ohlc-label">Vol</span><span class="ohlc-val" id="oV">—</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ── Data generation ───────────────────────────────────────────────
+  function genOHLC(count, startPrice, volatility) {
+    const data = [];
+    let price = startPrice;
+    const baseDate = new Date('2025-09-01');
+    for (let i = 0; i < count; i++) {
+      const open  = price;
+      const move  = (Math.random() - 0.48) * volatility;
+      const close = Math.max(50, open + move);
+      const wick  = Math.random() * volatility * 0.8;
+      const high  = Math.max(open, close) + Math.random() * wick;
+      const low   = Math.min(open, close) - Math.random() * wick;
+      const vol   = Math.floor(500000 + Math.random() * 4000000);
+      const d = new Date(baseDate);
+      d.setDate(d.getDate() + i);
+      data.push({ date:d, open, high, low, close, vol });
+      price = close;
+    }
+    return data;
+  }
+
+  const datasets = {
+    '1D': genOHLC(24,  148, 2),
+    '1W': genOHLC(30,  140, 5),
+    '1M': genOHLC(60,  120, 8),
+    '3M': genOHLC(180, 90,  6),
+  };
+
+  let currentTF = '1M';
+  let showMA10 = true, showMA20 = true;
+
+  // ── MA calculation ────────────────────────────────────────────────
+  function calcMA(data, period) {
+    return data.map((_, i) => {
+      if (i < period-1) return null;
+      const slice = data.slice(i-period+1, i+1);
+      return slice.reduce((a,d) => a+d.close, 0) / period;
+    });
+  }
+
+  // ── Render ────────────────────────────────────────────────────────
+  function fmt(n) { return '$' + n.toFixed(2); }
+  function fmtVol(n) { return n >= 1e6 ? (n/1e6).toFixed(1)+'M' : (n/1000).toFixed(0)+'k'; }
+
+  function render() {
+    const data = datasets[currentTF];
+    const canvasCard = document.getElementById('canvasCard');
+    const mainCanvas = document.getElementById('mainChart');
+    const volCanvas  = document.getElementById('volChart');
+    const W = canvasCard.clientWidth;
+
+    mainCanvas.width = W;
+    volCanvas.width  = W;
+    mainCanvas.height = 340;
+    volCanvas.height  = 80;
+
+    const ctx  = mainCanvas.getContext('2d');
+    const vctx = volCanvas.getContext('2d');
+    ctx.clearRect(0,0,W,340);
+    vctx.clearRect(0,0,W,80);
+
+    const N = data.length;
+    const pad = {l:60, r:14, t:14, b:28};
+    const cw = W - pad.l - pad.r;
+    const ch = 340 - pad.t - pad.b;
+
+    const candleW = Math.max(3, Math.floor(cw/N) - 2);
+    const spacing = cw / N;
+
+    // Price range
+    const prices = data.flatMap(d => [d.high, d.low]);
+    const minP = Math.min(...prices), maxP = Math.max(...prices);
+    const pRange = maxP - minP || 1;
+    const pPad = pRange * 0.05;
+    const effMin = minP - pPad, effMax = maxP + pPad;
+    const pScale = p => pad.t + ch - ((p - effMin)/(effMax - effMin)) * ch;
+
+    // Price axis grid
+    ctx.strokeStyle = 'rgba(148,163,184,0.07)';
+    ctx.lineWidth = 1;
+    for (let i=0; i<=5; i++) {
+      const p = effMin + (effMax-effMin)*(i/5);
+      const y = pScale(p);
+      ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l+cw, y); ctx.stroke();
+      ctx.fillStyle = '#475569'; ctx.font='10px Inter,sans-serif'; ctx.textAlign='right';
+      ctx.fillText(fmt(p), pad.l-6, y+4);
+    }
+
+    // MA lines
+    const ma10 = calcMA(data, 10);
+    const ma20 = calcMA(data, 20);
+
+    if (showMA10) {
+      ctx.beginPath();
+      ma10.forEach((v,i) => {
+        if (v === null) return;
+        const x = pad.l + i*spacing + spacing/2;
+        const y = pScale(v);
+        i===0||ma10[i-1]===null ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+      });
+      ctx.strokeStyle = '#94A3B8';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+
+    if (showMA20) {
+      ctx.beginPath();
+      ma20.forEach((v,i) => {
+        if (v === null) return;
+        const x = pad.l + i*spacing + spacing/2;
+        const y = pScale(v);
+        i===0||ma20[i-1]===null ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+      });
+      ctx.strokeStyle = '#F59E0B';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+
+    // Candlesticks
+    data.forEach((d, i) => {
+      const x = pad.l + i*spacing + spacing/2;
+      const isGreen = d.close >= d.open;
+      const col = isGreen ? '#10B981' : '#EF4444';
+      const bodyTop = pScale(Math.max(d.open, d.close));
+      const bodyBot = pScale(Math.min(d.open, d.close));
+      const bodyH = Math.max(1, bodyBot - bodyTop);
+
+      // Wick
+      ctx.beginPath();
+      ctx.moveTo(x, pScale(d.high));
+      ctx.lineTo(x, pScale(d.low));
+      ctx.strokeStyle = col;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // Body
+      ctx.fillStyle = isGreen ? col : col;
+      ctx.fillRect(x - candleW/2, bodyTop, candleW, bodyH);
+    });
+
+    // Time axis (bottom)
+    ctx.fillStyle = '#475569'; ctx.font='10px Inter,sans-serif';
+    const step = Math.ceil(N/8);
+    data.forEach((d,i) => {
+      if (i % step !== 0) return;
+      const x = pad.l + i*spacing + spacing/2;
+      ctx.textAlign='center';
+      ctx.fillText(d.date.toLocaleDateString('en-US',{month:'short',day:'numeric'}), x, 340-6);
+    });
+
+    // Store hit data
+    mainCanvas._data = data;
+    mainCanvas._pad = pad;
+    mainCanvas._spacing = spacing;
+    mainCanvas._pScale = pScale;
+    mainCanvas._W = W;
+    mainCanvas._N = N;
+
+    // Volume chart
+    const maxVol = Math.max(...data.map(d=>d.vol));
+    const vPad = {l:60,r:14,t:6,b:22};
+    const vH = 80 - vPad.t - vPad.b;
+    vctx.fillStyle = '#475569'; vctx.font='9px Inter,sans-serif'; vctx.textAlign='right';
+    vctx.fillText('Vol', vPad.l-6, vPad.t+vH/2+4);
+
+    data.forEach((d,i) => {
+      const x    = vPad.l + i*spacing + spacing/2;
+      const barH = Math.max(1, (d.vol/maxVol)*vH);
+      const isGreen = d.close >= d.open;
+      vctx.fillStyle = isGreen ? 'rgba(16,185,129,0.5)' : 'rgba(239,68,68,0.5)';
+      vctx.fillRect(x - candleW/2, vPad.t+vH-barH, candleW, barH);
+    });
+
+    // Update stats bar
+    const last = data[data.length-1];
+    const prev = data[data.length-2];
+    const change = last.close - prev.close;
+    const pct    = (change/prev.close)*100;
+    const up = change >= 0;
+    document.getElementById('priceDisplay').textContent = fmt(last.close);
+    const dc = document.getElementById('dayChange');
+    dc.textContent = `${up?'▲':'▼'} ${fmt(Math.abs(change))} (${Math.abs(pct).toFixed(2)}%)`;
+    dc.className = 'day-change ' + (up?'up':'down');
+  }
+
+  // ── Hover crosshair ───────────────────────────────────────────────
+  document.getElementById('mainChart').addEventListener('mousemove', function(e) {
+    if (!this._data) return;
+    const rect = this.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+
+    const i = Math.round((mx - this._pad.l) / this._spacing - 0.5);
+    if (i < 0 || i >= this._N) { document.getElementById('ohlcTooltip').classList.remove('visible'); return; }
+    const d = this._data[i];
+
+    // Redraw + crosshair
+    render();
+    const ctx = this.getContext('2d');
+    const x = this._pad.l + i*this._spacing + this._spacing/2;
+    ctx.beginPath(); ctx.moveTo(x, this._pad.t); ctx.lineTo(x, 340-this._pad.b);
+    const yC = this._pScale(d.close);
+    ctx.moveTo(this._pad.l, yC); ctx.lineTo(this._pad.l+(this._W-this._pad.l-this._pad.r), yC);
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4,3]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Update tooltip
+    const up = d.close >= d.open;
+    const col = up ? '#10B981' : '#EF4444';
+    document.getElementById('oO').textContent = fmt(d.open);
+    document.getElementById('oH').textContent = fmt(d.high);  document.getElementById('oH').style.color = '#10B981';
+    document.getElementById('oL').textContent = fmt(d.low);   document.getElementById('oL').style.color = '#EF4444';
+    document.getElementById('oC').textContent = fmt(d.close); document.getElementById('oC').style.color = col;
+    document.getElementById('oV').textContent = fmtVol(d.vol);
+    document.getElementById('ohlcTooltip').classList.add('visible');
+  });
+
+  document.getElementById('mainChart').addEventListener('mouseleave', function() {
+    document.getElementById('ohlcTooltip').classList.remove('visible');
+    render();
+  });
+
+  // ── Timeframe tabs ────────────────────────────────────────────────
+  document.getElementById('tfTabs').addEventListener('click', e => {
+    const btn = e.target.closest('button[data-tf]');
+    if (!btn) return;
+    document.querySelectorAll('#tfTabs button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentTF = btn.dataset.tf;
+    render();
+  });
+
+  // ── MA toggles ────────────────────────────────────────────────────
+  document.getElementById('ma10check').addEventListener('change', e => { showMA10 = e.target.checked; render(); });
+  document.getElementById('ma20check').addEventListener('change', e => { showMA20 = e.target.checked; render(); });
+
+  render();
+  window.addEventListener('resize', render);
+</script>
+</body>
+</html>

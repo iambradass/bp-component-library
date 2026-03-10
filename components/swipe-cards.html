@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Swipe Cards — Component Library</title>
+  <!-- COMPONENT: Swipe Cards | COPY: style + html + script -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── CUSTOMIZE ─────────────────────────────────────────────── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.12);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --danger:         #EF4444;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+
+      /* Swipe threshold in px — beyond this the card flies off */
+      --swipe-threshold: 120;
+    }
+    /* ── END CUSTOMIZE ─────────────────────────────────────────── */
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: var(--font-body); min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 2rem 1rem 3rem;
+      overflow: hidden;
+    }
+
+    h1 { font-family: var(--font-heading); font-size: 1.75rem; font-weight: 700; text-align: center; margin-bottom: 0.4rem; }
+    .sub { color: var(--text-secondary); text-align: center; font-size: 0.875rem; margin-bottom: 2.5rem; }
+
+    /* ── Deck container ──────────────────────────────────────── */
+    .deck {
+      position: relative;
+      width: min(380px, 92vw);
+      height: 500px; /* enough for the tallest card */
+    }
+
+    /* ── Individual card ─────────────────────────────────────── */
+    .swipe-card {
+      position: absolute;
+      inset: 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 1.75rem;
+      display: flex; flex-direction: column;
+      user-select: none;
+      touch-action: none;
+      cursor: grab;
+      will-change: transform;
+      /* Transition only for snap-back and stack settling — removed during drag */
+    }
+    .swipe-card:active { cursor: grabbing; }
+
+    /* Stack depth transforms (CSS, overridden by JS for active card) */
+    .swipe-card[data-depth="0"] { z-index: 5; transform: none; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+    .swipe-card[data-depth="1"] { z-index: 4; transform: translateY(10px) scale(0.96); }
+    .swipe-card[data-depth="2"] { z-index: 3; transform: translateY(20px) scale(0.92); }
+    .swipe-card[data-depth="3"] { z-index: 2; transform: translateY(28px) scale(0.88); }
+    .swipe-card[data-depth="4"] { z-index: 1; transform: translateY(34px) scale(0.85); }
+    .swipe-card.settling { transition: transform 0.35s cubic-bezier(0.4,0,0.2,1); }
+    .swipe-card.snap-back { transition: transform 0.45s cubic-bezier(0.34,1.56,0.64,1); }
+    .swipe-card.fly-off   { transition: transform 0.4s ease-in, opacity 0.4s ease; pointer-events: none; }
+
+    /* ── Card content ────────────────────────────────────────── */
+    .card-tag {
+      font-family: ui-monospace, monospace; font-size: 0.625rem;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      padding: 3px 9px; border-radius: 4px;
+      display: inline-block; margin-bottom: 1rem;
+    }
+    .card-client { font-family: var(--font-heading); font-size: 1.5rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .card-type   { color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1.5rem; }
+
+    .card-details { display: flex; flex-direction: column; gap: 0.6rem; flex: 1; }
+    .detail-row { display: flex; align-items: center; gap: 0.75rem; }
+    .detail-icon { width: 28px; height: 28px; border-radius: 6px; background: var(--elevated); display: flex; align-items: center; justify-content: center; color: var(--text-muted); flex-shrink: 0; }
+    .detail-label { font-size: 0.6875rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    .detail-value { font-size: 0.875rem; font-weight: 500; }
+
+    .card-desc { font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.6; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+
+    /* ── Accept / Decline overlays ───────────────────────────── */
+    .card-overlay {
+      position: absolute; inset: 0;
+      border-radius: 20px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-heading); font-size: 1.5rem; font-weight: 700;
+      pointer-events: none; opacity: 0;
+      transition: opacity 0.1s ease;
+      letter-spacing: 0.05em;
+    }
+    .overlay-accept {
+      background: rgba(16,185,129,0.15);
+      color: var(--accent);
+      border: 2.5px solid rgba(16,185,129,0.4);
+    }
+    .overlay-decline {
+      background: rgba(239,68,68,0.12);
+      color: var(--danger);
+      border: 2.5px solid rgba(239,68,68,0.35);
+    }
+
+    /* ── Action buttons below deck ───────────────────────────── */
+    .deck-actions {
+      display: flex; gap: 1.5rem; margin-top: 2rem;
+    }
+    .action-btn {
+      width: 60px; height: 60px; border-radius: 50%;
+      border: 2px solid var(--border); background: var(--surface);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem; cursor: pointer;
+      transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .action-btn:hover { transform: scale(1.1); }
+    .action-btn.decline:hover { border-color: rgba(239,68,68,0.5); box-shadow: 0 0 20px rgba(239,68,68,0.2); }
+    .action-btn.accept:hover  { border-color: var(--accent-border); box-shadow: 0 0 20px rgba(16,185,129,0.2); }
+
+    /* ── Empty state ─────────────────────────────────────────── */
+    .empty-state {
+      display: none;
+      flex-direction: column; align-items: center; gap: 1rem;
+      text-align: center; padding: 2rem;
+    }
+    .empty-state.visible { display: flex; }
+    .empty-icon { font-size: 3rem; }
+    .empty-text { font-family: var(--font-heading); font-size: 1.125rem; font-weight: 700; }
+    .empty-sub  { font-size: 0.875rem; color: var(--text-secondary); }
+    .reset-btn {
+      background: var(--accent); color: #0D1117;
+      font-family: var(--font-heading); font-size: 0.9375rem; font-weight: 700;
+      padding: 10px 22px; border-radius: 8px; border: none; cursor: pointer;
+      margin-top: 0.5rem; transition: transform 0.15s ease;
+    }
+    .reset-btn:hover { transform: translateY(-2px); }
+
+    /* Counter */
+    .deck-counter {
+      font-family: ui-monospace, monospace; font-size: 0.75rem;
+      color: var(--text-muted); text-align: center;
+      margin-bottom: 0.75rem;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Swipe Cards</h1>
+  <p class="sub">Drag left to decline, right to accept — or use the buttons below.</p>
+
+  <div class="deck-counter" id="deck-counter">5 proposals remaining</div>
+
+  <!-- Card deck -->
+  <div class="deck" id="deck">
+
+    <div class="swipe-card" data-index="4" data-depth="4">
+      <span class="card-tag" style="background:rgba(99,102,241,0.15); color:#818CF8;">UI/UX Design</span>
+      <div class="card-client">Novara Health</div>
+      <div class="card-type">Patient Portal Redesign</div>
+      <div class="card-details">
+        <div class="detail-row">
+          <div class="detail-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+          <div><div class="detail-label">Budget</div><div class="detail-value">$18,000</div></div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+          <div><div class="detail-label">Timeline</div><div class="detail-value">12 weeks</div></div>
+        </div>
+      </div>
+      <p class="card-desc">Overhaul patient scheduling, records access, and messaging. React + accessibility compliance required.</p>
+      <div class="card-overlay overlay-accept">✓ Accept</div>
+      <div class="card-overlay overlay-decline">✗ Decline</div>
+    </div>
+
+    <div class="swipe-card" data-index="3" data-depth="3">
+      <span class="card-tag" style="background:rgba(245,158,11,0.15); color:#FCD34D;">Brand Identity</span>
+      <div class="card-client">Mesa Roasting Co.</div>
+      <div class="card-type">Full Brand Package</div>
+      <div class="card-details">
+        <div class="detail-row">
+          <div class="detail-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+          <div><div class="detail-label">Budget</div><div class="detail-value">$6,500</div></div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+          <div><div class="detail-label">Timeline</div><div class="detail-value">5 weeks</div></div>
+        </div>
+      </div>
+      <p class="card-desc">Logo, color system, type hierarchy, packaging template, brand guidelines PDF. Artisan coffee startup expanding nationally.</p>
+      <div class="card-overlay overlay-accept">✓ Accept</div>
+      <div class="card-overlay overlay-decline">✗ Decline</div>
+    </div>
+
+    <div class="swipe-card" data-index="2" data-depth="2">
+      <span class="card-tag" style="background:rgba(239,68,68,0.12); color:#F87171;">E-commerce</span>
+      <div class="card-client">GearShift Cycles</div>
+      <div class="card-type">Shopify Store + Custom Theme</div>
+      <div class="card-details">
+        <div class="detail-row">
+          <div class="detail-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+          <div><div class="detail-label">Budget</div><div class="detail-value">$12,000</div></div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+          <div><div class="detail-label">Timeline</div><div class="detail-value">8 weeks</div></div>
+        </div>
+      </div>
+      <p class="card-desc">150-product catalog, custom filtering, speed optimization, loyalty program integration, launch campaign.</p>
+      <div class="card-overlay overlay-accept">✓ Accept</div>
+      <div class="card-overlay overlay-decline">✗ Decline</div>
+    </div>
+
+    <div class="swipe-card" data-index="1" data-depth="1">
+      <span class="card-tag" style="background:rgba(16,185,129,0.12); color:#34D399;">Web App</span>
+      <div class="card-client">PulseMetrics Inc.</div>
+      <div class="card-type">SaaS Dashboard MVP</div>
+      <div class="card-details">
+        <div class="detail-row">
+          <div class="detail-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+          <div><div class="detail-label">Budget</div><div class="detail-value">$32,000</div></div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+          <div><div class="detail-label">Timeline</div><div class="detail-value">16 weeks</div></div>
+        </div>
+      </div>
+      <p class="card-desc">Analytics dashboard for marketing teams: multi-source data ingestion, real-time charts, team workspaces, Slack integration.</p>
+      <div class="card-overlay overlay-accept">✓ Accept</div>
+      <div class="card-overlay overlay-decline">✗ Decline</div>
+    </div>
+
+    <div class="swipe-card" data-index="0" data-depth="0">
+      <span class="card-tag" style="background:rgba(16,185,129,0.12); color:var(--accent);">Website</span>
+      <div class="card-client">Thornfield Law</div>
+      <div class="card-type">Marketing Site Redesign</div>
+      <div class="card-details">
+        <div class="detail-row">
+          <div class="detail-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+          <div><div class="detail-label">Budget</div><div class="detail-value">$9,400</div></div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+          <div><div class="detail-label">Timeline</div><div class="detail-value">6 weeks</div></div>
+        </div>
+      </div>
+      <p class="card-desc">7-page legal marketing site. Attorney bios, practice area pages, consultation funnel, local SEO setup for 3 markets.</p>
+      <div class="card-overlay overlay-accept">✓ Accept</div>
+      <div class="card-overlay overlay-decline">✗ Decline</div>
+    </div>
+
+  </div>
+
+  <!-- Buttons -->
+  <div class="deck-actions">
+    <button class="action-btn decline" onclick="triggerSwipe('left')" title="Decline">✗</button>
+    <button class="action-btn accept"  onclick="triggerSwipe('right')" title="Accept">✓</button>
+  </div>
+
+  <!-- Empty state (hidden until all cards swiped) -->
+  <div class="empty-state" id="empty-state">
+    <div class="empty-icon">📋</div>
+    <div class="empty-text">You've reviewed everything.</div>
+    <p class="empty-sub">All 5 proposals have been evaluated.</p>
+    <button class="reset-btn" onclick="resetDeck()">Start Over</button>
+  </div>
+
+<script>
+(function() {
+  var THRESHOLD = 120; // px — swipe this far to dismiss
+  var deck      = document.getElementById('deck');
+  var counter   = document.getElementById('deck-counter');
+  var emptyEl   = document.getElementById('empty-state');
+
+  // Store original HTML for reset
+  var originalHTML = deck.innerHTML;
+
+  // Get all cards sorted by depth (depth 0 = top)
+  function getCards() {
+    return Array.from(deck.querySelectorAll('.swipe-card')).sort(function(a,b) {
+      return parseInt(a.dataset.depth) - parseInt(b.dataset.depth);
+    });
+  }
+
+  var cards = getCards();
+  var total = cards.length;
+
+  function updateCounter() {
+    var rem = deck.querySelectorAll('.swipe-card').length;
+    counter.textContent = rem + ' proposal' + (rem !== 1 ? 's' : '') + ' remaining';
+    if (rem === 0) {
+      counter.textContent = '';
+      emptyEl.classList.add('visible');
+      deck.style.display = 'none';
+    }
+  }
+
+  /* ── Update depth attributes → triggers CSS transitions ──── */
+  function restack() {
+    var remaining = getCards();
+    remaining.forEach(function(card, i) {
+      card.dataset.depth = i;
+      card.classList.add('settling');
+      // Remove class after transition completes to avoid fighting drags
+      clearTimeout(card._settleTimer);
+      card._settleTimer = setTimeout(function() { card.classList.remove('settling'); }, 400);
+    });
+  }
+
+  /* ── Fly a card off screen in a direction ─────────────────── */
+  function flyOff(card, direction) {
+    var x = direction === 'right' ? window.innerWidth + 200 : -(window.innerWidth + 200);
+    card.classList.add('fly-off');
+    card.style.transform = 'translateX(' + x + 'px) rotate(' + (direction === 'right' ? 20 : -20) + 'deg)';
+    card.style.opacity   = '0';
+    setTimeout(function() {
+      card.remove();
+      restack();
+      updateCounter();
+    }, 420);
+  }
+
+  /* ── External button trigger ──────────────────────────────── */
+  window.triggerSwipe = function(direction) {
+    var top = deck.querySelector('.swipe-card[data-depth="0"]');
+    if (top) flyOff(top, direction);
+  };
+
+  /* ── Drag handling ────────────────────────────────────────── */
+  function getClientXY(e) {
+    return e.touches
+      ? { x: e.touches[0].clientX, y: e.touches[0].clientY }
+      : { x: e.clientX, y: e.clientY };
+  }
+
+  function initDrag(card) {
+    var startX = 0, startY = 0;
+    var currentX = 0, currentY = 0;
+    var isDragging = false;
+
+    function onStart(e) {
+      if (card.dataset.depth !== '0') return; // only top card draggable
+      isDragging = true;
+      var pt = getClientXY(e);
+      startX   = pt.x;
+      startY   = pt.y;
+      currentX = 0; currentY = 0;
+      card.style.transition = 'none';
+      e.preventDefault();
+    }
+
+    function onMove(e) {
+      if (!isDragging) return;
+      var pt = getClientXY(e);
+      currentX = pt.x - startX;
+      currentY = pt.y - startY;
+      var rotation = currentX * 0.08; // tilt
+
+      card.style.transform = 'translateX(' + currentX + 'px) translateY(' + (currentY * 0.3) + 'px) rotate(' + rotation + 'deg)';
+
+      // Show overlays
+      var accept  = card.querySelector('.overlay-accept');
+      var decline = card.querySelector('.overlay-decline');
+      var threshold = 40;
+      if (currentX > threshold) {
+        accept.style.opacity  = Math.min((currentX - threshold) / 80, 1);
+        decline.style.opacity = '0';
+      } else if (currentX < -threshold) {
+        decline.style.opacity = Math.min((-currentX - threshold) / 80, 1);
+        accept.style.opacity  = '0';
+      } else {
+        accept.style.opacity  = '0';
+        decline.style.opacity = '0';
+      }
+      e.preventDefault();
+    }
+
+    function onEnd() {
+      if (!isDragging) return;
+      isDragging = false;
+
+      // Hide overlays
+      card.querySelector('.overlay-accept').style.opacity  = '0';
+      card.querySelector('.overlay-decline').style.opacity = '0';
+
+      if (currentX > THRESHOLD) {
+        flyOff(card, 'right');
+      } else if (currentX < -THRESHOLD) {
+        flyOff(card, 'left');
+      } else {
+        // Snap back
+        card.classList.add('snap-back');
+        card.style.transform = '';
+        setTimeout(function() { card.classList.remove('snap-back'); }, 500);
+      }
+    }
+
+    card.addEventListener('mousedown',  onStart);
+    card.addEventListener('touchstart', onStart, { passive: false });
+    document.addEventListener('mousemove',  onMove);
+    document.addEventListener('touchmove',  onMove, { passive: false });
+    document.addEventListener('mouseup',    onEnd);
+    document.addEventListener('touchend',   onEnd);
+  }
+
+  // Initialize drag on each card
+  cards.forEach(function(card) { initDrag(card); });
+
+  /* ── Reset deck ───────────────────────────────────────────── */
+  window.resetDeck = function() {
+    deck.innerHTML = originalHTML;
+    deck.style.display = '';
+    emptyEl.classList.remove('visible');
+    counter.textContent = total + ' proposals remaining';
+    cards = getCards();
+    cards.forEach(function(card) { initDrag(card); });
+  };
+
+  updateCounter();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,501 @@
+<!-- COMPONENT: Feature Tabs Visual | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feature Tabs Visual — Live Mockups</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+      --red:            #EF4444;
+      --blue:           #3B82F6;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font-body); min-height: 100vh; }
+
+    /* ── Section wrapper ── */
+    .section {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 5rem 1.5rem;
+    }
+    .section-header { text-align: center; margin-bottom: 4rem; }
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: var(--font-mono); font-size: 0.75rem; font-weight: 600;
+      color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em;
+      padding: 5px 14px; background: var(--accent-dim);
+      border: 1px solid var(--accent-border); border-radius: 100px;
+      margin-bottom: 1.25rem;
+    }
+    .section-title {
+      font-family: var(--font-heading);
+      font-size: clamp(1.75rem, 4vw, 2.75rem);
+      font-weight: 700; letter-spacing: -0.025em; line-height: 1.2;
+      margin-bottom: 0.75rem;
+    }
+    .section-sub { font-size: 1.0625rem; color: var(--text-secondary); line-height: 1.6; }
+
+    /* ── Main layout: tabs left / mockup right ── */
+    .ftv-layout {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      gap: 3rem;
+      align-items: start;
+    }
+    @media (max-width: 768px) {
+      .ftv-layout { grid-template-columns: 1fr; }
+    }
+
+    /* ── Tab list (left column) ── */
+    .ftv-tabs {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      position: relative;
+    }
+    @media (max-width: 768px) {
+      .ftv-tabs { flex-direction: row; overflow-x: auto; scrollbar-width: none; padding-bottom: 4px; }
+      .ftv-tabs::-webkit-scrollbar { display: none; }
+    }
+
+    .ftv-tab {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      border-radius: var(--radius);
+      border: 1px solid transparent;
+      cursor: pointer;
+      background: transparent;
+      color: var(--text-muted);
+      transition: all 0.2s;
+      text-align: left;
+      position: relative;
+    }
+    @media (max-width: 768px) { .ftv-tab { flex-shrink: 0; flex-direction: column; align-items: center; text-align: center; padding: 12px 14px; } }
+
+    .ftv-tab:hover { color: var(--text-secondary); background: var(--surface); }
+    .ftv-tab.is-active {
+      background: var(--surface);
+      border-color: var(--accent-border);
+      color: var(--text);
+    }
+
+    /* The sliding indicator line */
+    .ftv-tab.is-active::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 8px; bottom: 8px;
+      width: 3px;
+      background: var(--accent);
+      border-radius: 0 2px 2px 0;
+    }
+    @media (max-width: 768px) {
+      .ftv-tab.is-active::before { left: 8px; right: 8px; width: auto; top: auto; bottom: 0; height: 3px; border-radius: 2px 2px 0 0; }
+    }
+
+    .ftv-tab-icon {
+      width: 36px; height: 36px; border-radius: 8px;
+      background: var(--elevated); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; color: var(--text-muted);
+      transition: all 0.2s;
+    }
+    .ftv-tab.is-active .ftv-tab-icon { background: var(--accent-dim); border-color: var(--accent-border); color: var(--accent); }
+
+    .ftv-tab-label {
+      font-family: var(--font-heading);
+      font-size: 0.9375rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    /* ── Mockup container (right column) ── */
+    .ftv-mockup-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      min-height: 420px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    /* Each mockup panel: hidden until active */
+    .ftv-panel { display: none; width: 100%; animation: panelIn 0.35s ease; }
+    .ftv-panel.is-active { display: block; }
+    @keyframes panelIn {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ─────────────────────────────────── */
+    /* Mockup 1: Browser chrome + site     */
+    /* ─────────────────────────────────── */
+    .mock-browser {
+      background: var(--elevated); border-radius: 10px;
+      border: 1px solid var(--border); overflow: hidden;
+    }
+    .mock-browser-bar {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px; background: var(--bg); border-bottom: 1px solid var(--border);
+    }
+    .mock-dots { display: flex; gap: 6px; }
+    .mock-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .mock-dot.red { background: #EF4444; }
+    .mock-dot.amber { background: #F59E0B; }
+    .mock-dot.green { background: #10B981; }
+    .mock-url-bar {
+      flex: 1; height: 24px; background: var(--surface);
+      border: 1px solid var(--border); border-radius: 4px;
+      display: flex; align-items: center; padding: 0 10px;
+      font-family: var(--font-mono); font-size: 0.6875rem; color: var(--text-muted);
+    }
+    .mock-site-content { padding: 1.5rem; }
+    .mock-site-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+    .mock-logo { font-family: var(--font-heading); font-size: 0.9375rem; font-weight: 700; color: var(--text); }
+    .mock-nav-links { display: flex; gap: 16px; }
+    .mock-nav-link { font-size: 0.75rem; color: var(--text-muted); }
+    .mock-site-hero { text-align: center; padding: 2rem 1rem; }
+    .mock-h1 { font-family: var(--font-heading); font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text); }
+    .mock-p { font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 1rem; }
+    .mock-cta-btn { display: inline-block; padding: 8px 20px; background: var(--accent); color: #0D1117; border-radius: 6px; font-size: 0.8125rem; font-weight: 700; font-family: var(--font-heading); }
+    .mock-stats-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-top: 1.5rem; }
+    .mock-stat-card { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px; text-align: center; }
+    .mock-stat-num { font-family: var(--font-heading); font-size: 1.125rem; font-weight: 700; color: var(--accent); }
+    .mock-stat-lbl { font-size: 0.625rem; color: var(--text-muted); margin-top: 2px; }
+
+    /* ─────────────────────────────────── */
+    /* Mockup 2: Google SERP simulation    */
+    /* ─────────────────────────────────── */
+    .mock-serp { background: var(--elevated); border-radius: 10px; border: 1px solid var(--border); padding: 1.5rem; }
+    .mock-google-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 1.5rem; }
+    .mock-g-logo { font-weight: 700; font-size: 1.25rem; background: linear-gradient(135deg, #4285f4, #34a853, #fbbc05, #ea4335); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .mock-g-search { flex: 1; height: 36px; background: var(--surface); border: 1px solid var(--border); border-radius: 18px; display: flex; align-items: center; padding: 0 16px; font-size: 0.8125rem; color: var(--text-secondary); }
+    .mock-serp-result { padding: 14px 0; border-bottom: 1px solid var(--border); }
+    .mock-serp-result:last-child { border-bottom: none; }
+    .mock-serp-url { font-size: 0.6875rem; color: #5f9f3d; margin-bottom: 3px; display: flex; align-items: center; gap: 6px; }
+    .mock-live-badge { padding: 2px 7px; background: rgba(16,185,129,0.15); border: 1px solid var(--accent-border); border-radius: 100px; font-size: 0.5625rem; font-weight: 600; color: var(--accent); letter-spacing: 0.05em; }
+    .mock-serp-title { font-family: var(--font-heading); font-size: 1rem; color: #8ab4f8; margin-bottom: 4px; }
+    .mock-serp-desc { font-size: 0.75rem; color: var(--text-secondary); line-height: 1.5; }
+    .mock-serp-result.is-you .mock-serp-title { color: var(--accent); }
+    .mock-serp-result.is-you { background: rgba(16,185,129,0.04); border-radius: 8px; padding: 14px 12px; border-bottom: none; border: 1px solid rgba(16,185,129,0.15); }
+
+    /* ─────────────────────────────────── */
+    /* Mockup 3: Lead capture form         */
+    /* ─────────────────────────────────── */
+    .mock-form-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: start; }
+    @media (max-width: 520px) { .mock-form-wrap { grid-template-columns: 1fr; } }
+    .mock-form-card { background: var(--elevated); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; }
+    .mock-form-title { font-family: var(--font-heading); font-size: 0.9375rem; font-weight: 700; margin-bottom: 1rem; color: var(--text); }
+    .mock-input {
+      width: 100%; height: 36px; background: var(--surface); border: 1px solid var(--border);
+      border-radius: 6px; padding: 0 12px; font-size: 0.8125rem; color: var(--text-secondary);
+      margin-bottom: 10px; display: flex; align-items: center;
+    }
+    .mock-submit { width: 100%; height: 38px; background: var(--accent); border: none; border-radius: 6px; font-family: var(--font-heading); font-size: 0.875rem; font-weight: 700; color: #0D1117; cursor: pointer; }
+
+    /* Notification card */
+    .mock-notif {
+      background: var(--elevated); border: 1px solid var(--accent-border); border-radius: 10px; padding: 1rem 1.25rem;
+      animation: notifBounce 0.5s ease 0.3s both;
+    }
+    @keyframes notifBounce { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:none; } }
+    .mock-notif-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .mock-notif-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    .mock-notif-title { font-family: var(--font-heading); font-size: 0.8125rem; font-weight: 700; color: var(--accent); }
+    .mock-notif-name { font-size: 0.9375rem; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+    .mock-notif-detail { font-size: 0.75rem; color: var(--text-muted); }
+
+    /* ─────────────────────────────────── */
+    /* Mockup 4: Analytics dashboard       */
+    /* ─────────────────────────────────── */
+    .mock-analytics { background: var(--elevated); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; }
+    .mock-analytics-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+    .mock-analytics-title { font-family: var(--font-heading); font-size: 0.9375rem; font-weight: 700; }
+    .mock-date-badge { font-family: var(--font-mono); font-size: 0.6875rem; color: var(--text-muted); padding: 3px 10px; border: 1px solid var(--border); border-radius: 100px; }
+    .mock-metrics { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 1.5rem; }
+    .mock-metric { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
+    .mock-metric-num { font-family: var(--font-heading); font-size: 1.25rem; font-weight: 700; color: var(--text); }
+    .mock-metric-label { font-size: 0.625rem; color: var(--text-muted); margin-top: 2px; }
+    .mock-metric-trend { font-size: 0.6875rem; color: var(--accent); margin-top: 4px; }
+    /* Mini bar chart */
+    .mock-chart { height: 80px; display: flex; align-items: flex-end; gap: 6px; }
+    .mock-bar {
+      flex: 1; border-radius: 3px 3px 0 0;
+      background: linear-gradient(to top, var(--accent), rgba(16,185,129,0.3));
+      transition: height 0.6s ease;
+      min-height: 6px;
+    }
+
+    /* ─────────────────────────────────── */
+    /* Mockup 5: CRM contact card          */
+    /* ─────────────────────────────────── */
+    .mock-crm { background: var(--elevated); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+    .mock-crm-header { background: var(--bg); padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+    .mock-crm-title { font-family: var(--font-heading); font-size: 0.875rem; font-weight: 700; flex: 1; }
+    .mock-new-badge { padding: 3px 10px; background: var(--accent-dim); border: 1px solid var(--accent-border); border-radius: 100px; font-size: 0.6875rem; font-weight: 600; color: var(--accent); animation: pulse 2s infinite; }
+    .mock-crm-body { padding: 1.5rem; }
+    .mock-contact-row { display: flex; align-items: center; gap: 14px; margin-bottom: 1.25rem; }
+    .mock-avatar { width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-dim), var(--elevated)); border: 2px solid var(--accent-border); display: flex; align-items: center; justify-content: center; font-family: var(--font-heading); font-weight: 700; color: var(--accent); font-size: 1.125rem; }
+    .mock-contact-name { font-family: var(--font-heading); font-size: 1rem; font-weight: 700; color: var(--text); }
+    .mock-contact-source { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+    .mock-crm-fields { display: flex; flex-direction: column; gap: 8px; }
+    .mock-crm-field { display: flex; justify-content: space-between; font-size: 0.8125rem; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+    .mock-crm-field-label { color: var(--text-muted); }
+    .mock-crm-field-value { color: var(--text-secondary); font-weight: 500; }
+
+  </style>
+</head>
+<body>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="eyebrow">Everything you need</div>
+      <h2 class="section-title">One platform. Every tool you need to grow.</h2>
+      <p class="section-sub">From your first impression to ongoing lead flow — we handle the tech so you can focus on closings.</p>
+    </div>
+
+    <div class="ftv-layout">
+
+      <!-- Left: tab list -->
+      <div class="ftv-tabs" role="tablist">
+
+        <button class="ftv-tab is-active" role="tab" aria-selected="true" data-tab="0">
+          <div class="ftv-tab-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+          </div>
+          <span class="ftv-tab-label">Your Website</span>
+        </button>
+
+        <button class="ftv-tab" role="tab" data-tab="1">
+          <div class="ftv-tab-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          </div>
+          <span class="ftv-tab-label">Search Visibility</span>
+        </button>
+
+        <button class="ftv-tab" role="tab" data-tab="2">
+          <div class="ftv-tab-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13 19.79 19.79 0 0 1 1.62 4.32a2 2 0 0 1 2-2.18h3A2 2 0 0 1 8.6 3.86c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9a16 16 0 0 0 6 6l.92-.92a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          </div>
+          <span class="ftv-tab-label">Lead Capture</span>
+        </button>
+
+        <button class="ftv-tab" role="tab" data-tab="3">
+          <div class="ftv-tab-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          </div>
+          <span class="ftv-tab-label">Monthly Reports</span>
+        </button>
+
+        <button class="ftv-tab" role="tab" data-tab="4">
+          <div class="ftv-tab-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <span class="ftv-tab-label">CRM Connection</span>
+        </button>
+
+      </div>
+
+      <!-- Right: mockup display -->
+      <div class="ftv-mockup-wrap">
+
+        <!-- Panel 0: Website browser mockup -->
+        <div class="ftv-panel is-active" data-panel="0">
+          <div class="mock-browser">
+            <div class="mock-browser-bar">
+              <div class="mock-dots">
+                <div class="mock-dot red"></div>
+                <div class="mock-dot amber"></div>
+                <div class="mock-dot green"></div>
+              </div>
+              <div class="mock-url-bar">sarahwilliamstitle.com</div>
+            </div>
+            <div class="mock-site-content">
+              <div class="mock-site-nav">
+                <div class="mock-logo">Sarah Williams | Title Rep</div>
+                <div class="mock-nav-links">
+                  <span class="mock-nav-link">About</span>
+                  <span class="mock-nav-link">Services</span>
+                  <span class="mock-nav-link">Contact</span>
+                </div>
+              </div>
+              <div class="mock-site-hero">
+                <div class="mock-h1">Dallas' Most Trusted Title Rep</div>
+                <div class="mock-p">Fast closings, clear communication, and 12 years of experience across DFW.</div>
+                <div class="mock-cta-btn">Schedule a Consultation</div>
+              </div>
+              <div class="mock-stats-row">
+                <div class="mock-stat-card"><div class="mock-stat-num">847</div><div class="mock-stat-lbl">Closings</div></div>
+                <div class="mock-stat-card"><div class="mock-stat-num">4.9★</div><div class="mock-stat-lbl">Rating</div></div>
+                <div class="mock-stat-card"><div class="mock-stat-num">12yr</div><div class="mock-stat-lbl">Experience</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel 1: Google SERP -->
+        <div class="ftv-panel" data-panel="1">
+          <div class="mock-serp">
+            <div class="mock-google-bar">
+              <span class="mock-g-logo">Google</span>
+              <div class="mock-g-search">title rep Dallas TX near me</div>
+            </div>
+            <div class="mock-serp-result is-you">
+              <div class="mock-serp-url">
+                sarahwilliamstitle.com
+                <span class="mock-live-badge">LIVE</span>
+              </div>
+              <div class="mock-serp-title">Sarah Williams — Title Rep | Dallas, TX</div>
+              <div class="mock-serp-desc">Experienced title rep serving DFW since 2012. Fast closings, dedicated support, and 847+ satisfied clients. Get in touch today.</div>
+            </div>
+            <div class="mock-serp-result" style="opacity:0.5;">
+              <div class="mock-serp-url">competitor-title.com</div>
+              <div class="mock-serp-title">DFW Title Services | Title Company</div>
+              <div class="mock-serp-desc">We offer title insurance for buyers and sellers in the Dallas area. Contact us for more information...</div>
+            </div>
+            <div class="mock-serp-result" style="opacity:0.35;">
+              <div class="mock-serp-url">anothertitleco.net</div>
+              <div class="mock-serp-title">Title Rep — Dallas Fort Worth</div>
+              <div class="mock-serp-desc">Professional title services. Give us a call to learn more about working with our team.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel 2: Lead capture form + notification -->
+        <div class="ftv-panel" data-panel="2">
+          <div class="mock-form-wrap">
+            <div class="mock-form-card">
+              <div class="mock-form-title">Get in Touch</div>
+              <div class="mock-input">Name</div>
+              <div class="mock-input">Email address</div>
+              <div class="mock-input">Phone number</div>
+              <div class="mock-input" style="height:60px; align-items:flex-start; padding-top:10px;">How can I help you?</div>
+              <button class="mock-submit">Send Message</button>
+            </div>
+            <div>
+              <div style="margin-bottom:12px; font-size:0.75rem; color:var(--text-muted); font-family:var(--font-mono); text-transform:uppercase; letter-spacing:0.06em;">New lead — just now</div>
+              <div class="mock-notif">
+                <div class="mock-notif-header">
+                  <div class="mock-notif-dot"></div>
+                  <div class="mock-notif-title">New Lead from Website</div>
+                </div>
+                <div class="mock-notif-name">Marcus Johnson</div>
+                <div class="mock-notif-detail">Phone: (214) 555-0192</div>
+                <div class="mock-notif-detail" style="margin-top:4px;">Source: Contact Form</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel 3: Analytics dashboard -->
+        <div class="ftv-panel" data-panel="3">
+          <div class="mock-analytics" style="width:100%;">
+            <div class="mock-analytics-header">
+              <div class="mock-analytics-title">Monthly Performance Report</div>
+              <div class="mock-date-badge">March 2026</div>
+            </div>
+            <div class="mock-metrics">
+              <div class="mock-metric">
+                <div class="mock-metric-num">1,284</div>
+                <div class="mock-metric-label">Site Visitors</div>
+                <div class="mock-metric-trend">▲ +34%</div>
+              </div>
+              <div class="mock-metric">
+                <div class="mock-metric-num">23</div>
+                <div class="mock-metric-label">New Leads</div>
+                <div class="mock-metric-trend">▲ +8</div>
+              </div>
+              <div class="mock-metric">
+                <div class="mock-metric-num">#2</div>
+                <div class="mock-metric-label">Google Rank</div>
+                <div class="mock-metric-trend">▲ +6 spots</div>
+              </div>
+            </div>
+            <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:8px;">Visitor traffic (last 8 months)</div>
+            <div class="mock-chart">
+              <div class="mock-bar" style="height:30%"></div>
+              <div class="mock-bar" style="height:40%"></div>
+              <div class="mock-bar" style="height:35%"></div>
+              <div class="mock-bar" style="height:55%"></div>
+              <div class="mock-bar" style="height:60%"></div>
+              <div class="mock-bar" style="height:70%"></div>
+              <div class="mock-bar" style="height:80%"></div>
+              <div class="mock-bar" style="height:100%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel 4: CRM contact card -->
+        <div class="ftv-panel" data-panel="4">
+          <div class="mock-crm" style="width:100%; max-width:400px; margin:0 auto;">
+            <div class="mock-crm-header">
+              <div class="mock-crm-title">CRM Contact</div>
+              <div class="mock-new-badge">New from Website</div>
+            </div>
+            <div class="mock-crm-body">
+              <div class="mock-contact-row">
+                <div class="mock-avatar">MJ</div>
+                <div>
+                  <div class="mock-contact-name">Marcus Johnson</div>
+                  <div class="mock-contact-source">Came from: sarahwilliamstitle.com</div>
+                </div>
+              </div>
+              <div class="mock-crm-fields">
+                <div class="mock-crm-field"><span class="mock-crm-field-label">Email</span><span class="mock-crm-field-value">marcus.j@email.com</span></div>
+                <div class="mock-crm-field"><span class="mock-crm-field-label">Phone</span><span class="mock-crm-field-value">(214) 555-0192</span></div>
+                <div class="mock-crm-field"><span class="mock-crm-field-label">Lead Source</span><span class="mock-crm-field-value">Contact Form</span></div>
+                <div class="mock-crm-field"><span class="mock-crm-field-label">Status</span><span class="mock-crm-field-value" style="color:var(--accent);">New Lead</span></div>
+                <div class="mock-crm-field" style="border-bottom:none"><span class="mock-crm-field-label">Added</span><span class="mock-crm-field-value">Just now</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /ftv-mockup-wrap -->
+    </div><!-- /ftv-layout -->
+  </div><!-- /section -->
+
+  <script>
+    // Tab / panel switching
+    const tabs = document.querySelectorAll('.ftv-tab');
+    const panels = document.querySelectorAll('.ftv-panel');
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const idx = parseInt(tab.dataset.tab);
+        tabs.forEach(t => { t.classList.remove('is-active'); t.setAttribute('aria-selected', 'false'); });
+        panels.forEach(p => p.classList.remove('is-active'));
+        tab.classList.add('is-active');
+        tab.setAttribute('aria-selected', 'true');
+        panels[idx].classList.add('is-active');
+      });
+    });
+  </script>
+
+</body>
+</html>

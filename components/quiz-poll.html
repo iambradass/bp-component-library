@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quiz / Poll</title>
+  <!-- COMPONENT: Quiz / Poll | COPY: style + html + script -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── CUSTOMIZE ── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --glow:           rgba(16,185,129,0.15);
+      --glow-strong:    rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --border-accent:  rgba(16,185,129,0.3);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+
+      --correct:        rgba(16,185,129,0.15);
+      --correct-border: rgba(16,185,129,0.5);
+      --wrong:          rgba(239,68,68,0.1);
+      --wrong-border:   rgba(239,68,68,0.35);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      padding: 2rem 1.5rem 4rem;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+    .page-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.75rem;
+    }
+    .page-title {
+      font-family: var(--font-heading);
+      font-size: clamp(1.75rem, 4vw, 2.5rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+    }
+    .page-desc {
+      color: var(--text-secondary);
+      font-size: 0.9375rem;
+      max-width: 560px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      max-width: 960px;
+      margin: 0 auto;
+      align-items: start;
+    }
+    @media (max-width: 720px) { .two-col { grid-template-columns: 1fr; } }
+
+    /* ── Shared card panel ── */
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .panel-header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+    .panel-mode {
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+    .panel-title {
+      font-family: var(--font-heading);
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    /* ── QUIZ ── */
+    /* Progress bar */
+    .quiz-progress {
+      height: 3px;
+      background: var(--elevated);
+    }
+    .quiz-progress-fill {
+      height: 100%;
+      background: var(--accent);
+      transition: width 0.4s ease;
+      box-shadow: 0 0 8px var(--glow-strong);
+    }
+
+    .quiz-body { padding: 1.5rem; }
+    .quiz-step-label {
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      color: var(--text-muted);
+      margin-bottom: 0.625rem;
+    }
+    .quiz-question {
+      font-family: var(--font-heading);
+      font-size: 1.0625rem;
+      font-weight: 600;
+      margin-bottom: 1.25rem;
+      line-height: 1.4;
+    }
+
+    .quiz-options {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .quiz-option {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      transition: border-color 0.2s, background 0.2s, color 0.2s;
+      background: var(--elevated);
+      text-align: left;
+      width: 100%;
+    }
+    .quiz-option:hover:not(.locked) {
+      border-color: var(--border-accent);
+      color: var(--text);
+    }
+    .quiz-option.correct {
+      background: var(--correct);
+      border-color: var(--correct-border);
+      color: #A7F3D0;
+    }
+    .quiz-option.wrong {
+      background: var(--wrong);
+      border-color: var(--wrong-border);
+      color: #FCA5A5;
+    }
+    .quiz-option.locked { cursor: default; }
+    .quiz-option-key {
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      text-transform: uppercase;
+      background: var(--border);
+      border-radius: 4px;
+      padding: 1px 6px;
+      flex-shrink: 0;
+      margin-top: 0.125em;
+    }
+
+    /* Explanation */
+    .quiz-explanation {
+      background: var(--elevated);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 8px 8px 0;
+      padding: 0.75rem 1rem;
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s ease, padding 0.3s ease;
+      margin-bottom: 0;
+    }
+    .quiz-explanation.revealed {
+      max-height: 200px;
+      margin-bottom: 1rem;
+    }
+
+    .quiz-next {
+      display: block;
+      width: 100%;
+      padding: 0.75rem;
+      background: var(--glow);
+      border: 1px solid var(--border-accent);
+      border-radius: 8px;
+      color: var(--accent);
+      font-family: var(--font-heading);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, box-shadow 0.2s;
+    }
+    .quiz-next:hover:not(:disabled) {
+      background: rgba(16,185,129,0.2);
+      box-shadow: 0 0 16px var(--glow);
+    }
+    .quiz-next:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    /* Results screen */
+    .quiz-results {
+      display: none;
+      text-align: center;
+      padding: 2rem 1.5rem;
+    }
+    .quiz-results.show { display: block; }
+    .quiz-results-score {
+      font-family: var(--font-heading);
+      font-size: 3rem;
+      font-weight: 700;
+      color: var(--accent);
+      line-height: 1;
+      margin-bottom: 0.5rem;
+    }
+    .quiz-results-tier {
+      font-size: 1.125rem;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+    }
+    .quiz-results-msg {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      line-height: 1.6;
+      margin-bottom: 1.5rem;
+    }
+    .quiz-retake {
+      padding: 0.625rem 1.5rem;
+      background: var(--glow);
+      border: 1px solid var(--border-accent);
+      border-radius: 8px;
+      color: var(--accent);
+      font-family: var(--font-heading);
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .quiz-retake:hover { background: rgba(16,185,129,0.2); }
+
+    /* ── POLL ── */
+    .poll-body { padding: 1.5rem; }
+
+    .poll-question {
+      font-family: var(--font-heading);
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      line-height: 1.4;
+    }
+    .poll-options { display: flex; flex-direction: column; gap: 0.5rem; }
+    .poll-option {
+      position: relative;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: border-color 0.2s;
+      background: var(--elevated);
+    }
+    .poll-option:hover:not(.voted) { border-color: var(--border-accent); }
+    .poll-option.chosen { border-color: var(--accent); }
+
+    /* Result bar fills behind the text */
+    .poll-bar {
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 0%;
+      background: var(--glow);
+      transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+      border-right: 2px solid var(--border-accent);
+    }
+    .poll-option.chosen .poll-bar { background: rgba(16,185,129,0.15); }
+
+    .poll-option-inner {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 1rem;
+    }
+    .poll-option-text {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+    .poll-option.chosen .poll-option-text { color: var(--text); }
+    .poll-option-pct {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      display: none;
+    }
+    .poll-voted .poll-option-pct { display: block; }
+
+    .poll-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 0.75rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+    .poll-count { font-family: var(--font-mono); }
+
+    /* Divider between polls */
+    .poll-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 1.5rem 0;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="page-header">
+    <div class="page-eyebrow">Quiz / Poll</div>
+    <h1 class="page-title">Interactive Quiz & Poll</h1>
+    <p class="page-desc">A 5-question quiz with scoring and reveal, plus 3 live polls with animated result bars. Educational content about web design fundamentals.</p>
+  </header>
+
+  <div class="two-col">
+
+    <!-- QUIZ PANEL -->
+    <div class="panel" id="quiz-panel">
+      <div class="panel-header">
+        <div class="panel-mode">Quiz Mode</div>
+        <div class="panel-title" id="quiz-header-label">Web Design Fundamentals</div>
+      </div>
+      <div class="quiz-progress"><div class="quiz-progress-fill" id="quiz-progress-fill" style="width:20%"></div></div>
+
+      <!-- Question view -->
+      <div class="quiz-body" id="quiz-view">
+        <div class="quiz-step-label" id="quiz-step-label">Question 1 of 5</div>
+        <div class="quiz-question" id="quiz-question"></div>
+        <div class="quiz-options" id="quiz-options"></div>
+        <div class="quiz-explanation" id="quiz-explanation"></div>
+        <button class="quiz-next" id="quiz-next" disabled>Next Question →</button>
+      </div>
+
+      <!-- Results view -->
+      <div class="quiz-results" id="quiz-results">
+        <div class="quiz-results-score" id="results-score"></div>
+        <div class="quiz-results-tier" id="results-tier"></div>
+        <div class="quiz-results-msg" id="results-msg"></div>
+        <button class="quiz-retake" id="quiz-retake">↺ Retake Quiz</button>
+      </div>
+    </div>
+
+    <!-- POLL PANEL -->
+    <div class="panel" id="poll-panel">
+      <div class="panel-header">
+        <div class="panel-mode">Poll Mode</div>
+        <div class="panel-title">Community Votes</div>
+      </div>
+      <div class="poll-body" id="poll-body">
+        <!-- JS builds polls here -->
+      </div>
+    </div>
+
+  </div>
+
+
+  <script>
+  /* ──────────────────────────────────────────
+     QUIZ / POLL — Script
+     QUIZ: 5 questions, one at a time, reveal + explanation
+     POLL: 3 polls, vote → animated result bars
+  ────────────────────────────────────────── */
+
+  /* ── QUIZ DATA ── */
+  var questions = [
+    {
+      q: 'What does LCP stand for in Google's Core Web Vitals?',
+      options: [
+        'Largest Content Page',
+        'Largest Contentful Paint',
+        'Lowest Cache Performance',
+        'Load Content Protocol'
+      ],
+      correct: 1,
+      explanation: 'LCP (Largest Contentful Paint) measures how long it takes the largest visible element — usually a hero image or heading — to fully render. Google's target is under 2.5 seconds.'
+    },
+    {
+      q: 'Which meta tag is essential for responsive mobile design?',
+      options: [
+        '<meta name="charset" content="UTF-8">',
+        '<meta name="robots" content="index">',
+        '<meta name="viewport" content="width=device-width, initial-scale=1.0">',
+        '<meta name="theme-color" content="#000">'
+      ],
+      correct: 2,
+      explanation: 'The viewport meta tag tells mobile browsers not to zoom out and scale down your desktop layout. Without it, your mobile-responsive CSS won\'t work.'
+    },
+    {
+      q: 'What is the minimum recommended touch target size for mobile buttons?',
+      options: ['24×24px', '32×32px', '44×44px', '60×60px'],
+      correct: 2,
+      explanation: 'Apple\'s Human Interface Guidelines and Google\'s Material Design both recommend at least 44×44px for interactive elements on touch screens. Smaller targets cause mis-taps and hurt UX.'
+    },
+    {
+      q: 'Which HTTP status code means a page has permanently moved?',
+      options: ['200 OK', '301 Moved Permanently', '404 Not Found', '503 Service Unavailable'],
+      correct: 1,
+      explanation: 'A 301 redirect tells both browsers and Google that a URL has permanently moved. It also passes ~90–99% of the original page's ranking authority to the new URL — critical when restructuring a site.'
+    },
+    {
+      q: 'What does "above the fold" refer to in web design?',
+      options: [
+        'The website header element',
+        'Content visible without scrolling on initial page load',
+        'The top navigation menu',
+        'The hero image section'
+      ],
+      correct: 1,
+      explanation: '"Above the fold" comes from newspaper printing — the top half visible on a folded newspaper. On the web, it\'s everything visible without scrolling. It\'s the highest-value real estate: it must load fast and immediately communicate your value proposition.'
+    }
+  ];
+
+  var currentQ = 0;
+  var score = 0;
+  var answered = false;
+
+  var keys = ['A', 'B', 'C', 'D'];
+
+  function renderQuestion(i) {
+    answered = false;
+    var q = questions[i];
+    var total = questions.length;
+
+    document.getElementById('quiz-step-label').textContent = 'Question ' + (i+1) + ' of ' + total;
+    document.getElementById('quiz-question').textContent = q.q;
+    document.getElementById('quiz-progress-fill').style.width = ((i+1) / total * 100) + '%';
+    document.getElementById('quiz-next').disabled = true;
+    document.getElementById('quiz-next').textContent = i === total - 1 ? 'See Results' : 'Next Question →';
+
+    var expEl = document.getElementById('quiz-explanation');
+    expEl.textContent = '';
+    expEl.classList.remove('revealed');
+
+    var optionsEl = document.getElementById('quiz-options');
+    optionsEl.innerHTML = '';
+
+    q.options.forEach(function(opt, oi) {
+      var btn = document.createElement('button');
+      btn.className = 'quiz-option';
+      btn.innerHTML = '<span class="quiz-option-key">' + keys[oi] + '</span>' + opt;
+      btn.addEventListener('click', function() {
+        if (answered) return;
+        answered = true;
+
+        /* Lock all options */
+        optionsEl.querySelectorAll('.quiz-option').forEach(function(b, bi) {
+          b.classList.add('locked');
+          if (bi === q.correct) b.classList.add('correct');
+          else if (bi === oi)   b.classList.add('wrong');
+        });
+
+        if (oi === q.correct) score++;
+
+        /* Show explanation */
+        expEl.textContent = q.explanation;
+        expEl.classList.add('revealed');
+        document.getElementById('quiz-next').disabled = false;
+      });
+      optionsEl.appendChild(btn);
+    });
+  }
+
+  document.getElementById('quiz-next').addEventListener('click', function() {
+    currentQ++;
+    if (currentQ >= questions.length) {
+      showResults();
+    } else {
+      renderQuestion(currentQ);
+    }
+  });
+
+  function showResults() {
+    document.getElementById('quiz-view').style.display = 'none';
+    var res = document.getElementById('quiz-results');
+    res.classList.add('show');
+
+    var total = questions.length;
+    document.getElementById('results-score').textContent = score + '/' + total;
+
+    var tiers = [
+      { min: 0, max: 1, tier: 'Just Getting Started', msg: 'Web design is a deep field — the fact that you\'re learning puts you ahead of most business owners. Bookmark this quiz and retake it after 30 days of study.' },
+      { min: 2, max: 3, tier: 'Building Knowledge', msg: 'Solid foundation. You understand the core concepts — now it\'s about applying them consistently. Focus on Core Web Vitals and mobile-first design next.' },
+      { min: 4, max: 4, tier: 'Strong Fundamentals', msg: 'You know your stuff. One more to perfect — review the question you missed and you\'ll be client-ready on the technical side.' },
+      { min: 5, max: 5, tier: '⚡ Web Design Expert', msg: 'Perfect score. You have a genuinely strong grasp of web fundamentals. You\'re ahead of the curve and ready to put this knowledge to work.' }
+    ];
+
+    var tier = tiers.find(function(t) { return score >= t.min && score <= t.max; }) || tiers[0];
+    document.getElementById('results-tier').textContent = tier.tier;
+    document.getElementById('results-msg').textContent = tier.msg;
+  }
+
+  document.getElementById('quiz-retake').addEventListener('click', function() {
+    currentQ = 0;
+    score = 0;
+    document.getElementById('quiz-results').classList.remove('show');
+    document.getElementById('quiz-view').style.display = 'block';
+    renderQuestion(0);
+  });
+
+  renderQuestion(0);
+
+  /* ── POLL DATA ── */
+  /* Simulated vote counts — feel real, not too round */
+  var polls = [
+    {
+      q: 'What\'s the biggest challenge when building a website?',
+      options: [
+        { label: 'Writing the copy / content',  votes: 312 },
+        { label: 'Choosing the right platform',  votes: 189 },
+        { label: 'Getting it to look right',      votes: 241 },
+        { label: 'Making it load fast',           votes: 97  }
+      ]
+    },
+    {
+      q: 'How do most of your clients find you?',
+      options: [
+        { label: 'Word of mouth / referrals',    votes: 447 },
+        { label: 'Google search',                 votes: 283 },
+        { label: 'Social media',                  votes: 154 },
+        { label: 'Paid advertising',              votes: 88  }
+      ]
+    },
+    {
+      q: 'Which would you improve on your site first?',
+      options: [
+        { label: 'Page speed',                    votes: 198 },
+        { label: 'Mobile experience',             votes: 231 },
+        { label: 'More compelling copy',          votes: 176 },
+        { label: 'Better photos / visuals',       votes: 143 }
+      ]
+    }
+  ];
+
+  var pollBody = document.getElementById('poll-body');
+  var pollStates = polls.map(function() { return { voted: false, chosenIdx: -1, totalVotes: 0 }; });
+
+  polls.forEach(function(poll, pi) {
+    var total = poll.options.reduce(function(s, o) { return s + o.votes; }, 0);
+    pollStates[pi].totalVotes = total;
+
+    if (pi > 0) {
+      var div = document.createElement('div');
+      div.className = 'poll-divider';
+      pollBody.appendChild(div);
+    }
+
+    var qEl = document.createElement('div');
+    qEl.className = 'poll-question';
+    qEl.textContent = poll.q;
+    pollBody.appendChild(qEl);
+
+    var optsEl = document.createElement('div');
+    optsEl.className = 'poll-options';
+    optsEl.id = 'poll-opts-' + pi;
+
+    poll.options.forEach(function(opt, oi) {
+      var pct = Math.round(opt.votes / total * 100);
+
+      var optEl = document.createElement('div');
+      optEl.className = 'poll-option';
+      optEl.setAttribute('role', 'button');
+      optEl.setAttribute('tabindex', '0');
+      optEl.setAttribute('aria-label', opt.label + ' — vote');
+
+      optEl.innerHTML = '<div class="poll-bar" data-pct="' + pct + '"></div>'
+        + '<div class="poll-option-inner">'
+        + '<span class="poll-option-text">' + opt.label + '</span>'
+        + '<span class="poll-option-pct">' + pct + '%</span>'
+        + '</div>';
+
+      function vote() {
+        if (pollStates[pi].voted) return;
+        pollStates[pi].voted = true;
+        pollStates[pi].chosenIdx = oi;
+
+        /* Mark all options in this poll */
+        var allOpts = optsEl.querySelectorAll('.poll-option');
+        allOpts.forEach(function(o) { o.classList.add('voted'); });
+        optEl.classList.add('chosen');
+
+        /* Reveal bars */
+        optsEl.classList.add('poll-voted');
+        allOpts.forEach(function(o) {
+          var bar = o.querySelector('.poll-bar');
+          bar.style.width = bar.dataset.pct + '%';
+        });
+
+        footerEl.querySelector('.poll-count').textContent = (total + 1) + ' votes';
+      }
+
+      optEl.addEventListener('click', vote);
+      optEl.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); vote(); }
+      });
+
+      optsEl.appendChild(optEl);
+    });
+
+    pollBody.appendChild(optsEl);
+
+    var footerEl = document.createElement('div');
+    footerEl.className = 'poll-footer';
+    footerEl.innerHTML = '<span class="poll-count">' + total + ' votes</span>'
+      + '<span>Click to vote</span>';
+    pollBody.appendChild(footerEl);
+  });
+  </script>
+
+</body>
+</html>

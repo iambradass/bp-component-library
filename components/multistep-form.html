@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multi-step Form — Component Library</title>
+
+  <!--
+  ============================================================
+  COMPONENT: Multi-step Form Wizard
+  COPY: <style> block + HTML block + <script> block into target site
+  FEATURES:
+    - 4-step wizard with progress indicator (circles + connecting line)
+    - Step 1: Large option cards (single-select service type)
+    - Step 2: Business details (text/select inputs)
+    - Step 3: Budget range cards + timeline select
+    - Step 4: Contact info (name, email, phone)
+    - Slide transitions: Next slides right→left, Back slides left→right
+    - Next button disabled until required fields filled
+    - Final submit shows animated success state with checkmark SVG
+    - Mobile-first: 375px minimum, 44px touch targets
+  ============================================================
+  -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+
+    /* ── CUSTOMIZE: swap these variables ── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --glow:           rgba(16, 185, 129, 0.1);
+      --border:         rgba(148, 163, 184, 0.1);
+      --border-accent:  rgba(16, 185, 129, 0.35);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      padding: 3rem 1.5rem 5rem;
+    }
+
+    .demo-label {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+    .demo-title {
+      font-family: var(--font-heading);
+      font-size: 2rem;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+    .demo-subtitle {
+      color: var(--text-secondary);
+      text-align: center;
+      font-size: 0.9375rem;
+      margin-bottom: 3rem;
+    }
+
+
+    /* ════════════════════════════════════════════
+       FORM SHELL
+    ════════════════════════════════════════════ */
+
+    .msf-shell {
+      max-width: 580px;
+      margin: 0 auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      overflow: hidden;
+    }
+
+
+    /* ════════════════════════════════════════════
+       PROGRESS INDICATOR
+    ════════════════════════════════════════════ */
+
+    .msf-progress {
+      padding: 28px 32px 0;
+      position: relative;
+    }
+
+    .msf-steps-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+    }
+
+    /* The connecting line behind the step circles */
+    .msf-line {
+      position: absolute;
+      top: 50%;
+      left: 22px;
+      right: 22px;
+      height: 2px;
+      background: var(--border);
+      transform: translateY(-50%);
+      z-index: 0;
+    }
+
+    /* Fill portion of the line — width updated by JS */
+    .msf-line-fill {
+      height: 100%;
+      background: var(--accent);
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      width: 0%;
+    }
+
+    /* Step circle */
+    .msf-step-circle {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--surface);
+      border: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-heading);
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      position: relative;
+      z-index: 1;
+      transition: border-color 0.3s, background 0.3s, color 0.3s;
+      flex-shrink: 0;
+    }
+    .msf-step-circle.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(16, 185, 129, 0.08);
+    }
+    .msf-step-circle.complete {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: white;
+    }
+
+    /* Step labels below circles */
+    .msf-step-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 10px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+    }
+    .msf-step-label {
+      font-family: var(--font-mono);
+      font-size: 0.5625rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      text-align: center;
+      width: 44px;
+      transition: color 0.3s;
+    }
+    .msf-step-label.active { color: var(--accent); }
+    .msf-step-label.complete { color: var(--accent); }
+
+
+    /* ════════════════════════════════════════════
+       STEP CONTENT AREA
+       Slides in/out using absolute positioning + transitions
+    ════════════════════════════════════════════ */
+
+    .msf-content {
+      position: relative;
+      overflow: hidden;
+      /* Height is set dynamically by JS to match active step */
+      transition: height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .msf-step-panel {
+      position: absolute;
+      width: 100%;
+      padding: 32px;
+      /* Start at natural position */
+      transform: translateX(0);
+      opacity: 1;
+      transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                  opacity  0.35s ease;
+    }
+
+    /* Panels not yet shown (waiting to enter from the right) */
+    .msf-step-panel.enter-right {
+      transform: translateX(60px);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* Panels going away (exiting to the left) */
+    .msf-step-panel.exit-left {
+      transform: translateX(-60px);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* Going backward: enter from left, exit to right */
+    .msf-step-panel.enter-left {
+      transform: translateX(-60px);
+      opacity: 0;
+      pointer-events: none;
+    }
+    .msf-step-panel.exit-right {
+      transform: translateX(60px);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* Step heading */
+    .msf-step-title {
+      font-family: var(--font-heading);
+      font-size: 1.375rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .msf-step-desc {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+    }
+
+
+    /* ── Option cards (Step 1 & 3) ── */
+    .option-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+    .option-cards.two-col {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .option-card {
+      padding: 20px 16px;
+      background: var(--elevated);
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      text-align: center;
+      transition: border-color 0.2s, background 0.2s;
+      user-select: none;
+      min-height: 44px;
+    }
+    .option-card:hover {
+      border-color: rgba(16, 185, 129, 0.2);
+    }
+    .option-card.selected {
+      border-color: var(--accent);
+      background: rgba(16, 185, 129, 0.08);
+    }
+    .option-card-icon {
+      font-size: 1.75rem;
+      margin-bottom: 8px;
+      display: block;
+    }
+    .option-card-label {
+      font-family: var(--font-heading);
+      font-size: 0.9375rem;
+      font-weight: 600;
+    }
+    .option-card-sub {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    @media (max-width: 480px) {
+      .option-cards { grid-template-columns: 1fr; }
+      .option-cards.two-col { grid-template-columns: 1fr; }
+    }
+
+
+    /* ── Text inputs (Step 2 & 4) ── */
+    .msf-field {
+      margin-bottom: 16px;
+    }
+    .msf-label {
+      display: block;
+      font-family: var(--font-heading);
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+    .msf-input,
+    .msf-select {
+      width: 100%;
+      padding: 13px 16px;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+      min-height: 48px;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+    .msf-input::placeholder { color: var(--text-muted); }
+    .msf-input:focus,
+    .msf-select:focus { border-color: var(--border-accent); }
+
+    /* Custom select arrow */
+    .msf-select-wrap {
+      position: relative;
+    }
+    .msf-select-wrap::after {
+      content: '';
+      position: absolute;
+      right: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 0;
+      height: 0;
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 5px solid var(--text-muted);
+      pointer-events: none;
+    }
+    .msf-select option { background: var(--elevated); color: var(--text); }
+
+
+    /* ════════════════════════════════════════════
+       BUTTON ROW
+    ════════════════════════════════════════════ */
+
+    .msf-btn-row {
+      display: flex;
+      gap: 12px;
+      padding: 0 32px 32px;
+      justify-content: space-between;
+    }
+
+    .btn-back {
+      padding: 13px 24px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text-secondary);
+      font-family: var(--font-heading);
+      font-size: 0.9375rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+      min-height: 48px;
+    }
+    .btn-back:hover { border-color: var(--border-accent); color: var(--text); }
+
+    .btn-next {
+      flex: 1;
+      padding: 13px 24px;
+      background: var(--accent);
+      border: none;
+      border-radius: var(--radius);
+      color: #fff;
+      font-family: var(--font-heading);
+      font-size: 0.9375rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.15s;
+      min-height: 48px;
+    }
+    .btn-next:hover:not(:disabled) { opacity: 0.88; transform: translateY(-1px); }
+    .btn-next:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+
+    /* ════════════════════════════════════════════
+       SUCCESS STATE
+    ════════════════════════════════════════════ */
+
+    .msf-success {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 48px 32px;
+      gap: 16px;
+    }
+    .msf-success.visible { display: flex; }
+
+    .success-icon-wrap {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: rgba(16, 185, 129, 0.1);
+      border: 2px solid var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Animated checkmark — SVG stroke draw */
+    .check-path {
+      stroke-dasharray: 40;
+      stroke-dashoffset: 40;
+      animation: draw-check 0.5s ease forwards 0.2s;
+    }
+    @keyframes draw-check {
+      to { stroke-dashoffset: 0; }
+    }
+
+    .success-title {
+      font-family: var(--font-heading);
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+    .success-desc {
+      font-size: 0.9375rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      max-width: 340px;
+    }
+    .success-reset {
+      margin-top: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--accent);
+      cursor: pointer;
+      text-decoration: underline;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="demo-label">Component Demo</div>
+  <h1 class="demo-title">Multi-step Form Wizard</h1>
+  <p class="demo-subtitle">4-step lead capture with animated transitions, validation, and success state.</p>
+
+
+  <!-- ════════════════════════════════════════════
+       FORM WIZARD
+  ════════════════════════════════════════════ -->
+  <div class="msf-shell" id="msf-shell">
+
+    <!-- Progress bar (hidden on success) -->
+    <div class="msf-progress" id="msf-progress">
+      <div class="msf-steps-row">
+        <!-- Connecting line -->
+        <div class="msf-line"><div class="msf-line-fill" id="msf-line-fill"></div></div>
+        <!-- Step circles -->
+        <div class="msf-step-circle active" id="step-circle-0">1</div>
+        <div class="msf-step-circle enter-right" id="step-circle-1">2</div>
+        <div class="msf-step-circle enter-right" id="step-circle-2">3</div>
+        <div class="msf-step-circle enter-right" id="step-circle-3">
+          <!-- Checkmark for last step when complete -->
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+      </div>
+      <div class="msf-step-labels">
+        <div class="msf-step-label active" id="step-label-0">Need</div>
+        <div class="msf-step-label" id="step-label-1">Business</div>
+        <div class="msf-step-label" id="step-label-2">Budget</div>
+        <div class="msf-step-label" id="step-label-3">Contact</div>
+      </div>
+    </div>
+
+    <!-- Step panels -->
+    <div class="msf-content" id="msf-content">
+
+      <!-- ── STEP 1: What do you need? ── -->
+      <div class="msf-step-panel" id="step-panel-0">
+        <h2 class="msf-step-title">What do you need?</h2>
+        <p class="msf-step-desc">Choose the primary service you're looking for.</p>
+        <div class="option-cards" id="service-cards">
+          <div class="option-card" data-value="website">
+            <span class="option-card-icon">🌐</span>
+            <div class="option-card-label">Website</div>
+            <div class="option-card-sub">Custom design + dev</div>
+          </div>
+          <div class="option-card" data-value="seo">
+            <span class="option-card-icon">🔍</span>
+            <div class="option-card-label">SEO</div>
+            <div class="option-card-sub">Rank + get found</div>
+          </div>
+          <div class="option-card" data-value="ads">
+            <span class="option-card-icon">📣</span>
+            <div class="option-card-label">Google Ads</div>
+            <div class="option-card-sub">Paid traffic</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── STEP 2: Business details ── -->
+      <div class="msf-step-panel enter-right" id="step-panel-1">
+        <h2 class="msf-step-title">Tell us about your business</h2>
+        <p class="msf-step-desc">Helps us understand what we're working with.</p>
+        <div class="msf-field">
+          <label class="msf-label" for="biz-name">Business name <span style="color:var(--accent)">*</span></label>
+          <input type="text" id="biz-name" class="msf-input" placeholder="e.g. Apex Roofing LLC" autocomplete="organization">
+        </div>
+        <div class="msf-field">
+          <label class="msf-label" for="biz-industry">Industry <span style="color:var(--accent)">*</span></label>
+          <div class="msf-select-wrap">
+            <select id="biz-industry" class="msf-select">
+              <option value="" disabled selected>Select your industry...</option>
+              <option value="home-services">Home Services (Roofing, HVAC, Plumbing...)</option>
+              <option value="real-estate">Real Estate</option>
+              <option value="medical">Medical / Healthcare</option>
+              <option value="legal">Legal</option>
+              <option value="ecommerce">E-commerce / Retail</option>
+              <option value="restaurant">Restaurant / Food</option>
+              <option value="fitness">Fitness / Wellness</option>
+              <option value="saas">SaaS / Tech</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="msf-field">
+          <label class="msf-label" for="biz-url">Current website <span style="color:var(--text-muted);font-weight:400">(optional)</span></label>
+          <input type="url" id="biz-url" class="msf-input" placeholder="https://yoursite.com" autocomplete="url" inputmode="url">
+        </div>
+      </div>
+
+      <!-- ── STEP 3: Budget & timeline ── -->
+      <div class="msf-step-panel enter-right" id="step-panel-2">
+        <h2 class="msf-step-title">Budget &amp; timeline</h2>
+        <p class="msf-step-desc">No wrong answers — helps us scope the right solution.</p>
+        <div class="option-cards two-col" id="budget-cards" style="margin-bottom:20px;">
+          <div class="option-card" data-value="under-2k">
+            <div class="option-card-label">Under $2,000</div>
+            <div class="option-card-sub">Starter project</div>
+          </div>
+          <div class="option-card" data-value="2k-5k">
+            <div class="option-card-label">$2,000 – $5,000</div>
+            <div class="option-card-sub">Most projects</div>
+          </div>
+          <div class="option-card" data-value="5k-10k">
+            <div class="option-card-label">$5,000 – $10,000</div>
+            <div class="option-card-sub">Full build + CRM</div>
+          </div>
+          <div class="option-card" data-value="over-10k">
+            <div class="option-card-label">$10,000+</div>
+            <div class="option-card-sub">Enterprise / complex</div>
+          </div>
+        </div>
+        <div class="msf-field">
+          <label class="msf-label" for="timeline">When do you need this live?</label>
+          <div class="msf-select-wrap">
+            <select id="timeline" class="msf-select">
+              <option value="" disabled selected>Select a timeline...</option>
+              <option value="asap">As soon as possible</option>
+              <option value="2-4-weeks">2 – 4 weeks</option>
+              <option value="1-2-months">1 – 2 months</option>
+              <option value="flexible">I'm flexible</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── STEP 4: Contact info ── -->
+      <div class="msf-step-panel enter-right" id="step-panel-3">
+        <h2 class="msf-step-title">How do we reach you?</h2>
+        <p class="msf-step-desc">We'll follow up within one business day.</p>
+        <div class="msf-field">
+          <label class="msf-label" for="contact-name">Your name <span style="color:var(--accent)">*</span></label>
+          <input type="text" id="contact-name" class="msf-input" placeholder="First and last name" autocomplete="name">
+        </div>
+        <div class="msf-field">
+          <label class="msf-label" for="contact-email">Email address <span style="color:var(--accent)">*</span></label>
+          <input type="email" id="contact-email" class="msf-input" placeholder="you@company.com" autocomplete="email" inputmode="email">
+        </div>
+        <div class="msf-field">
+          <label class="msf-label" for="contact-phone">Phone number <span style="color:var(--text-muted);font-weight:400">(optional)</span></label>
+          <input type="tel" id="contact-phone" class="msf-input" placeholder="(555) 000-0000" autocomplete="tel" inputmode="tel">
+        </div>
+      </div>
+
+    </div><!-- /msf-content -->
+
+    <!-- Success state — shown after submit -->
+    <div class="msf-success" id="msf-success">
+      <div class="success-icon-wrap">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline class="check-path" points="20 6 9 17 4 12"/>
+        </svg>
+      </div>
+      <div class="success-title">You're all set!</div>
+      <p class="success-desc">Thanks for reaching out. We'll review your details and get back to you within one business day.</p>
+      <div class="success-reset" id="msf-reset">Start over</div>
+    </div>
+
+    <!-- Navigation buttons (hidden on success) -->
+    <div class="msf-btn-row" id="msf-btn-row">
+      <button class="btn-back" id="btn-back" style="visibility:hidden;">Back</button>
+      <button class="btn-next" id="btn-next" disabled>Continue</button>
+    </div>
+
+  </div><!-- /msf-shell -->
+
+
+  <script>
+  /*
+  ════════════════════════════════════════
+  MULTI-STEP FORM WIZARD
+  ════════════════════════════════════════
+  */
+
+  var currentStep = 0;
+  var totalSteps  = 4;
+
+  /* Step validation functions — return true if step is complete */
+  var validators = [
+    /* Step 1: a service card must be selected */
+    function() {
+      return document.querySelector('#service-cards .option-card.selected') !== null;
+    },
+    /* Step 2: business name + industry required */
+    function() {
+      var name     = document.getElementById('biz-name').value.trim();
+      var industry = document.getElementById('biz-industry').value;
+      return name.length > 0 && industry !== '';
+    },
+    /* Step 3: a budget card must be selected */
+    function() {
+      return document.querySelector('#budget-cards .option-card.selected') !== null;
+    },
+    /* Step 4: name + email required */
+    function() {
+      var name  = document.getElementById('contact-name').value.trim();
+      var email = document.getElementById('contact-email').value.trim();
+      return name.length > 0 && email.includes('@');
+    },
+  ];
+
+  var panels   = document.querySelectorAll('.msf-step-panel');
+  var circles  = document.querySelectorAll('.msf-step-circle');
+  var labels   = document.querySelectorAll('.msf-step-label');
+  var lineFill = document.getElementById('msf-line-fill');
+  var btnNext  = document.getElementById('btn-next');
+  var btnBack  = document.getElementById('btn-back');
+  var content  = document.getElementById('msf-content');
+
+  /* Set content area height to match active panel */
+  function syncHeight() {
+    var active = document.getElementById('step-panel-' + currentStep);
+    content.style.height = active.scrollHeight + 'px';
+  }
+
+  /* Update progress circles and line fill */
+  function updateProgress() {
+    circles.forEach(function(c, i) {
+      c.classList.remove('active', 'complete');
+      if (i < currentStep) c.classList.add('complete');
+      else if (i === currentStep) c.classList.add('active');
+    });
+    labels.forEach(function(l, i) {
+      l.classList.remove('active', 'complete');
+      if (i < currentStep) l.classList.add('complete');
+      else if (i === currentStep) l.classList.add('active');
+    });
+
+    /* Line fill: 0% at step 0, 100% at step 3 */
+    var fillPct = (currentStep / (totalSteps - 1)) * 100;
+    lineFill.style.width = fillPct + '%';
+  }
+
+  /* Check if current step is valid and enable/disable Next button */
+  function updateNextBtn() {
+    var valid = validators[currentStep]();
+    btnNext.disabled = !valid;
+    btnNext.textContent = (currentStep === totalSteps - 1) ? 'Submit' : 'Continue';
+  }
+
+  /* Navigate forward */
+  function goNext() {
+    if (!validators[currentStep]()) return;
+
+    var leaving = document.getElementById('step-panel-' + currentStep);
+    var entering = document.getElementById('step-panel-' + (currentStep + 1));
+
+    /* Exit: slide old panel left */
+    leaving.classList.add('exit-left');
+    leaving.classList.remove('enter-right', 'enter-left', 'exit-right');
+
+    /* Enter: slide new panel in from right */
+    entering.classList.remove('enter-right', 'exit-left', 'exit-right', 'enter-left');
+    /* Force repaint so transition fires */
+    entering.getBoundingClientRect();
+    entering.style.opacity = '';
+    entering.style.transform = '';
+
+    currentStep++;
+    updateProgress();
+    syncHeight();
+    updateNextBtn();
+    btnBack.style.visibility = 'visible';
+  }
+
+  /* Navigate backward */
+  function goBack() {
+    if (currentStep === 0) return;
+
+    var leaving  = document.getElementById('step-panel-' + currentStep);
+    var entering = document.getElementById('step-panel-' + (currentStep - 1));
+
+    /* Exit: slide old panel to the right */
+    leaving.classList.add('exit-right');
+    leaving.classList.remove('enter-right', 'exit-left', 'enter-left');
+
+    /* Enter: slide previous panel in from left */
+    entering.classList.remove('exit-left', 'exit-right', 'enter-right', 'enter-left');
+
+    currentStep--;
+    updateProgress();
+    syncHeight();
+    updateNextBtn();
+    if (currentStep === 0) btnBack.style.visibility = 'hidden';
+  }
+
+  /* Submit form */
+  function submitForm() {
+    /* Hide form elements */
+    document.getElementById('msf-progress').style.display = 'none';
+    document.getElementById('msf-content').style.display = 'none';
+    document.getElementById('msf-btn-row').style.display = 'none';
+    /* Show success */
+    document.getElementById('msf-success').classList.add('visible');
+  }
+
+  /* Reset to step 1 */
+  function resetForm() {
+    document.getElementById('msf-progress').style.display = '';
+    document.getElementById('msf-content').style.display = '';
+    document.getElementById('msf-btn-row').style.display = '';
+    document.getElementById('msf-success').classList.remove('visible');
+
+    /* Clear selections and inputs */
+    document.querySelectorAll('.option-card.selected').forEach(function(c) { c.classList.remove('selected'); });
+    document.getElementById('biz-name').value = '';
+    document.getElementById('biz-industry').value = '';
+    document.getElementById('biz-url').value = '';
+    document.getElementById('timeline').value = '';
+    document.getElementById('contact-name').value = '';
+    document.getElementById('contact-email').value = '';
+    document.getElementById('contact-phone').value = '';
+
+    /* Reset panels */
+    panels.forEach(function(p, i) {
+      p.classList.remove('exit-left', 'exit-right', 'enter-left');
+      if (i === 0) {
+        p.classList.remove('enter-right');
+      } else {
+        p.classList.add('enter-right');
+      }
+    });
+
+    currentStep = 0;
+    updateProgress();
+    syncHeight();
+    updateNextBtn();
+    btnBack.style.visibility = 'hidden';
+  }
+
+  /* ── Option card single-select ── */
+  function initOptionCards(containerSelector) {
+    var container = document.querySelector(containerSelector);
+    if (!container) return;
+    container.querySelectorAll('.option-card').forEach(function(card) {
+      card.addEventListener('click', function() {
+        container.querySelectorAll('.option-card').forEach(function(c) { c.classList.remove('selected'); });
+        card.classList.add('selected');
+        updateNextBtn();
+      });
+    });
+  }
+
+  initOptionCards('#service-cards');
+  initOptionCards('#budget-cards');
+
+  /* ── Live validation on text inputs ── */
+  ['biz-name','biz-industry','biz-url','timeline','contact-name','contact-email','contact-phone'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('input', updateNextBtn);
+      el.addEventListener('change', updateNextBtn);
+    }
+  });
+
+  /* ── Button handlers ── */
+  btnNext.addEventListener('click', function() {
+    if (currentStep === totalSteps - 1) {
+      submitForm();
+    } else {
+      goNext();
+    }
+  });
+  btnBack.addEventListener('click', goBack);
+  document.getElementById('msf-reset').addEventListener('click', resetForm);
+
+  /* ── Init ── */
+  syncHeight();
+  updateProgress();
+  updateNextBtn();
+
+  /* Recalculate height on window resize */
+  window.addEventListener('resize', syncHeight);
+  </script>
+
+</body>
+</html>

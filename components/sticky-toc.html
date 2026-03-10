@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sticky TOC — Component Library</title>
+
+  <!--
+  /* COMPONENT: Sticky TOC | COPY: style + html + script */
+  Auto-generated table of contents from H2/H3 tags via JS.
+  Sidebar is position:sticky. IntersectionObserver tracks which
+  heading is in view and highlights the matching TOC link.
+  Mobile: TOC collapses to a top toggle bar with dropdown.
+  -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+
+    /* ============================================================
+       CUSTOMIZE
+       ============================================================ */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --glow:           rgba(16,185,129,0.15);
+      --glow-strong:    rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --border-accent:  rgba(16,185,129,0.3);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+    }
+    /* ============================================================ */
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+    }
+
+    /* ── Page wrapper ── */
+    .toc-page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 3rem 1.5rem 6rem;
+      display: flex;
+      gap: 3rem;
+      align-items: flex-start;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       MAIN ARTICLE (70% width on desktop)
+       ═══════════════════════════════════════════════════════════ */
+    .toc-article {
+      flex: 1 1 0;
+      min-width: 0; /* prevents flex overflow */
+    }
+
+    .toc-article-header {
+      margin-bottom: 2.5rem;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .toc-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.75rem;
+    }
+
+    .toc-page-title {
+      font-family: var(--font-heading);
+      font-size: clamp(1.75rem, 4vw, 2.5rem);
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      line-height: 1.15;
+      margin-bottom: 1rem;
+    }
+
+    .toc-article-meta {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+    }
+
+    /* Article body typography */
+    .toc-body h2 {
+      font-family: var(--font-heading);
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.015em;
+      margin: 3rem 0 1rem;
+      /* Scroll offset so heading isn't hidden by any sticky header */
+      scroll-margin-top: 1.5rem;
+    }
+
+    .toc-body h3 {
+      font-family: var(--font-heading);
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--text);
+      margin: 2rem 0 0.75rem;
+      scroll-margin-top: 1.5rem;
+    }
+
+    .toc-body p {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      line-height: 1.75;
+      margin-bottom: 1.25rem;
+    }
+
+    .toc-body strong { color: var(--text); font-weight: 600; }
+
+    .toc-body ul {
+      margin: 0 0 1.25rem 1.5rem;
+    }
+    .toc-body li {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      margin-bottom: 0.4rem;
+    }
+    .toc-body li::marker { color: var(--accent); }
+
+    /* ═══════════════════════════════════════════════════════════
+       SIDEBAR TOC (30% width, sticky)
+       ═══════════════════════════════════════════════════════════ */
+    .toc-sidebar {
+      flex: 0 0 260px;
+      position: sticky;
+      top: 24px;
+      align-self: flex-start; /* critical: prevents stretching to article height */
+      max-height: calc(100vh - 48px);
+      overflow-y: auto;
+      /* Hide scrollbar visually but keep scroll functional */
+      scrollbar-width: none;
+    }
+    .toc-sidebar::-webkit-scrollbar { display: none; }
+
+    /* TOC panel */
+    .toc-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+    }
+
+    .toc-panel-label {
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 1rem;
+    }
+
+    /* TOC nav list — generated by JS */
+    .toc-nav {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .toc-nav-link {
+      display: block;
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      text-decoration: none;
+      padding: 5px 8px 5px 12px;
+      border-radius: 6px;
+      border-left: 2px solid transparent;
+      transition: color 0.15s, background 0.15s, border-color 0.15s;
+      line-height: 1.4;
+    }
+    .toc-nav-link:hover {
+      color: var(--text);
+      background: rgba(148,163,184,0.06);
+    }
+
+    /* Active link: accent color + left border */
+    .toc-nav-link.is-active {
+      color: var(--accent);
+      border-left-color: var(--accent);
+      background: var(--glow);
+    }
+
+    /* H3 sub-items are indented */
+    .toc-nav-link.is-h3 {
+      padding-left: 24px;
+      font-size: 0.775rem;
+      color: var(--text-muted);
+    }
+    .toc-nav-link.is-h3.is-active {
+      color: var(--accent);
+    }
+
+    /* ── Mobile: collapsible TOC dropdown ── */
+    .toc-mobile-bar {
+      display: none; /* shown on mobile only */
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0;
+      margin-bottom: 1.5rem;
+    }
+
+    .toc-mobile-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 14px 1.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      background: none;
+      border: none;
+      cursor: pointer;
+    }
+
+    .toc-mobile-chevron {
+      width: 16px;
+      height: 16px;
+      transition: transform 0.2s ease;
+      color: var(--text-muted);
+    }
+    .toc-mobile-bar.is-open .toc-mobile-chevron { transform: rotate(180deg); }
+
+    .toc-mobile-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+    .toc-mobile-bar.is-open .toc-mobile-content { max-height: 400px; }
+
+    .toc-mobile-nav {
+      padding: 0.5rem 1rem 1rem;
+      list-style: none;
+    }
+    .toc-mobile-nav-link {
+      display: block;
+      padding: 8px 12px;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      text-decoration: none;
+      border-radius: 6px;
+      transition: background 0.15s, color 0.15s;
+    }
+    .toc-mobile-nav-link.is-h3 { padding-left: 24px; font-size: 0.8125rem; }
+    .toc-mobile-nav-link:hover { background: rgba(148,163,184,0.06); color: var(--text); }
+    .toc-mobile-nav-link.is-active { color: var(--accent); }
+
+    /* ── Responsive ── */
+    @media (max-width: 840px) {
+      .toc-page {
+        display: block;
+        padding-top: 0;
+      }
+      .toc-sidebar { display: none; }
+      .toc-mobile-bar { display: block; }
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- ── Mobile TOC bar (top, sticky) ── -->
+  <div class="toc-mobile-bar" id="toc-mobile-bar">
+    <button class="toc-mobile-toggle" id="toc-mobile-toggle" aria-expanded="false" aria-controls="toc-mobile-content">
+      <span id="toc-mobile-label">Table of Contents</span>
+      <svg class="toc-mobile-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+    </button>
+    <div class="toc-mobile-content" id="toc-mobile-content">
+      <ul class="toc-mobile-nav" id="toc-mobile-nav"></ul>
+    </div>
+  </div>
+
+
+  <div class="toc-page">
+
+    <!-- ─────────────────────────────────────────────────
+         MAIN ARTICLE
+         ───────────────────────────────────────────────── -->
+    <main class="toc-article">
+
+      <header class="toc-article-header">
+        <p class="toc-eyebrow">Web Design</p>
+        <h1 class="toc-page-title">The Complete Guide to Modern Web Performance</h1>
+        <p class="toc-article-meta">Updated March 2026 &bull; 12 min read</p>
+      </header>
+
+      <!-- Article body — all H2/H3 headings are auto-detected by the TOC script -->
+      <div class="toc-body" id="toc-body">
+
+        <h2 id="h-intro">Introduction to Core Web Vitals</h2>
+        <p>Google's Core Web Vitals program formalized what developers have known for years: performance is a product feature. A slow page isn't just frustrating — it directly costs conversions, rankings, and brand trust.</p>
+        <p>The three official CWV metrics are Largest Contentful Paint (LCP), Cumulative Layout Shift (CLS), and Interaction to Next Paint (INP). Each measures a distinct dimension of perceived performance from the user's perspective.</p>
+
+        <h3 id="h-lcp">Largest Contentful Paint (LCP)</h3>
+        <p>LCP measures when the largest visible element in the viewport has finished rendering. For most pages this is a hero image or an above-the-fold heading. Good LCP is under 2.5 seconds. Common culprits for slow LCP: large uncompressed images, render-blocking scripts, and slow server response times.</p>
+        <p>The fastest fix is almost always image optimization. Convert JPEG/PNG to WebP or AVIF, add proper width/height attributes, and use <strong>loading="eager" fetchpriority="high"</strong> on the hero image.</p>
+
+        <h3 id="h-cls">Cumulative Layout Shift (CLS)</h3>
+        <p>CLS scores the visual stability of your page. Every time an element moves unexpectedly — a late-loading banner pushing content down, a font swap that reflows text — CLS scores a penalty. Good CLS is under 0.1.</p>
+        <p>Reserve space for images and embeds with explicit width/height attributes or aspect-ratio CSS. Use font-display: optional or font-display: swap with matching system fonts to minimize font-swap reflow.</p>
+
+        <h3 id="h-inp">Interaction to Next Paint (INP)</h3>
+        <p>INP replaced First Input Delay (FID) in 2024. While FID only measured the first interaction, INP evaluates the responsiveness of all interactions throughout the page lifecycle. Good INP is under 200ms.</p>
+
+        <h2 id="h-loading">Loading Performance</h2>
+        <p>Loading performance encompasses everything from the initial HTML response to the last byte of a critical asset. Every millisecond here directly affects your LCP score.</p>
+
+        <h3 id="h-ttfb">Time to First Byte</h3>
+        <p>TTFB is the time between the browser requesting a page and receiving the first byte of the response. This is primarily a server problem: slow backend processing, lack of caching, or geographic distance between server and user.</p>
+        <p>The most impactful solutions are edge caching (CDN), server-side response caching, and serving static HTML wherever possible. A well-configured CDN can reduce TTFB from 400ms to under 50ms for users distant from the origin.</p>
+
+        <h3 id="h-critical">Critical Rendering Path</h3>
+        <p>The browser must parse HTML, fetch and parse CSS, execute blocking JavaScript, then render the first frame. Any resource that blocks this path delays the first paint. Inline critical CSS, defer non-critical JS, and preload key fonts to optimize this sequence.</p>
+        <p>Chrome's Coverage tool is invaluable here — it shows exactly how much of your CSS and JS is actually used on the initial load. Unused CSS that's parsed on every page load is silent overhead.</p>
+
+        <h2 id="h-images">Image Optimization</h2>
+        <p>Images account for the majority of page weight on most websites. A page with a 4MB unoptimized hero image will fail LCP on mobile regardless of how well everything else is optimized.</p>
+
+        <h3 id="h-formats">Modern Image Formats</h3>
+        <p>WebP delivers roughly 30% smaller files than JPEG at equivalent visual quality. AVIF delivers another 20–50% reduction over WebP. Both have excellent browser support as of 2026 — use the <strong>&lt;picture&gt;</strong> element with AVIF, WebP, and JPEG fallbacks for maximum compatibility.</p>
+
+        <h3 id="h-lazy">Lazy Loading</h3>
+        <p>Native lazy loading via <strong>loading="lazy"</strong> on img and iframe elements defers off-screen media until the user scrolls near it. This reduces initial page weight, improves LCP for above-fold content, and saves bandwidth for users who never scroll the full page.</p>
+        <p>Never lazy-load above-the-fold images — this will actually hurt your LCP score by deferring content the browser would otherwise prioritize.</p>
+
+        <h2 id="h-js">JavaScript Performance</h2>
+        <p>JavaScript is the most expensive resource type on the web. Unlike images (which are just decoded bytes), JS must be parsed, compiled, and executed by the browser's engine before it can do anything. On low-end Android devices this process can take 5–10x longer than on a developer's MacBook Pro.</p>
+
+        <h3 id="h-bundles">Bundle Optimization</h3>
+        <p>Code splitting, tree shaking, and minification are table stakes for any production JS bundle. But the more impactful question is: does this feature need JavaScript at all? Form validation, accordions, sticky headers, and many interactive components can be built with CSS alone.</p>
+
+        <h3 id="h-mainthread">Main Thread Unblocking</h3>
+        <p>Long tasks on the main thread (over 50ms) directly cause bad INP scores. Break long synchronous operations into smaller chunks using setTimeout(fn, 0) or the newer scheduler.postTask() API. Use Web Workers to offload computationally intensive work off the main thread entirely.</p>
+
+        <h2 id="h-tools">Measurement and Tooling</h2>
+        <p>You cannot improve what you cannot measure. A complete performance monitoring setup includes both lab tools (Lighthouse, WebPageTest) for controlled testing and field data (Chrome User Experience Report, real user monitoring) for understanding your actual users' experience.</p>
+
+        <h3 id="h-lighthouse">Lighthouse</h3>
+        <p>Lighthouse is the entry point for most developers. Run it from Chrome DevTools or as a CLI tool. Pay attention to the opportunities and diagnostics sections — these provide concrete, actionable improvements ranked by estimated impact.</p>
+
+        <h3 id="h-rum">Real User Monitoring</h3>
+        <p>Lab tools simulate a single user in controlled conditions. RUM collects performance data from your actual traffic — real devices, real network conditions, real user behavior. Services like Cloudflare Analytics, Vercel Analytics, or self-hosted Plausible can provide CWV field data broken down by page, device type, and geography.</p>
+
+      </div>
+    </main>
+
+
+    <!-- ─────────────────────────────────────────────────
+         SIDEBAR TOC (desktop)
+         ───────────────────────────────────────────────── -->
+    <aside class="toc-sidebar" aria-label="Table of contents">
+      <nav class="toc-panel">
+        <p class="toc-panel-label">On this page</p>
+        <!-- Populated by JS -->
+        <ul class="toc-nav" id="toc-nav"></ul>
+      </nav>
+    </aside>
+
+  </div>
+
+
+  <script>
+  /* ── Sticky TOC with scroll spy ──
+     1. JS finds all H2/H3 in #toc-body and assigns IDs if missing
+     2. Builds both desktop (sidebar) and mobile nav lists
+     3. IntersectionObserver fires when headings enter/leave viewport,
+        updating the active link in both navs
+     4. Smooth scroll on link click (with small offset)
+  */
+  (function() {
+
+    var body        = document.getElementById('toc-body');
+    var desktopNav  = document.getElementById('toc-nav');
+    var mobileNav   = document.getElementById('toc-mobile-nav');
+    var mobileLbl   = document.getElementById('toc-mobile-label');
+    var mobileBar   = document.getElementById('toc-mobile-bar');
+    var mobileToggle = document.getElementById('toc-mobile-toggle');
+    var mobileContent = document.getElementById('toc-mobile-content');
+
+    /* ── Step 1: collect all H2 and H3 headings ── */
+    var headings = Array.from(body.querySelectorAll('h2, h3'));
+
+    /* Ensure each heading has a unique ID */
+    headings.forEach(function(h, i) {
+      if (!h.id) {
+        h.id = 'heading-' + i;
+      }
+    });
+
+    /* ── Step 2: build nav lists ── */
+    var desktopLinks = [];
+    var mobileLinks  = [];
+
+    headings.forEach(function(h) {
+      var isH3 = h.tagName === 'H3';
+      var text  = h.textContent.trim();
+      var href  = '#' + h.id;
+
+      /* Desktop link */
+      var li  = document.createElement('li');
+      var a   = document.createElement('a');
+      a.href  = href;
+      a.textContent = text;
+      a.className = 'toc-nav-link' + (isH3 ? ' is-h3' : '');
+      a.dataset.id = h.id;
+      li.appendChild(a);
+      desktopNav.appendChild(li);
+      desktopLinks.push(a);
+
+      /* Mobile link */
+      var mli = document.createElement('li');
+      var ma  = document.createElement('a');
+      ma.href = href;
+      ma.textContent = text;
+      ma.className = 'toc-mobile-nav-link' + (isH3 ? ' is-h3' : '');
+      ma.dataset.id = h.id;
+      mli.appendChild(ma);
+      mobileNav.appendChild(mli);
+      mobileLinks.push(ma);
+
+      /* Smooth scroll click handler */
+      [a, ma].forEach(function(link) {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          var target = document.getElementById(h.id);
+          if (target) {
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+          /* Close mobile dropdown */
+          mobileBar.classList.remove('is-open');
+          mobileToggle.setAttribute('aria-expanded', 'false');
+        });
+      });
+    });
+
+    /* ── Step 3: IntersectionObserver for scroll spy ──
+       We observe each heading. When a heading enters the viewport,
+       we activate its TOC link. When it leaves, we deactivate.
+       The topmost currently-intersecting heading wins. */
+    var activeId = null;
+
+    var observer = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          setActive(entry.target.id);
+        }
+      });
+    }, {
+      rootMargin: '0px 0px -60% 0px', /* heading must be in upper 40% of viewport */
+      threshold: 0
+    });
+
+    headings.forEach(function(h) { observer.observe(h); });
+
+    function setActive(id) {
+      if (activeId === id) return;
+      activeId = id;
+
+      desktopLinks.forEach(function(a) {
+        a.classList.toggle('is-active', a.dataset.id === id);
+      });
+      mobileLinks.forEach(function(a) {
+        a.classList.toggle('is-active', a.dataset.id === id);
+      });
+
+      /* Update mobile toggle label to show current section */
+      var current = desktopLinks.find(function(a) { return a.dataset.id === id; });
+      if (current && mobileLbl) {
+        mobileLbl.textContent = current.textContent;
+      }
+
+      /* Auto-scroll active link into view in sidebar */
+      var activeLink = desktopLinks.find(function(a) { return a.dataset.id === id; });
+      if (activeLink) {
+        activeLink.scrollIntoView({ block: 'nearest' });
+      }
+    }
+
+    /* ── Mobile toggle ── */
+    mobileToggle.addEventListener('click', function() {
+      var isOpen = mobileBar.classList.toggle('is-open');
+      mobileToggle.setAttribute('aria-expanded', String(isOpen));
+    });
+
+  })();
+  </script>
+
+</body>
+</html>

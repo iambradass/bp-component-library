@@ -1,0 +1,368 @@
+<!-- COMPONENT: ROI Calculator | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ROI Calculator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      /* ── CUSTOMIZE ── */
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      padding: 3rem 1.5rem 5rem;
+    }
+
+    .wrap { max-width: 960px; margin: 0 auto; }
+
+    /* ── Header ── */
+    .page-header { text-align: center; margin-bottom: 3rem; }
+    .page-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 0.7rem; font-weight: 600; color: var(--accent);
+      text-transform: uppercase; letter-spacing: 0.1em;
+      padding: 4px 12px; background: var(--accent-dim);
+      border: 1px solid var(--accent-border); border-radius: 100px; margin-bottom: 1.25rem;
+    }
+    h1 { font-family: var(--font-heading); font-size: clamp(1.75rem,4vw,2.75rem); font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.75rem; }
+    .page-sub { color: var(--text-secondary); font-size: 1rem; line-height: 1.6; }
+
+    /* ── Main calculator card ── */
+    .calc-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2.5rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3rem;
+    }
+    @media (max-width: 680px) {
+      .calc-card { grid-template-columns: 1fr; gap: 2rem; padding: 1.75rem; }
+    }
+
+    /* ── Left: Sliders ── */
+    .sliders-panel h2 {
+      font-family: var(--font-heading); font-size: 1.1rem; font-weight: 700;
+      margin-bottom: 2rem; color: var(--text);
+    }
+
+    .slider-group { margin-bottom: 1.75rem; }
+    .slider-label {
+      display: flex; justify-content: space-between; align-items: baseline;
+      margin-bottom: 0.75rem;
+    }
+    .slider-name { font-size: 0.875rem; font-weight: 500; color: var(--text-secondary); }
+    .slider-value {
+      font-family: var(--font-heading); font-size: 1rem; font-weight: 700;
+      color: var(--accent);
+    }
+
+    /* Custom range input */
+    input[type=range] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--elevated);
+      outline: none;
+      cursor: pointer;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: 3px solid var(--bg);
+      box-shadow: 0 0 0 2px var(--accent-border);
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    input[type=range]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+      box-shadow: 0 0 0 4px var(--accent-dim);
+    }
+    input[type=range]::-moz-range-thumb {
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: 3px solid var(--bg);
+      cursor: pointer;
+    }
+
+    .slider-range-labels {
+      display: flex; justify-content: space-between;
+      margin-top: 0.375rem;
+      font-size: 0.7rem; color: var(--text-muted);
+    }
+
+    /* ── Right: Results panel ── */
+    .results-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+    .results-panel h2 {
+      font-family: var(--font-heading); font-size: 1.1rem; font-weight: 700;
+      color: var(--text);
+    }
+
+    .result-row {
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.125rem 1.25rem;
+      display: flex; flex-direction: column; gap: 0.25rem;
+    }
+    .result-row.highlight {
+      border-color: var(--accent-border);
+      background: var(--accent-dim);
+    }
+    .result-row-label { font-size: 0.775rem; color: var(--text-muted); font-weight: 500; }
+    .result-row-value {
+      font-family: var(--font-heading); font-size: 1.625rem; font-weight: 700;
+      color: var(--text); line-height: 1;
+    }
+    .result-row.highlight .result-row-value { color: var(--accent); }
+    .result-row-delta {
+      font-size: 0.775rem; color: var(--accent); font-weight: 600; margin-top: 2px;
+    }
+
+    /* ── Bar chart ── */
+    .chart-section {
+      margin-top: 0.5rem;
+    }
+    .chart-label {
+      font-size: 0.75rem; font-weight: 600; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 1rem;
+    }
+    .bar-group { display: flex; flex-direction: column; gap: 0.625rem; }
+    .bar-row { display: flex; align-items: center; gap: 0.75rem; }
+    .bar-row-label { font-size: 0.75rem; color: var(--text-secondary); width: 52px; flex-shrink: 0; text-align: right; }
+    .bar-track {
+      flex: 1; height: 24px;
+      background: var(--elevated); border-radius: 6px; overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%; border-radius: 6px;
+      transition: width 0.6s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .bar-fill.before { background: var(--text-muted); }
+    .bar-fill.after  { background: var(--accent); }
+    .bar-row-val { font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); width: 64px; flex-shrink: 0; }
+
+    /* ── CTA ── */
+    .calc-cta {
+      margin-top: 2rem;
+      padding: 1.75rem 2.5rem;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.25rem;
+    }
+    .calc-cta p { font-size: 1rem; color: var(--text-secondary); line-height: 1.55; max-width: 500px; }
+    .cta-btn {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: var(--accent); color: var(--bg);
+      font-family: var(--font-heading); font-size: 0.95rem; font-weight: 700;
+      padding: 0.875rem 2rem; border-radius: 10px; border: none;
+      cursor: pointer; text-decoration: none;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .cta-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(16,185,129,0.35); }
+  </style>
+</head>
+<body>
+
+  <div class="wrap">
+    <header class="page-header">
+      <div class="page-eyebrow">Tools</div>
+      <h1>Revenue ROI Calculator</h1>
+      <p class="page-sub">See how a +1% conversion rate improvement impacts your annual revenue. Adjust the sliders to match your numbers.</p>
+    </header>
+
+    <!-- Main calculator -->
+    <div class="calc-card">
+
+      <!-- Left: Sliders -->
+      <div class="sliders-panel">
+        <h2>Your Numbers</h2>
+
+        <!-- Slider 1: Monthly leads -->
+        <div class="slider-group">
+          <div class="slider-label">
+            <span class="slider-name">Monthly Leads</span>
+            <span class="slider-value" id="leadsVal">50</span>
+          </div>
+          <input type="range" id="leads" min="0" max="500" value="50" step="5">
+          <div class="slider-range-labels"><span>0</span><span>500</span></div>
+        </div>
+
+        <!-- Slider 2: Average deal value -->
+        <div class="slider-group">
+          <div class="slider-label">
+            <span class="slider-name">Avg Deal Value</span>
+            <span class="slider-value" id="dealVal">$5,000</span>
+          </div>
+          <input type="range" id="deal" min="500" max="50000" value="5000" step="500">
+          <div class="slider-range-labels"><span>$500</span><span>$50K</span></div>
+        </div>
+
+        <!-- Slider 3: Conversion rate -->
+        <div class="slider-group">
+          <div class="slider-label">
+            <span class="slider-name">Conversion Rate</span>
+            <span class="slider-value" id="convVal">2.0%</span>
+          </div>
+          <input type="range" id="conv" min="0.5" max="10" value="2" step="0.5">
+          <div class="slider-range-labels"><span>0.5%</span><span>10%</span></div>
+        </div>
+
+        <!-- Bar chart -->
+        <div class="chart-section">
+          <div class="chart-label">Before vs. After</div>
+          <div class="bar-group">
+            <div class="bar-row">
+              <span class="bar-row-label">Before</span>
+              <div class="bar-track"><div class="bar-fill before" id="barBefore" style="width:40%"></div></div>
+              <span class="bar-row-val" id="barBeforeLabel">$5,000</span>
+            </div>
+            <div class="bar-row">
+              <span class="bar-row-label">After</span>
+              <div class="bar-track"><div class="bar-fill after" id="barAfter" style="width:60%"></div></div>
+              <span class="bar-row-val" id="barAfterLabel">$7,500</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Results -->
+      <div class="results-panel">
+        <h2>Your Results</h2>
+
+        <div class="result-row">
+          <div class="result-row-label">Current Monthly Revenue</div>
+          <div class="result-row-value" id="currentRev">$5,000</div>
+        </div>
+
+        <div class="result-row">
+          <div class="result-row-label">At +1% Conversion Rate</div>
+          <div class="result-row-value" id="projRev">$7,500</div>
+          <div class="result-row-delta" id="projDelta">+$2,500/mo more</div>
+        </div>
+
+        <div class="result-row highlight">
+          <div class="result-row-label">Annual Revenue Gain</div>
+          <div class="result-row-value" id="annualGain">$30,000</div>
+          <div class="result-row-delta" id="annualROI">+50% from a 1% conversion lift</div>
+        </div>
+      </div>
+
+    </div><!-- /calc-card -->
+
+    <!-- CTA -->
+    <div class="calc-cta">
+      <p>See what a better website could do for your business. Most clients see a positive ROI within the first 60 days.</p>
+      <a href="#" class="cta-btn">
+        Book a Discovery Call
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+      </a>
+    </div>
+
+  </div><!-- /wrap -->
+
+  <script>
+    /* ─────────────────────────────────────────────
+       ROI CALCULATOR
+       Reads all 3 sliders, computes revenue metrics,
+       updates DOM and animated bar chart.
+    ───────────────────────────────────────────── */
+
+    const leadsSlider = document.getElementById('leads');
+    const dealSlider  = document.getElementById('deal');
+    const convSlider  = document.getElementById('conv');
+
+    // Animated number display — lerps to target value
+    const displayTargets = {};
+    const displayCurrent = {};
+
+    function fmt(n, prefix='$') {
+      if (n >= 1000000) return prefix + (n/1000000).toFixed(1) + 'M';
+      if (n >= 1000)    return prefix + (n/1000).toFixed(n >= 10000 ? 0 : 1) + 'K';
+      return prefix + Math.round(n).toLocaleString();
+    }
+
+    function update() {
+      const leads = parseFloat(leadsSlider.value);
+      const deal  = parseFloat(dealSlider.value);
+      const conv  = parseFloat(convSlider.value);
+
+      // Update slider value labels
+      document.getElementById('leadsVal').textContent = Math.round(leads);
+      document.getElementById('dealVal').textContent  = '$' + deal.toLocaleString();
+      document.getElementById('convVal').textContent  = conv.toFixed(1) + '%';
+
+      // Core calculations
+      const currentMonthly  = leads * (conv / 100) * deal;
+      const improvedMonthly = leads * ((conv + 1) / 100) * deal;
+      const monthlyDelta    = improvedMonthly - currentMonthly;
+      const annualGain      = monthlyDelta * 12;
+      const pctIncrease     = conv > 0 ? ((monthlyDelta / currentMonthly) * 100).toFixed(0) : 'N/A';
+
+      // Update result text
+      document.getElementById('currentRev').textContent = fmt(currentMonthly);
+      document.getElementById('projRev').textContent    = fmt(improvedMonthly);
+      document.getElementById('projDelta').textContent  = '+' + fmt(monthlyDelta) + '/mo more';
+      document.getElementById('annualGain').textContent = fmt(annualGain);
+      document.getElementById('annualROI').textContent  = '+' + pctIncrease + '% from a 1% conversion lift';
+
+      // Bar chart — scale bars relative to each other
+      const max = Math.max(currentMonthly, improvedMonthly, 1);
+      const beforePct = (currentMonthly  / max) * 90 + 5; // 5–95% range
+      const afterPct  = (improvedMonthly / max) * 90 + 5;
+
+      document.getElementById('barBefore').style.width      = beforePct + '%';
+      document.getElementById('barAfter').style.width       = afterPct  + '%';
+      document.getElementById('barBeforeLabel').textContent = fmt(currentMonthly);
+      document.getElementById('barAfterLabel').textContent  = fmt(improvedMonthly);
+    }
+
+    // Wire up sliders
+    [leadsSlider, dealSlider, convSlider].forEach(el => {
+      el.addEventListener('input', update);
+    });
+
+    // Initial calculation
+    update();
+  </script>
+</body>
+</html>

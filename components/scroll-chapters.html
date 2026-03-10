@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scroll Chapters — Component Library</title>
+  <!-- COMPONENT: Scroll Chapters | COPY: style + html + script -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── CUSTOMIZE ─────────────────────────────────────────────── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.12);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+    }
+    /* ── END CUSTOMIZE ─────────────────────────────────────────── */
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font-body); overflow-x: hidden; }
+
+    /* ── Progress bar — thin line at very top of viewport ──── */
+    #progress-bar-wrap {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      height: 3px; background: rgba(148,163,184,0.08);
+    }
+    #progress-fill {
+      height: 100%; background: var(--accent);
+      width: 0%; transition: width 0.05s linear;
+      box-shadow: 0 0 6px rgba(16,185,129,0.5);
+    }
+
+    /* Chapter dot markers on the bar */
+    #chapter-dots {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1001;
+      height: 3px; pointer-events: none;
+    }
+    .ch-dot {
+      position: absolute; top: 50%;
+      width: 10px; height: 10px;
+      background: var(--surface);
+      border: 2px solid var(--border);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      cursor: pointer;
+      pointer-events: all;
+      transition: background 0.3s ease, border-color 0.3s ease, transform 0.2s ease;
+    }
+    .ch-dot:hover { transform: translate(-50%, -50%) scale(1.4); }
+    .ch-dot.passed { background: var(--accent); border-color: var(--accent); }
+
+    /* Dot tooltip on hover */
+    .ch-dot::after {
+      content: attr(data-label);
+      position: absolute; top: 16px; left: 50%;
+      transform: translateX(-50%);
+      background: var(--elevated); border: 1px solid var(--border);
+      border-radius: 6px; padding: 4px 10px;
+      font-family: var(--font-body); font-size: 0.6875rem;
+      color: var(--text); white-space: nowrap;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .ch-dot:hover::after { opacity: 1; }
+
+    /* Reading position badge (top-right) */
+    #ch-position {
+      position: fixed; top: 1.5rem; right: 1.5rem;
+      font-family: ui-monospace, monospace; font-size: 0.6875rem;
+      color: var(--text-muted); z-index: 999;
+      background: rgba(13,17,23,0.8); border: 1px solid var(--border);
+      padding: 5px 12px; border-radius: 100px;
+    }
+
+    /* ── Chapter layouts ──────────────────────────────────────── */
+
+    /* Each chapter section */
+    .chapter {
+      min-height: 100vh;
+      padding: 8rem 2rem 6rem;
+      position: relative;
+    }
+
+    .ch-inner {
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    /* Massive decorative chapter number behind content */
+    .ch-bg-num {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: var(--font-heading);
+      font-size: clamp(12rem, 30vw, 20rem);
+      font-weight: 700;
+      color: rgba(255,255,255,0.015);
+      pointer-events: none;
+      user-select: none;
+      line-height: 1;
+    }
+
+    .ch-number {
+      font-family: ui-monospace, monospace;
+      font-size: 0.6875rem; text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--accent); margin-bottom: 1.25rem;
+    }
+
+    .ch-title {
+      font-family: var(--font-heading);
+      font-size: clamp(2rem, 5vw, 3.25rem);
+      font-weight: 700; letter-spacing: -0.025em;
+      line-height: 1.15; margin-bottom: 1rem;
+    }
+
+    .ch-premise {
+      font-size: 1.125rem;
+      color: var(--text-secondary);
+      line-height: 1.7; margin-bottom: 2.5rem;
+    }
+
+    /* Body text */
+    .ch-body {
+      font-size: 1rem; line-height: 1.8;
+      color: var(--text-secondary);
+    }
+    .ch-body p + p { margin-top: 1.25rem; }
+
+    /* Pull stat — big number + context */
+    .pull-stat {
+      text-align: center; padding: 3rem 0;
+    }
+    .pull-num {
+      font-family: var(--font-heading);
+      font-size: clamp(4rem, 12vw, 8rem);
+      font-weight: 700; letter-spacing: -0.04em;
+      color: var(--accent); line-height: 1;
+    }
+    .pull-context {
+      font-size: 1.125rem; color: var(--text-secondary);
+      margin-top: 0.75rem; max-width: 480px;
+      margin-inline: auto;
+    }
+
+    /* Pull quote */
+    .pull-quote {
+      border-left: 3px solid var(--accent);
+      padding: 1.5rem 2rem;
+      background: var(--accent-dim);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      margin: 2rem 0;
+      font-size: 1.25rem; font-family: var(--font-heading);
+      font-weight: 600; line-height: 1.5;
+    }
+
+    /* Mini bar chart (Chapter 2) */
+    .bar-chart { margin: 2rem 0; }
+    .bar-row {
+      display: flex; align-items: center; gap: 1rem;
+      margin-bottom: 0.75rem;
+    }
+    .bar-label {
+      font-size: 0.8125rem; color: var(--text-secondary);
+      min-width: 140px; flex-shrink: 0;
+    }
+    .bar-track {
+      flex: 1; height: 8px;
+      background: var(--elevated); border-radius: 100px; overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%; background: var(--accent); border-radius: 100px;
+      width: 0%;
+      transition: width 1s cubic-bezier(0.4,0,0.2,1);
+    }
+    .bar-pct {
+      font-family: ui-monospace, monospace;
+      font-size: 0.75rem; color: var(--accent); min-width: 36px;
+    }
+
+    /* Feature grid (Chapter 4) */
+    .feature-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 1rem; margin: 2rem 0;
+    }
+    @media (max-width: 500px) { .feature-grid { grid-template-columns: 1fr; } }
+
+    .feature-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.5rem;
+    }
+    .feature-icon {
+      width: 36px; height: 36px; border-radius: 8px;
+      background: var(--accent-dim); border: 1px solid var(--accent-border);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--accent); margin-bottom: 0.75rem;
+    }
+    .feature-title { font-family: var(--font-heading); font-size: 0.9375rem; font-weight: 600; margin-bottom: 0.4rem; }
+    .feature-desc  { font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.5; }
+
+    /* CTA chapter — dark, high contrast */
+    #ch5 { background: #060A0F; border-top: 1px solid var(--border); }
+    .final-cta {
+      display: flex; flex-direction: column; align-items: center;
+      text-align: center; gap: 1.5rem; padding: 4rem 0;
+    }
+    .cta-headline {
+      font-family: var(--font-heading);
+      font-size: clamp(2.25rem, 7vw, 4rem);
+      font-weight: 700; letter-spacing: -0.025em;
+    }
+    .cta-sub { font-size: 1.0625rem; color: var(--text-secondary); max-width: 420px; }
+    .cta-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--accent); color: #0D1117;
+      font-family: var(--font-heading); font-size: 1rem; font-weight: 700;
+      padding: 14px 32px; border-radius: 8px; text-decoration: none;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .cta-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(16,185,129,0.3); }
+
+    /* Divider between chapters */
+    .ch-divider {
+      height: 1px; background: var(--border);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Progress bar -->
+  <div id="progress-bar-wrap">
+    <div id="progress-fill"></div>
+  </div>
+
+  <!-- Chapter dots (positioned by JS once we know chapter positions) -->
+  <div id="chapter-dots"></div>
+
+  <!-- Reading position indicator -->
+  <div id="ch-position">Chapter 1 of 5</div>
+
+  <!-- ── CHAPTER 1 ─────────────────────────────────────────── -->
+  <section class="chapter" id="ch1">
+    <div class="ch-bg-num">1</div>
+    <div class="ch-inner">
+      <div class="ch-number">Chapter 01 of 05 — The Problem</div>
+      <h2 class="ch-title">Why Your Business Is Invisible Online</h2>
+      <p class="ch-premise">Most businesses have a website. Very few have a presence. There's a difference — and it's costing you.</p>
+
+      <div class="pull-stat">
+        <div class="pull-num">75%</div>
+        <p class="pull-context">of users judge a company's credibility based on its website alone — before reading a single word.</p>
+      </div>
+
+      <div class="ch-body">
+        <p>You built a website. You paid someone to design it. Maybe you even updated it last year. And yet — when a potential client searches for what you do, you don't show up. Or you show up, but they click away in seconds.</p>
+        <p>The problem isn't that you don't have a website. The problem is that your website doesn't work. It doesn't speak to anyone in particular. It doesn't make a clear promise. And it certainly doesn't make the next step obvious.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="ch-divider"></div>
+
+  <!-- ── CHAPTER 2 ─────────────────────────────────────────── -->
+  <section class="chapter" id="ch2">
+    <div class="ch-bg-num">2</div>
+    <div class="ch-inner">
+      <div class="ch-number">Chapter 02 of 05 — The Evidence</div>
+      <h2 class="ch-title">The Data Doesn't Lie</h2>
+      <p class="ch-premise">We audited 200 small business websites across five industries. The patterns were painful and consistent.</p>
+
+      <div class="bar-chart" id="bar-chart">
+        <div class="bar-row">
+          <span class="bar-label">No clear CTA</span>
+          <div class="bar-track"><div class="bar-fill" data-width="83"></div></div>
+          <span class="bar-pct">83%</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">Slow mobile load</span>
+          <div class="bar-track"><div class="bar-fill" data-width="71"></div></div>
+          <span class="bar-pct">71%</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">Generic copy</span>
+          <div class="bar-track"><div class="bar-fill" data-width="91"></div></div>
+          <span class="bar-pct">91%</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">No trust signals</span>
+          <div class="bar-track"><div class="bar-fill" data-width="67"></div></div>
+          <span class="bar-pct">67%</span>
+        </div>
+      </div>
+
+      <div class="ch-body">
+        <p>These aren't edge cases — they're the norm. Most business owners know something isn't working, but they can't name it. They chalk it up to "the market" or "just how it is." It's not. It's fixable.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="ch-divider"></div>
+
+  <!-- ── CHAPTER 3 ─────────────────────────────────────────── -->
+  <section class="chapter" id="ch3">
+    <div class="ch-bg-num">3</div>
+    <div class="ch-inner">
+      <div class="ch-number">Chapter 03 of 05 — The Turning Point</div>
+      <h2 class="ch-title">The Moment It Clicks</h2>
+      <p class="ch-premise">Every business we've helped had one thing in common: they stopped treating their website like a brochure and started treating it like a salesperson.</p>
+
+      <div class="pull-quote">
+        "We changed the headline on our homepage and booked three new clients in the first week. We hadn't changed anything else."
+        <div style="margin-top:0.75rem; font-size:0.8125rem; color:var(--text-secondary); font-weight:400;">— Sarah K., Landscape Architecture</div>
+      </div>
+
+      <div class="ch-body">
+        <p>The insight is almost embarrassingly simple: your website needs to answer one question faster than your competition. <em style="color:var(--text); font-style:normal; font-weight:600;">"What can you do for me, right now?"</em></p>
+        <p>Every second you make them work harder than that, you're losing them. The fix isn't a redesign. It's clarity. It's specificity. It's making the right next step so obvious that not taking it feels like the wrong move.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="ch-divider"></div>
+
+  <!-- ── CHAPTER 4 ─────────────────────────────────────────── -->
+  <section class="chapter" id="ch4">
+    <div class="ch-bg-num">4</div>
+    <div class="ch-inner">
+      <div class="ch-number">Chapter 04 of 05 — The Solution</div>
+      <h2 class="ch-title">What Actually Works</h2>
+      <p class="ch-premise">Four things, done right, move the needle every time. Not ten. Not a rebrand. Four things.</p>
+
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </div>
+          <div class="feature-title">Specific Messaging</div>
+          <p class="feature-desc">One clear promise above the fold. No jargon. No "we help businesses grow."</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          </div>
+          <div class="feature-title">Fast Load Time</div>
+          <p class="feature-desc">Under 2 seconds on mobile. Every extra second costs 7% conversion rate.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </div>
+          <div class="feature-title">Real Social Proof</div>
+          <p class="feature-desc">Specific results, real names, actual photos. Not stock testimonials.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </div>
+          <div class="feature-title">Obvious Next Step</div>
+          <p class="feature-desc">One CTA per screen. Make the ask before they have to think about it.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="ch-divider"></div>
+
+  <!-- ── CHAPTER 5 ─────────────────────────────────────────── -->
+  <section class="chapter" id="ch5">
+    <div class="ch-bg-num">5</div>
+    <div class="ch-inner">
+      <div class="ch-number">Chapter 05 of 05 — The Call</div>
+      <div class="final-cta">
+        <p style="font-size:0.875rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.1em;">You've seen the problem. You've seen the fix.</p>
+        <h2 class="cta-headline">Now let's fix yours.</h2>
+        <p class="cta-sub">A 30-minute audit call. No pitch, no fluff — just a direct look at what's holding your site back.</p>
+        <a href="#" class="cta-btn">Book your free audit →</a>
+      </div>
+    </div>
+  </section>
+
+<script>
+(function() {
+  var chapters = ['ch1','ch2','ch3','ch4','ch5'];
+  var chEls    = chapters.map(function(id) { return document.getElementById(id); });
+  var progFill = document.getElementById('progress-fill');
+  var dotsWrap = document.getElementById('chapter-dots');
+  var chPos    = document.getElementById('ch-position');
+  var barsFired = false;
+
+  /* ── Create chapter dots on the progress bar ─────────────── */
+  function buildDots() {
+    var totalH = document.body.scrollHeight - window.innerHeight;
+    chEls.forEach(function(el, i) {
+      var pct = (el.offsetTop / totalH) * 100;
+      var dot = document.createElement('div');
+      dot.className = 'ch-dot';
+      dot.style.left = pct.toFixed(2) + '%';
+      dot.dataset.label = 'Chapter ' + (i + 1);
+      dot.addEventListener('click', function() {
+        window.scrollTo({ top: el.offsetTop, behavior: 'smooth' });
+      });
+      dotsWrap.appendChild(dot);
+    });
+  }
+  buildDots();
+
+  /* ── Scroll update ───────────────────────────────────────── */
+  var ticking = false;
+  var dots;
+
+  function update() {
+    ticking = false;
+    dots = dots || document.querySelectorAll('.ch-dot');
+
+    var scrollY  = window.pageYOffset;
+    var totalH   = document.body.scrollHeight - window.innerHeight;
+    var progress = (scrollY / totalH) * 100;
+
+    progFill.style.width = Math.min(progress, 100).toFixed(2) + '%';
+
+    // Determine active chapter and update position badge + dots
+    var activeChapter = 0;
+    chEls.forEach(function(el, i) {
+      var rect = el.getBoundingClientRect();
+      if (rect.top <= window.innerHeight * 0.5) activeChapter = i;
+    });
+
+    chPos.textContent = 'Chapter ' + (activeChapter + 1) + ' of 5';
+
+    dots.forEach(function(d, i) {
+      d.classList.toggle('passed', i <= activeChapter);
+    });
+
+    // Animate bar chart when Chapter 2 enters view
+    var ch2 = chEls[1].getBoundingClientRect();
+    if (!barsFired && ch2.top < window.innerHeight * 0.7) {
+      barsFired = true;
+      document.querySelectorAll('.bar-fill').forEach(function(fill) {
+        fill.style.width = fill.dataset.width + '%';
+      });
+    }
+  }
+
+  window.addEventListener('scroll', function() {
+    if (!ticking) { requestAnimationFrame(update); ticking = true; }
+  }, { passive: true });
+
+  window.addEventListener('resize', function() {
+    dotsWrap.innerHTML = '';
+    buildDots();
+    dots = null;
+    update();
+  });
+
+  update();
+})();
+</script>
+</body>
+</html>

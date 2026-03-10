@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sticky Split Scroll</title>
+
+  <!--
+    COMPONENT: Sticky Split Scroll
+    COPY: style + html + script
+    Text sections scroll left while a visual stays sticky right.
+    Visual swaps content via IntersectionObserver as each text section passes 40% visibility.
+    Mobile: visuals inline above text, sticky disabled.
+  -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+
+    /* ── CUSTOMIZE ── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --glow:           rgba(16,185,129,0.15);
+      --border:         rgba(148,163,184,0.1);
+      --border-accent:  rgba(16,185,129,0.3);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+    }
+
+    /* Page intro section (above the split scroll) */
+    .page-intro {
+      text-align: center;
+      padding: 5rem 1.5rem 4rem;
+    }
+    .eyebrow {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      padding: 4px 12px;
+      border: 1px solid var(--border-accent);
+      background: var(--glow);
+      border-radius: 100px;
+      margin-bottom: 1.25rem;
+    }
+    .page-title {
+      font-family: var(--font-heading);
+      font-size: clamp(2rem, 5vw, 3rem);
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      margin-bottom: 1rem;
+    }
+    .page-sub {
+      color: var(--text-secondary);
+      font-size: 1rem;
+      line-height: 1.7;
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    /* Spacer so sticky section has room to breathe */
+    .spacer { height: 4rem; }
+    .spacer-end { height: 6rem; }
+
+
+    /* ══════════════════════════════════════
+       SPLIT SCROLL CONTAINER
+    ══════════════════════════════════════ */
+    .split-scroll {
+      display: flex;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+      gap: 3rem;
+    }
+
+    /* ── LEFT: Scrolling text column ── */
+    .split-scroll__text {
+      flex: 1;
+      min-width: 0;
+    }
+
+    /* Each text section — ~60vh tall so only one is visible at a time */
+    .text-section {
+      min-height: 65vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 4rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .text-section:last-child { border-bottom: none; }
+
+    .ts-step {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      margin-bottom: 0.75rem;
+    }
+    .ts-heading {
+      font-family: var(--font-heading);
+      font-size: clamp(1.5rem, 2.5vw, 2rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 1rem;
+      line-height: 1.25;
+    }
+    .ts-body {
+      color: var(--text-secondary);
+      line-height: 1.75;
+      font-size: 0.9375rem;
+      margin-bottom: 1.5rem;
+      max-width: 440px;
+    }
+    .ts-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+    .ts-list li {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+    .ts-list li::before {
+      content: '';
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--accent);
+      flex-shrink: 0;
+    }
+
+
+    /* ── RIGHT: Sticky visual column ── */
+    .split-scroll__visual {
+      flex: 1;
+      min-width: 0;
+      /* Sticky: stays in viewport while text scrolls */
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+    }
+
+    /* Stack all panels in the same grid cell; only active one is visible */
+    .visual-stack {
+      width: 100%;
+      display: grid;
+      grid-template-areas: 'panel';
+    }
+
+    .visual-panel {
+      grid-area: panel;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.75rem;
+      /* Default: hidden and slightly scaled down */
+      opacity: 0;
+      transform: scale(0.96);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+      pointer-events: none;
+    }
+
+    /* Active panel — visible and full scale */
+    .visual-panel.active {
+      opacity: 1;
+      transform: scale(1);
+      pointer-events: auto;
+    }
+
+
+    /* ── Panel 1: Checklist / Roadmap ── */
+    .checklist-title {
+      font-family: var(--font-heading);
+      font-size: 0.875rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: var(--text-secondary);
+    }
+    .checklist-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.875rem;
+    }
+    .checklist-item:last-child { border-bottom: none; }
+    .check-box {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .check-box.done {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #0D1117;
+    }
+    .check-box.pending { border-color: var(--border-accent); }
+
+    /* ── Panel 2: Browser mockup wireframe ── */
+    .panel-browser {
+      background: var(--elevated);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .panel-browser-chrome {
+      background: var(--bg);
+      padding: 0.6rem 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .pb-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .pb-dot:nth-child(1) { background: #FF5F56; }
+    .pb-dot:nth-child(2) { background: #FFBD2E; }
+    .pb-dot:nth-child(3) { background: #27C93F; }
+    .panel-browser-body { padding: 1rem; }
+    .pb-hero  { height: 64px; background: var(--surface); border-radius: 6px; margin-bottom: 0.75rem; }
+    .pb-row   { height: 10px; background: var(--surface); border-radius: 3px; margin-bottom: 6px; }
+    .pb-cards { display: flex; gap: 8px; margin-top: 0.75rem; }
+    .pb-card  { flex: 1; height: 44px; background: var(--surface); border-radius: 6px; }
+
+    /* ── Panel 3: Performance metrics card ── */
+    .perf-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+    .perf-stat {
+      background: var(--elevated);
+      border-radius: 10px;
+      padding: 1rem;
+      text-align: center;
+    }
+    .perf-val {
+      font-family: var(--font-heading);
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .perf-label {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-top: 0.3rem;
+    }
+    .perf-trend {
+      font-size: 0.75rem;
+      color: var(--accent);
+      margin-top: 0.2rem;
+    }
+
+    /* ── Panel 4: Support thread mock ── */
+    .thread-title {
+      font-family: var(--font-heading);
+      font-size: 0.875rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .thread-badge {
+      background: var(--glow);
+      border: 1px solid var(--border-accent);
+      border-radius: 100px;
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      color: var(--accent);
+      padding: 2px 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .thread-message {
+      display: flex;
+      gap: 0.6rem;
+      margin-bottom: 0.75rem;
+      align-items: flex-start;
+    }
+    .thread-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .thread-bubble {
+      background: var(--elevated);
+      border-radius: 10px;
+      border-top-left-radius: 3px;
+      padding: 0.6rem 0.75rem;
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      flex: 1;
+    }
+    .thread-message.me .thread-bubble {
+      background: var(--glow);
+      border: 1px solid var(--border-accent);
+      border-top-right-radius: 3px;
+      border-top-left-radius: 10px;
+    }
+
+
+    /* ══════════════════════════════════════
+       MOBILE — Stack everything vertically
+    ══════════════════════════════════════ */
+    @media (max-width: 768px) {
+      .split-scroll {
+        flex-direction: column;
+        padding: 0 1rem;
+        gap: 0;
+      }
+
+      /* Visuals become inline — sticky disabled */
+      .split-scroll__visual {
+        position: static;
+        height: auto;
+        margin-bottom: 1.5rem;
+      }
+
+      .visual-stack {
+        display: block;
+      }
+
+      /* On mobile: show all panels statically (JS won't hide them) */
+      .visual-panel {
+        opacity: 1;
+        transform: none;
+        margin-bottom: 1rem;
+      }
+
+      /* Move each visual BEFORE its corresponding text section on mobile */
+      .text-section {
+        min-height: auto;
+        padding: 2rem 0;
+      }
+
+      /* Hide the sticky visual column completely on mobile */
+      .split-scroll__visual { display: none; }
+
+      /* Show inline mobile visuals (added separately in HTML) */
+      .mobile-visual { display: block !important; }
+    }
+
+    /* Hidden on desktop, shown on mobile */
+    .mobile-visual {
+      display: none;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- Page intro -->
+  <div class="page-intro">
+    <div class="eyebrow">Sticky Split Scroll</div>
+    <h1 class="page-title">How we work</h1>
+    <p class="page-sub">Scroll down — the visual on the right stays anchored while each service section comes into view.</p>
+  </div>
+  <div class="spacer"></div>
+
+
+  <!-- ═══════════════════════════════════════
+       SPLIT SCROLL LAYOUT
+  ════════════════════════════════════════ -->
+  <div class="split-scroll">
+
+    <!-- LEFT: Scrolling text sections -->
+    <div class="split-scroll__text">
+
+      <!-- Text 1 -->
+      <div class="text-section" data-visual="0">
+        <div class="ts-step">Phase 01</div>
+        <h2 class="ts-heading">Strategy &amp; Planning</h2>
+        <p class="ts-body">Every engagement begins with a discovery sprint. We map your goals, audience, and competitive landscape before a single pixel is designed.</p>
+        <ul class="ts-list">
+          <li>Stakeholder interviews + goal mapping</li>
+          <li>Competitive landscape audit</li>
+          <li>User journey mapping</li>
+          <li>Content strategy + sitemap</li>
+        </ul>
+      </div>
+
+      <!-- Text 2 -->
+      <div class="text-section" data-visual="1">
+        <div class="ts-step">Phase 02</div>
+        <h2 class="ts-heading">Design &amp; Build</h2>
+        <p class="ts-body">Mobile-first design in Figma, then pixel-perfect implementation with clean semantic HTML, modern CSS, and vanilla JS where needed.</p>
+        <ul class="ts-list">
+          <li>High-fidelity Figma mockups</li>
+          <li>Mobile-first responsive build</li>
+          <li>Performance budget enforcement</li>
+          <li>Accessibility (WCAG 2.1 AA)</li>
+        </ul>
+      </div>
+
+      <!-- Text 3 -->
+      <div class="text-section" data-visual="2">
+        <div class="ts-step">Phase 03</div>
+        <h2 class="ts-heading">Launch &amp; Optimize</h2>
+        <p class="ts-body">CI/CD deploy pipeline, CDN configuration, and A/B testing infrastructure — all in place before you go live. Then we iterate on the data.</p>
+        <ul class="ts-list">
+          <li>Git-push → auto-deploy</li>
+          <li>CDN + cache configuration</li>
+          <li>Analytics + heatmap setup</li>
+          <li>First-month conversion audit</li>
+        </ul>
+      </div>
+
+      <!-- Text 4 -->
+      <div class="text-section" data-visual="3">
+        <div class="ts-step">Phase 04</div>
+        <h2 class="ts-heading">Ongoing Support</h2>
+        <p class="ts-body">A dedicated point of contact, monthly performance reviews, and priority support — so your site grows with your business, not against it.</p>
+        <ul class="ts-list">
+          <li>Monthly strategy calls</li>
+          <li>Priority 4-hour response SLA</li>
+          <li>Proactive uptime monitoring</li>
+          <li>Quarterly performance reviews</li>
+        </ul>
+      </div>
+
+    </div><!-- /split-scroll__text -->
+
+
+    <!-- RIGHT: Sticky visual column -->
+    <div class="split-scroll__visual">
+      <div class="visual-stack">
+
+        <!-- Panel 0: Strategy checklist -->
+        <div class="visual-panel active" data-panel="0">
+          <div class="checklist-title">Discovery Checklist</div>
+          <div class="checklist-item"><span class="check-box done"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>Goals &amp; KPIs defined</div>
+          <div class="checklist-item"><span class="check-box done"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>Competitor audit complete</div>
+          <div class="checklist-item"><span class="check-box done"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>User personas built</div>
+          <div class="checklist-item"><span class="check-box pending"></span>Sitemap approved</div>
+          <div class="checklist-item"><span class="check-box pending"></span>Content inventory ready</div>
+        </div>
+
+        <!-- Panel 1: Browser wireframe -->
+        <div class="visual-panel" data-panel="1">
+          <div class="panel-browser">
+            <div class="panel-browser-chrome">
+              <div class="pb-dot"></div>
+              <div class="pb-dot"></div>
+              <div class="pb-dot"></div>
+            </div>
+            <div class="panel-browser-body">
+              <div class="pb-hero"></div>
+              <div class="pb-row"></div>
+              <div class="pb-row" style="width:75%"></div>
+              <div class="pb-row" style="width:60%"></div>
+              <div class="pb-cards">
+                <div class="pb-card"></div>
+                <div class="pb-card"></div>
+                <div class="pb-card"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel 2: Performance metrics -->
+        <div class="visual-panel" data-panel="2">
+          <div style="font-family:var(--font-heading);font-size:0.875rem;font-weight:600;color:var(--text-secondary);margin-bottom:1rem;">Performance Overview</div>
+          <div class="perf-grid">
+            <div class="perf-stat">
+              <div class="perf-val">98</div>
+              <div class="perf-label">Lighthouse</div>
+              <div class="perf-trend">↑ Performance</div>
+            </div>
+            <div class="perf-stat">
+              <div class="perf-val">1.2s</div>
+              <div class="perf-label">LCP</div>
+              <div class="perf-trend">Top 10%</div>
+            </div>
+            <div class="perf-stat">
+              <div class="perf-val">4.7%</div>
+              <div class="perf-label">Conversion</div>
+              <div class="perf-trend">↑ 2.1% MoM</div>
+            </div>
+            <div class="perf-stat">
+              <div class="perf-val">99.9%</div>
+              <div class="perf-label">Uptime</div>
+              <div class="perf-trend">12-month avg</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel 3: Support thread -->
+        <div class="visual-panel" data-panel="3">
+          <div class="thread-title">
+            Support Thread
+            <span class="thread-badge">Online</span>
+          </div>
+          <div class="thread-message">
+            <div class="thread-avatar" style="background:#1e3a2f;color:var(--accent);">BP</div>
+            <div class="thread-bubble">Hey! The new landing page is live but the hero image isn't loading on iOS. Can you take a look?</div>
+          </div>
+          <div class="thread-message me">
+            <div class="thread-bubble">On it — looks like a WebP encoding issue. Pushing a fix now, should be resolved in &lt;15 min.</div>
+            <div class="thread-avatar" style="background:#1e2a3a;color:#60A5FA;">SA</div>
+          </div>
+          <div class="thread-message">
+            <div class="thread-avatar" style="background:#1e3a2f;color:var(--accent);">BP</div>
+            <div class="thread-bubble">You're a legend. Thank you!</div>
+          </div>
+        </div>
+
+      </div><!-- /visual-stack -->
+    </div><!-- /split-scroll__visual -->
+
+  </div><!-- /split-scroll -->
+
+  <div class="spacer-end"></div>
+
+
+  <script>
+  /* ─────────────────────────────────────────────────
+     Swap active visual panel when a text section
+     becomes ≥ 40% visible in the viewport.
+  ───────────────────────────────────────────────── */
+
+  // Only run on desktop — mobile uses inline layout
+  if (window.matchMedia('(min-width: 769px)').matches) {
+
+    const textSections = document.querySelectorAll('.text-section');
+    const panels       = document.querySelectorAll('.visual-panel');
+
+    function setActive(index) {
+      panels.forEach(function(p, i) {
+        p.classList.toggle('active', i === index);
+      });
+    }
+
+    const observer = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          const idx = parseInt(entry.target.dataset.visual);
+          setActive(idx);
+        }
+      });
+    }, {
+      threshold: 0.4,        // Fires when 40% of section is visible
+      rootMargin: '-10% 0px' // Slight inset from viewport edges
+    });
+
+    textSections.forEach(function(section) {
+      observer.observe(section);
+    });
+
+  }
+  </script>
+
+</body>
+</html>

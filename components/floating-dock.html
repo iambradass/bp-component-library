@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Floating Dock — Component Library</title>
+
+  <!--
+  /* COMPONENT: Floating Dock | COPY: style + html + script */
+  macOS-style magnification dock. Icons grow as the cursor passes near
+  them — adjacent icons get partial magnification too, creating a smooth
+  wave-like scaling effect. Fixed bottom-center in production.
+  -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+
+    /* ============================================================
+       CUSTOMIZE — adjust these to match your project
+       ============================================================ */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --glow:           rgba(16,185,129,0.15);
+      --glow-strong:    rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --border-accent:  rgba(16,185,129,0.3);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+
+      /* Dock-specific settings */
+      --dock-icon-base: 48px;  /* resting icon size */
+      --dock-icon-max:  80px;  /* max magnified size (mirrors JS maxScale calc) */
+    }
+    /* ============================================================ */
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+
+    /* ── Hero section — gives context for the dock sitting over a real page ── */
+    .dock-hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 2rem 1.5rem 8rem; /* bottom pad makes room for dock */
+      position: relative;
+
+      /* Subtle grid dot background */
+      background-image:
+        radial-gradient(circle at 60% 20%, rgba(16,185,129,0.06) 0%, transparent 50%),
+        radial-gradient(circle, rgba(148,163,184,0.04) 1px, transparent 1px);
+      background-size: 100% 100%, 28px 28px;
+    }
+
+    .dock-hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 5px 14px;
+      background: rgba(16,185,129,0.08);
+      border: 1px solid var(--border-accent);
+      border-radius: 100px;
+      margin-bottom: 1.5rem;
+    }
+
+    .dock-hero-title {
+      font-family: var(--font-heading);
+      font-size: clamp(2.5rem, 6vw, 4rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin-bottom: 1rem;
+    }
+    .dock-hero-title span {
+      color: var(--accent);
+    }
+
+    .dock-hero-sub {
+      color: var(--text-secondary);
+      font-size: 1.0625rem;
+      line-height: 1.65;
+      max-width: 480px;
+      margin-bottom: 2.5rem;
+    }
+
+    /* Two CTA buttons */
+    .dock-hero-ctas {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .dock-cta-primary {
+      padding: 0.75rem 1.75rem;
+      background: var(--accent);
+      color: #0D1117;
+      font-family: var(--font-heading);
+      font-size: 0.9375rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      min-height: 44px; /* touch target */
+    }
+    .dock-cta-primary:hover { opacity: 0.85; }
+    .dock-cta-secondary {
+      padding: 0.75rem 1.75rem;
+      background: transparent;
+      color: var(--text-secondary);
+      font-family: var(--font-heading);
+      font-size: 0.9375rem;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+      min-height: 44px;
+    }
+    .dock-cta-secondary:hover {
+      border-color: var(--border-accent);
+      color: var(--text);
+    }
+
+    /* Production note */
+    .dock-note {
+      margin-top: 2rem;
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 8px 16px;
+      background: rgba(148,163,184,0.04);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+
+
+    /* ── THE DOCK ──
+       Fixed, bottom-center, pill-shaped glass bar.
+       `align-items: flex-end` is critical: icons grow upward (not downward)
+       because they're bottom-aligned in the flex container. */
+    .dock {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 100;
+
+      display: flex;
+      align-items: flex-end;  /* icons grow upward when scaled */
+      gap: 6px;
+      padding: 10px 16px;
+
+      background: rgba(30, 41, 59, 0.7);
+      backdrop-filter: blur(20px) saturate(150%);
+      -webkit-backdrop-filter: blur(20px) saturate(150%);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 100px; /* pill shape */
+      box-shadow:
+        0 8px 32px rgba(0,0,0,0.5),
+        0 1px 0 rgba(255,255,255,0.06) inset;
+    }
+
+
+    /* ── Dock item ── */
+    .dock-item {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: var(--dock-icon-base);
+      height: var(--dock-icon-base);
+      cursor: pointer;
+
+      /* Transform origin at bottom so icon grows upward */
+      transform-origin: bottom center;
+      transition: transform 0.15s ease;
+    }
+
+
+    /* ── Icon button inside dock item ── */
+    .dock-icon {
+      width: 100%;
+      height: 100%;
+      border-radius: 14px;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+    }
+    .dock-item:hover .dock-icon {
+      background: rgba(16,185,129,0.1);
+      border-color: var(--border-accent);
+      color: var(--accent);
+    }
+
+
+    /* ── Tooltip — appears above the icon on hover ──
+       Uses CSS :hover so no JS needed for visibility.
+       `pointer-events: none` prevents it from blocking clicks. */
+    .dock-tooltip {
+      position: absolute;
+      bottom: calc(100% + 10px); /* 10px above the icon */
+      left: 50%;
+      transform: translateX(-50%) scale(0.8);
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-family: var(--font-heading);
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s ease, transform 0.15s ease;
+
+      /* Small arrow pointing down */
+    }
+    .dock-tooltip::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 5px solid transparent;
+      border-top-color: var(--border);
+    }
+    .dock-item:hover .dock-tooltip {
+      opacity: 1;
+      transform: translateX(-50%) scale(1);
+    }
+
+    /* ── Mobile: hide dock on very small screens, show static nav suggestion ── */
+    @media (max-width: 480px) {
+      .dock {
+        gap: 4px;
+        padding: 8px 10px;
+        bottom: 16px;
+      }
+      :root { --dock-icon-base: 42px; }
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- Hero — provides realistic context for the dock -->
+  <section class="dock-hero">
+    <div class="dock-hero-badge">Floating Dock Demo</div>
+    <h1 class="dock-hero-title">Your workspace,<br><span>beautifully organized.</span></h1>
+    <p class="dock-hero-sub">Hover over the dock at the bottom of the screen to see the macOS-style magnification effect in action.</p>
+    <div class="dock-hero-ctas">
+      <button class="dock-cta-primary">Get Started</button>
+      <button class="dock-cta-secondary">View Docs</button>
+    </div>
+    <div class="dock-note">Position: fixed bottom-center in production — hover the dock below</div>
+  </section>
+
+
+  <!-- THE DOCK — 8 icons with labels -->
+  <div class="dock" id="dock" role="navigation" aria-label="Application dock">
+
+    <!-- Home -->
+    <div class="dock-item" tabindex="0" role="button" aria-label="Home">
+      <div class="dock-tooltip">Home</div>
+      <div class="dock-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+          <polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Search -->
+    <div class="dock-item" tabindex="0" role="button" aria-label="Search">
+      <div class="dock-tooltip">Search</div>
+      <div class="dock-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/>
+          <path d="m21 21-4.35-4.35"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Briefcase / Work -->
+    <div class="dock-item" tabindex="0" role="button" aria-label="Projects">
+      <div class="dock-tooltip">Projects</div>
+      <div class="dock-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+          <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Mail -->
+    <div class="dock-item" tabindex="0" role="button" aria-label="Mail">
+      <div class="dock-tooltip">Mail</div>
+      <div class="dock-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+          <polyline points="22,6 12,13 2,6"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Settings -->
+    <div class="dock-item" tabindex="0" role="button" aria-label="Settings">
+      <div class="dock-tooltip">Settings</div>
+      <div class="dock-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- GitHub -->
+    <div class="dock-item" tabindex="0" role="button" aria-label="GitHub">
+      <div class="dock-tooltip">GitHub</div>
+      <div class="dock-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Twitter / X -->
+    <div class="dock-item" tabindex="0" role="button" aria-label="Twitter">
+      <div class="dock-tooltip">Twitter</div>
+      <div class="dock-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- User Profile -->
+    <div class="dock-item" tabindex="0" role="button" aria-label="Profile">
+      <div class="dock-tooltip">Profile</div>
+      <div class="dock-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+      </div>
+    </div>
+
+  </div><!-- /dock -->
+
+
+  <script>
+  /* ── Magnification logic ──
+     On mousemove over the dock, we calculate the distance from the cursor
+     to the center of each icon. Icons closest to the cursor scale up to 2.2×;
+     icons further away scale proportionally less via a squared falloff curve
+     (Math.pow gives a nice bell curve rather than a linear ramp). */
+
+  const dock  = document.getElementById('dock');
+  const items = dock.querySelectorAll('.dock-item');
+
+  const MAX_DIST  = 120;  // px — max radius of magnification influence
+  const MIN_SCALE = 1;    // resting scale
+  const MAX_SCALE = 2.2;  // peak scale at cursor position
+
+  dock.addEventListener('mousemove', (e) => {
+    items.forEach((item) => {
+      const rect   = item.getBoundingClientRect();
+      const center = rect.left + rect.width / 2;
+      const dist   = Math.abs(e.clientX - center);
+
+      // Squared falloff: closer = disproportionately larger
+      const scale = dist < MAX_DIST
+        ? MIN_SCALE + (MAX_SCALE - MIN_SCALE) * Math.pow(1 - dist / MAX_DIST, 2)
+        : MIN_SCALE;
+
+      item.style.transform = `scale(${scale.toFixed(3)})`;
+    });
+  });
+
+  /* Reset all icons when the cursor leaves the dock */
+  dock.addEventListener('mouseleave', () => {
+    items.forEach((item) => {
+      item.style.transform = 'scale(1)';
+    });
+  });
+
+  /* Keyboard accessibility: Enter/Space activates an item */
+  items.forEach((item) => {
+    item.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        item.click();
+      }
+    });
+  });
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,291 @@
+<!-- COMPONENT: Proof Numbers | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Proof Numbers — Traction Section</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font-body); min-height: 100vh; }
+
+    /* ── Section ── */
+    .section {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 5rem 1.5rem;
+    }
+    .section-header { text-align: center; margin-bottom: 4rem; }
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: var(--font-mono); font-size: 0.75rem; font-weight: 600;
+      color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em;
+      padding: 5px 14px; background: var(--accent-dim);
+      border: 1px solid var(--accent-border); border-radius: 100px; margin-bottom: 1.25rem;
+    }
+    .section-title {
+      font-family: var(--font-heading);
+      font-size: clamp(1.75rem, 4vw, 2.75rem);
+      font-weight: 700; letter-spacing: -0.025em; line-height: 1.2;
+    }
+
+    /* ── Hero stats 2×2 grid ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    @media (max-width: 560px) { .stats-grid { grid-template-columns: 1fr; } }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .stat-card:hover { border-color: rgba(16,185,129,0.2); transform: translateY(-2px); }
+    .stat-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(to right, var(--accent), rgba(16,185,129,0));
+    }
+
+    /* Trend badge in top-right */
+    .stat-trend {
+      position: absolute; top: 1.25rem; right: 1.25rem;
+      display: flex; align-items: center; gap: 4px;
+      font-family: var(--font-mono); font-size: 0.6875rem; font-weight: 600;
+      color: var(--accent); background: var(--accent-dim);
+      border: 1px solid var(--accent-border); border-radius: 100px;
+      padding: 3px 10px;
+    }
+
+    .stat-number {
+      font-family: var(--font-heading);
+      font-size: clamp(3rem, 7vw, 4.5rem);
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      line-height: 1;
+      color: var(--text);
+      display: block;
+      margin-bottom: 0.5rem;
+    }
+    .stat-number-accent { color: var(--accent); }
+
+    .stat-label {
+      font-family: var(--font-heading); font-size: 1.0625rem; font-weight: 600;
+      color: var(--text); margin-bottom: 0.5rem;
+    }
+
+    /* ── Context block below each stat ── */
+    .stat-context {
+      font-size: 0.875rem; color: var(--text-muted); line-height: 1.6;
+      margin-top: 0.75rem; padding-top: 0.75rem;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── Proof bar ── */
+    .proof-bar-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      margin-bottom: 1rem;
+    }
+    .proof-bar-title {
+      font-family: var(--font-heading); font-size: 1rem; font-weight: 700;
+      color: var(--text); margin-bottom: 1.5rem;
+    }
+    .proof-bars { display: flex; flex-direction: column; gap: 1rem; }
+    .proof-bar-row { }
+    .proof-bar-label-row {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 6px;
+    }
+    .proof-bar-label { font-size: 0.875rem; color: var(--text-secondary); }
+    .proof-bar-pct { font-family: var(--font-heading); font-size: 0.875rem; font-weight: 700; color: var(--accent); }
+    .proof-bar-track { height: 8px; background: var(--elevated); border-radius: 4px; overflow: hidden; }
+    .proof-bar-fill {
+      height: 100%; border-radius: 4px; width: 0;
+      transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .proof-bar-fill.google { background: linear-gradient(to right, var(--accent), #38bdf8); }
+    .proof-bar-fill.referral { background: linear-gradient(to right, #8b5cf6, #6366f1); }
+    .proof-bar-fill.social { background: linear-gradient(to right, #f59e0b, #ef4444); }
+
+    /* Source legend */
+    .proof-legend { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1rem; }
+    .proof-legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: var(--text-muted); }
+    .proof-legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .dot-google { background: var(--accent); }
+    .dot-referral { background: #8b5cf6; }
+    .dot-social { background: #f59e0b; }
+
+    /* ── Animation: stat count-up ── */
+    .stat-number { opacity: 0; transform: translateY(10px); transition: opacity 0.4s ease, transform 0.4s ease; }
+    .stat-number.counted { opacity: 1; transform: none; }
+
+  </style>
+</head>
+<body>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="eyebrow">By the numbers</div>
+      <h2 class="section-title">The numbers don't lie.</h2>
+    </div>
+
+    <!-- 2×2 hero stats -->
+    <div class="stats-grid">
+
+      <div class="stat-card">
+        <div class="stat-trend">▲ +12% this quarter</div>
+        <span class="stat-number" data-target="127" data-suffix="+">127+</span>
+        <div class="stat-label">Title reps served</div>
+        <div class="stat-context">Across 18 states, every market size — from solo practitioners to top-10 closers. Not a single client left because results were lacking.</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-trend">▲ +4% YoY</div>
+        <span class="stat-number" data-target="94" data-suffix="%" data-decimal="0">94%</span>
+        <div class="stat-label">Renewal rate</div>
+        <div class="stat-context">When 94 out of every 100 clients renew, it means the product delivers. This isn't a month-to-month churn business — it's a long-term partnership.</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-trend">▲ Down from 21</div>
+        <span class="stat-number" data-target="10" data-suffix=" days">10 days</span>
+        <div class="stat-label">Average time to launch</div>
+        <div class="stat-context">From your kickoff call to a live, indexed website — average 10 calendar days. Compare that to 3–6 months with a traditional agency.</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-trend">▲ +$400K this year</div>
+        <span class="stat-number" data-target="2.4" data-suffix="M" data-prefix="$">$2.4M</span>
+        <div class="stat-label">In tracked commissions</div>
+        <div class="stat-context">Commission revenue our clients have directly attributed to leads captured through their websites. We track ROI because accountability matters to us.</div>
+      </div>
+
+    </div>
+
+    <!-- Proof bar: lead source breakdown -->
+    <div class="proof-bar-section">
+      <div class="proof-bar-title">Where client leads come from — platform breakdown</div>
+      <div class="proof-bars">
+
+        <div class="proof-bar-row">
+          <div class="proof-bar-label-row">
+            <span class="proof-bar-label">Google Search (organic)</span>
+            <span class="proof-bar-pct">67%</span>
+          </div>
+          <div class="proof-bar-track">
+            <div class="proof-bar-fill google" data-width="67"></div>
+          </div>
+        </div>
+
+        <div class="proof-bar-row">
+          <div class="proof-bar-label-row">
+            <span class="proof-bar-label">Referrals via website contact</span>
+            <span class="proof-bar-pct">23%</span>
+          </div>
+          <div class="proof-bar-track">
+            <div class="proof-bar-fill referral" data-width="23"></div>
+          </div>
+        </div>
+
+        <div class="proof-bar-row">
+          <div class="proof-bar-label-row">
+            <span class="proof-bar-label">Social media driven to site</span>
+            <span class="proof-bar-pct">10%</span>
+          </div>
+          <div class="proof-bar-track">
+            <div class="proof-bar-fill social" data-width="10"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="proof-legend">
+        <div class="proof-legend-item"><div class="proof-legend-dot dot-google"></div> Google Search</div>
+        <div class="proof-legend-item"><div class="proof-legend-dot dot-referral"></div> Referrals</div>
+        <div class="proof-legend-item"><div class="proof-legend-dot dot-social"></div> Social Media</div>
+      </div>
+    </div>
+
+  </div><!-- /section -->
+
+  <script>
+    // ── Count-up function (handles integer, decimal, prefix, suffix) ──
+    function countUp(el) {
+      const target  = parseFloat(el.dataset.target);
+      const suffix  = el.dataset.suffix || '';
+      const prefix  = el.dataset.prefix || '';
+      const isDecim = target % 1 !== 0;
+      const duration = 1600;
+      const start = performance.now();
+
+      function tick(now) {
+        const progress = Math.min((now - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 4); // easeOutQuart
+        const current = eased * target;
+        el.textContent = prefix + (isDecim ? current.toFixed(1) : Math.round(current)) + suffix;
+        if (progress < 1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    }
+
+    // ── IntersectionObserver: trigger count-up + bar fill on scroll ──
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        const el = entry.target;
+
+        if (el.classList.contains('stat-number')) {
+          el.classList.add('counted');
+          countUp(el);
+          io.unobserve(el);
+        }
+
+        if (el.classList.contains('proof-bars')) {
+          el.querySelectorAll('.proof-bar-fill').forEach(bar => {
+            const w = bar.dataset.width;
+            // Delayed slightly after stats
+            setTimeout(() => { bar.style.width = w + '%'; }, 200);
+          });
+          io.unobserve(el);
+        }
+      });
+    }, { threshold: 0.4 });
+
+    document.querySelectorAll('.stat-number').forEach(el => io.observe(el));
+    const proofBars = document.querySelector('.proof-bars');
+    if (proofBars) io.observe(proofBars);
+  </script>
+
+</body>
+</html>

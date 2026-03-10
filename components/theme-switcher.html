@@ -1,0 +1,543 @@
+<!-- COMPONENT: Multi-Theme Switcher | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en" data-theme="acid">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multi-Theme Switcher</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ── Customize ── */
+    :root {
+      --radius: 12px;
+      --font-heading: 'Space Grotesk', sans-serif;
+      --font-body: 'Inter', sans-serif;
+      /* Transition speed for theme swaps */
+      --theme-transition: 0.3s ease;
+    }
+
+    /* ── THEME DEFINITIONS ── */
+    /* Each theme overrides the core color variables */
+
+    /* Acid: dark bg, electric lime — matches the design system default */
+    :root[data-theme="acid"] {
+      --bg:            #0D1117;
+      --surface:       #111827;
+      --elevated:      #1E293B;
+      --accent:        #10B981;
+      --accent-dim:    rgba(16,185,129,0.15);
+      --accent-border: rgba(16,185,129,0.3);
+      --border:        rgba(148,163,184,0.1);
+      --text:          #F8FAFC;
+      --text-secondary:#94A3B8;
+      --text-muted:    #475569;
+      --swatch:        #10B981;
+    }
+
+    /* Forest: dark greens and emerald */
+    :root[data-theme="forest"] {
+      --bg:            #0A1A0F;
+      --surface:       #0F2417;
+      --elevated:      #1A3A25;
+      --accent:        #34D058;
+      --accent-dim:    rgba(52,208,88,0.15);
+      --accent-border: rgba(52,208,88,0.3);
+      --border:        rgba(134,198,134,0.1);
+      --text:          #E6F4EA;
+      --text-secondary:#86C686;
+      --text-muted:    #4A7A4A;
+      --swatch:        #34D058;
+    }
+
+    /* Ocean: deep navy and cyan */
+    :root[data-theme="ocean"] {
+      --bg:            #060C1A;
+      --surface:       #0A1628;
+      --elevated:      #102240;
+      --accent:        #06B6D4;
+      --accent-dim:    rgba(6,182,212,0.15);
+      --accent-border: rgba(6,182,212,0.3);
+      --border:        rgba(100,160,200,0.1);
+      --text:          #E0F2FE;
+      --text-secondary:#7DD3FC;
+      --text-muted:    #2E6A8C;
+      --swatch:        #06B6D4;
+    }
+
+    /* Sunset: dark warm background, orange/amber */
+    :root[data-theme="sunset"] {
+      --bg:            #1A0E07;
+      --surface:       #231308;
+      --elevated:      #3A2010;
+      --accent:        #F97316;
+      --accent-dim:    rgba(249,115,22,0.15);
+      --accent-border: rgba(249,115,22,0.3);
+      --border:        rgba(200,130,80,0.1);
+      --text:          #FFF7ED;
+      --text-secondary:#FDB276;
+      --text-muted:    #7A4020;
+      --swatch:        #F97316;
+    }
+
+    /* Midnight: near-black with violet/purple */
+    :root[data-theme="midnight"] {
+      --bg:            #08061A;
+      --surface:       #100E28;
+      --elevated:      #1E1A40;
+      --accent:        #A855F7;
+      --accent-dim:    rgba(168,85,247,0.15);
+      --accent-border: rgba(168,85,247,0.3);
+      --border:        rgba(140,100,200,0.1);
+      --text:          #F5F3FF;
+      --text-secondary:#C4B5FD;
+      --text-muted:    #5B4B8A;
+      --swatch:        #A855F7;
+    }
+
+    /* ── Global reset ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* Apply transitions to ALL elements so theme swap animates smoothly */
+    * {
+      transition:
+        background-color var(--theme-transition),
+        border-color var(--theme-transition),
+        color var(--theme-transition),
+        box-shadow var(--theme-transition);
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      padding-bottom: 4rem;
+    }
+
+    /* ── Page layout ── */
+    .page-wrap {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 5rem 1.5rem 2rem;
+    }
+
+    /* ── Floating theme switcher pill ── */
+    .theme-switcher {
+      position: fixed;
+      top: 1.25rem;
+      right: 1.25rem;
+      z-index: 100;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 0.5rem 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+    }
+
+    .theme-label {
+      font-family: var(--font-body);
+      font-size: 0.72rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-right: 0.25rem;
+      /* Skip color transition for the label */
+    }
+
+    /* Each swatch button */
+    .theme-swatch {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      cursor: pointer;
+      background: var(--swatch-color); /* set inline */
+      transition: transform 0.2s ease, border-color 0.2s ease;
+      position: relative;
+    }
+
+    .theme-swatch:hover { transform: scale(1.2); }
+
+    /* Active swatch gets a white ring */
+    .theme-swatch.active {
+      border-color: var(--text);
+      transform: scale(1.15);
+    }
+
+    /* ── Hero section ── */
+    .hero {
+      text-align: center;
+      padding: 4rem 0 3rem;
+    }
+
+    .hero-eyebrow {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-border);
+      border-radius: 999px;
+      padding: 0.3rem 0.9rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .hero-title {
+      font-family: var(--font-heading);
+      font-size: clamp(2.2rem, 5vw, 3.5rem);
+      font-weight: 700;
+      line-height: 1.1;
+      margin-bottom: 1rem;
+    }
+
+    .hero-title span { color: var(--accent); }
+
+    .hero-sub {
+      font-size: 1.1rem;
+      color: var(--text-secondary);
+      max-width: 520px;
+      margin: 0 auto 2rem;
+      line-height: 1.6;
+    }
+
+    .hero-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--accent);
+      color: var(--bg);
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 0.95rem;
+      padding: 0.75rem 1.75rem;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .hero-btn:hover {
+      filter: brightness(1.1);
+    }
+
+    /* ── Feature cards ── */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 3rem;
+    }
+
+    .feature-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+    }
+
+    .feature-card:hover {
+      border-color: var(--accent-border);
+      box-shadow: 0 0 0 1px var(--accent-border);
+    }
+
+    .feature-icon {
+      width: 44px;
+      height: 44px;
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-border);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+      margin-bottom: 1rem;
+    }
+
+    .feature-title {
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .feature-desc {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* ── Stats row ── */
+    .stats-row {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 3rem;
+    }
+
+    .stat-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem 2rem;
+      text-align: center;
+      flex: 1;
+      min-width: 160px;
+    }
+
+    .stat-num {
+      font-family: var(--font-heading);
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--accent);
+      display: block;
+      line-height: 1;
+      margin-bottom: 0.4rem;
+    }
+
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    /* ── Sample form field ── */
+    .form-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    .form-section h3 {
+      font-family: var(--font-heading);
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 1.25rem;
+    }
+
+    .field-group {
+      margin-bottom: 1rem;
+    }
+
+    .field-label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 0.4rem;
+    }
+
+    .field-input {
+      width: 100%;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.65rem 0.9rem;
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      outline: none;
+    }
+
+    .field-input:focus {
+      border-color: var(--accent-border);
+      box-shadow: 0 0 0 3px var(--accent-dim);
+    }
+
+    .field-input::placeholder { color: var(--text-muted); }
+
+    .form-btn {
+      width: 100%;
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      border-radius: 8px;
+      padding: 0.75rem;
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      margin-top: 0.5rem;
+    }
+
+    .form-btn:hover { filter: brightness(1.1); }
+
+    /* ── Theme name badge ── */
+    .theme-badge {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .theme-badge-inner {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--elevated);
+      border: 1px solid var(--accent-border);
+      border-radius: 999px;
+      padding: 0.4rem 1rem;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .theme-badge-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    .theme-badge-name {
+      font-weight: 600;
+      color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Floating Theme Switcher Pill ── -->
+  <!-- 5 color swatches, one per theme. Active swatch gets a white ring. -->
+  <div class="theme-switcher" id="themeSwitcher" role="toolbar" aria-label="Theme switcher">
+    <span class="theme-label">Theme</span>
+    <button class="theme-swatch active" data-theme="acid"     style="background:#10B981" title="Acid"     aria-pressed="true"></button>
+    <button class="theme-swatch"        data-theme="forest"   style="background:#34D058" title="Forest"   aria-pressed="false"></button>
+    <button class="theme-swatch"        data-theme="ocean"    style="background:#06B6D4" title="Ocean"    aria-pressed="false"></button>
+    <button class="theme-swatch"        data-theme="sunset"   style="background:#F97316" title="Sunset"   aria-pressed="false"></button>
+    <button class="theme-swatch"        data-theme="midnight" style="background:#A855F7" title="Midnight" aria-pressed="false"></button>
+  </div>
+
+  <div class="page-wrap">
+
+    <!-- Active theme name badge -->
+    <div class="theme-badge">
+      <div class="theme-badge-inner">
+        <span class="theme-badge-dot"></span>
+        Active theme: <span class="theme-badge-name" id="themeName">Acid</span>
+      </div>
+    </div>
+
+    <!-- Hero -->
+    <section class="hero">
+      <div class="hero-eyebrow">Multi-Theme System</div>
+      <h1 class="hero-title">Design for every <span>mood</span></h1>
+      <p class="hero-sub">Switch between five hand-crafted themes — each with its own personality and color palette. Your preference is saved across visits.</p>
+      <a href="#" class="hero-btn">
+        Get started
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+      </a>
+    </section>
+
+    <!-- Feature cards -->
+    <div class="cards-grid">
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M3 12h3m12 0h3M12 3v3m0 12v3"/></svg>
+        </div>
+        <div class="feature-title">CSS Custom Properties</div>
+        <p class="feature-desc">All colors are stored as CSS variables so every element updates instantly when you swap themes — no repaints required.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <div class="feature-title">Persists Across Visits</div>
+        <p class="feature-desc">Your chosen theme is saved to localStorage and automatically restored the next time you open the page.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3z"/></svg>
+        </div>
+        <div class="feature-title">Smooth Transitions</div>
+        <p class="feature-desc">A 0.3s ease transition on all color properties creates a silky-smooth theme swap — no jarring flashes or reloads.</p>
+      </div>
+    </div>
+
+    <!-- Stats row -->
+    <div class="stats-row">
+      <div class="stat-item">
+        <span class="stat-num">5</span>
+        <span class="stat-label">Themes</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num">0.3s</span>
+        <span class="stat-label">Transition</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num">∞</span>
+        <span class="stat-label">Possibilities</span>
+      </div>
+    </div>
+
+    <!-- Sample form -->
+    <div class="form-section">
+      <h3>Sample Form Field</h3>
+      <div class="field-group">
+        <label class="field-label" for="emailField">Email address</label>
+        <input class="field-input" id="emailField" type="email" placeholder="you@example.com">
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="nameField">Full name</label>
+        <input class="field-input" id="nameField" type="text" placeholder="Jane Smith">
+      </div>
+      <button class="form-btn">Subscribe to updates</button>
+    </div>
+
+  </div><!-- /page-wrap -->
+
+  <script>
+    // ── Theme Switcher Logic ──
+
+    // Theme display names (used in the badge)
+    const THEME_NAMES = {
+      acid:     'Acid',
+      forest:   'Forest',
+      ocean:    'Ocean',
+      sunset:   'Sunset',
+      midnight: 'Midnight'
+    };
+
+    const html        = document.documentElement;
+    const swatches    = document.querySelectorAll('.theme-swatch');
+    const themeName   = document.getElementById('themeName');
+
+    // Apply a theme: set data-theme on <html>, update active swatch, save to localStorage
+    function applyTheme(theme) {
+      html.dataset.theme = theme;
+      themeName.textContent = THEME_NAMES[theme] || theme;
+
+      swatches.forEach(s => {
+        const isActive = s.dataset.theme === theme;
+        s.classList.toggle('active', isActive);
+        s.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+      });
+
+      localStorage.setItem('preferred-theme', theme);
+    }
+
+    // Attach click handler to each swatch
+    swatches.forEach(swatch => {
+      swatch.addEventListener('click', () => applyTheme(swatch.dataset.theme));
+    });
+
+    // On load: restore saved theme (fall back to 'acid' if none saved)
+    const saved = localStorage.getItem('preferred-theme');
+    if (saved && THEME_NAMES[saved]) {
+      applyTheme(saved);
+    } else {
+      applyTheme('acid');
+    }
+  </script>
+</body>
+</html>

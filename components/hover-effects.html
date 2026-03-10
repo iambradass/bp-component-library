@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hover Effects — Component Library</title>
+  <!-- COMPONENT: Hover Effects | COPY: style + html + script -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── CUSTOMIZE ─────────────────────────────────────────────── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.12);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+    }
+    /* ── END CUSTOMIZE ─────────────────────────────────────────── */
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      padding: 2rem 1.5rem 5rem;
+    }
+
+    .page-title {
+      font-family: var(--font-heading);
+      font-size: clamp(1.5rem, 4vw, 2.25rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.4rem;
+    }
+    .page-sub { color: var(--text-secondary); font-size: 0.9375rem; margin-bottom: 3rem; }
+
+    .max-wrap { max-width: 960px; margin: 0 auto; }
+
+    /* Section headers */
+    .section-title {
+      font-family: var(--font-heading);
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--accent);
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .demo-block {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    /* Label under each demo item */
+    .effect-label {
+      font-size: 0.6875rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      margin-top: 0.5rem;
+    }
+
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       SECTION A — LINK HOVER EFFECTS
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+    .link-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .link-row {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+    .link-row .effect-label { min-width: 160px; }
+
+    /* Base link reset */
+    .hl { color: var(--text); text-decoration: none; font-size: 1rem; display: inline-block; cursor: pointer; }
+
+    /* L1 — Underline draws left to right */
+    .hl-underline { position: relative; }
+    .hl-underline::after {
+      content: '';
+      position: absolute;
+      bottom: -2px; left: 0;
+      width: 100%; height: 2px;
+      background: var(--accent);
+      transform: scaleX(0);
+      transform-origin: left center;
+      transition: transform 0.3s ease;
+    }
+    .hl-underline:hover::after { transform: scaleX(1); }
+
+    /* L2 — Underline wipes then re-draws in accent */
+    .hl-wipe { position: relative; }
+    .hl-wipe::before {
+      content: '';
+      position: absolute;
+      bottom: -2px; left: 0;
+      width: 100%; height: 2px;
+      background: var(--text-muted);
+      transform: scaleX(1);
+      transform-origin: right center;
+      transition: transform 0.2s ease;
+    }
+    .hl-wipe::after {
+      content: '';
+      position: absolute;
+      bottom: -2px; left: 0;
+      width: 100%; height: 2px;
+      background: var(--accent);
+      transform: scaleX(0);
+      transform-origin: left center;
+      transition: transform 0.2s ease 0.2s;
+    }
+    .hl-wipe:hover::before { transform: scaleX(0); }
+    .hl-wipe:hover::after  { transform: scaleX(1); }
+
+    /* L3 — Text lifts up, copy slides in from below */
+    .hl-lift {
+      overflow: hidden;
+      height: 1.4em;
+      vertical-align: top;
+    }
+    .hl-lift-inner {
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .hl-lift-inner span { display: block; line-height: 1.4em; }
+    .hl-lift-inner .copy { color: var(--accent); }
+    .hl-lift:hover .hl-lift-inner { transform: translateY(-1.4em); }
+
+    /* L4 — Color sweeps left-to-right via clip-path */
+    .hl-sweep {
+      position: relative;
+      color: var(--text-secondary);
+    }
+    .hl-sweep .colored {
+      position: absolute;
+      left: 0; top: 0;
+      color: var(--accent);
+      white-space: nowrap;
+      clip-path: inset(0 100% 0 0);
+      transition: clip-path 0.4s ease;
+    }
+    .hl-sweep:hover .colored { clip-path: inset(0 0% 0 0); }
+
+    /* L5 — Background pill expands */
+    .hl-pill {
+      padding: 4px 12px;
+      border-radius: 100px;
+      position: relative;
+      z-index: 0;
+    }
+    .hl-pill::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--accent-dim);
+      border-radius: 100px;
+      transform: scaleX(0);
+      transform-origin: center;
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index: -1;
+    }
+    .hl-pill:hover::before { transform: scaleX(1); }
+    .hl-pill:hover { color: var(--accent); }
+
+    /* L6 — Letter spacing expands */
+    .hl-spacing {
+      letter-spacing: 0;
+      transition: letter-spacing 0.3s ease, color 0.3s ease;
+    }
+    .hl-spacing:hover { letter-spacing: 0.08em; color: var(--accent); }
+
+    /* L7 — Strikethrough draws across */
+    .hl-strike { position: relative; }
+    .hl-strike::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      width: 100%;
+      height: 1.5px;
+      background: var(--accent);
+      transform: scaleX(0);
+      transform-origin: left center;
+      transition: transform 0.35s ease;
+    }
+    .hl-strike:hover { color: var(--text-muted); }
+    .hl-strike:hover::after { transform: scaleX(1); }
+
+    /* L8 — Word-by-word stagger */
+    .hl-stagger { cursor: pointer; display: inline-flex; gap: 0.35em; }
+    .hl-stagger .word {
+      display: inline-block;
+      transition: color 0.2s ease, transform 0.2s ease;
+    }
+    .hl-stagger:hover .word { color: var(--accent); transform: translateY(-2px); }
+    .hl-stagger:hover .word:nth-child(1) { transition-delay: 0ms; }
+    .hl-stagger:hover .word:nth-child(2) { transition-delay: 60ms; }
+    .hl-stagger:hover .word:nth-child(3) { transition-delay: 120ms; }
+    .hl-stagger:hover .word:nth-child(4) { transition-delay: 180ms; }
+
+
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       SECTION B — CARD HOVER EFFECTS
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+    }
+    @media (max-width: 700px) { .card-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 480px) { .card-grid { grid-template-columns: 1fr; } }
+
+    .hc { /* hover card base */
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      height: 140px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+    .hc-title { font-family: var(--font-heading); font-size: 0.875rem; font-weight: 600; }
+    .hc-sub { font-size: 0.75rem; color: var(--text-secondary); margin-top: 4px; }
+
+    /* C1 — Image zoom + overlay */
+    .hc-zoom {
+      background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
+    }
+    .hc-zoom .img-bg {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+      opacity: 0.15;
+      transform: scale(1);
+      transition: transform 0.4s ease, opacity 0.4s ease;
+    }
+    .hc-zoom:hover .img-bg { transform: scale(1.08); opacity: 0.3; }
+    .hc-zoom .overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(16,185,129,0.08);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .hc-zoom:hover .overlay { opacity: 1; }
+    .hc-zoom .hc-title, .hc-zoom .hc-sub { position: relative; z-index: 1; }
+
+    /* C2 — Border glow + lift */
+    .hc-lift {
+      transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+    }
+    .hc-lift:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5), 0 0 0 1px var(--accent-border), 0 0 20px rgba(16,185,129,0.1);
+      border-color: var(--accent-border);
+    }
+
+    /* C3 — Corner accent expands */
+    .hc-corner::after {
+      content: '';
+      position: absolute;
+      bottom: 0; right: 0;
+      width: 40px; height: 40px;
+      background: var(--accent);
+      clip-path: polygon(100% 0, 100% 100%, 0 100%);
+      transition: width 0.35s ease, height 0.35s ease, opacity 0.35s ease;
+      opacity: 0.4;
+    }
+    .hc-corner:hover::after { width: 80px; height: 80px; opacity: 0.8; }
+
+    /* C4 — Reveal bottom content */
+    .hc-reveal { overflow: hidden; }
+    .hc-reveal .reveal-content {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      background: var(--accent);
+      color: #0D1117;
+      padding: 0.75rem 1.25rem;
+      transform: translateY(100%);
+      transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      font-size: 0.8125rem;
+      font-weight: 600;
+    }
+    .hc-reveal:hover .reveal-content { transform: translateY(0); }
+
+    /* C5 — 3D tilt (mouse-driven via JS) */
+    .hc-tilt { transition: box-shadow 0.3s ease; will-change: transform; }
+    .hc-tilt:hover { box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+
+    /* C6 — Spotlight follows cursor */
+    .hc-spotlight::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+        200px circle at var(--sx, 50%) var(--sy, 50%),
+        rgba(16,185,129,0.1),
+        transparent 70%
+      );
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .hc-spotlight:hover::before { opacity: 1; }
+
+
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       SECTION C — IMAGE HOVER EFFECTS
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+    .img-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+    }
+    @media (max-width: 700px) { .img-grid { grid-template-columns: repeat(2, 1fr); } }
+
+    .img-demo {
+      height: 120px;
+      border-radius: 10px;
+      overflow: hidden;
+      position: relative;
+      cursor: pointer;
+    }
+    /* CSS-gradient placeholder images */
+    .img-demo .pseudo-img {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, #1E3A5F 0%, #064E3B 100%);
+    }
+
+    /* I1 — Greyscale to color */
+    .img-grey .pseudo-img { filter: grayscale(1); transition: filter 0.4s ease; }
+    .img-grey:hover .pseudo-img { filter: grayscale(0); }
+
+    /* I2 — Zoom + scanline overlay */
+    .img-zoom .pseudo-img { transition: transform 0.4s ease; }
+    .img-zoom:hover .pseudo-img { transform: scale(1.1); }
+    .img-zoom::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.08) 2px,
+        rgba(0,0,0,0.08) 4px
+      );
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .img-zoom:hover::after { opacity: 1; }
+
+    /* I3 — Slice reveal — horizontal slices offset */
+    .img-slices { overflow: hidden; }
+    .slice {
+      position: absolute;
+      left: 0; right: 0;
+      overflow: hidden;
+      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .slice .pseudo-img { position: absolute; left: 0; right: 0; top: 0; }
+    .img-slices:hover .slice:nth-child(odd)  { transform: translateX(8px); }
+    .img-slices:hover .slice:nth-child(even) { transform: translateX(-8px); }
+
+    /* I4 — Blur to sharp */
+    .img-blur .pseudo-img {
+      filter: blur(6px);
+      transition: filter 0.5s ease;
+      transform: scale(1.05); /* prevent blur edges */
+    }
+    .img-blur:hover .pseudo-img { filter: blur(0); transform: scale(1); }
+  </style>
+</head>
+<body>
+
+  <div class="max-wrap">
+    <h1 class="page-title">Hover Effects</h1>
+    <p class="page-sub">18 effects across links, cards, and images. Hover each demo to see it in action.</p>
+
+    <!-- ── LINK EFFECTS ─────────────────────────────────────── -->
+    <div class="section-title">Link Hover Effects</div>
+    <div class="demo-block">
+      <div class="link-list">
+
+        <div class="link-row">
+          <span class="hl hl-underline">Our Services</span>
+          <span class="effect-label">1 — Underline draws left to right</span>
+        </div>
+
+        <div class="link-row">
+          <span class="hl hl-wipe">View Portfolio</span>
+          <span class="effect-label">2 — Underline wipes then re-draws in accent</span>
+        </div>
+
+        <div class="link-row">
+          <span class="hl hl-lift">
+            <span class="hl-lift-inner">
+              <span>Get in Touch</span>
+              <span class="copy">Get in Touch</span>
+            </span>
+          </span>
+          <span class="effect-label">3 — Text lifts up, copy slides in from below</span>
+        </div>
+
+        <div class="link-row">
+          <span class="hl hl-sweep">
+            Read the Case Study
+            <span class="colored">Read the Case Study</span>
+          </span>
+          <span class="effect-label">4 — Color sweeps left to right (clip-path reveal)</span>
+        </div>
+
+        <div class="link-row">
+          <span class="hl hl-pill">About Us</span>
+          <span class="effect-label">5 — Background pill expands around text</span>
+        </div>
+
+        <div class="link-row">
+          <span class="hl hl-spacing">Explore Projects</span>
+          <span class="effect-label">6 — Letter spacing expands on hover</span>
+        </div>
+
+        <div class="link-row">
+          <span class="hl hl-strike">Remove Item</span>
+          <span class="effect-label">7 — Strikethrough draws across (delete/complete state)</span>
+        </div>
+
+        <div class="link-row">
+          <span class="hl hl-stagger">
+            <span class="word">Word</span>
+            <span class="word">by</span>
+            <span class="word">Word</span>
+            <span class="word">Stagger</span>
+          </span>
+          <span class="effect-label">8 — Words lift with cascading delay</span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── CARD EFFECTS ─────────────────────────────────────── -->
+    <div class="section-title">Card Hover Effects</div>
+    <div class="demo-block">
+      <div class="card-grid">
+
+        <div>
+          <div class="hc hc-zoom">
+            <div class="img-bg"></div>
+            <div class="overlay"></div>
+            <div class="hc-title">Image Zoom</div>
+            <div class="hc-sub">Background scales + overlay fades</div>
+          </div>
+          <p class="effect-label" style="margin-top:0.5rem;">C1 — Zoom + overlay</p>
+        </div>
+
+        <div>
+          <div class="hc hc-lift">
+            <div class="hc-title">Border Glow</div>
+            <div class="hc-sub">Lifts 8px, accent glow appears</div>
+          </div>
+          <p class="effect-label" style="margin-top:0.5rem;">C2 — Glow + lift</p>
+        </div>
+
+        <div>
+          <div class="hc hc-corner">
+            <div class="hc-title">Corner Accent</div>
+            <div class="hc-sub">Triangle grows from corner</div>
+          </div>
+          <p class="effect-label" style="margin-top:0.5rem;">C3 — Corner expand</p>
+        </div>
+
+        <div>
+          <div class="hc hc-reveal">
+            <div class="hc-title">Reveal Content</div>
+            <div class="hc-sub">Hidden content waits below</div>
+            <div class="reveal-content">View Project →</div>
+          </div>
+          <p class="effect-label" style="margin-top:0.5rem;">C4 — Bottom reveal slide-up</p>
+        </div>
+
+        <div>
+          <div class="hc hc-tilt" id="tilt-card">
+            <div class="hc-title">3D Tilt</div>
+            <div class="hc-sub">Follows cursor position</div>
+          </div>
+          <p class="effect-label" style="margin-top:0.5rem;">C5 — Mouse-driven 3D tilt</p>
+        </div>
+
+        <div>
+          <div class="hc hc-spotlight" id="spotlight-card">
+            <div class="hc-title">Spotlight</div>
+            <div class="hc-sub">Radial glow tracks cursor</div>
+          </div>
+          <p class="effect-label" style="margin-top:0.5rem;">C6 — Spotlight follows cursor</p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── IMAGE EFFECTS ────────────────────────────────────── -->
+    <div class="section-title">Image Hover Effects</div>
+    <div class="demo-block">
+      <div class="img-grid">
+
+        <div>
+          <div class="img-demo img-grey">
+            <div class="pseudo-img" style="background: linear-gradient(135deg, #2D4A7A 0%, #1B6B5A 100%);"></div>
+          </div>
+          <p class="effect-label" style="margin-top:0.5rem;">I1 — Greyscale to color</p>
+        </div>
+
+        <div>
+          <div class="img-demo img-zoom">
+            <div class="pseudo-img" style="background: linear-gradient(135deg, #4C1D95 0%, #1E3A5F 100%);"></div>
+          </div>
+          <p class="effect-label" style="margin-top:0.5rem;">I2 — Zoom + scanline overlay</p>
+        </div>
+
+        <div>
+          <div class="img-demo img-slices" id="slice-demo">
+            <!-- Slices injected by JS -->
+          </div>
+          <p class="effect-label" style="margin-top:0.5rem;">I3 — Slice offset reveal</p>
+        </div>
+
+        <div>
+          <div class="img-demo img-blur">
+            <div class="pseudo-img" style="background: linear-gradient(135deg, #064E3B 0%, #0C4A6E 100%);"></div>
+          </div>
+          <p class="effect-label" style="margin-top:0.5rem;">I4 — Blur to sharp</p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ── C5 — 3D Tilt ─────────────────────────────────────────────── */
+(function() {
+  var card = document.getElementById('tilt-card');
+  var MAX = 12; // max tilt degrees
+
+  card.addEventListener('mousemove', function(e) {
+    var rect = card.getBoundingClientRect();
+    var x = (e.clientX - rect.left) / rect.width  - 0.5; // -0.5 to 0.5
+    var y = (e.clientY - rect.top)  / rect.height - 0.5;
+    card.style.transform = 'perspective(600px) rotateY(' + (x * MAX) + 'deg) rotateX(' + (-y * MAX) + 'deg) translateZ(10px)';
+  });
+  card.addEventListener('mouseleave', function() {
+    card.style.transform = 'perspective(600px) rotateY(0) rotateX(0) translateZ(0)';
+  });
+})();
+
+/* ── C6 — Spotlight cursor tracking ──────────────────────────── */
+(function() {
+  var card = document.getElementById('spotlight-card');
+  card.addEventListener('mousemove', function(e) {
+    var rect = card.getBoundingClientRect();
+    var x = ((e.clientX - rect.left) / rect.width  * 100).toFixed(1) + '%';
+    var y = ((e.clientY - rect.top)  / rect.height * 100).toFixed(1) + '%';
+    card.style.setProperty('--sx', x);
+    card.style.setProperty('--sy', y);
+  });
+})();
+
+/* ── I3 — Build slices for the image slice demo ─────────────── */
+(function() {
+  var demo   = document.getElementById('slice-demo');
+  var count  = 6;
+  var height = 100 / count;
+  var grad   = 'linear-gradient(135deg, #7C3AED 0%, #10B981 100%)';
+
+  for (var i = 0; i < count; i++) {
+    var slice = document.createElement('div');
+    slice.className = 'slice';
+    slice.style.cssText = 'height:' + height + '%; top:' + (i * height) + '%;';
+
+    var inner = document.createElement('div');
+    inner.className = 'pseudo-img';
+    inner.style.cssText = 'background:' + grad + '; height:' + (100 / height * 100) + '%; top:-' + (i * 100) + '%;';
+    // Each slice's inner image positioned to show the correct slice of the "full image"
+    inner.style.top = 'calc(-' + (i * height) + '% * ' + count + ')';
+
+    slice.appendChild(inner);
+    demo.appendChild(slice);
+  }
+})();
+</script>
+</body>
+</html>

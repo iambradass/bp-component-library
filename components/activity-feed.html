@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Activity Feed</title>
+
+  <!--
+    COMPONENT: Activity Feed / Notification Center
+    COPY: style + html + script
+    Panel A: Activity stream with "new items" banner, Load More.
+    Panel B: Notification center with All/Unread tabs, mark-as-read, empty state.
+  -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+
+    /* ── CUSTOMIZE ── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --glow:           rgba(16,185,129,0.15);
+      --border:         rgba(148,163,184,0.1);
+      --border-accent:  rgba(16,185,129,0.3);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+    }
+
+    .page {
+      max-width: 1060px;
+      margin: 0 auto;
+      padding: 3rem 1.5rem 5rem;
+    }
+
+    .page-header {
+      margin-bottom: 2rem;
+    }
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      margin-bottom: 0.5rem;
+    }
+    .page-heading {
+      font-family: var(--font-heading);
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    /* Two-panel layout */
+    .panels {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+    }
+    @media (max-width: 768px) {
+      .panels { grid-template-columns: 1fr; }
+    }
+
+    /* Shared panel card */
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .panel-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+    .panel-title {
+      font-family: var(--font-heading);
+      font-size: 0.9375rem;
+      font-weight: 600;
+    }
+
+    /* ══════════════════════════════════════
+       PANEL A: ACTIVITY FEED
+    ══════════════════════════════════════ */
+
+    /* "New items" banner — slides in at top when new items arrive */
+    .new-banner {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.6rem 1rem;
+      background: var(--glow);
+      border-bottom: 1px solid var(--border-accent);
+      font-family: var(--font-heading);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--accent);
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .new-banner:hover { background: rgba(16,185,129,0.2); }
+    .new-banner.visible { display: flex; }
+
+    /* Feed list */
+    .feed-list {
+      flex: 1;
+      overflow-y: auto;
+      max-height: 480px;
+    }
+
+    .feed-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      padding: 0.875rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s;
+
+      /* New items slide in */
+      animation: slideDown 0.35s ease forwards;
+    }
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-12px); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    .feed-item:last-child { border-bottom: none; }
+    .feed-item:hover { background: var(--elevated); }
+
+    /* User avatar (colored initials) */
+    .feed-avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-heading);
+      font-size: 0.7rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .feed-body { flex: 1; min-width: 0; }
+    .feed-action {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      margin-bottom: 0.25rem;
+    }
+    .feed-action strong { color: var(--text); font-weight: 600; }
+    .feed-time {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    /* Load more button */
+    .load-more-wrap {
+      padding: 0.875rem 1.25rem;
+      border-top: 1px solid var(--border);
+    }
+    .load-more-btn {
+      width: 100%;
+      padding: 0.625rem;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-secondary);
+      font-family: var(--font-heading);
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+      min-height: 44px;
+    }
+    .load-more-btn:hover {
+      border-color: var(--border-accent);
+      color: var(--text);
+    }
+
+
+    /* ══════════════════════════════════════
+       PANEL B: NOTIFICATION CENTER
+    ══════════════════════════════════════ */
+
+    /* Tab bar */
+    .notif-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+    }
+    .notif-tab {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      font-family: var(--font-heading);
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+    }
+    .notif-tab.active {
+      color: var(--text);
+      border-bottom-color: var(--accent);
+    }
+    .tab-badge {
+      background: var(--accent);
+      color: #0D1117;
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 100px;
+    }
+
+    /* Mark all read button */
+    .mark-all-btn {
+      background: none;
+      border: none;
+      color: var(--accent);
+      font-family: var(--font-heading);
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      padding: 0;
+      min-height: 44px;
+    }
+    .mark-all-btn:hover { opacity: 0.7; }
+
+    /* Notifications list */
+    .notif-list {
+      flex: 1;
+      overflow-y: auto;
+      max-height: 440px;
+    }
+
+    /* Individual notification */
+    .notif-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      padding: 0.875rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.15s;
+      position: relative;
+    }
+    .notif-item:last-child { border-bottom: none; }
+    .notif-item:hover { background: var(--elevated); }
+
+    /* Unread state: slightly lighter background */
+    .notif-item.unread { background: rgba(16,185,129,0.025); }
+    .notif-item.unread:hover { background: rgba(16,185,129,0.05); }
+
+    /* Unread indicator dot */
+    .notif-dot {
+      position: absolute;
+      top: 1rem;
+      right: 1.25rem;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent);
+      transition: opacity 0.3s;
+    }
+    .notif-item:not(.unread) .notif-dot { opacity: 0; }
+
+    /* Icon */
+    .notif-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.875rem;
+      flex-shrink: 0;
+    }
+
+    .notif-body { flex: 1; min-width: 0; padding-right: 1.5rem; }
+    .notif-title {
+      font-family: var(--font-heading);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 0.2rem;
+    }
+    .notif-text {
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      margin-bottom: 0.3rem;
+    }
+    .notif-time {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    /* Empty state */
+    .notif-empty {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 1.5rem;
+      text-align: center;
+    }
+    .notif-empty.visible { display: flex; }
+    .empty-check {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--glow);
+      border: 1px solid var(--border-accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+      margin-bottom: 1rem;
+    }
+    .empty-text {
+      font-family: var(--font-heading);
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+    .empty-sub {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="page">
+
+    <div class="page-header">
+      <div class="eyebrow">Dashboard Component</div>
+      <div class="page-heading">Activity &amp; Notifications</div>
+    </div>
+
+    <div class="panels">
+
+      <!-- ═══════════════════════════════════
+           PANEL A: Activity Feed
+      ════════════════════════════════════ -->
+      <div class="panel" id="panel-feed">
+        <div class="panel-header">
+          <div class="panel-title">Activity Feed</div>
+          <span style="font-family:var(--font-mono);font-size:0.65rem;color:var(--text-muted);">LIVE</span>
+        </div>
+
+        <!-- "New items" banner — revealed by JS -->
+        <div class="new-banner" id="new-banner">
+          ↑ 2 new activities — click to reveal
+        </div>
+
+        <!-- Feed items list -->
+        <div class="feed-list" id="feed-list">
+          <div class="feed-item">
+            <div class="feed-avatar" style="background:#1e3a2f;color:#10B981;">AK</div>
+            <div class="feed-body">
+              <div class="feed-action"><strong>Aisha Kim</strong> submitted a new lead from <strong>Meridian Landing Page</strong></div>
+              <div class="feed-time">2 min ago</div>
+            </div>
+          </div>
+          <div class="feed-item">
+            <div class="feed-avatar" style="background:#1e2a3a;color:#60A5FA;">MR</div>
+            <div class="feed-body">
+              <div class="feed-action"><strong>Marcus Reid</strong> changed <strong>NexaFlow Dashboard</strong> status to <strong>In Review</strong></div>
+              <div class="feed-time">14 min ago</div>
+            </div>
+          </div>
+          <div class="feed-item">
+            <div class="feed-avatar" style="background:#2a1e3a;color:#A78BFA;">JL</div>
+            <div class="feed-body">
+              <div class="feed-action"><strong>Jordan Lee</strong> commented on <strong>Solaris brand deck</strong></div>
+              <div class="feed-time">1 hr ago</div>
+            </div>
+          </div>
+          <div class="feed-item">
+            <div class="feed-avatar" style="background:#2a1e10;color:#FBBF24;">SP</div>
+            <div class="feed-body">
+              <div class="feed-action"><strong>Sara Park</strong> uploaded <strong>3 files</strong> to the Altitude project</div>
+              <div class="feed-time">2 hr ago</div>
+            </div>
+          </div>
+          <div class="feed-item">
+            <div class="feed-avatar" style="background:#1e3a2f;color:#10B981;">TW</div>
+            <div class="feed-body">
+              <div class="feed-action"><strong>Tom Walsh</strong> sent invoice <strong>#INV-2847</strong> to Prism Studio — $31,000</div>
+              <div class="feed-time">3 hr ago</div>
+            </div>
+          </div>
+          <div class="feed-item">
+            <div class="feed-avatar" style="background:#1e2040;color:#818CF8;">RJ</div>
+            <div class="feed-body">
+              <div class="feed-action"><strong>Riya Joshi</strong> scheduled a <strong>kickoff call</strong> with Granite Bay Labs for Mar 8</div>
+              <div class="feed-time">Yesterday</div>
+            </div>
+          </div>
+          <div class="feed-item">
+            <div class="feed-avatar" style="background:#2a1e3a;color:#A78BFA;">BP</div>
+            <div class="feed-body">
+              <div class="feed-action"><strong>Bradley</strong> marked <strong>Fieldwork Co.</strong> as <strong>Completed</strong></div>
+              <div class="feed-time">Yesterday</div>
+            </div>
+          </div>
+          <div class="feed-item">
+            <div class="feed-avatar" style="background:#1e3020;color:#34D399;">KC</div>
+            <div class="feed-body">
+              <div class="feed-action"><strong>Kai Chen</strong> added a comment: <strong>"Design looks great, let's go live Thursday"</strong></div>
+              <div class="feed-time">2 days ago</div>
+            </div>
+          </div>
+          <div class="feed-item">
+            <div class="feed-avatar" style="background:#3a1e20;color:#F87171;">LM</div>
+            <div class="feed-body">
+              <div class="feed-action"><strong>Lena Meyer</strong> put <strong>Helix Systems</strong> on hold pending client feedback</div>
+              <div class="feed-time">2 days ago</div>
+            </div>
+          </div>
+          <div class="feed-item">
+            <div class="feed-avatar" style="background:#1e2a3a;color:#60A5FA;">NP</div>
+            <div class="feed-body">
+              <div class="feed-action"><strong>Nadia Patel</strong> completed the <strong>SEO audit</strong> for Cascade Digital</div>
+              <div class="feed-time">3 days ago</div>
+            </div>
+          </div>
+        </div><!-- /feed-list -->
+
+        <div class="load-more-wrap">
+          <button class="load-more-btn" id="load-more-btn">Load more activity</button>
+        </div>
+      </div><!-- /panel-feed -->
+
+
+      <!-- ═══════════════════════════════════
+           PANEL B: Notification Center
+      ════════════════════════════════════ -->
+      <div class="panel" id="panel-notif">
+        <div class="panel-header">
+          <div class="panel-title">Notifications</div>
+          <button class="mark-all-btn" id="mark-all-btn">Mark all read</button>
+        </div>
+
+        <!-- Tabs -->
+        <div class="notif-tabs">
+          <button class="notif-tab active" data-tab="all">All</button>
+          <button class="notif-tab" data-tab="unread">
+            Unread
+            <span class="tab-badge" id="unread-count">4</span>
+          </button>
+        </div>
+
+        <!-- Notifications list -->
+        <div class="notif-list" id="notif-list">
+
+          <div class="notif-item unread" data-id="n1">
+            <div class="notif-icon">📋</div>
+            <div class="notif-body">
+              <div class="notif-title">Project status updated</div>
+              <div class="notif-text">NexaFlow Dashboard moved to "In Review" — approval needed before launch.</div>
+              <div class="notif-time">2 min ago</div>
+            </div>
+            <div class="notif-dot"></div>
+          </div>
+
+          <div class="notif-item unread" data-id="n2">
+            <div class="notif-icon">💬</div>
+            <div class="notif-body">
+              <div class="notif-title">New comment on Solaris</div>
+              <div class="notif-text">Jordan Lee: "The hero section typography feels a bit heavy — can we reduce line-height?"</div>
+              <div class="notif-time">14 min ago</div>
+            </div>
+            <div class="notif-dot"></div>
+          </div>
+
+          <div class="notif-item unread" data-id="n3">
+            <div class="notif-icon">🧾</div>
+            <div class="notif-body">
+              <div class="notif-title">Invoice #INV-2847 sent</div>
+              <div class="notif-text">$31,000 invoice delivered to Prism Studio. Payment due in 14 days.</div>
+              <div class="notif-time">3 hr ago</div>
+            </div>
+            <div class="notif-dot"></div>
+          </div>
+
+          <div class="notif-item unread" data-id="n4">
+            <div class="notif-icon">📁</div>
+            <div class="notif-body">
+              <div class="notif-title">3 files uploaded</div>
+              <div class="notif-text">Sara Park added 3 files to the Altitude project — logos, brand guide, and final copy doc.</div>
+              <div class="notif-time">2 hr ago</div>
+            </div>
+            <div class="notif-dot"></div>
+          </div>
+
+          <div class="notif-item" data-id="n5">
+            <div class="notif-icon">✅</div>
+            <div class="notif-body">
+              <div class="notif-title">Project completed</div>
+              <div class="notif-text">Fieldwork Co. marked as completed. Final deliverables archived successfully.</div>
+              <div class="notif-time">Yesterday</div>
+            </div>
+            <div class="notif-dot"></div>
+          </div>
+
+          <div class="notif-item" data-id="n6">
+            <div class="notif-icon">📅</div>
+            <div class="notif-body">
+              <div class="notif-title">Meeting scheduled</div>
+              <div class="notif-text">Kickoff call with Granite Bay Labs confirmed for March 8, 10:00 AM PST.</div>
+              <div class="notif-time">Yesterday</div>
+            </div>
+            <div class="notif-dot"></div>
+          </div>
+
+          <div class="notif-item" data-id="n7">
+            <div class="notif-icon">🔔</div>
+            <div class="notif-body">
+              <div class="notif-title">Client approved design</div>
+              <div class="notif-text">Aurora Digital signed off on final mockups. Development sprint can begin.</div>
+              <div class="notif-time">2 days ago</div>
+            </div>
+            <div class="notif-dot"></div>
+          </div>
+
+        </div><!-- /notif-list -->
+
+        <!-- Empty unread state (hidden by default) -->
+        <div class="notif-empty" id="notif-empty">
+          <div class="empty-check">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div class="empty-text">You're all caught up</div>
+          <div class="empty-sub">No unread notifications</div>
+        </div>
+
+      </div><!-- /panel-notif -->
+
+    </div><!-- /panels -->
+  </div><!-- /page -->
+
+
+  <script>
+  /* ─────────────────────────────────────────────────
+     PANEL A: Activity Feed
+  ───────────────────────────────────────────────── */
+
+  /* Simulate 2 new items arriving after 3 seconds */
+  setTimeout(function() {
+    document.getElementById('new-banner').classList.add('visible');
+  }, 3000);
+
+  document.getElementById('new-banner').addEventListener('click', function() {
+    const banner = this;
+    banner.classList.remove('visible');
+
+    const newItems = [
+      { initials:'ZD', bg:'#1e2830', color:'#38BDF8', action:'<strong>Zara Drake</strong> submitted a quote request for a new e-commerce project', time:'Just now' },
+      { initials:'OC', bg:'#302015', color:'#FB923C', action:'<strong>Omar Cruz</strong> replied to your comment on <strong>Ironclad homepage</strong>', time:'Just now' },
+    ];
+
+    const feedList = document.getElementById('feed-list');
+    newItems.forEach(function(item) {
+      const el = document.createElement('div');
+      el.className = 'feed-item';
+      el.innerHTML =
+        '<div class="feed-avatar" style="background:' + item.bg + ';color:' + item.color + ';">' + item.initials + '</div>' +
+        '<div class="feed-body"><div class="feed-action">' + item.action + '</div><div class="feed-time">' + item.time + '</div></div>';
+      feedList.insertBefore(el, feedList.firstChild);
+    });
+  });
+
+  /* Load more — appends 2 additional older items */
+  document.getElementById('load-more-btn').addEventListener('click', function() {
+    const btn = this;
+    btn.textContent = 'Loading…';
+    btn.disabled = true;
+
+    setTimeout(function() {
+      const items = [
+        { initials:'FM', bg:'#2a1a10', color:'#F97316', action:'<strong>Fatima Malik</strong> exported the <strong>monthly analytics report</strong>', time:'4 days ago' },
+        { initials:'SB', bg:'#1a2a1e', color:'#4ADE80', action:'<strong>Sean Burke</strong> added Bastion Works to On Hold pending budget review', time:'5 days ago' },
+      ];
+      const feedList = document.getElementById('feed-list');
+      items.forEach(function(item) {
+        const el = document.createElement('div');
+        el.className = 'feed-item';
+        el.innerHTML =
+          '<div class="feed-avatar" style="background:' + item.bg + ';color:' + item.color + ';">' + item.initials + '</div>' +
+          '<div class="feed-body"><div class="feed-action">' + item.action + '</div><div class="feed-time">' + item.time + '</div></div>';
+        feedList.appendChild(el);
+      });
+
+      btn.textContent = 'No more activity';
+      btn.disabled = true;
+      btn.style.opacity = '0.4';
+    }, 800);
+  });
+
+
+  /* ─────────────────────────────────────────────────
+     PANEL B: Notifications
+  ───────────────────────────────────────────────── */
+
+  function countUnread() {
+    return document.querySelectorAll('.notif-item.unread').length;
+  }
+
+  function updateUnreadBadge() {
+    const count = countUnread();
+    const badge = document.getElementById('unread-count');
+    badge.textContent = count;
+    badge.style.display = count === 0 ? 'none' : '';
+  }
+
+  /* Click an item → mark it read */
+  document.querySelectorAll('.notif-item').forEach(function(item) {
+    item.addEventListener('click', function() {
+      if (item.classList.contains('unread')) {
+        item.classList.remove('unread');
+        updateUnreadBadge();
+        checkEmptyUnread();
+      }
+    });
+  });
+
+  /* Mark all read */
+  document.getElementById('mark-all-btn').addEventListener('click', function() {
+    document.querySelectorAll('.notif-item.unread').forEach(function(item) {
+      item.classList.remove('unread');
+    });
+    updateUnreadBadge();
+    checkEmptyUnread();
+  });
+
+  /* Tabs: All / Unread */
+  document.querySelectorAll('.notif-tab').forEach(function(tab) {
+    tab.addEventListener('click', function() {
+      document.querySelectorAll('.notif-tab').forEach(function(t) { t.classList.remove('active'); });
+      tab.classList.add('active');
+
+      const filter = tab.dataset.tab;
+      document.querySelectorAll('.notif-item').forEach(function(item) {
+        if (filter === 'unread') {
+          item.style.display = item.classList.contains('unread') ? '' : 'none';
+        } else {
+          item.style.display = '';
+        }
+      });
+      checkEmptyUnread(filter);
+    });
+  });
+
+  function checkEmptyUnread(currentTab) {
+    const tab = currentTab || document.querySelector('.notif-tab.active').dataset.tab;
+    const empty = document.getElementById('notif-empty');
+    if (tab === 'unread' && countUnread() === 0) {
+      empty.classList.add('visible');
+    } else {
+      empty.classList.remove('visible');
+    }
+  }
+
+  updateUnreadBadge();
+  </script>
+
+</body>
+</html>

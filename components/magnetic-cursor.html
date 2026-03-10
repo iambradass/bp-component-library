@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Magnetic Cursor</title>
+
+  <!--
+    COMPONENT: Magnetic Cursor + Cursor Morphing
+    COPY: style + html + script
+    Custom cursor with 6 context-aware states: default, link hover, card/image hover,
+    text hover, click burst, drag mode. Ring follows with lag via rAF lerp.
+    ONLY activates on pointer: fine devices (no touch devices).
+  -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+
+    /* ── CUSTOMIZE ── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --glow:           rgba(16,185,129,0.15);
+      --border:         rgba(148,163,184,0.1);
+      --border-accent:  rgba(16,185,129,0.3);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+
+      /* ── Cursor sizes ── */
+      --cur-dot-size:   10px;
+      --cur-ring-size:  40px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* Hide default cursor on pointer devices */
+    @media (hover: hover) and (pointer: fine) {
+      * { cursor: none !important; }
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+
+    /* ═══════════════════════════════════════
+       CURSOR ELEMENTS
+    ════════════════════════════════════════ */
+
+    /* Small inner dot — follows cursor at 1.0 speed (instant) */
+    #cursor-dot {
+      position: fixed;
+      top: 0; left: 0;
+      width: var(--cur-dot-size);
+      height: var(--cur-dot-size);
+      background: var(--accent);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 99999;
+      /* Translate is updated by JS. -50% centers the dot on the cursor tip. */
+      transform: translate(-50%, -50%);
+      transition: opacity 0.2s, transform 0.15s, width 0.2s, height 0.2s, background 0.2s;
+      will-change: transform;
+    }
+
+    /* Larger ring — follows at 0.12 speed (lagged) */
+    #cursor-ring {
+      position: fixed;
+      top: 0; left: 0;
+      width: var(--cur-ring-size);
+      height: var(--cur-ring-size);
+      border: 2px solid var(--accent);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 99998;
+      transform: translate(-50%, -50%);
+      transition: width 0.3s cubic-bezier(0.23, 1, 0.32, 1),
+                  height 0.3s cubic-bezier(0.23, 1, 0.32, 1),
+                  background 0.3s,
+                  border-color 0.3s,
+                  opacity 0.3s;
+      will-change: transform;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Label inside the ring (for "View" state) */
+    #cursor-label {
+      font-family: var(--font-heading);
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: var(--bg);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      opacity: 0;
+      transition: opacity 0.2s;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+
+    /* ── STATE: hover (links, buttons) ──
+       Ring expands and fills with glow. Dot hides. */
+    body.cur--hover #cursor-ring {
+      width: 60px;
+      height: 60px;
+      background: rgba(16,185,129,0.12);
+      border-color: var(--accent);
+    }
+    body.cur--hover #cursor-dot {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0);
+    }
+
+    /* ── STATE: view (cards / images) ──
+       Ring becomes pill filled with accent. Label appears. Dot hides. */
+    body.cur--view #cursor-ring {
+      width: 72px;
+      height: 72px;
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+    body.cur--view #cursor-label {
+      opacity: 1;
+    }
+    body.cur--view #cursor-dot {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0);
+    }
+
+    /* ── STATE: text (hovering over paragraphs / text nodes) ──
+       Ring becomes a thin vertical bar (I-beam alternative). */
+    body.cur--text #cursor-ring {
+      width: 2px;
+      height: 28px;
+      border-radius: 2px;
+      border-width: 0;
+      background: var(--accent);
+    }
+    body.cur--text #cursor-dot {
+      opacity: 0;
+    }
+
+    /* ── STATE: click burst ── */
+    body.cur--click #cursor-ring {
+      transform: translate(-50%, -50%) scale(0.75);
+      background: rgba(16,185,129,0.2);
+      border-color: var(--accent);
+    }
+    body.cur--click #cursor-dot {
+      transform: translate(-50%, -50%) scale(0.6);
+    }
+
+    /* Hide both cursors until mouse enters the page */
+    #cursor-dot, #cursor-ring {
+      opacity: 0;
+    }
+    body.cur--ready #cursor-dot,
+    body.cur--ready #cursor-ring {
+      opacity: 1;
+    }
+
+
+    /* ═══════════════════════════════════════
+       DEMO PAGE CONTENT
+    ════════════════════════════════════════ */
+    .page {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 4rem 1.5rem 6rem;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 4rem;
+    }
+    .eyebrow {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      padding: 4px 12px;
+      border: 1px solid var(--border-accent);
+      background: var(--glow);
+      border-radius: 100px;
+      margin-bottom: 1.25rem;
+    }
+    .page-title {
+      font-family: var(--font-heading);
+      font-size: clamp(2rem, 5vw, 3rem);
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      margin-bottom: 1rem;
+    }
+    .page-sub {
+      color: var(--text-secondary);
+      font-size: 1rem;
+      line-height: 1.7;
+      max-width: 560px;
+      margin: 0 auto;
+    }
+
+    /* State legend */
+    .states-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 0.75rem;
+      margin-bottom: 3rem;
+    }
+    .state-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+    }
+    .state-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--accent);
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 8px;
+    }
+    .state-name {
+      font-family: var(--font-heading);
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 0.3rem;
+    }
+    .state-desc {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* Demo section labels */
+    .section-label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ── Interactive demo areas ── */
+    .demo-row {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 3rem;
+      flex-wrap: wrap;
+    }
+
+    /* Buttons — trigger hover state */
+    .demo-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0.75rem 1.5rem;
+      background: var(--accent);
+      color: #0D1117;
+      border: none;
+      border-radius: 8px;
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 0.9375rem;
+      cursor: none;
+    }
+    .demo-btn-outline {
+      background: transparent;
+      color: var(--accent);
+      border: 1px solid var(--border-accent);
+    }
+
+    /* Text block — trigger text state */
+    .demo-text-block {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 3rem;
+    }
+    .demo-text-block h3 {
+      font-family: var(--font-heading);
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+    }
+    .demo-text-block p {
+      color: var(--text-secondary);
+      line-height: 1.7;
+      font-size: 0.9375rem;
+    }
+    /* Explicitly mark paragraph text for cursor-text state */
+    .demo-text-block p { data-cursor: "text"; }
+
+    /* View cards — trigger view state */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+      margin-bottom: 3rem;
+    }
+    .view-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .view-card:hover {
+      border-color: var(--border-accent);
+      transform: translateY(-2px);
+    }
+    .view-card-thumb {
+      height: 140px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+      position: relative;
+    }
+    .view-card:nth-child(1) .view-card-thumb { background: linear-gradient(135deg, #0f3123, #0a2818); }
+    .view-card:nth-child(2) .view-card-thumb { background: linear-gradient(135deg, #1a1030, #0f0a20); }
+    .view-card:nth-child(3) .view-card-thumb { background: linear-gradient(135deg, #1a2010, #0f180a); }
+    .view-card-body {
+      padding: 1rem;
+    }
+    .view-card-title {
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-bottom: 0.25rem;
+    }
+    .view-card-meta {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* Draggable element */
+    .draggable-area {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem;
+      margin-bottom: 3rem;
+      text-align: center;
+    }
+    .draggable-item {
+      display: inline-block;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.75rem 1.5rem;
+      font-family: var(--font-heading);
+      font-weight: 600;
+      user-select: none;
+      cursor: none;
+    }
+    .draggable-hint {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 0.75rem;
+      font-family: var(--font-mono);
+    }
+
+    /* Mobile notice */
+    .mobile-notice {
+      display: none;
+      text-align: center;
+      padding: 3rem 1.5rem;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+    @media (hover: none) {
+      .mobile-notice { display: block; }
+      .page-content  { display: none; }
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- ── Custom cursor elements ── -->
+  <div id="cursor-dot" aria-hidden="true"></div>
+  <div id="cursor-ring" aria-hidden="true">
+    <span id="cursor-label">View</span>
+  </div>
+
+
+  <div class="page">
+    <header class="page-header">
+      <div class="eyebrow">Magnetic Cursor</div>
+      <h1 class="page-title">Cursor morphs by context</h1>
+      <p class="page-sub">A dual-element cursor (dot + ring) with lag — the ring follows at 12% speed per frame. Hover different elements to see each state.</p>
+    </header>
+
+    <!-- Touch device notice -->
+    <div class="mobile-notice">
+      This component requires a pointer device (mouse/trackpad).<br>
+      Custom cursor states are not applicable on touch screens.
+    </div>
+
+    <div class="page-content">
+
+      <!-- State legend -->
+      <div class="section-label">States</div>
+      <div class="states-grid">
+        <div class="state-card">
+          <div class="state-name"><span class="state-dot"></span>Default</div>
+          <div class="state-desc">10px dot + 40px lagged ring</div>
+        </div>
+        <div class="state-card">
+          <div class="state-name"><span class="state-dot"></span>Hover link/button</div>
+          <div class="state-desc">Ring expands to 60px with glow fill. Dot hides.</div>
+        </div>
+        <div class="state-card">
+          <div class="state-name"><span class="state-dot"></span>View card</div>
+          <div class="state-desc">Ring fills accent with "View" label. Dot hides.</div>
+        </div>
+        <div class="state-card">
+          <div class="state-name"><span class="state-dot"></span>Text</div>
+          <div class="state-desc">Ring collapses to a thin I-beam bar.</div>
+        </div>
+        <div class="state-card">
+          <div class="state-name"><span class="state-dot"></span>Click</div>
+          <div class="state-desc">Brief scale-down burst on mousedown.</div>
+        </div>
+      </div>
+
+      <!-- Buttons section -->
+      <div class="section-label">Hover: links &amp; buttons → ring expands</div>
+      <div class="demo-row">
+        <button class="demo-btn" data-cursor="hover">Get Started</button>
+        <button class="demo-btn demo-btn-outline" data-cursor="hover">View Docs</button>
+        <a href="#" class="demo-btn demo-btn-outline" data-cursor="hover">Sign In</a>
+        <a href="#" class="demo-btn" data-cursor="hover">Deploy Now</a>
+      </div>
+
+      <!-- Text block section -->
+      <div class="section-label">Hover: text paragraphs → I-beam cursor</div>
+      <div class="demo-text-block" data-cursor="text">
+        <h3>Readable article content</h3>
+        <p>When you hover over this paragraph the cursor ring narrows into a thin vertical I-beam, replacing the system text cursor with something that still feels intentional. Move through the lines of text — the thin bar tracks your position precisely.</p>
+      </div>
+
+      <!-- View cards section -->
+      <div class="section-label">Hover: image cards → "View" label pill</div>
+      <div class="cards-grid">
+        <div class="view-card cursor-view" data-cursor="view">
+          <div class="view-card-thumb">🌿</div>
+          <div class="view-card-body">
+            <div class="view-card-title">Brand Identity</div>
+            <div class="view-card-meta">Case Study · 2024</div>
+          </div>
+        </div>
+        <div class="view-card cursor-view" data-cursor="view">
+          <div class="view-card-thumb">⚡</div>
+          <div class="view-card-body">
+            <div class="view-card-title">SaaS Dashboard</div>
+            <div class="view-card-meta">Product Design · 2025</div>
+          </div>
+        </div>
+        <div class="view-card cursor-view" data-cursor="view">
+          <div class="view-card-thumb">🔮</div>
+          <div class="view-card-body">
+            <div class="view-card-title">Landing Page</div>
+            <div class="view-card-meta">Web Build · 2025</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Draggable section -->
+      <div class="section-label">Click anywhere → scale-down burst</div>
+      <div class="draggable-area">
+        <div class="draggable-item" id="draggable">Drag me around</div>
+        <p class="draggable-hint">Click &amp; drag — cursor ring changes during drag</p>
+      </div>
+
+    </div><!-- /page-content -->
+  </div><!-- /page -->
+
+
+  <script>
+  /* ─────────────────────────────────────────────────
+     Only activate on pointer: fine devices
+  ───────────────────────────────────────────────── */
+  if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    /* Touch device — skip all cursor JS */
+  } else {
+
+    const dot   = document.getElementById('cursor-dot');
+    const ring  = document.getElementById('cursor-ring');
+
+    /* ── Position state ── */
+    // Dot follows at full speed (set directly)
+    let dotX = 0, dotY = 0;
+    // Ring lerps toward dot position
+    let ringX = 0, ringY = 0;
+    const RING_LERP = 0.12;  // ← CUSTOMIZE: ring lag (0=instant, 1=never)
+
+    /* Animate ring with rAF lerp */
+    function animate() {
+      ringX += (dotX - ringX) * RING_LERP;
+      ringY += (dotY - ringY) * RING_LERP;
+      ring.style.left = ringX + 'px';
+      ring.style.top  = ringY + 'px';
+      requestAnimationFrame(animate);
+    }
+    requestAnimationFrame(animate);
+
+    /* Move dot instantly on mousemove */
+    document.addEventListener('mousemove', function(e) {
+      dotX = e.clientX;
+      dotY = e.clientY;
+      dot.style.left = dotX + 'px';
+      dot.style.top  = dotY + 'px';
+      document.body.classList.add('cur--ready');
+    });
+
+    /* ── State management ── */
+    function setState(state) {
+      document.body.classList.remove('cur--hover', 'cur--view', 'cur--text', 'cur--click', 'cur--drag');
+      if (state) document.body.classList.add('cur--' + state);
+    }
+
+    /* Click burst — brief then restore */
+    document.addEventListener('mousedown', function() {
+      setState('click');
+      setTimeout(function() { setState(currentState || ''); }, 150);
+    });
+
+    let currentState = '';
+
+    /* Set up state listeners from data-cursor attributes */
+    document.querySelectorAll('[data-cursor]').forEach(function(el) {
+      const state = el.dataset.cursor;
+      el.addEventListener('mouseenter', function() {
+        currentState = state;
+        setState(state);
+      });
+      el.addEventListener('mouseleave', function() {
+        currentState = '';
+        setState('');
+      });
+    });
+
+    /* ── Draggable demo ── */
+    (function() {
+      const item = document.getElementById('draggable');
+      let dragging = false;
+      let startX, startY, origLeft, origTop;
+
+      item.style.position = 'relative';
+
+      item.addEventListener('mousedown', function(e) {
+        dragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        origLeft = parseInt(item.style.left || 0);
+        origTop  = parseInt(item.style.top  || 0);
+        setState('drag');
+        currentState = 'drag';
+      });
+
+      document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        item.style.left = (origLeft + e.clientX - startX) + 'px';
+        item.style.top  = (origTop  + e.clientY - startY) + 'px';
+      });
+
+      document.addEventListener('mouseup', function() {
+        if (dragging) {
+          dragging = false;
+          currentState = '';
+          setState('');
+        }
+      });
+    })();
+
+    /* Hide cursors when mouse leaves window */
+    document.addEventListener('mouseleave', function() {
+      document.body.classList.remove('cur--ready');
+    });
+    document.addEventListener('mouseenter', function() {
+      document.body.classList.add('cur--ready');
+    });
+
+  }
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,363 @@
+<!-- COMPONENT: Scope of Work / Deliverables | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scope of Work — Deliverables</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: var(--font-body); min-height: 100vh;
+      padding: 3rem 1rem 5rem;
+    }
+
+    .sow-wrap { max-width: 860px; margin: 0 auto; }
+
+    /* ── Header ── */
+    .sow-header {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      gap: 1rem; flex-wrap: wrap; margin-bottom: 1.75rem;
+    }
+    .sow-header-left { flex: 1; min-width: 0; }
+    .sow-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: var(--font-heading); font-size: 0.75rem; font-weight: 600;
+      color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em;
+      padding: 4px 14px; background: var(--accent-dim);
+      border: 1px solid var(--accent-border); border-radius: 100px;
+      margin-bottom: 0.75rem;
+    }
+    .sow-title {
+      font-family: var(--font-heading); font-size: clamp(1.5rem, 4vw, 2.25rem);
+      font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.25rem;
+    }
+    .sow-service-name { color: var(--accent); }
+    .sow-note { font-size: 0.8125rem; color: var(--text-muted); }
+
+    /* ── Summary bar ── */
+    .sow-summary {
+      display: flex; flex-wrap: wrap; gap: 1rem; padding: 1.25rem;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); margin-bottom: 2rem;
+    }
+    .sow-stat { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 100px; }
+    .sow-stat-val {
+      font-family: var(--font-heading); font-size: 1.375rem; font-weight: 700;
+      color: var(--accent);
+    }
+    .sow-stat-label { font-size: 0.75rem; color: var(--text-muted); }
+    .sow-stat-sep { width: 1px; background: var(--border); align-self: stretch; }
+
+    /* ── Phase accordion ── */
+    .sow-phase { margin-bottom: 0.75rem; }
+
+    .sow-phase-header {
+      display: flex; align-items: center; gap: 0.875rem;
+      padding: 1rem 1.25rem; background: var(--surface);
+      border: 1px solid var(--border); border-radius: var(--radius);
+      cursor: pointer; transition: all 0.18s ease; user-select: none;
+    }
+    .sow-phase.open .sow-phase-header {
+      border-color: var(--accent-border); border-radius: var(--radius) var(--radius) 0 0;
+      background: var(--elevated);
+    }
+    .sow-phase-header:hover { border-color: rgba(148,163,184,0.25); }
+
+    .sow-phase-num {
+      width: 28px; height: 28px; border-radius: 50%; background: var(--elevated);
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      font-family: var(--font-heading); font-size: 0.75rem; font-weight: 700;
+      color: var(--text-muted); border: 1px solid var(--border);
+    }
+    .sow-phase.open .sow-phase-num { background: var(--accent-dim); color: var(--accent); border-color: var(--accent-border); }
+
+    .sow-phase-name {
+      font-family: var(--font-heading); font-size: 0.9375rem; font-weight: 700; flex: 1;
+    }
+    .sow-phase-timeline {
+      font-size: 0.75rem; color: var(--text-muted); white-space: nowrap;
+    }
+    .sow-phase-count {
+      font-family: var(--font-heading); font-size: 0.6875rem; font-weight: 600;
+      padding: 2px 9px; border-radius: 100px;
+      background: var(--elevated); color: var(--text-muted); border: 1px solid var(--border);
+      flex-shrink: 0; white-space: nowrap;
+    }
+    .sow-phase.open .sow-phase-count { background: var(--accent-dim); color: var(--accent); border-color: var(--accent-border); }
+    .sow-chevron {
+      color: var(--text-muted); flex-shrink: 0; transition: transform 0.25s;
+    }
+    .sow-phase.open .sow-chevron { transform: rotate(180deg); color: var(--accent); }
+
+    /* Phase body */
+    .sow-phase-body {
+      background: var(--surface); border: 1px solid var(--accent-border);
+      border-top: none; border-radius: 0 0 var(--radius) var(--radius);
+      overflow: hidden; max-height: 0; transition: max-height 0.45s ease;
+    }
+    .sow-phase.open .sow-phase-body { max-height: 1200px; }
+
+    /* ── Deliverable row ── */
+    .sow-item {
+      border-bottom: 1px solid var(--border); overflow: hidden;
+    }
+    .sow-item:last-child { border-bottom: none; }
+
+    .sow-item-header {
+      display: flex; align-items: flex-start; gap: 0.875rem;
+      padding: 0.875rem 1.25rem; cursor: pointer;
+      transition: background 0.15s;
+    }
+    .sow-item-header:hover { background: var(--elevated); }
+    .sow-item.open .sow-item-header { background: rgba(16,185,129,0.05); }
+
+    /* Decorative checkbox */
+    .sow-checkbox {
+      width: 18px; height: 18px; border-radius: 4px; flex-shrink: 0; margin-top: 1px;
+      border: 2px solid var(--accent-border); background: var(--accent-dim);
+      display: flex; align-items: center; justify-content: center; color: var(--accent);
+    }
+
+    .sow-item-name {
+      font-size: 0.875rem; font-weight: 600; color: var(--text); flex: 1;
+    }
+    .sow-item-brief { font-size: 0.8125rem; color: var(--text-muted); }
+    .sow-owner-badge {
+      font-family: var(--font-heading); font-size: 0.625rem; font-weight: 600;
+      padding: 2px 8px; border-radius: 100px; flex-shrink: 0;
+      text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap;
+      margin-top: 1px;
+    }
+    .owner-us   { background: var(--accent-dim); color: var(--accent); border: 1px solid var(--accent-border); }
+    .owner-you  { background: rgba(59,130,246,0.12); color: #3B82F6; border: 1px solid rgba(59,130,246,0.3); }
+    .owner-both { background: rgba(245,158,11,0.12); color: #F59E0B; border: 1px solid rgba(245,158,11,0.3); }
+
+    /* Expandable detail */
+    .sow-item-detail {
+      padding: 0 1.25rem; max-height: 0; overflow: hidden;
+      transition: max-height 0.35s ease, padding 0.2s;
+    }
+    .sow-item.open .sow-item-detail {
+      max-height: 400px; padding-bottom: 1rem;
+    }
+    .sow-item-desc { font-size: 0.875rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 0.625rem; }
+    .sow-criteria-label {
+      font-family: var(--font-heading); font-size: 0.6875rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted);
+      margin-bottom: 0.35rem;
+    }
+    .sow-criteria { font-size: 0.8125rem; color: var(--text-secondary); }
+  </style>
+</head>
+<body>
+
+<div class="sow-wrap">
+
+  <!-- Header -->
+  <div class="sow-header">
+    <div class="sow-header-left">
+      <div class="sow-eyebrow">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Scope of Work
+      </div>
+      <h2 class="sow-title"><span class="sow-service-name">Complete Web Presence</span> — Deliverables</h2>
+      <p class="sow-note">Print-friendly version available at project kickoff. Every item tracked in your client portal.</p>
+    </div>
+  </div>
+
+  <!-- Summary bar — JS fills counts -->
+  <div class="sow-summary" id="sowSummary">
+    <div class="sow-stat"><span class="sow-stat-val" id="totalCount">0</span><span class="sow-stat-label">Total Deliverables</span></div>
+    <div class="sow-stat-sep"></div>
+    <div class="sow-stat"><span class="sow-stat-val">5</span><span class="sow-stat-label">Project Phases</span></div>
+    <div class="sow-stat-sep"></div>
+    <div class="sow-stat"><span class="sow-stat-val">10</span><span class="sow-stat-label">Business Days</span></div>
+    <div class="sow-stat-sep"></div>
+    <div class="sow-stat"><span class="sow-stat-val" id="usCount">0</span><span class="sow-stat-label">Handled by Us</span></div>
+    <div class="sow-stat-sep"></div>
+    <div class="sow-stat"><span class="sow-stat-val" id="youCount">0</span><span class="sow-stat-label">Handled by You</span></div>
+  </div>
+
+  <!-- Phases rendered by JS -->
+  <div id="sowPhases"></div>
+
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  var phases = [
+    {
+      name: 'Discovery', timeline: 'Week 1, Days 1–2',
+      items: [
+        { name: 'Brand Questionnaire', brief: 'Collect your brand voice, goals, and target audience', owner: 'you',
+          desc: 'A structured 15-question form covering your ideal client, value proposition, differentiators, and visual preferences. Delivered as a Google Form — takes about 15 minutes.',
+          criteria: 'Completed form returned within 48 hours of kickoff call.' },
+        { name: 'Logo / Color Palette Review', brief: 'Evaluate existing assets for digital suitability', owner: 'us',
+          desc: 'We review any logo, brand guidelines, or color preferences you provide. If no brand assets exist, we recommend a direction based on your industry and market.',
+          criteria: 'Brand direction confirmed and documented in project brief.' },
+        { name: 'Competitor Research', brief: 'Review 3–5 competitor sites in your market', owner: 'us',
+          desc: 'We audit competitor sites for positioning, SEO weaknesses, and design patterns — then use insights to position your site more effectively.',
+          criteria: 'Competitor brief delivered via email before design begins.' },
+        { name: 'Site Map Approval', brief: 'Finalize page structure before design starts', owner: 'both',
+          desc: 'A one-page document showing your 5 pages, their purpose, and primary calls-to-action. Requires your sign-off before we move to design.',
+          criteria: 'Written approval via email within 24 hours of receiving the draft.' },
+      ]
+    },
+    {
+      name: 'Design', timeline: 'Week 1, Days 3–5',
+      items: [
+        { name: 'Homepage Wireframe', brief: 'Layout and section structure — no visual design yet', owner: 'us',
+          desc: 'A low-fidelity layout showing the hierarchy, sections, and CTA placement of your homepage. Focuses on structure before aesthetics.',
+          criteria: 'Reviewed and approved in the shared design document.' },
+        { name: 'Design Mockup — Homepage', brief: 'High-fidelity visual design of the homepage', owner: 'us',
+          desc: 'Full-color, font-applied, photography-placeholder design of your homepage in desktop and mobile views. Presented via Figma or image file.',
+          criteria: 'One round of revisions included. Approval required before build.' },
+        { name: 'Inner Page Templates', brief: 'Design template for About, Services, Contact pages', owner: 'us',
+          desc: 'Consistent inner-page layout based on approved homepage style. Applied across all 5 pages during build.',
+          criteria: 'Template approved as part of homepage sign-off.' },
+      ]
+    },
+    {
+      name: 'Development', timeline: 'Week 2, Days 6–8',
+      items: [
+        { name: '5 Custom Pages Built', brief: 'Home, About, Services, Testimonials, Contact', owner: 'us',
+          desc: 'All pages built live on your domain. Mobile-first responsive, tested at 375px, 768px, and 1440px. Semantic HTML with proper heading structure.',
+          criteria: 'All pages accessible at your domain before review call.' },
+        { name: 'Contact Form + CRM Integration', brief: 'Forms connected to GoHighLevel pipeline', owner: 'us',
+          desc: 'Contact forms on homepage and Contact page route directly into your GHL CRM as new contacts. Confirmation email sent to the visitor automatically.',
+          criteria: 'Test submission verified in GHL pipeline before launch.' },
+        { name: 'Google Analytics 4 Setup', brief: 'GA4 property with goal tracking', owner: 'us',
+          desc: 'GA4 property created (or connected to existing account), site tagged, and form submission goal configured.',
+          criteria: 'Real-time view showing traffic before launch review.' },
+        { name: 'SEO On-Page Setup', brief: 'Title tags, metas, schema, and alt text', owner: 'us',
+          desc: 'Every page gets a unique title tag, meta description, and local keyword strategy. Schema markup (LocalBusiness) added to homepage.',
+          criteria: 'SEO audit screenshot shared before launch.' },
+        { name: 'Speed Optimization', brief: 'Images compressed, code minified, CDN enabled', owner: 'us',
+          desc: 'All images optimized for web, CSS/JS minified, and CDN configured on hosting. Target: under 2 seconds on mobile.',
+          criteria: 'PageSpeed score above 85 on mobile documented before launch.' },
+      ]
+    },
+    {
+      name: 'Launch', timeline: 'Week 2, Days 9–10',
+      items: [
+        { name: 'Client Review', brief: 'Preview link shared, feedback collected', owner: 'you',
+          desc: 'You\'ll receive a staging URL to review everything end-to-end. Feedback submitted via the review form provided. One revision round included.',
+          criteria: 'Feedback received within 48 hours of preview link sent.' },
+        { name: 'Final QA', brief: 'Cross-browser and mobile testing before go-live', owner: 'us',
+          desc: 'We test across Chrome, Safari, Firefox, and Edge on desktop and iOS/Android mobile before any site goes live.',
+          criteria: 'QA checklist signed off internally before launch confirmation.' },
+        { name: 'Go-Live + Google Submission', brief: 'DNS pointed, sitemap submitted, search console active', owner: 'us',
+          desc: 'Site goes live at your domain. Sitemap submitted to Google Search Console for indexing. GBP listing connected.',
+          criteria: 'Domain resolving correctly and Google Search Console showing coverage.' },
+        { name: 'Training Video', brief: 'Recorded walkthrough of your site and CRM notifications', owner: 'us',
+          desc: 'A 10–15 minute Loom video showing how your site works, how leads appear in GHL, and how to request future changes.',
+          criteria: 'Video link delivered within 24 hours of launch.' },
+      ]
+    },
+    {
+      name: 'Ongoing', timeline: 'Monthly — Recurring',
+      items: [
+        { name: 'Monthly Performance Report', brief: 'Traffic, leads, and ranking delivered each month', owner: 'us',
+          desc: 'Concise PDF/email report showing website traffic, form submission count, keyword ranking movements, and any notable changes.',
+          criteria: 'Delivered by the 5th of each month.' },
+        { name: 'Content Updates', brief: 'Text and image changes handled on request', owner: 'us',
+          desc: 'Email us any changes — updated bio, new testimonial, revised services list — and we implement within 24 business hours.',
+          criteria: 'Changes live within 1 business day of request.' },
+        { name: 'Uptime Monitoring', brief: '24/7 automated monitoring with alerts', owner: 'us',
+          desc: 'Your site is monitored every 5 minutes. If it goes down, we get an alert and investigate — often before you even notice.',
+          criteria: 'Alert received and acknowledged within 15 minutes of downtime.' },
+      ]
+    },
+  ];
+
+  var phasesEl = document.getElementById('sowPhases');
+  var totalItems = 0, usItems = 0, youItems = 0;
+
+  phases.forEach(function(phase, pi) {
+    totalItems += phase.items.length;
+    phase.items.forEach(function(item) {
+      if (item.owner === 'us') usItems++;
+      else if (item.owner === 'you') youItems++;
+    });
+
+    var phaseEl = document.createElement('div');
+    phaseEl.className = 'sow-phase' + (pi === 0 ? ' open' : '');
+
+    var ownerClass = { us: 'owner-us', you: 'owner-you', both: 'owner-both' };
+    var ownerLabel = { us: 'Us', you: 'You', both: 'Both' };
+
+    phaseEl.innerHTML =
+      '<div class="sow-phase-header">' +
+        '<div class="sow-phase-num">' + (pi + 1) + '</div>' +
+        '<div class="sow-phase-name">Phase ' + (pi + 1) + ' — ' + phase.name + '</div>' +
+        '<div class="sow-phase-timeline">' + phase.timeline + '</div>' +
+        '<div class="sow-phase-count">' + phase.items.length + ' items</div>' +
+        '<svg class="sow-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>' +
+      '</div>' +
+      '<div class="sow-phase-body">' +
+        phase.items.map(function(item, ii) {
+          return '<div class="sow-item" data-i="' + pi + '-' + ii + '">' +
+            '<div class="sow-item-header">' +
+              '<div class="sow-checkbox"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>' +
+              '<div class="sow-item-name">' + item.name + '<div class="sow-item-brief">' + item.brief + '</div></div>' +
+              '<span class="sow-owner-badge ' + ownerClass[item.owner] + '">' + ownerLabel[item.owner] + '</span>' +
+            '</div>' +
+            '<div class="sow-item-detail">' +
+              '<p class="sow-item-desc">' + item.desc + '</p>' +
+              '<div class="sow-criteria-label">Acceptance Criteria</div>' +
+              '<p class="sow-criteria">' + item.criteria + '</p>' +
+            '</div>' +
+          '</div>';
+        }).join('') +
+      '</div>';
+
+    /* Phase toggle */
+    phaseEl.querySelector('.sow-phase-header').addEventListener('click', function() {
+      phaseEl.classList.toggle('open');
+    });
+
+    /* Item detail expand */
+    phaseEl.querySelectorAll('.sow-item-header').forEach(function(h) {
+      h.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var item = h.closest('.sow-item');
+        item.classList.toggle('open');
+      });
+    });
+
+    phasesEl.appendChild(phaseEl);
+  });
+
+  /* Fill summary counts */
+  document.getElementById('totalCount').textContent = totalItems;
+  document.getElementById('usCount').textContent = usItems;
+  document.getElementById('youCount').textContent = youItems;
+
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bento Grid — Component Library</title>
+
+  <!--
+  ============================================================
+  COMPONENT: Bento Grid
+  COPY: <style> block + HTML block + <script> block into target site
+  FEATURES:
+    - Apple-style asymmetric 4-column CSS grid
+    - Mixed tile sizes: 2×2, 2×1, 1×2, 1×1
+    - Staggered fade+translateY entrance animation on load
+    - Hover: subtle lift + accent border
+    - Hero tile with animated stat counter + radial glow
+    - Terminal-style code tile, tag cluster, testimonial
+    - Mobile: all tiles stack single column
+  ============================================================
+  -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+
+    /* ── CUSTOMIZE: swap these variables ── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --glow:           rgba(16, 185, 129, 0.15);
+      --glow-strong:    rgba(16, 185, 129, 0.3);
+      --border:         rgba(148, 163, 184, 0.1);
+      --border-accent:  rgba(16, 185, 129, 0.3);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         16px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      padding: 3rem 1.5rem 5rem;
+    }
+
+    .demo-label {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+    .demo-title {
+      font-family: var(--font-heading);
+      font-size: 2rem;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+    .demo-subtitle {
+      color: var(--text-secondary);
+      text-align: center;
+      font-size: 0.9375rem;
+      margin-bottom: 3rem;
+    }
+
+
+    /* ════════════════════════════════════════════
+       BENTO GRID LAYOUT
+    ════════════════════════════════════════════ */
+
+    .bento-grid {
+      max-width: 1080px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: auto;
+      gap: 16px;
+    }
+
+    /* ── Individual tile base ── */
+    .bento-tile {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      position: relative;
+      overflow: hidden;
+      /* Entrance animation — JS adds .bento-visible */
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.5s ease, transform 0.5s ease,
+                  border-color 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    /* Entrance state once JS fires */
+    .bento-tile.bento-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Hover lift */
+    .bento-tile:hover {
+      border-color: var(--border-accent);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+      transform: translateY(-4px);
+    }
+    /* Don't compound entrance + hover transform before visible */
+    .bento-tile:not(.bento-visible):hover {
+      transform: translateY(20px);
+    }
+
+
+    /* ── Tile size spans ── */
+    /* 2-col × 2-row (large featured) */
+    .tile-2x2 {
+      grid-column: span 2;
+      grid-row: span 2;
+    }
+    /* 2-col × 1-row (wide) */
+    .tile-2x1 {
+      grid-column: span 2;
+      grid-row: span 1;
+    }
+    /* 1-col × 2-row (tall) */
+    .tile-1x2 {
+      grid-column: span 1;
+      grid-row: span 2;
+    }
+    /* 1-col × 1-row (small) */
+    .tile-1x1 {
+      grid-column: span 1;
+      grid-row: span 1;
+    }
+
+
+    /* ════════════════════════════════════════════
+       TILE 1 — Hero Stat (2×2)
+       Large animated counter + radial glow bg
+    ════════════════════════════════════════════ */
+
+    .tile-hero {
+      background: var(--elevated);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+
+    /* Radial glow background — the signature "hero tile" look */
+    .tile-hero::before {
+      content: '';
+      position: absolute;
+      top: -60px;
+      left: -60px;
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, var(--glow) 0%, transparent 65%);
+      pointer-events: none;
+    }
+
+    .tile-hero-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      margin-bottom: 12px;
+      position: relative;
+    }
+
+    .tile-hero-stat {
+      font-family: var(--font-heading);
+      font-size: clamp(3rem, 6vw, 5rem);
+      font-weight: 700;
+      line-height: 1;
+      color: var(--text);
+      letter-spacing: -0.03em;
+      margin-bottom: 12px;
+      position: relative;
+    }
+    /* The accent suffix after the number */
+    .tile-hero-stat span {
+      color: var(--accent);
+    }
+
+    .tile-hero-desc {
+      font-size: 0.9375rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      max-width: 280px;
+      position: relative;
+    }
+
+    .tile-hero-badge {
+      position: absolute;
+      top: 28px;
+      right: 28px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid var(--border-accent);
+      border-radius: 100px;
+      padding: 5px 12px;
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+
+    /* ════════════════════════════════════════════
+       TILE 2 — Horizontal Feature (2×1)
+       Icon left + text right
+    ════════════════════════════════════════════ */
+
+    .tile-horizontal {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .tile-icon-wrap {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid var(--border-accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .tile-text-content h3 {
+      font-family: var(--font-heading);
+      font-size: 1.125rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .tile-text-content p {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+
+    /* ════════════════════════════════════════════
+       TILE 3 — Tall Vertical (1×2)
+       Large icon + animated background + text
+    ════════════════════════════════════════════ */
+
+    .tile-tall {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Animated floating dots background */
+    .tile-tall::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(circle, rgba(148, 163, 184, 0.05) 1px, transparent 1px);
+      background-size: 24px 24px;
+      pointer-events: none;
+      animation: bg-drift 8s ease-in-out infinite alternate;
+    }
+    @keyframes bg-drift {
+      from { background-position: 0 0; }
+      to   { background-position: 12px 12px; }
+    }
+
+    .tile-tall-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 18px;
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid var(--border-accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+      position: relative; /* above ::after */
+    }
+
+    .tile-tall h3 {
+      font-family: var(--font-heading);
+      font-size: 1.25rem;
+      font-weight: 700;
+      position: relative;
+      margin-top: auto;
+    }
+    .tile-tall p {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      position: relative;
+    }
+
+
+    /* ════════════════════════════════════════════
+       TILE 4 — Small Stat (1×1)
+    ════════════════════════════════════════════ */
+
+    .tile-small-stat {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .tile-small-stat .stat-icon {
+      color: var(--accent);
+      margin-bottom: 16px;
+    }
+
+    .tile-small-stat .stat-number {
+      font-family: var(--font-heading);
+      font-size: 2.25rem;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.02em;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+    .tile-small-stat .stat-number span { color: var(--accent); }
+
+    .tile-small-stat .stat-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-family: var(--font-mono);
+    }
+
+
+    /* ════════════════════════════════════════════
+       TILE 5 — Terminal/Code (2×1)
+    ════════════════════════════════════════════ */
+
+    .tile-terminal {
+      background: #0A0F1A;
+      border-color: rgba(16, 185, 129, 0.15);
+    }
+
+    .terminal-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .terminal-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    .td-red   { background: #FF5F57; }
+    .td-amber { background: #FFBD2E; }
+    .td-green { background: #28CA41; }
+
+    .terminal-title {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-left: 6px;
+    }
+
+    .terminal-body {
+      font-family: var(--font-mono);
+      font-size: 0.8125rem;
+      line-height: 1.8;
+    }
+    .t-prompt  { color: var(--accent); }
+    .t-cmd     { color: #93C5FD; }
+    .t-string  { color: #FCD34D; }
+    .t-comment { color: var(--text-muted); }
+    .t-output  { color: var(--text-secondary); }
+
+    /* Blinking cursor at end of last line */
+    .t-cursor {
+      display: inline-block;
+      width: 8px;
+      height: 14px;
+      background: var(--accent);
+      vertical-align: text-bottom;
+      animation: blink 1.1s step-end infinite;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0; }
+    }
+
+
+    /* ════════════════════════════════════════════
+       TILE 6 — Tag Cluster (1×1)
+    ════════════════════════════════════════════ */
+
+    .tile-tags {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .tile-tags h3 {
+      font-family: var(--font-heading);
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .tag-cloud {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    .tag-pill {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      padding: 5px 11px;
+      border-radius: 100px;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      background: rgba(148, 163, 184, 0.04);
+      transition: border-color 0.2s, color 0.2s, background 0.2s;
+      cursor: default;
+      white-space: nowrap;
+    }
+    .tag-pill:hover {
+      border-color: var(--border-accent);
+      color: var(--accent);
+      background: rgba(16, 185, 129, 0.06);
+    }
+    /* A few pre-highlighted tags */
+    .tag-pill.tag-active {
+      border-color: var(--border-accent);
+      color: var(--accent);
+      background: rgba(16, 185, 129, 0.08);
+    }
+
+
+    /* ════════════════════════════════════════════
+       TILE 7 — Testimonial Quote (2×1 wide)
+    ════════════════════════════════════════════ */
+
+    .tile-quote {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .quote-mark {
+      font-family: var(--font-heading);
+      font-size: 3.5rem;
+      line-height: 0.8;
+      color: var(--accent);
+      opacity: 0.4;
+      user-select: none;
+    }
+
+    .quote-text {
+      font-family: var(--font-heading);
+      font-size: 1.0625rem;
+      font-weight: 500;
+      color: var(--text);
+      line-height: 1.55;
+      flex: 1;
+    }
+
+    .quote-author {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    .quote-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), #065F46);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-heading);
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .quote-meta-name {
+      font-family: var(--font-heading);
+      font-size: 0.9375rem;
+      font-weight: 600;
+    }
+    .quote-meta-role {
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+    }
+
+    /* Stars */
+    .quote-stars {
+      margin-left: auto;
+      color: #FCD34D;
+      letter-spacing: 1px;
+      font-size: 0.875rem;
+    }
+
+
+    /* ── Mobile: stack all tiles single column ── */
+    @media (max-width: 767px) {
+      .bento-grid {
+        grid-template-columns: 1fr;
+      }
+      .tile-2x2,
+      .tile-2x1,
+      .tile-1x2,
+      .tile-1x1 {
+        grid-column: span 1;
+        grid-row: span 1;
+      }
+      .tile-hero-stat { font-size: 3.5rem; }
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="demo-label">Component Demo</div>
+  <h1 class="demo-title">Bento Grid</h1>
+  <p class="demo-subtitle">Apple-style asymmetric feature grid. Tiles stagger in on load. Demo content: web agency.</p>
+
+  <!-- ════════════════════════════════════════════
+       BENTO GRID
+  ════════════════════════════════════════════ -->
+  <div class="bento-grid" id="bento-grid">
+
+    <!-- TILE 1: Hero Stat — 2×2 large featured -->
+    <div class="bento-tile tile-2x2 tile-hero" data-stagger="0">
+      <div class="tile-hero-badge">Avg. result</div>
+      <div class="tile-hero-eyebrow">Revenue generated</div>
+      <div class="tile-hero-stat">
+        <span class="counter" data-target="4.2">0</span><span>M+</span>
+      </div>
+      <p class="tile-hero-desc">In tracked client revenue across 60+ projects. Every site we ship is built to convert, not just look good.</p>
+    </div>
+
+    <!-- TILE 2: Horizontal feature — 2×1 wide -->
+    <div class="bento-tile tile-2x1 tile-horizontal" data-stagger="1">
+      <div class="tile-icon-wrap">
+        <!-- Lightning bolt — speed/performance -->
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      </div>
+      <div class="tile-text-content">
+        <h3>Deployed in days, not months</h3>
+        <p>Most projects ship in under 3 weeks. Structured kickoff, clear deliverables, no endless revision cycles.</p>
+      </div>
+    </div>
+
+    <!-- TILE 3: Tall vertical — 1×2 -->
+    <div class="bento-tile tile-1x2 tile-tall" data-stagger="2">
+      <div class="tile-tall-icon">
+        <!-- Mobile icon -->
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg>
+      </div>
+      <h3>Mobile-first, always</h3>
+      <p>78% of your traffic is on a phone. We design for that reality from the first wireframe.</p>
+    </div>
+
+    <!-- TILE 4: Small stat — 1×1 -->
+    <div class="bento-tile tile-1x1 tile-small-stat" data-stagger="3">
+      <div class="stat-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      </div>
+      <div>
+        <div class="stat-number"><span class="counter" data-target="98">0</span><span>%</span></div>
+        <div class="stat-label">Client satisfaction</div>
+      </div>
+    </div>
+
+    <!-- TILE 5: Terminal/code snippet — 2×1 wide -->
+    <div class="bento-tile tile-2x1 tile-terminal" data-stagger="4">
+      <div class="terminal-header">
+        <span class="terminal-dot td-red"></span>
+        <span class="terminal-dot td-amber"></span>
+        <span class="terminal-dot td-green"></span>
+        <span class="terminal-title">deploy.sh</span>
+      </div>
+      <div class="terminal-body">
+        <div><span class="t-prompt">$</span> <span class="t-cmd">git push</span> <span class="t-string">origin main</span></div>
+        <div><span class="t-output">Enumerating objects: 14, done.</span></div>
+        <div><span class="t-output">Writing objects: 100% (14/14)</span></div>
+        <div><span class="t-prompt">$</span> <span class="t-cmd">vercel --prod</span></div>
+        <div><span class="t-comment"># ✓ Deployed to production</span></div>
+        <div><span class="t-output">https://your-site.vercel.app</span> <span class="t-cursor"></span></div>
+      </div>
+    </div>
+
+    <!-- TILE 6: Tag cluster — 1×1 small -->
+    <div class="bento-tile tile-1x1 tile-tags" data-stagger="5">
+      <h3>Tech stack</h3>
+      <div class="tag-cloud">
+        <span class="tag-pill tag-active">HTML/CSS</span>
+        <span class="tag-pill tag-active">Vanilla JS</span>
+        <span class="tag-pill">Vercel</span>
+        <span class="tag-pill">GHL</span>
+        <span class="tag-pill">WordPress</span>
+        <span class="tag-pill">Hostinger</span>
+        <span class="tag-pill">FTP</span>
+        <span class="tag-pill">Webhooks</span>
+      </div>
+    </div>
+
+    <!-- TILE 7: Testimonial quote — 2×1 wide -->
+    <div class="bento-tile tile-2x1 tile-quote" data-stagger="6">
+      <div class="quote-mark">"</div>
+      <p class="quote-text">They handed us a site that felt like it cost three times what we paid. Leads came in the first week. Genuinely the best money we've spent on marketing.</p>
+      <div class="quote-author">
+        <div class="quote-avatar">MR</div>
+        <div>
+          <div class="quote-meta-name">Marcus Reid</div>
+          <div class="quote-meta-role">Owner, Reid Home Buyers</div>
+        </div>
+        <div class="quote-stars">★★★★★</div>
+      </div>
+    </div>
+
+  </div><!-- /bento-grid -->
+
+
+  <script>
+  /*
+  ════════════════════════════════════════
+  BENTO GRID — entrance animation + counter
+  ════════════════════════════════════════
+  */
+
+  /* Staggered entrance: each tile reveals with a slight delay based on data-stagger */
+  var tiles = document.querySelectorAll('.bento-tile');
+  tiles.forEach(function(tile) {
+    var delay = parseInt(tile.getAttribute('data-stagger') || 0, 10) * 80;
+    setTimeout(function() {
+      tile.classList.add('bento-visible');
+    }, 120 + delay);
+  });
+
+  /*
+  Animated number counter for .counter elements.
+  Reads data-target attribute for the end value.
+  Uses easeOutQuart for a natural deceleration.
+  */
+  function animateCounter(el) {
+    var target   = parseFloat(el.getAttribute('data-target'));
+    var isFloat  = String(target).includes('.');
+    var duration = 1800; // ms
+    var start    = null;
+
+    function easeOutQuart(t) {
+      return 1 - Math.pow(1 - t, 4);
+    }
+
+    function step(timestamp) {
+      if (!start) start = timestamp;
+      var elapsed  = timestamp - start;
+      var progress = Math.min(elapsed / duration, 1);
+      var value    = target * easeOutQuart(progress);
+      el.textContent = isFloat ? value.toFixed(1) : Math.floor(value).toLocaleString();
+      if (progress < 1) requestAnimationFrame(step);
+    }
+
+    requestAnimationFrame(step);
+  }
+
+  /* Fire counters after tiles are visible */
+  setTimeout(function() {
+    document.querySelectorAll('.counter').forEach(animateCounter);
+  }, 400);
+  </script>
+
+</body>
+</html>

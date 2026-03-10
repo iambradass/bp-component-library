@@ -1,0 +1,487 @@
+<!-- COMPONENT: Achievement Unlock | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Achievement Badge System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      /* ── CUSTOMIZE ── */
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --gold:           #FBBF24;
+      --gold-dim:       rgba(251,191,36,0.15);
+      --gold-border:    rgba(251,191,36,0.3);
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+
+      /* XP bar config */
+      --xp-level-max: 2000;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      padding: 3rem 1.5rem 5rem;
+      overflow-x: hidden;
+    }
+
+    .wrap { max-width: 960px; margin: 0 auto; }
+
+    .page-header { text-align: center; margin-bottom: 2rem; }
+    .page-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 0.7rem; font-weight: 600; color: var(--accent);
+      text-transform: uppercase; letter-spacing: 0.1em;
+      padding: 4px 12px; background: var(--accent-dim);
+      border: 1px solid var(--accent-border); border-radius: 100px; margin-bottom: 1.25rem;
+    }
+    h1 { font-family: var(--font-heading); font-size: clamp(1.75rem,4vw,2.5rem); font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.75rem; }
+    .page-sub { color: var(--text-secondary); font-size: 0.95rem; line-height: 1.6; }
+
+    /* ── XP Progress bar ── */
+    .xp-bar-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+    }
+    @media (max-width: 500px) { .xp-bar-card { flex-direction: column; align-items: stretch; gap: 0.875rem; } }
+
+    .xp-level-badge {
+      font-family: var(--font-heading); font-size: 0.85rem; font-weight: 700;
+      padding: 6px 16px;
+      background: var(--gold-dim); color: var(--gold);
+      border: 1px solid var(--gold-border); border-radius: 100px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .xp-bar-wrap { flex: 1; }
+    .xp-bar-label {
+      display: flex; justify-content: space-between;
+      font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.5rem;
+    }
+    .xp-bar-track {
+      height: 8px; background: var(--elevated);
+      border-radius: 100px; overflow: hidden;
+    }
+    .xp-bar-fill {
+      height: 100%; border-radius: 100px;
+      background: linear-gradient(90deg, var(--gold), #f59e0b);
+      transition: width 0.6s cubic-bezier(0.34,1.56,0.64,1);
+      position: relative;
+    }
+    /* Shimmer effect on the XP bar */
+    .xp-bar-fill::after {
+      content: '';
+      position: absolute; top: 0; right: -30px;
+      width: 30px; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+      animation: shimmer 2s ease-in-out infinite;
+    }
+    @keyframes shimmer { 0%,100%{opacity:0} 50%{opacity:1} }
+
+    .xp-total {
+      font-family: var(--font-heading); font-size: 0.9rem; font-weight: 700;
+      color: var(--gold); white-space: nowrap; flex-shrink: 0;
+    }
+
+    /* ── Achievement grid ── */
+    .ach-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.875rem;
+    }
+    @media (max-width: 720px) { .ach-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 480px) { .ach-grid { grid-template-columns: repeat(2, 1fr); } }
+
+    /* Achievement card */
+    .ach-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem 1rem;
+      text-align: center;
+      display: flex; flex-direction: column; align-items: center; gap: 0.625rem;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s, border-color 0.2s;
+      user-select: none;
+    }
+    .ach-card:hover { transform: translateY(-2px); }
+
+    /* Locked state — grayscale + blur */
+    .ach-card.locked {
+      filter: grayscale(1);
+      opacity: 0.55;
+      cursor: pointer;
+    }
+    .ach-card.locked:hover { filter: grayscale(0.5); opacity: 0.75; }
+
+    /* Unlocked */
+    .ach-card.unlocked {
+      filter: none; opacity: 1;
+      border-color: var(--gold-border);
+      background: linear-gradient(135deg, var(--surface), var(--elevated));
+    }
+
+    /* Unlock animation states */
+    .ach-card.glow-pulse {
+      animation: achGlow 0.4s ease-in-out;
+    }
+    .ach-card.shake-anim {
+      animation: achShake 0.35s ease-in-out;
+    }
+    .ach-card.crack-open {
+      animation: achCrack 0.3s ease-in-out;
+    }
+    .ach-card.flip-unlock {
+      animation: achFlip 0.5s cubic-bezier(0.34,1.56,0.64,1);
+    }
+
+    @keyframes achGlow {
+      0%,100% { box-shadow: none; }
+      50%      { box-shadow: 0 0 0 4px var(--gold-border), 0 0 24px rgba(251,191,36,0.4); }
+    }
+    @keyframes achShake {
+      0%,100% { transform: translate(0,0); }
+      20%      { transform: translate(-4px, 0); }
+      40%      { transform: translate(4px,-2px); }
+      60%      { transform: translate(-3px, 1px); }
+      80%      { transform: translate(3px, 0); }
+    }
+    @keyframes achCrack {
+      0%   { transform: scale(1); }
+      50%  { transform: scale(1.05) rotate(2deg); }
+      100% { transform: scale(1); }
+    }
+    @keyframes achFlip {
+      0%   { transform: scale(0.8) rotateY(-90deg); opacity: 0.3; }
+      100% { transform: scale(1) rotateY(0deg); opacity: 1; }
+    }
+
+    .ach-icon { font-size: 2rem; line-height: 1; }
+    .ach-name {
+      font-family: var(--font-heading); font-size: 0.78rem; font-weight: 700;
+      color: var(--text); line-height: 1.3;
+    }
+    .ach-desc {
+      font-size: 0.68rem; color: var(--text-muted); line-height: 1.4;
+    }
+    .ach-xp {
+      font-family: var(--font-heading); font-size: 0.72rem; font-weight: 700;
+      color: var(--gold); padding: 2px 8px;
+      background: var(--gold-dim); border: 1px solid var(--gold-border);
+      border-radius: 100px;
+    }
+    .ach-card.locked .ach-xp { color: var(--text-muted); background: transparent; border-color: var(--border); }
+
+    /* Lock icon overlay on locked cards */
+    .lock-overlay {
+      position: absolute; top: 6px; right: 6px;
+      color: var(--text-muted); font-size: 0.8rem;
+    }
+    .ach-card.unlocked .lock-overlay { display: none; }
+
+    /* Confetti particles spawned by JS */
+    .confetti-particle {
+      position: fixed;
+      width: 8px; height: 8px;
+      border-radius: 2px;
+      pointer-events: none;
+      z-index: 9999;
+      animation: confettiFall var(--dur) ease-out forwards;
+    }
+    @keyframes confettiFall {
+      0%   { transform: translate(0,0) rotate(0deg) scale(1); opacity: 1; }
+      100% { transform: translate(var(--dx), var(--dy)) rotate(var(--rot)) scale(0.4); opacity: 0; }
+    }
+
+    /* ── Level-up overlay ── */
+    .levelup-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.85);
+      z-index: 10000;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.3s;
+    }
+    .levelup-overlay.visible { opacity: 1; pointer-events: auto; }
+
+    .levelup-inner {
+      text-align: center;
+      animation: levelUpPop 0.5s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    @keyframes levelUpPop {
+      from { transform: scale(0.4); opacity: 0; }
+      to   { transform: scale(1); opacity: 1; }
+    }
+
+    .levelup-label {
+      font-family: var(--font-heading); font-size: 0.85rem; font-weight: 700;
+      color: var(--gold); text-transform: uppercase; letter-spacing: 0.2em;
+      margin-bottom: 0.5rem;
+    }
+    .levelup-text {
+      font-family: var(--font-heading); font-size: clamp(3rem, 10vw, 6rem);
+      font-weight: 700; letter-spacing: -0.03em;
+      background: linear-gradient(135deg, var(--gold), #fff);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      line-height: 1;
+      margin-bottom: 0.75rem;
+    }
+    .levelup-sub { color: var(--text-secondary); font-size: 1rem; }
+    .levelup-close {
+      margin-top: 2rem; padding: 0.75rem 2rem;
+      background: var(--accent); color: var(--bg);
+      font-family: var(--font-heading); font-weight: 700;
+      border: none; border-radius: 10px; cursor: pointer; font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="wrap">
+    <header class="page-header">
+      <div class="page-eyebrow">Gamification</div>
+      <h1>Achievement Badge System</h1>
+      <p class="page-sub">Click any locked achievement to unlock it. Watch the animation sequence — glow, shake, crack, confetti burst, flip to unlocked. XP bar updates live.</p>
+    </header>
+
+    <!-- XP bar -->
+    <div class="xp-bar-card">
+      <div class="xp-level-badge" id="levelBadge">Level 4</div>
+      <div class="xp-bar-wrap">
+        <div class="xp-bar-label">
+          <span id="xpLabel">Progress to Level 5</span>
+          <span id="xpNumbers">1,240 / 2,000 XP</span>
+        </div>
+        <div class="xp-bar-track">
+          <div class="xp-bar-fill" id="xpFill" style="width:62%"></div>
+        </div>
+      </div>
+      <div class="xp-total" id="xpTotal">1,240 XP</div>
+    </div>
+
+    <!-- Achievement grid -->
+    <div class="ach-grid" id="achGrid">
+      <!-- Rendered by JS -->
+    </div>
+  </div>
+
+  <!-- Level-up overlay -->
+  <div class="levelup-overlay" id="levelupOverlay">
+    <div class="levelup-inner">
+      <div class="levelup-label">Achievement Unlocked!</div>
+      <div class="levelup-text" id="levelupText">LEVEL UP!</div>
+      <div class="levelup-sub" id="levelupSub">You've reached Level 5</div>
+      <button class="levelup-close" onclick="dismissLevelup()">Awesome!</button>
+    </div>
+  </div>
+
+  <script>
+    /* ─────────────────────────────────────────────
+       ACHIEVEMENT SYSTEM
+       State: each achievement has unlocked:bool and xp value.
+       Clicking a locked achievement runs a 4-phase animation:
+         1. Glow pulse (0ms)
+         2. Shake (400ms)
+         3. Crack open (750ms)
+         4. Confetti burst (1000ms)
+         5. Card flip to unlocked (1100ms)
+         6. XP count-up (1100ms)
+       On level-up, show fullscreen overlay.
+    ───────────────────────────────────────────── */
+
+    const LEVEL_THRESHOLDS = [0, 500, 1000, 1500, 2000, 3000, 4500, 6500, 9000];
+    const CONFETTI_COLORS  = ['#10B981','#FBBF24','#60A5FA','#F87171','#A78BFA','#34D399'];
+
+    const achievements = [
+      { id: 0,  icon: '🚀', name: 'First Project',     desc: 'Shipped your first live project',       xp: 100, unlocked: true  },
+      { id: 1,  icon: '🌙', name: 'Night Owl',          desc: 'Committed code past midnight',          xp: 75,  unlocked: true  },
+      { id: 2,  icon: '⚡', name: 'Speed Demon',        desc: 'Delivered a project in under 1 week',   xp: 200, unlocked: true  },
+      { id: 3,  icon: '⭐', name: '5-Star Rating',      desc: 'Received a perfect 5-star review',      xp: 150, unlocked: true  },
+      { id: 4,  icon: '🏆', name: '10 Projects',        desc: 'Completed 10 live projects',             xp: 250, unlocked: true  },
+      { id: 5,  icon: '🧙', name: 'Code Whisperer',     desc: 'Fixed a bug with a single character',   xp: 100, unlocked: true  },
+      { id: 6,  icon: '🔥', name: 'On a Roll',          desc: '3 projects delivered in one month',     xp: 175, unlocked: true  },
+      { id: 7,  icon: '💰', name: 'Revenue Milestone',  desc: 'Crossed $50K in billed revenue',        xp: 300, unlocked: true  },
+      { id: 8,  icon: '📈', name: 'Traffic Tripler',    desc: "Tripled a client's organic traffic",    xp: 200, unlocked: false },
+      { id: 9,  icon: '🎯', name: 'Conversion King',    desc: 'Achieved 10%+ conversion rate',         xp: 225, unlocked: false },
+      { id: 10, icon: '🌐', name: 'Global Reach',       desc: 'Built a site with 10K monthly visitors',xp: 175, unlocked: false },
+      { id: 11, icon: '🤝', name: 'Agency Partner',     desc: 'Signed a recurring agency contract',    xp: 250, unlocked: false },
+    ];
+
+    // XP state
+    let currentXP = 1240;
+    let currentLevel = 4;
+
+    function getLevel(xp) {
+      for (let i = LEVEL_THRESHOLDS.length - 1; i >= 0; i--) {
+        if (xp >= LEVEL_THRESHOLDS[i]) return i + 1;
+      }
+      return 1;
+    }
+
+    function getNextLevelXP(level) {
+      return LEVEL_THRESHOLDS[level] || LEVEL_THRESHOLDS[LEVEL_THRESHOLDS.length - 1] + 1000;
+    }
+
+    function updateXPBar(addedXP) {
+      const startXP  = currentXP;
+      const targetXP = currentXP + addedXP;
+      const duration = 800;
+      const start    = performance.now();
+
+      function frame(now) {
+        const t    = Math.min((now - start) / duration, 1);
+        const ease = 1 - Math.pow(1 - t, 3);
+        const xp   = Math.round(startXP + (targetXP - startXP) * ease);
+
+        const level      = getLevel(xp);
+        const levelStart = LEVEL_THRESHOLDS[level - 1] || 0;
+        const levelEnd   = getNextLevelXP(level);
+        const pct        = Math.min(((xp - levelStart) / (levelEnd - levelStart)) * 100, 100);
+
+        document.getElementById('xpFill').style.width   = pct + '%';
+        document.getElementById('xpTotal').textContent  = xp.toLocaleString() + ' XP';
+        document.getElementById('xpNumbers').textContent = xp.toLocaleString() + ' / ' + levelEnd.toLocaleString() + ' XP';
+        document.getElementById('levelBadge').textContent = 'Level ' + level;
+
+        if (t < 1) requestAnimationFrame(frame);
+        else {
+          currentXP = targetXP;
+          const newLevel = getLevel(targetXP);
+          if (newLevel > currentLevel) {
+            currentLevel = newLevel;
+            setTimeout(() => showLevelup(newLevel), 400);
+          }
+        }
+      }
+      requestAnimationFrame(frame);
+    }
+
+    /* ── Confetti burst from a card element ── */
+    function burstConfetti(el) {
+      const rect  = el.getBoundingClientRect();
+      const cx    = rect.left + rect.width  / 2;
+      const cy    = rect.top  + rect.height / 2;
+      const count = 28;
+
+      for (let i = 0; i < count; i++) {
+        const p = document.createElement('div');
+        p.className = 'confetti-particle';
+
+        const angle  = (i / count) * Math.PI * 2;
+        const dist   = 80 + Math.random() * 120;
+        const dx     = Math.cos(angle) * dist;
+        const dy     = Math.sin(angle) * dist - 50; // bias upward
+        const rot    = (Math.random() - 0.5) * 720 + 'deg';
+        const dur    = (0.6 + Math.random() * 0.5) + 's';
+        const color  = CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)];
+        const size   = (6 + Math.random() * 8) + 'px';
+
+        p.style.cssText = `
+          left:${cx}px; top:${cy}px;
+          background:${color}; width:${size}; height:${size};
+          --dx:${dx}px; --dy:${dy}px; --rot:${rot}; --dur:${dur};
+        `;
+        document.body.appendChild(p);
+        p.addEventListener('animationend', () => p.remove());
+      }
+    }
+
+    /* ── Unlock sequence ── */
+    function unlockAchievement(idx) {
+      const ach  = achievements[idx];
+      if (ach.unlocked) return;
+      ach.unlocked = true;
+
+      const card = document.getElementById('ach-' + idx);
+      if (!card) return;
+
+      // Phase 1: glow
+      card.classList.add('glow-pulse');
+
+      // Phase 2: shake
+      setTimeout(() => {
+        card.classList.remove('glow-pulse');
+        card.classList.add('shake-anim');
+      }, 400);
+
+      // Phase 3: crack
+      setTimeout(() => {
+        card.classList.remove('shake-anim');
+        card.classList.add('crack-open');
+      }, 800);
+
+      // Phase 4: confetti + flip
+      setTimeout(() => {
+        card.classList.remove('crack-open');
+        burstConfetti(card);
+        // Mark unlocked — triggers CSS changes
+        card.classList.remove('locked');
+        card.classList.add('unlocked', 'flip-unlock');
+        // Remove lock overlay
+        card.querySelector('.lock-overlay')?.remove();
+        setTimeout(() => card.classList.remove('flip-unlock'), 600);
+
+        // XP count-up
+        updateXPBar(ach.xp);
+      }, 1100);
+    }
+
+    /* ── Level-up overlay ── */
+    function showLevelup(level) {
+      document.getElementById('levelupText').textContent = 'LEVEL ' + level + '!';
+      document.getElementById('levelupSub').textContent  = 'You\'ve reached Level ' + level;
+      document.getElementById('levelupOverlay').classList.add('visible');
+    }
+    function dismissLevelup() {
+      document.getElementById('levelupOverlay').classList.remove('visible');
+    }
+
+    /* ── Render achievement grid ── */
+    function render() {
+      const grid = document.getElementById('achGrid');
+      grid.innerHTML = achievements.map(a => `
+        <div class="ach-card ${a.unlocked ? 'unlocked' : 'locked'}"
+             id="ach-${a.id}"
+             onclick="unlockAchievement(${a.id})"
+             title="${a.unlocked ? 'Already unlocked' : 'Click to unlock!'}">
+          ${!a.unlocked ? '<span class="lock-overlay">🔒</span>' : ''}
+          <div class="ach-icon">${a.icon}</div>
+          <div class="ach-name">${a.name}</div>
+          <div class="ach-desc">${a.desc}</div>
+          <div class="ach-xp">+${a.xp} XP</div>
+        </div>
+      `).join('');
+    }
+
+    render();
+  </script>
+</body>
+</html>

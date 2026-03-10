@@ -1,0 +1,473 @@
+<!-- COMPONENT: Empty State Designs | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Empty States</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ── Customize ── */
+    :root {
+      --bg:            #0D1117;
+      --surface:       #111827;
+      --elevated:      #1E293B;
+      --accent:        #10B981;
+      --accent-dim:    rgba(16,185,129,0.15);
+      --accent-border: rgba(16,185,129,0.3);
+      --border:        rgba(148,163,184,0.1);
+      --text:          #F8FAFC;
+      --text-secondary:#94A3B8;
+      --text-muted:    #475569;
+      --radius:        12px;
+      --font-heading:  'Space Grotesk', sans-serif;
+      --font-body:     'Inter', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      padding: 2.5rem 1rem 4rem;
+    }
+
+    .page-wrap {
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .page-title {
+      font-family: var(--font-heading);
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .page-sub {
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+    }
+
+    /* ── Grid of empty state cards ── */
+    .states-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.25rem;
+    }
+
+    /* ── Each empty state card ── */
+    .empty-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 0;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .empty-card:hover {
+      border-color: var(--accent-border);
+      box-shadow: 0 0 0 1px var(--accent-border);
+    }
+
+    /* ── Illustration area ── */
+    .empty-illustration {
+      width: 80px;
+      height: 80px;
+      margin-bottom: 1.5rem;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Soft glow ring behind illustration */
+    .empty-illustration::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: var(--accent-dim);
+    }
+
+    /* Override illustration background per card type */
+    .empty-card.error   .empty-illustration::before { background: rgba(239,68,68,0.1); }
+    .empty-card.offline .empty-illustration::before { background: rgba(100,116,139,0.15); }
+    .empty-card.warning .empty-illustration::before { background: rgba(251,191,36,0.1); }
+    .empty-card.cart    .empty-illustration::before { background: rgba(139,92,246,0.1); }
+    .empty-card.welcome .empty-illustration::before { background: rgba(16,185,129,0.12); }
+
+    .empty-illustration svg {
+      position: relative;
+      z-index: 1;
+      color: var(--accent);
+    }
+
+    .empty-card.error   .empty-illustration svg { color: #EF4444; }
+    .empty-card.offline .empty-illustration svg { color: #94A3B8; }
+    .empty-card.warning .empty-illustration svg { color: #FBBF24; }
+    .empty-card.cart    .empty-illustration svg { color: #8B5CF6; }
+
+    /* ── Text ── */
+    .empty-headline {
+      font-family: var(--font-heading);
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .empty-sub {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 1.5rem;
+      max-width: 220px;
+    }
+
+    /* ── CTA buttons ── */
+    .empty-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--accent);
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      padding: 0.55rem 1.2rem;
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      text-decoration: none;
+      transition: filter 0.15s;
+    }
+    .empty-cta:hover { filter: brightness(1.1); }
+
+    .empty-cta.secondary {
+      background: var(--elevated);
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
+    .empty-cta.secondary:hover { border-color: var(--accent-border); color: var(--text); }
+
+    .empty-cta.danger {
+      background: rgba(239,68,68,0.15);
+      color: #EF4444;
+      border: 1px solid rgba(239,68,68,0.3);
+    }
+    .empty-cta.danger:hover { background: rgba(239,68,68,0.25); }
+
+    .empty-cta.purple {
+      background: rgba(139,92,246,0.15);
+      color: #8B5CF6;
+      border: 1px solid rgba(139,92,246,0.3);
+    }
+    .empty-cta.purple:hover { background: rgba(139,92,246,0.25); }
+
+    .cta-row {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    /* ── Suggestions for "No results" ── */
+    .suggestions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      margin-bottom: 1.5rem;
+      text-align: left;
+      width: 100%;
+    }
+
+    .suggestion-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    .suggestion-item::before {
+      content: '';
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    /* ── First-time welcome: 3 action cards ── */
+    .welcome-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      width: 100%;
+      margin-bottom: 1.25rem;
+    }
+
+    .welcome-action-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.7rem 0.9rem;
+      text-align: left;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+
+    .welcome-action-item:hover { border-color: var(--accent-border); }
+
+    .wa-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: var(--accent-dim);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .wa-text { flex: 1; }
+    .wa-title { font-size: 0.85rem; font-weight: 600; }
+    .wa-desc  { font-size: 0.75rem; color: var(--text-secondary); }
+
+    /* ── Retry animation ── */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinning { animation: spin 1s linear infinite; }
+
+    /* ── Offline: animated satellite orbit ── */
+    .offline-orbit {
+      position: relative;
+      width: 60px;
+      height: 60px;
+    }
+
+    .orbit-ring {
+      position: absolute;
+      inset: 0;
+      border: 1.5px dashed rgba(148,163,184,0.3);
+      border-radius: 50%;
+    }
+
+    .orbit-dot {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      background: #94A3B8;
+      border-radius: 50%;
+      top: -4px;
+      left: 50%;
+      transform: translateX(-50%);
+      animation: orbit 3s linear infinite;
+    }
+
+    @keyframes orbit {
+      from { transform: translateX(-50%) rotate(0deg) translateY(30px) rotate(0deg); }
+      to   { transform: translateX(-50%) rotate(360deg) translateY(30px) rotate(-360deg); }
+    }
+
+    .orbit-center {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ── Loading bar (maintenance) ── */
+    .progress-bar-wrap {
+      width: 100%;
+      height: 6px;
+      background: var(--elevated);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 1rem;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 999px;
+      animation: slowFill 8s ease-in-out infinite alternate;
+    }
+
+    @keyframes slowFill {
+      from { width: 15%; }
+      to   { width: 72%; }
+    }
+
+    /* Section label */
+    .card-label {
+      position: absolute;
+      top: 0.75rem;
+      right: 0.75rem;
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page-wrap">
+    <div class="page-header">
+      <h1 class="page-title">Empty States</h1>
+      <p class="page-sub">Eight polished empty state patterns for different contexts</p>
+    </div>
+
+    <div class="states-grid">
+
+      <!-- 1. No search results -->
+      <div class="empty-card" style="position:relative">
+        <span class="card-label">No Results</span>
+        <div class="empty-illustration">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+        </div>
+        <div class="empty-headline">No results found</div>
+        <p class="empty-sub">We couldn't find anything matching "design tokens". Try a different query.</p>
+        <div class="suggestions">
+          <div class="suggestion-item">Check for typos or misspellings</div>
+          <div class="suggestion-item">Try more general terms</div>
+          <div class="suggestion-item">Search by category instead</div>
+        </div>
+        <button class="empty-cta secondary">Clear search</button>
+      </div>
+
+      <!-- 2. Empty inbox -->
+      <div class="empty-card" style="position:relative">
+        <span class="card-label">Empty Inbox</span>
+        <div class="empty-illustration">
+          <!-- CSS envelope illustration -->
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+        </div>
+        <div class="empty-headline">You're all caught up!</div>
+        <p class="empty-sub">No new messages in your inbox. Everything is read and replied to.</p>
+        <button class="empty-cta">Compose message</button>
+      </div>
+
+      <!-- 3. No data yet -->
+      <div class="empty-card" style="position:relative">
+        <span class="card-label">No Data</span>
+        <div class="empty-illustration">
+          <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="14"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="10"/><line x1="2" y1="20" x2="22" y2="20"/><circle cx="18" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="2" r="1.5" fill="currentColor"/><circle cx="6" cy="8" r="1.5" fill="currentColor"/></svg>
+        </div>
+        <div class="empty-headline">No data to display</div>
+        <p class="empty-sub">Your chart will appear here once you add your first entry. Start tracking your metrics today.</p>
+        <button class="empty-cta">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add first entry
+        </button>
+      </div>
+
+      <!-- 4. Error loading -->
+      <div class="empty-card error" style="position:relative">
+        <span class="card-label">Error</span>
+        <div class="empty-illustration">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+        <div class="empty-headline">Failed to load data</div>
+        <p class="empty-sub">Something went wrong while fetching your data. This is on us — please try again.</p>
+        <div class="cta-row">
+          <button class="empty-cta danger" id="retryBtn" onclick="this.querySelector('svg').classList.add('spinning'); setTimeout(()=>this.querySelector('svg').classList.remove('spinning'),1200)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.5"/></svg>
+            Retry
+          </button>
+          <button class="empty-cta secondary">Status page</button>
+        </div>
+      </div>
+
+      <!-- 5. Offline -->
+      <div class="empty-card offline" style="position:relative">
+        <span class="card-label">Offline</span>
+        <div class="empty-illustration" style="z-index:1">
+          <div class="offline-orbit">
+            <div class="orbit-ring"></div>
+            <div class="orbit-dot"></div>
+            <div class="orbit-center">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.56 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+            </div>
+          </div>
+        </div>
+        <div class="empty-headline">No internet connection</div>
+        <p class="empty-sub">Check your Wi-Fi or mobile data and try again. Your recent work has been saved locally.</p>
+        <button class="empty-cta secondary">Check connection</button>
+      </div>
+
+      <!-- 6. No notifications -->
+      <div class="empty-card" style="position:relative">
+        <span class="card-label">Notifications</span>
+        <div class="empty-illustration">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/><line x1="12" y1="2" x2="12" y2="4"/></svg>
+        </div>
+        <div class="empty-headline">Nothing new here</div>
+        <p class="empty-sub">You're all caught up! We'll let you know when something needs your attention.</p>
+        <button class="empty-cta secondary">Notification settings</button>
+      </div>
+
+      <!-- 7. Empty cart -->
+      <div class="empty-card cart" style="position:relative">
+        <span class="card-label">Empty Cart</span>
+        <div class="empty-illustration">
+          <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        </div>
+        <div class="empty-headline">Your cart is empty</div>
+        <p class="empty-sub">Looks like you haven't added anything yet. Browse our catalog to find something you'll love.</p>
+        <button class="empty-cta purple">Browse catalog</button>
+      </div>
+
+      <!-- 8. First-time user welcome -->
+      <div class="empty-card welcome" style="position:relative">
+        <span class="card-label">Welcome</span>
+        <div class="empty-illustration">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3z"/></svg>
+        </div>
+        <div class="empty-headline">Welcome to your workspace</div>
+        <p class="empty-sub">You're just getting started. Complete these steps to set up your account.</p>
+        <div class="welcome-actions">
+          <div class="welcome-action-item">
+            <div class="wa-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+            <div class="wa-text"><div class="wa-title">Complete your profile</div><div class="wa-desc">Add a photo and bio</div></div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-muted)"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+          <div class="welcome-action-item">
+            <div class="wa-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+            <div class="wa-text"><div class="wa-title">Invite teammates</div><div class="wa-desc">Collaborate with your team</div></div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-muted)"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+          <div class="welcome-action-item">
+            <div class="wa-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></div>
+            <div class="wa-text"><div class="wa-title">Connect an integration</div><div class="wa-desc">Slack, GitHub, and more</div></div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-muted)"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+        </div>
+        <button class="empty-cta">Get started</button>
+      </div>
+
+    </div><!-- /states-grid -->
+  </div><!-- /page-wrap -->
+
+</body>
+</html>

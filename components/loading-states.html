@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loading States — Component Library</title>
+  <!-- COMPONENT: Loading States | COPY: style + html + script -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── CUSTOMIZE ─────────────────────────────────────────────── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --shimmer:        rgba(255,255,255,0.04);
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+    }
+    /* ── END CUSTOMIZE ─────────────────────────────────────────── */
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      padding: 2rem 1.5rem 5rem;
+    }
+
+    .page-title { font-family: var(--font-heading); font-size: clamp(1.5rem,4vw,2.25rem); font-weight:700; letter-spacing:-0.02em; margin-bottom:0.4rem; }
+    .page-sub { color: var(--text-secondary); font-size:0.9375rem; margin-bottom:3rem; }
+    .max-wrap { max-width:960px; margin:0 auto; }
+
+    .section-title {
+      font-family: var(--font-heading);
+      font-size: 1rem; font-weight: 600;
+      color: var(--accent);
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .demo-block {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    /* Replay button */
+    .replay-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-family: var(--font-heading); font-size:0.75rem; font-weight:600;
+      color: var(--text-muted);
+      background: var(--elevated); border: 1px solid var(--border);
+      border-radius: 6px; padding: 4px 10px;
+      cursor: pointer; margin-top: 0.75rem;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .replay-btn:hover { border-color: var(--accent-border); color: var(--accent); }
+
+    /* Grid for spinners */
+    .spinner-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+    }
+    @media (max-width: 600px) { .spinner-grid { grid-template-columns: repeat(2, 1fr); } }
+
+    .spinner-cell {
+      display: flex; flex-direction: column; align-items: center; gap: 0.75rem;
+    }
+    .spinner-label { font-size:0.6875rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.07em; text-align:center; }
+
+    /* ── SPINNER 1 — Rotating ring ─────────────────────────── */
+    .spin-ring {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      border: 3px solid var(--elevated);
+      border-top-color: var(--accent);
+      animation: spin-r 0.8s linear infinite;
+    }
+    @keyframes spin-r { to { transform: rotate(360deg); } }
+
+    /* ── SPINNER 2 — Bouncing dots ─────────────────────────── */
+    .spin-dots { display: flex; gap: 6px; align-items: center; height: 44px; }
+    .spin-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: bounce-dot 1s ease-in-out infinite;
+    }
+    .spin-dot:nth-child(2) { animation-delay: 0.15s; }
+    .spin-dot:nth-child(3) { animation-delay: 0.3s; }
+    @keyframes bounce-dot {
+      0%,60%,100% { transform: translateY(0); opacity: 0.5; }
+      30%          { transform: translateY(-12px); opacity: 1; }
+    }
+
+    /* ── SPINNER 3 — Pulse ring ────────────────────────────── */
+    .spin-pulse {
+      position: relative; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;
+    }
+    .spin-pulse-core {
+      width: 12px; height: 12px; border-radius: 50%; background: var(--accent);
+    }
+    .spin-pulse-ring {
+      position: absolute; inset: 0;
+      border-radius: 50%;
+      border: 2px solid var(--accent);
+      animation: pulse-ring 1.4s ease-out infinite;
+      opacity: 0;
+    }
+    .spin-pulse-ring:nth-child(2) { animation-delay: 0.5s; }
+    @keyframes pulse-ring {
+      0%   { transform: scale(0.4); opacity: 0.8; }
+      100% { transform: scale(1.6); opacity: 0; }
+    }
+
+    /* ── SPINNER 4 — Morphing blob ─────────────────────────── */
+    .spin-blob {
+      width: 44px; height: 44px;
+      background: var(--accent);
+      border-radius: 50%;
+      animation: morph-blob 2s ease-in-out infinite;
+    }
+    @keyframes morph-blob {
+      0%,100% { border-radius: 50%; transform: rotate(0deg); }
+      25%  { border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%; transform: rotate(45deg); }
+      50%  { border-radius: 70% 30% 50% 50% / 30% 30% 70% 70%; transform: rotate(90deg); }
+      75%  { border-radius: 30% 70% 30% 70% / 60% 40% 60% 40%; transform: rotate(135deg); }
+    }
+
+    /* ── SPINNER 5 — Text loading ──────────────────────────── */
+    .spin-text {
+      font-family: var(--font-heading);
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      height: 44px; display: flex; align-items: center;
+    }
+    .spin-text span {
+      display: inline-block;
+      animation: letter-appear 1.5s ease infinite;
+      opacity: 0;
+    }
+    .spin-text span:nth-child(1)  { animation-delay: 0.0s; }
+    .spin-text span:nth-child(2)  { animation-delay: 0.1s; }
+    .spin-text span:nth-child(3)  { animation-delay: 0.2s; }
+    .spin-text span:nth-child(4)  { animation-delay: 0.3s; }
+    .spin-text span:nth-child(5)  { animation-delay: 0.4s; }
+    .spin-text span:nth-child(6)  { animation-delay: 0.5s; }
+    .spin-text span:nth-child(7)  { animation-delay: 0.6s; }
+    .spin-text span:nth-child(8)  { animation-delay: 0.7s; }
+    .spin-text span:nth-child(9)  { animation-delay: 0.8s; }
+    .spin-text span:nth-child(10) { animation-delay: 0.9s; }
+    @keyframes letter-appear {
+      0%,10%  { opacity: 0; transform: translateY(4px); }
+      20%,60% { opacity: 1; transform: translateY(0); }
+      80%,100%{ opacity: 0; }
+    }
+
+    /* ── SPINNER 6 — Dual ring ─────────────────────────────── */
+    .spin-dual {
+      width: 44px; height: 44px;
+      position: relative;
+    }
+    .spin-dual .ring {
+      position: absolute; inset: 0;
+      border-radius: 50%;
+      border: 3px solid transparent;
+    }
+    .spin-dual .ring-a {
+      border-top-color: var(--accent);
+      animation: spin-r 0.9s linear infinite;
+    }
+    .spin-dual .ring-b {
+      inset: 6px;
+      border-bottom-color: rgba(16,185,129,0.5);
+      animation: spin-r 0.7s linear infinite reverse;
+    }
+
+    /* ── PROGRESS ────────────────────────────────────────────── */
+    .progress-stack { display: flex; flex-direction: column; gap: 1.5rem; }
+
+    /* P1 — Linear bar with shimmer */
+    .prog-track {
+      background: var(--elevated);
+      border-radius: 100px;
+      height: 8px;
+      overflow: hidden;
+      position: relative;
+    }
+    .prog-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 100px;
+      position: relative;
+      overflow: hidden;
+    }
+    .prog-fill::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%);
+      animation: shimmer-sweep 1.5s linear infinite;
+    }
+    @keyframes shimmer-sweep {
+      0%   { transform: translateX(-100%); }
+      100% { transform: translateX(200%); }
+    }
+
+    /* P2 — Segmented bar */
+    .prog-segments { display: flex; gap: 3px; }
+    .prog-seg {
+      flex: 1; height: 8px; border-radius: 3px;
+      background: var(--elevated);
+    }
+    .prog-seg.active { background: var(--accent); }
+
+    /* P3 — Step dots */
+    .prog-step-dots { display: flex; gap: 12px; align-items: center; }
+    .step-dot {
+      width: 12px; height: 12px; border-radius: 50%;
+      background: var(--elevated);
+      border: 2px solid var(--border);
+      transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    .step-dot.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      box-shadow: 0 0 8px rgba(16,185,129,0.5);
+    }
+    .step-dot.done {
+      background: rgba(16,185,129,0.3);
+      border-color: var(--accent-border);
+    }
+
+    /* P4 — Circular countdown (SVG) */
+    .circle-wrap { display: flex; gap: 1.5rem; align-items: center; }
+    .circ-svg { width: 60px; height: 60px; transform: rotate(-90deg); }
+    .circ-track { fill: none; stroke: var(--elevated); stroke-width: 4; }
+    .circ-fill  { fill: none; stroke: var(--accent); stroke-width: 4; stroke-linecap: round; }
+
+    /* ── SKELETONS ──────────────────────────────────────────── */
+    .skeleton-stack { display: flex; flex-direction: column; gap: 1.25rem; }
+
+    .sk-shimmer {
+      background: linear-gradient(90deg, var(--elevated) 25%, var(--surface) 50%, var(--elevated) 75%);
+      background-size: 200% 100%;
+      animation: sk-sweep 1.5s ease-in-out infinite;
+      border-radius: 6px;
+    }
+    @keyframes sk-sweep {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* Content card skeleton */
+    .sk-card { display: flex; flex-direction: column; gap: 10px; }
+    .sk-img { height: 80px; border-radius: 8px; }
+    .sk-line { height: 12px; }
+    .sk-line.w-full { width: 100%; }
+    .sk-line.w-3q  { width: 75%; }
+    .sk-line.w-half{ width: 50%; }
+
+    /* List item skeleton */
+    .sk-list-item { display: flex; gap: 12px; align-items: center; }
+    .sk-avatar { width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0; }
+    .sk-list-text { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+
+    /* Table row skeleton */
+    .sk-table { display: flex; gap: 8px; }
+    .sk-cell { height: 36px; border-radius: 4px; flex: 1; }
+
+    /* ── TYPING INDICATOR ────────────────────────────────────── */
+    .typing-bubble {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--elevated);
+      border-radius: 20px 20px 20px 4px;
+      padding: 12px 18px;
+    }
+    .typing-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--text-muted);
+      animation: typing-bounce 1.2s ease-in-out infinite;
+    }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typing-bounce {
+      0%,80%,100% { transform: translateY(0); background: var(--text-muted); }
+      40%          { transform: translateY(-6px); background: var(--accent); }
+    }
+  </style>
+</head>
+<body>
+
+<div class="max-wrap">
+  <h1 class="page-title">Loading States</h1>
+  <p class="page-sub">Spinners, progress bars, skeletons, and the typing indicator. Every "something is happening" pattern.</p>
+
+  <!-- SPINNERS -->
+  <div class="section-title">Spinner Variants</div>
+  <div class="demo-block">
+    <div class="spinner-grid">
+      <div class="spinner-cell">
+        <div class="spin-ring"></div>
+        <span class="spinner-label">1 — Classic ring</span>
+      </div>
+      <div class="spinner-cell">
+        <div class="spin-dots">
+          <div class="spin-dot"></div><div class="spin-dot"></div><div class="spin-dot"></div>
+        </div>
+        <span class="spinner-label">2 — Bouncing dots</span>
+      </div>
+      <div class="spinner-cell">
+        <div class="spin-pulse">
+          <div class="spin-pulse-ring"></div>
+          <div class="spin-pulse-ring"></div>
+          <div class="spin-pulse-core"></div>
+        </div>
+        <span class="spinner-label">3 — Pulse rings</span>
+      </div>
+      <div class="spinner-cell">
+        <div class="spin-blob"></div>
+        <span class="spinner-label">4 — Morphing blob</span>
+      </div>
+      <div class="spinner-cell">
+        <div class="spin-text">
+          <span>L</span><span>o</span><span>a</span><span>d</span><span>i</span><span>n</span><span>g</span><span>.</span><span>.</span><span>.</span>
+        </div>
+        <span class="spinner-label">5 — Text animation</span>
+      </div>
+      <div class="spinner-cell">
+        <div class="spin-dual">
+          <div class="ring ring-a"></div>
+          <div class="ring ring-b"></div>
+        </div>
+        <span class="spinner-label">6 — Dual counter-ring</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="section-title">Progress Patterns</div>
+  <div class="demo-block">
+    <div class="progress-stack">
+
+      <div>
+        <div style="margin-bottom:0.5rem; font-size:0.8125rem; color:var(--text-secondary);">1 — Linear bar with shimmer</div>
+        <div class="prog-track"><div class="prog-fill" style="width:65%"></div></div>
+        <button class="replay-btn" onclick="animateBar(this)">Replay</button>
+      </div>
+
+      <div>
+        <div style="margin-bottom:0.5rem; font-size:0.8125rem; color:var(--text-secondary);">2 — Segmented bar (fills step by step)</div>
+        <div class="prog-segments" id="seg-bar">
+          <div class="prog-seg active"></div><div class="prog-seg active"></div>
+          <div class="prog-seg active"></div><div class="prog-seg"></div>
+          <div class="prog-seg"></div><div class="prog-seg"></div>
+          <div class="prog-seg"></div><div class="prog-seg"></div>
+        </div>
+        <button class="replay-btn" onclick="animateSegments()">Replay</button>
+      </div>
+
+      <div>
+        <div style="margin-bottom:0.5rem; font-size:0.8125rem; color:var(--text-secondary);">3 — Step dots</div>
+        <div class="prog-step-dots" id="step-dots">
+          <div class="step-dot done"></div>
+          <div class="step-dot done"></div>
+          <div class="step-dot active"></div>
+          <div class="step-dot"></div>
+        </div>
+        <button class="replay-btn" onclick="animateSteps()">Replay</button>
+      </div>
+
+      <div>
+        <div style="margin-bottom:0.5rem; font-size:0.8125rem; color:var(--text-secondary);">4 — Circular countdown</div>
+        <div class="circle-wrap">
+          <svg class="circ-svg" viewBox="0 0 44 44">
+            <circle class="circ-track" cx="22" cy="22" r="18"/>
+            <circle class="circ-fill" id="circ-fill" cx="22" cy="22" r="18"
+              stroke-dasharray="113" stroke-dashoffset="0"/>
+          </svg>
+          <span style="font-family:var(--font-heading); font-size:1.5rem; font-weight:700;" id="circ-num">30</span>
+        </div>
+        <button class="replay-btn" onclick="startCircle()">Replay</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SKELETONS -->
+  <div class="section-title">Skeleton Loaders</div>
+  <div class="demo-block">
+    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:1.5rem;">
+
+      <div>
+        <div style="font-size:0.6875rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.07em; margin-bottom:0.75rem;">Content Card</div>
+        <div class="sk-card">
+          <div class="sk-shimmer sk-img"></div>
+          <div class="sk-shimmer sk-line w-full"></div>
+          <div class="sk-shimmer sk-line w-3q"></div>
+          <div class="sk-shimmer sk-line w-half"></div>
+        </div>
+      </div>
+
+      <div>
+        <div style="font-size:0.6875rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.07em; margin-bottom:0.75rem;">List Item</div>
+        <div class="sk-list-item">
+          <div class="sk-shimmer sk-avatar"></div>
+          <div class="sk-list-text">
+            <div class="sk-shimmer sk-line w-3q"></div>
+            <div class="sk-shimmer sk-line w-half"></div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div style="font-size:0.6875rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.07em; margin-bottom:0.75rem;">Table Row</div>
+        <div class="sk-table">
+          <div class="sk-shimmer sk-cell" style="flex:2"></div>
+          <div class="sk-shimmer sk-cell"></div>
+          <div class="sk-shimmer sk-cell" style="flex:1.5"></div>
+          <div class="sk-shimmer sk-cell" style="flex:0.7"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- TYPING INDICATOR -->
+  <div class="section-title">Typing Indicator</div>
+  <div class="demo-block">
+    <div style="display:flex; flex-direction:column; gap:0.75rem; align-items:flex-start;">
+      <div class="typing-bubble">
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+      </div>
+      <span style="font-size:0.75rem; color:var(--text-muted);">Sarah is typing...</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ── Animated progress bar replay ─────────────────────────────── */
+function animateBar(btn) {
+  var track = btn.previousElementSibling;
+  var fill  = track.querySelector('.prog-fill');
+  fill.style.transition = 'none';
+  fill.style.width = '0%';
+  setTimeout(function() {
+    fill.style.transition = 'width 1.5s ease';
+    fill.style.width = '65%';
+  }, 50);
+}
+
+/* ── Segmented bar replay ─────────────────────────────────────── */
+function animateSegments() {
+  var segs = document.querySelectorAll('#seg-bar .prog-seg');
+  segs.forEach(function(s) { s.classList.remove('active'); });
+  var i = 0;
+  var timer = setInterval(function() {
+    if (i >= segs.length) { clearInterval(timer); return; }
+    segs[i].classList.add('active');
+    i++;
+  }, 220);
+}
+
+/* ── Step dots replay ─────────────────────────────────────────── */
+function animateSteps() {
+  var dots = document.querySelectorAll('#step-dots .step-dot');
+  dots.forEach(function(d) { d.classList.remove('active','done'); });
+  var step = 0;
+  var timer = setInterval(function() {
+    if (step >= dots.length) { clearInterval(timer); return; }
+    if (step > 0) dots[step-1].classList.replace('active','done');
+    dots[step].classList.add('active');
+    step++;
+  }, 600);
+}
+
+/* ── Circular countdown ───────────────────────────────────────── */
+var circTimer = null;
+function startCircle() {
+  var fill = document.getElementById('circ-fill');
+  var num  = document.getElementById('circ-num');
+  var total = 30;
+  var circumference = 113;
+  var current = total;
+
+  clearInterval(circTimer);
+  fill.style.strokeDashoffset = '0';
+  num.textContent = total;
+
+  circTimer = setInterval(function() {
+    current--;
+    if (current < 0) { clearInterval(circTimer); return; }
+    var progress = 1 - (current / total);
+    fill.style.strokeDashoffset = (circumference * progress).toFixed(2);
+    num.textContent = current;
+  }, 100);
+}
+
+// Auto-start the circle demo on load
+startCircle();
+</script>
+</body>
+</html>

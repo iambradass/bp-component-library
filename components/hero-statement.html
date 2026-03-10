@@ -1,0 +1,524 @@
+<!-- COMPONENT: Hero Statement | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hero Statement — Typographic Hero</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+
+    /* ── Customize ── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+      --red:            #EF4444;
+      --amber:          #F59E0B;
+      --blue:           #3B82F6;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+    }
+
+    /* ── Demo chrome: tab switcher at top ── */
+    .demo-tabs {
+      display: flex;
+      gap: 6px;
+      padding: 1.25rem 1.5rem;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .demo-tab {
+      padding: 6px 16px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .demo-tab.is-active {
+      background: var(--accent-dim);
+      border-color: var(--accent-border);
+      color: var(--accent);
+    }
+    .demo-tab:hover:not(.is-active) { color: var(--text-secondary); border-color: rgba(148,163,184,0.2); }
+
+    /* Each variant is hidden unless active */
+    .variant { display: none; }
+    .variant.is-active { display: block; }
+
+    /* ── Shared hero atoms ── */
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 5px 14px;
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-border);
+      border-radius: 100px;
+    }
+    .eyebrow-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 28px;
+      background: var(--accent);
+      color: #0D1117;
+      font-family: var(--font-heading);
+      font-size: 0.9375rem;
+      font-weight: 700;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(16,185,129,0.35); }
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 28px;
+      background: transparent;
+      color: var(--text-secondary);
+      font-family: var(--font-heading);
+      font-size: 0.9375rem;
+      font-weight: 600;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .btn-secondary:hover { border-color: rgba(148,163,184,0.3); color: var(--text); }
+
+    /* ── VARIANT A — Rotating Word Hero ── */
+    .var-a {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 5rem 1.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+    /* Dot grid background */
+    .var-a::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(circle, rgba(148,163,184,0.06) 1px, transparent 1px);
+      background-size: 28px 28px;
+      pointer-events: none;
+    }
+    /* Subtle glow orb */
+    .var-a::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -55%);
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(16,185,129,0.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .var-a-inner {
+      position: relative;
+      z-index: 1;
+      max-width: 760px;
+    }
+    .var-a-headline {
+      font-family: var(--font-heading);
+      font-size: clamp(2.5rem, 7vw, 5.5rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+      color: var(--text);
+      margin: 1.5rem 0 0.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 0.3em;
+    }
+    /* The cycling word — monospace, gradient clip */
+    .rotating-word {
+      font-family: var(--font-mono);
+      font-size: clamp(2.2rem, 6.5vw, 5rem);
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent) 0%, #38bdf8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      display: inline-block;
+      min-width: 7ch;
+      text-align: left;
+      position: relative;
+    }
+    /* Crossfade animation on word change */
+    @keyframes wordIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .rotating-word.animating { animation: wordIn 0.35s ease forwards; }
+
+    .var-a-sub {
+      font-size: clamp(1rem, 2.5vw, 1.25rem);
+      color: var(--text-secondary);
+      line-height: 1.6;
+      max-width: 520px;
+      margin: 1.5rem auto 2.5rem;
+    }
+    .var-a-ctas { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+    /* ── VARIANT B — Highlight Sweep ── */
+    .var-b {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 5rem 1.5rem;
+      background: var(--bg);
+    }
+    .var-b-inner {
+      max-width: 700px;
+      width: 100%;
+    }
+    .var-b-headline {
+      font-family: var(--font-heading);
+      font-size: clamp(1.75rem, 5vw, 3.5rem);
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      line-height: 1.2;
+      margin: 1.5rem 0 2.5rem;
+    }
+    /* Each line of the statement */
+    .highlight-line {
+      display: block;
+      margin-bottom: 0.15em;
+    }
+    /* The highlight mark — sweeps left-to-right */
+    .highlight-phrase {
+      position: relative;
+      display: inline;
+    }
+    .highlight-phrase::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      width: 0%;
+      height: 100%;
+      background: var(--accent-dim);
+      border-radius: 4px;
+      transition: width 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: -1;
+    }
+    .highlight-phrase.swept::after { width: 100%; }
+
+    .var-b-sub {
+      font-size: 1.0625rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      margin-bottom: 2rem;
+    }
+    .var-b-ctas { display: flex; gap: 12px; flex-wrap: wrap; }
+
+    /* ── VARIANT C — Split Declaration ── */
+    .var-c {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+    @media (max-width: 768px) {
+      .var-c { grid-template-columns: 1fr; }
+      .var-c-left { min-height: 40vh; }
+    }
+
+    /* Left: the big word */
+    .var-c-left {
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4rem 3rem;
+      border-right: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+    .var-c-left::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 40% 50%, rgba(16,185,129,0.08) 0%, transparent 65%);
+    }
+    .var-c-big-word {
+      font-family: var(--font-heading);
+      font-size: clamp(5rem, 14vw, 11rem);
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      color: var(--accent);
+      line-height: 1;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Right: everything else */
+    .var-c-right {
+      display: flex;
+      align-items: center;
+      padding: 4rem 3rem;
+      background: var(--surface);
+    }
+    .var-c-right-inner { max-width: 420px; }
+    .var-c-headline {
+      font-family: var(--font-heading);
+      font-size: clamp(1.5rem, 3vw, 2.25rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin: 1.25rem 0 1rem;
+    }
+    .var-c-benefits {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin: 1.5rem 0 2rem;
+    }
+    .var-c-benefit {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.9375rem;
+      color: var(--text-secondary);
+    }
+    .var-c-benefit-icon {
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-border);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      color: var(--accent);
+    }
+    .var-c-ctas { display: flex; gap: 12px; flex-wrap: wrap; }
+
+  </style>
+</head>
+<body>
+
+  <!-- Demo: tab switcher -->
+  <div class="demo-tabs">
+    <button class="demo-tab is-active" data-variant="a">A — Rotating Word</button>
+    <button class="demo-tab" data-variant="b">B — Highlight Sweep</button>
+    <button class="demo-tab" data-variant="c">C — Split Declaration</button>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- VARIANT A — Rotating Word Hero              -->
+  <!-- ═══════════════════════════════════════════ -->
+  <section class="variant is-active" id="variant-a">
+    <div class="var-a">
+      <div class="var-a-inner">
+        <div class="eyebrow">
+          <span class="eyebrow-dot"></span>
+          For Title Professionals
+        </div>
+        <h1 class="var-a-headline">
+          We build
+          <span class="rotating-word" id="rotating-word">websites</span>
+          that convert.
+        </h1>
+        <p class="var-a-sub">
+          Your digital presence, built by people who understand the title industry.
+          Professional websites, automated lead capture, and search visibility — all in one.
+        </p>
+        <div class="var-a-ctas">
+          <a href="#" class="btn-primary">
+            Get Started
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+          </a>
+          <a href="#" class="btn-secondary">See how it works</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- VARIANT B — Highlight Sweep                 -->
+  <!-- ═══════════════════════════════════════════ -->
+  <section class="variant" id="variant-b">
+    <div class="var-b">
+      <div class="var-b-inner">
+        <div class="eyebrow">
+          <span class="eyebrow-dot"></span>
+          The honest truth
+        </div>
+
+        <!-- Three-line statement with progressive highlight sweeps -->
+        <h2 class="var-b-headline">
+          <span class="highlight-line">
+            Stop relying on <span class="highlight-phrase" data-delay="400">referrals alone.</span>
+          </span>
+          <span class="highlight-line">
+            Start showing up <span class="highlight-phrase" data-delay="900">where your clients search.</span>
+          </span>
+          <span class="highlight-line" style="color: var(--text-secondary); font-size: 0.8em;">
+            Because your competitors already are.
+          </span>
+        </h2>
+
+        <p class="var-b-sub">
+          Every month you're invisible online is a month someone else gets the call.
+          We build title rep websites that rank, capture leads, and make you the obvious choice.
+        </p>
+        <div class="var-b-ctas">
+          <a href="#" class="btn-primary">Build My Site</a>
+          <a href="#" class="btn-secondary">See Live Examples</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- VARIANT C — Split Declaration               -->
+  <!-- ═══════════════════════════════════════════ -->
+  <section class="variant" id="variant-c">
+    <div class="var-c">
+
+      <!-- Left: the one word -->
+      <div class="var-c-left">
+        <div class="var-c-big-word">GROW.</div>
+      </div>
+
+      <!-- Right: everything else -->
+      <div class="var-c-right">
+        <div class="var-c-right-inner">
+          <div class="eyebrow">
+            <span class="eyebrow-dot"></span>
+            For Title Professionals
+          </div>
+          <h2 class="var-c-headline">
+            Your professional web presence, built and managed for you.
+          </h2>
+          <ul class="var-c-benefits">
+            <li class="var-c-benefit">
+              <span class="var-c-benefit-icon">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </span>
+              Custom website live in 10 days
+            </li>
+            <li class="var-c-benefit">
+              <span class="var-c-benefit-icon">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </span>
+              Automated lead capture and follow-up
+            </li>
+            <li class="var-c-benefit">
+              <span class="var-c-benefit-icon">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </span>
+              Search visibility from day one
+            </li>
+          </ul>
+          <div class="var-c-ctas">
+            <a href="#" class="btn-primary">Get Started</a>
+            <a href="#" class="btn-secondary">Learn more</a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <script>
+    // ── Tab switcher ──
+    const tabs = document.querySelectorAll('.demo-tab');
+    const variants = document.querySelectorAll('.variant');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const target = tab.dataset.variant;
+        tabs.forEach(t => t.classList.remove('is-active'));
+        variants.forEach(v => v.classList.remove('is-active'));
+        tab.classList.add('is-active');
+        document.getElementById('variant-' + target).classList.add('is-active');
+        // Trigger sweep on variant B each time it's activated
+        if (target === 'b') triggerSweep();
+      });
+    });
+
+    // ── Variant A: Rotating word ──
+    const words = ['websites', 'pipelines', 'credibility', 'results', 'growth'];
+    let wordIndex = 0;
+    const wordEl = document.getElementById('rotating-word');
+    setInterval(() => {
+      wordIndex = (wordIndex + 1) % words.length;
+      wordEl.classList.remove('animating');
+      // Force reflow to restart animation
+      void wordEl.offsetWidth;
+      wordEl.textContent = words[wordIndex];
+      wordEl.classList.add('animating');
+    }, 2200);
+
+    // ── Variant B: Highlight sweep ──
+    function triggerSweep() {
+      // Reset all phrases first
+      document.querySelectorAll('.highlight-phrase').forEach(el => el.classList.remove('swept'));
+      // Stagger each phrase with its delay
+      document.querySelectorAll('.highlight-phrase').forEach(el => {
+        const delay = parseInt(el.dataset.delay || 0);
+        setTimeout(() => el.classList.add('swept'), delay);
+      });
+    }
+    // Auto-trigger on page load if variant B is active
+    if (document.getElementById('variant-b').classList.contains('is-active')) triggerSweep();
+  </script>
+
+</body>
+</html>

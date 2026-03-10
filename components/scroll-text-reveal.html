@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scroll Text Reveal — Component Library</title>
+
+  <!--
+  /* COMPONENT: Scroll Text Reveal | COPY: style + html + script */
+  Words in a large statement illuminate from muted to bright as you scroll
+  through them. Each word is a <span> with an initial muted color.
+  A scroll listener checks each word's viewport position on every frame
+  via requestAnimationFrame — when a word crosses the midpoint of the
+  viewport, it transitions to the bright color with a subtle glow.
+  -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+
+    /* ============================================================
+       CUSTOMIZE — adjust these to match your project
+       ============================================================ */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --glow:           rgba(16,185,129,0.15);
+      --glow-strong:    rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --border-accent:  rgba(16,185,129,0.3);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+    }
+    /* ============================================================ */
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+    }
+
+
+    /* ── Filler section above — forces user to scroll before hitting the text ── */
+    .str-intro {
+      min-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 3rem 1.5rem;
+
+      background-image: radial-gradient(circle, rgba(148,163,184,0.04) 1px, transparent 1px);
+      background-size: 28px 28px;
+    }
+
+    .str-intro-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 5px 14px;
+      background: rgba(16,185,129,0.08);
+      border: 1px solid var(--border-accent);
+      border-radius: 100px;
+      margin-bottom: 1.5rem;
+    }
+
+    .str-intro h1 {
+      font-family: var(--font-heading);
+      font-size: clamp(2rem, 5vw, 3rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.75rem;
+    }
+    .str-intro p {
+      color: var(--text-secondary);
+      font-size: 1rem;
+      line-height: 1.6;
+      max-width: 460px;
+    }
+    .str-scroll-cue {
+      margin-top: 3rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      animation: str-bob 1.8s ease-in-out infinite;
+    }
+    @keyframes str-bob {
+      0%, 100% { transform: translateY(0); }
+      50%       { transform: translateY(8px); }
+    }
+
+
+    /* ── The reveal section ── */
+    .str-reveal-section {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 10vh 2rem 15vh;
+    }
+
+    /* The label above */
+    .str-section-label {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 2.5rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .str-section-label::before {
+      content: '';
+      display: block;
+      width: 24px;
+      height: 1px;
+      background: var(--accent);
+    }
+
+
+    /* ── Reveal text ──
+       Font size is large and responsive (clamp).
+       Each word is a <span class="str-word">.
+       Words start muted and transition to bright when .str-word--lit is added. */
+    .str-text {
+      font-family: var(--font-heading);
+      font-size: clamp(1.5rem, 3.5vw, 2.75rem);
+      font-weight: 600;
+      line-height: 1.55;
+      letter-spacing: -0.01em;
+    }
+
+    /* Individual word — spaces are preserved between spans via the JS wrapping */
+    .str-word {
+      display: inline;
+      color: var(--text-muted);
+      transition: color 0.35s ease, text-shadow 0.35s ease;
+      /* No `display: inline-block` here — keep natural text reflow */
+    }
+
+    /* Lit state: full brightness + subtle accent glow */
+    .str-word--lit {
+      color: var(--text);
+      text-shadow: 0 0 24px rgba(16, 185, 129, 0.25);
+    }
+
+    /* Accent-colored "highlight" words — mark specific words in the HTML */
+    .str-word--accent.str-word--lit {
+      color: var(--accent);
+      text-shadow: 0 0 30px rgba(16, 185, 129, 0.5);
+    }
+
+
+    /* ── Filler section below — more scrolling room after the text ── */
+    .str-outro {
+      min-height: 60vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 3rem 1.5rem;
+    }
+    .str-outro-inner {
+      max-width: 480px;
+    }
+    .str-outro h2 {
+      font-family: var(--font-heading);
+      font-size: clamp(1.5rem, 3vw, 2rem);
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+    .str-outro p {
+      color: var(--text-secondary);
+      font-size: 0.9375rem;
+      line-height: 1.65;
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- Intro section — scroll past this to reach the effect -->
+  <section class="str-intro">
+    <div class="str-intro-badge">Scroll Text Reveal</div>
+    <h1>Words that follow your scroll</h1>
+    <p>Scroll down to see each word illuminate as it enters the active zone of your viewport. Used by Stripe, Apple, Linear, and more.</p>
+    <div class="str-scroll-cue" aria-hidden="true">
+      <svg width="20" height="28" viewBox="0 0 20 28" fill="none">
+        <rect x="1" y="1" width="18" height="26" rx="9" stroke="currentColor" stroke-opacity="0.25" stroke-width="1.5"/>
+        <circle cx="10" cy="8" r="2.5" fill="currentColor" fill-opacity="0.4">
+          <animate attributeName="cy" values="8;19;8" dur="1.8s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values="0.7;0;0.7" dur="1.8s" repeatCount="indefinite"/>
+        </circle>
+      </svg>
+      Scroll down
+    </div>
+  </section>
+
+
+  <!-- The reveal section -->
+  <section class="str-reveal-section">
+    <div class="str-section-label">Our Approach</div>
+
+    <!--
+      The text — JS will split these into individual word spans.
+      Words wrapped in <em class="str-accent"> will receive accent color when lit.
+      Put the raw text here; the JS does the wrapping automatically.
+    -->
+    <p class="str-text" id="str-text">
+      We don't build websites. We build <em class="str-accent">sales systems</em>
+      that happen to live on the web. Every pixel earns its place.
+      Every word is tested. Every page is engineered to turn
+      <em class="str-accent">strangers into clients</em> — fast. We've
+      shipped hundreds of these and we know exactly what separates
+      a <em class="str-accent">site that converts</em> from one that
+      collects dust. Speed matters. Clarity matters. <em class="str-accent">Results</em> are
+      the only metric we care about.
+    </p>
+  </section>
+
+
+  <!-- Outro section -->
+  <section class="str-outro">
+    <div class="str-outro-inner">
+      <h2>Ready to build something that works?</h2>
+      <p>That's the whole pitch. If you're tired of web projects that look nice but don't move the needle, let's talk.</p>
+    </div>
+  </section>
+
+
+  <script>
+  /* ── Scroll Text Reveal ──
+     Implementation approach:
+     1. Parse the .str-text element — find all text nodes and <em> elements
+     2. Wrap every word in a <span class="str-word"> (accent words get extra class)
+     3. On scroll (via requestAnimationFrame), check each word's Y center against
+        the viewport midpoint — words above the midpoint become lit
+     4. Use getBoundingClientRect() per word, checked on each scroll event
+  */
+
+  const textEl = document.getElementById('str-text');
+
+  /* ── Step 1: Rebuild the element content as word spans ──
+     We need to handle mixed text and <em class="str-accent"> elements.
+     Strategy: walk child nodes, split text into words, wrap each. */
+
+  function wrapWords(container) {
+    // Collect all child nodes as a static array (we'll replace them)
+    const children = Array.from(container.childNodes);
+    container.innerHTML = ''; // clear
+
+    children.forEach((node) => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        // Text node — split into words and wrap each
+        const words = node.textContent.split(/(\s+)/); // keep whitespace
+        words.forEach((chunk) => {
+          if (/^\s+$/.test(chunk)) {
+            // Whitespace — preserve as a text node
+            container.appendChild(document.createTextNode(chunk));
+          } else if (chunk.length > 0) {
+            const span = document.createElement('span');
+            span.className = 'str-word';
+            span.textContent = chunk;
+            container.appendChild(span);
+          }
+        });
+
+      } else if (node.nodeType === Node.ELEMENT_NODE && node.tagName === 'EM') {
+        // Accent element — wrap its words with extra accent class
+        const words = node.textContent.split(/(\s+)/);
+        words.forEach((chunk) => {
+          if (/^\s+$/.test(chunk)) {
+            container.appendChild(document.createTextNode(chunk));
+          } else if (chunk.length > 0) {
+            const span = document.createElement('span');
+            span.className = 'str-word str-word--accent';
+            span.textContent = chunk;
+            container.appendChild(span);
+          }
+        });
+      }
+    });
+  }
+
+  wrapWords(textEl);
+
+  /* ── Step 2: Scroll reveal loop ──
+     We use requestAnimationFrame + a scroll flag for performance.
+     Only re-check word positions when a scroll event has fired since the last frame. */
+
+  const words = textEl.querySelectorAll('.str-word');
+  let scrollPending = false;
+
+  function checkReveal() {
+    const viewportMid = window.innerHeight * 0.6; // trigger at 60% down the viewport
+
+    words.forEach((word) => {
+      const rect = word.getBoundingClientRect();
+      const wordCenter = rect.top + rect.height / 2;
+
+      if (wordCenter < viewportMid) {
+        word.classList.add('str-word--lit');
+      }
+      // Optional: un-reveal when scrolling back up (uncomment to enable)
+      // else { word.classList.remove('str-word--lit'); }
+    });
+
+    scrollPending = false;
+  }
+
+  window.addEventListener('scroll', () => {
+    if (!scrollPending) {
+      scrollPending = true;
+      requestAnimationFrame(checkReveal);
+    }
+  }, { passive: true });
+
+  // Initial check in case any words are already in view
+  checkReveal();
+  </script>
+
+</body>
+</html>

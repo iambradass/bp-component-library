@@ -1,0 +1,301 @@
+<!-- COMPONENT: Value Stack | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Value Stack</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: var(--font-body); min-height: 100vh;
+      padding: 3rem 1rem 5rem;
+    }
+
+    .vs-wrap { max-width: 680px; margin: 0 auto; }
+
+    /* ── Header ── */
+    .vs-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: var(--font-heading); font-size: 0.75rem; font-weight: 600;
+      color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em;
+      padding: 4px 14px; background: var(--accent-dim);
+      border: 1px solid var(--accent-border); border-radius: 100px;
+      margin-bottom: 1rem;
+    }
+    .vs-title {
+      font-family: var(--font-heading); font-size: clamp(1.75rem, 4vw, 2.5rem);
+      font-weight: 700; letter-spacing: -0.02em; margin-bottom: 2rem;
+    }
+
+    /* ── Stack container ── */
+    .vs-stack {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden; margin-bottom: 1.5rem;
+    }
+
+    /* Each stack row */
+    .vs-row {
+      display: flex; align-items: flex-start; gap: 1rem;
+      padding: 1.125rem 1.25rem; border-bottom: 1px solid var(--border);
+      /* Start invisible for stagger animation */
+      opacity: 0; transform: translateY(12px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+    .vs-row:last-child { border-bottom: none; }
+    .vs-row.visible { opacity: 1; transform: none; }
+
+    .vs-check {
+      width: 22px; height: 22px; border-radius: 50%;
+      background: var(--accent-dim); border: 1px solid var(--accent-border);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--accent); flex-shrink: 0; margin-top: 1px;
+    }
+
+    .vs-row-body { flex: 1; min-width: 0; }
+    .vs-row-name {
+      font-family: var(--font-heading); font-size: 0.9375rem; font-weight: 600;
+      color: var(--text); margin-bottom: 2px;
+    }
+    .vs-row-desc { font-size: 0.8125rem; color: var(--text-muted); line-height: 1.4; }
+
+    .vs-row-value {
+      font-family: var(--font-heading); font-size: 0.875rem; font-weight: 600;
+      color: var(--text-secondary); white-space: nowrap; flex-shrink: 0;
+      padding-top: 2px;
+    }
+
+    /* ── Running total + reveal ── */
+    .vs-total-row {
+      display: flex; justify-content: space-between; align-items: baseline;
+      padding: 1.25rem; background: var(--elevated);
+      border-radius: var(--radius); border: 1px solid var(--border);
+      margin-bottom: 1.5rem;
+      /* Start hidden */
+      opacity: 0; transform: translateY(8px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    .vs-total-row.visible { opacity: 1; transform: none; }
+    .vs-total-label { font-family: var(--font-heading); font-size: 1rem; color: var(--text-secondary); }
+    .vs-total-value { font-family: var(--font-heading); font-size: 1.5rem; font-weight: 700; color: var(--text); }
+
+    /* ── Decorative divider ── */
+    .vs-divider {
+      text-align: center; position: relative; margin: 1.75rem 0;
+      opacity: 0; transition: opacity 0.5s ease;
+    }
+    .vs-divider.visible { opacity: 1; }
+    .vs-divider::before {
+      content: ''; position: absolute; left: 0; right: 0; top: 50%;
+      height: 1px; background: var(--accent-border);
+    }
+    .vs-divider-inner {
+      position: relative; background: var(--bg);
+      padding: 0 1rem; display: inline-block;
+      font-family: var(--font-heading); font-size: 0.75rem; font-weight: 600;
+      color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em;
+    }
+
+    /* ── Price reveal ── */
+    .vs-price-reveal {
+      background: var(--surface); border: 1px solid var(--accent-border);
+      border-radius: var(--radius); padding: 2rem 1.5rem;
+      text-align: center; margin-bottom: 1.5rem;
+      box-shadow: 0 0 40px rgba(16,185,129,0.12);
+      /* Start hidden */
+      opacity: 0; transform: scale(0.96);
+      transition: opacity 0.55s ease, transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .vs-price-reveal.visible { opacity: 1; transform: none; }
+
+    .vs-price-label {
+      font-family: var(--font-heading); font-size: 0.875rem; font-weight: 500;
+      color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em;
+      margin-bottom: 0.5rem;
+    }
+    .vs-price-amount {
+      font-family: var(--font-heading); font-size: clamp(2.5rem, 6vw, 3.5rem);
+      font-weight: 700; color: var(--accent); letter-spacing: -0.02em;
+      line-height: 1; margin-bottom: 0.5rem;
+    }
+    .vs-price-note { font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1.5rem; }
+    .vs-price-savings {
+      display: inline-block; font-family: var(--font-heading); font-size: 0.875rem;
+      font-weight: 600; color: var(--accent); background: var(--accent-dim);
+      border: 1px solid var(--accent-border); border-radius: 100px;
+      padding: 4px 14px; margin-bottom: 1.5rem;
+    }
+
+    /* ── CTA button ── */
+    .vs-cta {
+      display: block; width: 100%;
+      padding: 0.9375rem 1.5rem; border-radius: 10px;
+      background: var(--accent); color: var(--bg);
+      font-family: var(--font-heading); font-size: 1rem; font-weight: 700;
+      border: none; cursor: pointer;
+      transition: opacity 0.18s ease, transform 0.18s ease;
+      text-align: center;
+    }
+    .vs-cta:hover { opacity: 0.88; transform: translateY(-1px); }
+
+    .vs-guarantee {
+      text-align: center; font-size: 0.8125rem; color: var(--text-muted);
+      margin-top: 0.75rem;
+    }
+  </style>
+</head>
+<body>
+
+<div class="vs-wrap">
+
+  <div class="vs-eyebrow">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+    Complete Package Value
+  </div>
+  <h2 class="vs-title">Here's Everything You're Getting</h2>
+
+  <!-- Stack rows — JS renders and animates -->
+  <div class="vs-stack" id="vsStack"></div>
+
+  <!-- Total value row -->
+  <div class="vs-total-row" id="vsTotalRow">
+    <span class="vs-total-label">Total Retail Value</span>
+    <span class="vs-total-value" id="vsTotalValue">$0</span>
+  </div>
+
+  <!-- Decorative divider -->
+  <div class="vs-divider" id="vsDivider">
+    <span class="vs-divider-inner">Your investment today</span>
+  </div>
+
+  <!-- Price reveal -->
+  <div class="vs-price-reveal" id="vsPriceReveal">
+    <div class="vs-price-label">Your Investment</div>
+    <div class="vs-price-amount">$97<span style="font-size:1.5rem;">/mo</span></div>
+    <div class="vs-price-note">No setup fee. No long-term contract. Cancel anytime.</div>
+    <div class="vs-price-savings">You save $4,503+ vs. hiring separately</div>
+    <button class="vs-cta">Get Started Today — Just $97/mo</button>
+  </div>
+
+  <p class="vs-guarantee">30-day satisfaction guarantee. If you're not happy in the first 30 days, we'll refund you — no questions asked.</p>
+
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  /* ── Stack items ── */
+  var items = [
+    { name: 'Custom Website Design', desc: 'Professionally designed from scratch — not a template', value: 800 },
+    { name: 'Mobile Optimization', desc: 'Perfect on every phone and screen size', value: 400 },
+    { name: 'SEO Foundation Setup', desc: 'Title tags, meta, schema, and local keyword strategy', value: 600 },
+    { name: 'Google Business Profile', desc: 'Claimed, optimized, and connected to your site', value: 300 },
+    { name: 'CRM Integration', desc: 'Form leads auto-flow into your GoHighLevel pipeline', value: 500 },
+    { name: 'Monthly Performance Report', desc: 'Traffic, leads, and rankings delivered every month', value: 200 },
+    { name: 'Priority Support', desc: 'Changes and fixes handled within 24 hours, every time', value: 400 },
+    { name: 'Hosting + SSL + Domain', desc: 'Fully managed infrastructure — we handle all of it', value: 350 },
+    { name: 'Google Analytics Setup', desc: 'GA4 configured with goal tracking from day one', value: 150 },
+    { name: 'Review Funnel', desc: 'Automated follow-up that grows your Google star rating', value: 250 },
+  ];
+
+  var totalValue = items.reduce(function(sum, i) { return sum + i.value; }, 0);
+
+  var stack      = document.getElementById('vsStack');
+  var totalRow   = document.getElementById('vsTotalRow');
+  var totalEl    = document.getElementById('vsTotalValue');
+  var divider    = document.getElementById('vsDivider');
+  var priceReveal = document.getElementById('vsPriceReveal');
+
+  /* ── Render rows ── */
+  items.forEach(function(item) {
+    var row = document.createElement('div');
+    row.className = 'vs-row';
+    row.innerHTML =
+      '<div class="vs-check">' +
+        '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' +
+      '</div>' +
+      '<div class="vs-row-body">' +
+        '<div class="vs-row-name">' + item.name + '</div>' +
+        '<div class="vs-row-desc">' + item.desc + '</div>' +
+      '</div>' +
+      '<div class="vs-row-value">$' + item.value.toLocaleString() + '</div>';
+    stack.appendChild(row);
+  });
+
+  /* ── Count-up animation ── */
+  function countUp(el, target, duration) {
+    var start = performance.now();
+    function frame(now) {
+      var pct = Math.min((now - start) / duration, 1);
+      /* easeOutQuart */
+      pct = 1 - Math.pow(1 - pct, 4);
+      el.textContent = '$' + Math.round(pct * target).toLocaleString();
+      if (pct < 1) requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  /* ── IntersectionObserver — trigger stagger when stack scrolls into view ── */
+  var rows = Array.from(stack.querySelectorAll('.vs-row'));
+  var triggered = false;
+
+  var observer = new IntersectionObserver(function(entries) {
+    if (entries[0].isIntersecting && !triggered) {
+      triggered = true;
+      observer.disconnect();
+
+      /* Stagger each row in at 100ms intervals */
+      rows.forEach(function(row, i) {
+        setTimeout(function() {
+          row.classList.add('visible');
+        }, i * 100);
+      });
+
+      /* After all rows, show total and count up */
+      var totalDelay = rows.length * 100 + 100;
+      setTimeout(function() {
+        totalRow.classList.add('visible');
+        countUp(totalEl, totalValue, 900);
+      }, totalDelay);
+
+      /* Then the divider */
+      setTimeout(function() {
+        divider.classList.add('visible');
+      }, totalDelay + 500);
+
+      /* Then the price reveal */
+      setTimeout(function() {
+        priceReveal.classList.add('visible');
+      }, totalDelay + 800);
+    }
+  }, { threshold: 0.15 });
+
+  observer.observe(stack);
+
+})();
+</script>
+</body>
+</html>

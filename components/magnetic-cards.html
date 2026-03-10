@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Magnetic Tilt Cards — Component Library</title>
+
+  <!--
+  ============================================================
+  COMPONENT: Magnetic Tilt Cards
+  COPY: <style> block + HTML block + <script> block into target site
+  EFFECT: Cards tilt in 3D toward the mouse with a spotlight that follows the cursor.
+  NOTE: On touch devices, tilt is disabled — cards show an elevated static style instead.
+  ============================================================
+  -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+
+    /* ── CUSTOMIZE: swap these variables for your target site ── */
+    :root {
+      --mc-bg-page:       #0D1117;
+      --mc-bg-surface:    #111827;
+      --mc-bg-elevated:   #1E293B;
+      --mc-accent:        #10B981;
+      --mc-accent-glow:   rgba(16, 185, 129, 0.15);
+      --mc-accent-border: rgba(16, 185, 129, 0.3);
+      --mc-text:          #F8FAFC;
+      --mc-text-secondary:#94A3B8;
+      --mc-text-muted:    #475569;
+      --mc-border:        rgba(148, 163, 184, 0.1);
+      --mc-radius:        12px;
+      --mc-tilt-max:      15;   /* max degrees of tilt — CUSTOMIZE */
+      --mc-font-heading:  'Space Grotesk', system-ui, sans-serif;
+      --mc-font-body:     'Inter', system-ui, sans-serif;
+      --mc-font-mono:     ui-monospace, monospace;
+    }
+
+    /* ── Page wrapper (demo only) ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--mc-bg-page);
+      color: var(--mc-text);
+      font-family: var(--mc-font-body);
+      min-height: 100vh;
+      padding: 3rem 1.5rem 5rem;
+    }
+    .demo-label {
+      font-family: var(--mc-font-mono);
+      font-size: 0.75rem;
+      color: var(--mc-accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+    .demo-title {
+      font-family: var(--mc-font-heading);
+      font-size: 2rem;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+    .demo-subtitle {
+      color: var(--mc-text-secondary);
+      text-align: center;
+      font-size: 0.9375rem;
+      margin-bottom: 3rem;
+    }
+
+
+    /* ════════════════════════════════════════════
+       COMPONENT STYLES
+    ════════════════════════════════════════════ */
+
+    /* Grid: 3 cols on desktop, 2 on tablet, 1 on mobile */
+    .mc-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    @media (max-width: 900px) {
+      .mc-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 580px) {
+      .mc-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Card outer wrapper — perspective lives here so the inner can rotate */
+    .mc-card-wrap {
+      perspective: 800px;
+    }
+
+    /* The card itself — this is what rotates and holds the spotlight */
+    .mc-card {
+      position: relative;
+      background: var(--mc-bg-surface);
+      border: 1px solid var(--mc-border);
+      border-radius: var(--mc-radius);
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      /* Transition handles the spring-back when mouse leaves */
+      transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1),
+                  box-shadow 0.5s cubic-bezier(0.23, 1, 0.32, 1),
+                  border-color 0.3s ease;
+      transform-style: preserve-3d;
+      will-change: transform;
+      overflow: hidden;
+      cursor: default;
+    }
+
+    /* Spotlight overlay — a radial gradient that follows the cursor */
+    .mc-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      /* Position updated via JS inline style */
+      background: radial-gradient(
+        600px circle at var(--spotlight-x, 50%) var(--spotlight-y, 50%),
+        rgba(16, 185, 129, 0.08),
+        transparent 70%
+      );
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .mc-card:hover::before { opacity: 1; }
+
+    /* On hover: intensify border and add box shadow glow */
+    .mc-card:hover {
+      border-color: var(--mc-accent-border);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5),
+                  0 0 0 1px var(--mc-accent-border),
+                  0 0 40px var(--mc-accent-glow);
+    }
+
+    /* All card children need z-index > 0 so they sit above the spotlight overlay */
+    .mc-card > * { position: relative; z-index: 1; }
+
+    /* Icon container */
+    .mc-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 10px;
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid var(--mc-accent-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--mc-accent);
+      flex-shrink: 0;
+    }
+
+    /* Category tag */
+    .mc-tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 10px;
+      border-radius: 100px;
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid var(--mc-accent-border);
+      font-family: var(--mc-font-mono);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--mc-accent);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      width: fit-content;
+    }
+
+    .mc-title {
+      font-family: var(--mc-font-heading);
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--mc-text);
+      line-height: 1.3;
+    }
+
+    .mc-desc {
+      font-size: 0.9rem;
+      color: var(--mc-text-secondary);
+      line-height: 1.7;
+      flex: 1;
+    }
+
+    /* Bottom CTA link */
+    .mc-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--mc-accent);
+      text-decoration: none;
+      margin-top: auto;
+      transition: gap 0.2s ease;
+    }
+    .mc-link:hover { gap: 10px; }
+    .mc-link svg { width: 14px; height: 14px; }
+
+    /* ── Touch device fallback: no tilt, elevated card style ── */
+    @media (hover: none) {
+      .mc-card {
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        border-color: var(--mc-accent-border);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+      .mc-card:active {
+        transform: scale(0.98) !important;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+      }
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="demo-label">Component Demo</div>
+  <h1 class="demo-title">Magnetic Tilt Cards</h1>
+  <p class="demo-subtitle">Move your cursor over the cards — they tilt toward you with a spotlight glow.</p>
+
+  <div class="mc-grid">
+
+    <!-- Card 1 -->
+    <div class="mc-card-wrap">
+      <div class="mc-card">
+        <div class="mc-icon">
+          <!-- Rocket icon -->
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>
+        </div>
+        <div class="mc-tag">Growth</div>
+        <div class="mc-title">Lead Generation Systems</div>
+        <p class="mc-desc">Automated pipelines that capture, qualify, and nurture leads 24/7 without manual intervention. Built to scale from day one.</p>
+        <a href="#" class="mc-link">
+          Explore systems
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </a>
+      </div>
+    </div>
+
+    <!-- Card 2 -->
+    <div class="mc-card-wrap">
+      <div class="mc-card">
+        <div class="mc-icon">
+          <!-- Code icon -->
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        </div>
+        <div class="mc-tag">Development</div>
+        <div class="mc-title">Custom Web Builds</div>
+        <p class="mc-desc">Hand-coded, mobile-first websites and landing pages engineered for performance and conversion — not just aesthetics.</p>
+        <a href="#" class="mc-link">
+          View portfolio
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </a>
+      </div>
+    </div>
+
+    <!-- Card 3 -->
+    <div class="mc-card-wrap">
+      <div class="mc-card">
+        <div class="mc-icon">
+          <!-- Bar chart icon -->
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg>
+        </div>
+        <div class="mc-tag">Analytics</div>
+        <div class="mc-title">Data-Driven Reporting</div>
+        <p class="mc-desc">Monthly performance dashboards that translate raw data into clear decisions. Know exactly what's working and what to cut.</p>
+        <a href="#" class="mc-link">
+          See sample report
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </a>
+      </div>
+    </div>
+
+  </div><!-- /mc-grid -->
+
+
+  <script>
+  /*
+  ── HOW THE TILT WORKS ──
+  On mousemove over each card:
+    1. Calculate cursor offset from card center as a percentage (-1 to 1 range)
+    2. Multiply by MAX_TILT to get rotation degrees
+    3. Apply rotateX (vertical axis) and rotateY (horizontal axis)
+    4. Move the spotlight's radial gradient center to match cursor position
+  On mouseleave:
+    - Remove inline transform, CSS transition springs it back to flat
+  */
+
+  // CUSTOMIZE: maximum tilt in degrees
+  var MAX_TILT = 15;
+
+  // Skip tilt on touch devices — hover:none = touch device
+  var isTouchDevice = !window.matchMedia('(hover: hover)').matches;
+
+  if (!isTouchDevice) {
+    document.querySelectorAll('.mc-card').forEach(function(card) {
+      var wrap = card.closest('.mc-card-wrap');
+
+      wrap.addEventListener('mousemove', function(e) {
+        var rect = card.getBoundingClientRect();
+
+        // Cursor position relative to card center, normalized to -1..+1
+        var relX = ((e.clientX - rect.left) / rect.width  - 0.5) * 2;
+        var relY = ((e.clientY - rect.top)  / rect.height - 0.5) * 2;
+
+        // rotateY: positive relX = right side of card → tilt right (positive Y rotation)
+        // rotateX: positive relY = bottom of card → tilt down (negative X rotation)
+        var rotY =  relX * MAX_TILT;
+        var rotX = -relY * MAX_TILT;
+
+        // Apply the 3D transform — disable CSS transition while mouse moves for instant tracking
+        card.style.transition = 'box-shadow 0.3s ease, border-color 0.3s ease';
+        card.style.transform = 'rotateX(' + rotX + 'deg) rotateY(' + rotY + 'deg) scale3d(1.02, 1.02, 1.02)';
+
+        // Move spotlight to cursor position (as percentage of card dimensions)
+        var spotX = ((e.clientX - rect.left) / rect.width  * 100).toFixed(1) + '%';
+        var spotY = ((e.clientY - rect.top)  / rect.height * 100).toFixed(1) + '%';
+        card.style.setProperty('--spotlight-x', spotX);
+        card.style.setProperty('--spotlight-y', spotY);
+      });
+
+      wrap.addEventListener('mouseleave', function() {
+        // Restore spring-back transition, then reset transform
+        card.style.transition = 'transform 0.5s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.5s cubic-bezier(0.23, 1, 0.32, 1), border-color 0.3s ease';
+        card.style.transform = '';
+      });
+    });
+  }
+  </script>
+
+</body>
+</html>

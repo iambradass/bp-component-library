@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Particle Network — Component Library</title>
+
+  <!--
+  /* COMPONENT: Particle Network | COPY: style + html + script */
+  Canvas-based particle field — dots drift and connect with lines when close.
+  Cursor lines draw in accent color. Classic interactive hero background.
+  Uses devicePixelRatio for sharp rendering on retina displays.
+  Touch events treated as cursor position for mobile.
+  -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+
+    /* ============================================================
+       CUSTOMIZE — adjust these to match your project
+       ============================================================ */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --glow:           rgba(16,185,129,0.15);
+      --glow-strong:    rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --border-accent:  rgba(16,185,129,0.3);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+    }
+    /* ============================================================ */
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+
+    /* ── Hero section — canvas is the background ── */
+    .pn-hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    /* Canvas fills the hero absolutely, z-index 0 */
+    #pn-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      display: block;
+    }
+
+    /* Hero content sits above the canvas */
+    .pn-content {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 3rem 1.5rem;
+      max-width: 680px;
+    }
+
+    .pn-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 5px 14px;
+      background: rgba(16,185,129,0.08);
+      border: 1px solid var(--border-accent);
+      border-radius: 100px;
+      margin-bottom: 1.5rem;
+    }
+    .pn-badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pn-pulse 2s ease-in-out infinite;
+    }
+    @keyframes pn-pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.4; transform: scale(0.8); }
+    }
+
+    .pn-headline {
+      font-family: var(--font-heading);
+      font-size: clamp(2.25rem, 6vw, 4rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin-bottom: 1rem;
+    }
+    .pn-headline span { color: var(--accent); }
+
+    .pn-sub {
+      color: var(--text-secondary);
+      font-size: clamp(1rem, 2vw, 1.125rem);
+      line-height: 1.65;
+      margin-bottom: 2.5rem;
+    }
+
+    .pn-ctas {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .pn-btn-primary {
+      padding: 0.875rem 2rem;
+      min-height: 48px;
+      background: var(--accent);
+      color: #0D1117;
+      font-family: var(--font-heading);
+      font-size: 0.9375rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    .pn-btn-primary:hover {
+      opacity: 0.85;
+      transform: translateY(-1px);
+    }
+
+    .pn-btn-secondary {
+      padding: 0.875rem 2rem;
+      min-height: 48px;
+      background: rgba(255,255,255,0.05);
+      color: var(--text);
+      font-family: var(--font-heading);
+      font-size: 0.9375rem;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s, transform 0.2s;
+    }
+    .pn-btn-secondary:hover {
+      background: rgba(255,255,255,0.08);
+      border-color: var(--border-accent);
+      transform: translateY(-1px);
+    }
+
+    /* Scroll indicator */
+    .pn-scroll-hint {
+      position: absolute;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      animation: pn-bob 2s ease-in-out infinite;
+    }
+    @keyframes pn-bob {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50%       { transform: translateX(-50%) translateY(6px); }
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- Hero with canvas background -->
+  <section class="pn-hero">
+
+    <!-- Canvas — particle network renders here -->
+    <canvas id="pn-canvas" aria-hidden="true"></canvas>
+
+    <!-- Hero copy — above the canvas via z-index -->
+    <div class="pn-content">
+      <div class="pn-badge">
+        <span class="pn-badge-dot"></span>
+        Now in public beta
+      </div>
+      <h1 class="pn-headline">Connect your team.<br><span>Ship faster.</span></h1>
+      <p class="pn-sub">The collaborative workspace that thinks as fast as you do. Designed for the teams building tomorrow — not the ones managing yesterday.</p>
+      <div class="pn-ctas">
+        <button class="pn-btn-primary">Start for free</button>
+        <button class="pn-btn-secondary">Watch demo</button>
+      </div>
+    </div>
+
+    <!-- Scroll hint -->
+    <div class="pn-scroll-hint" aria-hidden="true">
+      <svg width="16" height="20" viewBox="0 0 16 20" fill="none">
+        <rect x="1" y="1" width="14" height="18" rx="7" stroke="currentColor" stroke-opacity="0.3" stroke-width="1.5"/>
+        <circle cx="8" cy="6" r="2" fill="currentColor" fill-opacity="0.4">
+          <animate attributeName="cy" values="6;13;6" dur="2s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values="0.6;0;0.6" dur="2s" repeatCount="indefinite"/>
+        </circle>
+      </svg>
+      Scroll
+    </div>
+
+  </section>
+
+
+  <script>
+  /* ── Particle Network ──
+     Core approach:
+     1. Create N particles with random position, velocity, and size
+     2. Each frame: move particles, bounce off edges
+     3. Draw lines between particles within CONNECT_DIST (opacity based on dist)
+     4. Draw lines from cursor to nearby particles in accent color
+     5. Particles near cursor are drawn slightly larger
+     6. devicePixelRatio scaling for sharp retina rendering
+  */
+
+  const canvas = document.getElementById('pn-canvas');
+  const ctx    = canvas.getContext('2d');
+
+  /* ── Configuration ── */
+  const PARTICLE_COUNT   = 80;    // capped for performance
+  const CONNECT_DIST     = 120;   // px — max distance for particle-to-particle lines
+  const CURSOR_DIST      = 160;   // px — max distance for cursor-to-particle lines
+  const PARTICLE_COLOR   = 'rgba(148, 163, 184, 0.6)';  // resting particles
+  const LINE_COLOR       = 'rgba(148, 163, 184, 0.15)'; // particle-to-particle lines
+  const CURSOR_LINE      = 'rgba(16, 185, 129, 0.4)';   // cursor lines (accent)
+  const BASE_SPEED       = 0.4;   // max velocity per axis
+  const BASE_RADIUS      = 2;     // resting particle radius
+
+  let particles = [];
+  let dpr = 1;
+  let W = 0;
+  let H = 0;
+  let mouse = { x: -9999, y: -9999 }; // off-screen default
+
+  /* Resize canvas and re-init particles */
+  function initCanvas() {
+    dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    W = rect.width;
+    H = rect.height;
+
+    // Scale canvas for retina
+    canvas.width  = W * dpr;
+    canvas.height = H * dpr;
+    ctx.scale(dpr, dpr);
+
+    // Rebuild particles on resize
+    particles = [];
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+      particles.push({
+        x:  Math.random() * W,
+        y:  Math.random() * H,
+        vx: (Math.random() - 0.5) * BASE_SPEED * 2,
+        vy: (Math.random() - 0.5) * BASE_SPEED * 2,
+      });
+    }
+  }
+
+  /* Main animation loop */
+  function animate() {
+    ctx.clearRect(0, 0, W, H);
+
+    // Move particles and bounce off edges
+    particles.forEach((p) => {
+      p.x += p.vx;
+      p.y += p.vy;
+      if (p.x < 0 || p.x > W) p.vx *= -1;
+      if (p.y < 0 || p.y > H) p.vy *= -1;
+    });
+
+    // Draw particle-to-particle connection lines
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i + 1; j < particles.length; j++) {
+        const a = particles[i];
+        const b = particles[j];
+        const dx = a.x - b.x;
+        const dy = a.y - b.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist < CONNECT_DIST) {
+          // Opacity fades from 1 at dist=0 to 0 at dist=CONNECT_DIST
+          const opacity = (1 - dist / CONNECT_DIST) * 0.3;
+          ctx.beginPath();
+          ctx.strokeStyle = `rgba(148, 163, 184, ${opacity})`;
+          ctx.lineWidth = 1;
+          ctx.moveTo(a.x, a.y);
+          ctx.lineTo(b.x, b.y);
+          ctx.stroke();
+        }
+      }
+    }
+
+    // Draw cursor-to-particle lines (accent color)
+    particles.forEach((p) => {
+      const dx = p.x - mouse.x;
+      const dy = p.y - mouse.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist < CURSOR_DIST) {
+        const opacity = (1 - dist / CURSOR_DIST) * 0.6;
+        ctx.beginPath();
+        ctx.strokeStyle = `rgba(16, 185, 129, ${opacity})`;
+        ctx.lineWidth = 1;
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(mouse.x, mouse.y);
+        ctx.stroke();
+      }
+    });
+
+    // Draw particles (larger if near cursor)
+    particles.forEach((p) => {
+      const dx = p.x - mouse.x;
+      const dy = p.y - mouse.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      // Grow to 3.5px radius when very close to cursor
+      const r = dist < CURSOR_DIST
+        ? BASE_RADIUS + 1.5 * (1 - dist / CURSOR_DIST)
+        : BASE_RADIUS;
+
+      ctx.beginPath();
+      ctx.fillStyle = PARTICLE_COLOR;
+      ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    requestAnimationFrame(animate);
+  }
+
+  /* Track mouse position */
+  window.addEventListener('mousemove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    mouse.x = e.clientX - rect.left;
+    mouse.y = e.clientY - rect.top;
+  });
+
+  /* Reset cursor when mouse leaves the window */
+  window.addEventListener('mouseleave', () => {
+    mouse.x = -9999;
+    mouse.y = -9999;
+  });
+
+  /* Touch: treat last touch point as cursor */
+  canvas.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const touch = e.touches[0];
+    mouse.x = touch.clientX - rect.left;
+    mouse.y = touch.clientY - rect.top;
+  }, { passive: false });
+
+  canvas.addEventListener('touchend', () => {
+    mouse.x = -9999;
+    mouse.y = -9999;
+  });
+
+  /* Re-init on resize (debounced 200ms) */
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      initCanvas();
+    }, 200);
+  });
+
+  /* Start */
+  initCanvas();
+  animate();
+  </script>
+
+</body>
+</html>

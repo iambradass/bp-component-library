@@ -1,0 +1,345 @@
+<!-- COMPONENT: Benefit + Proof Cards | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Benefit + Proof Cards</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: var(--font-body); min-height: 100vh;
+      padding: 3rem 1rem 5rem;
+    }
+
+    .bpc-wrap { max-width: 960px; margin: 0 auto; }
+
+    /* ── Header ── */
+    .bpc-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: var(--font-heading); font-size: 0.75rem; font-weight: 600;
+      color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em;
+      padding: 4px 14px; background: var(--accent-dim);
+      border: 1px solid var(--accent-border); border-radius: 100px;
+      margin-bottom: 1rem;
+    }
+    .bpc-title {
+      font-family: var(--font-heading); font-size: clamp(1.75rem, 4vw, 2.5rem);
+      font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.5rem;
+    }
+    .bpc-subtitle {
+      color: var(--text-secondary); font-size: 1rem; line-height: 1.6;
+      max-width: 520px; margin-bottom: 2rem;
+    }
+
+    /* ── Scroll track ── */
+    .bpc-scroller-wrap { position: relative; }
+
+    .bpc-scroller {
+      display: flex; gap: 1rem; overflow-x: auto; scroll-snap-type: x mandatory;
+      scrollbar-width: none; padding-bottom: 4px;
+      /* Negative margin + padding trick to show peeking card */
+      padding-right: 3rem;
+    }
+    .bpc-scroller::-webkit-scrollbar { display: none; }
+
+    /* ── Individual card — fixed height, snap ── */
+    .bpc-card {
+      flex: 0 0 300px; height: 340px;
+      background: var(--surface); border-radius: var(--radius);
+      border: 1px solid var(--border);
+      padding: 1.5rem; display: flex; flex-direction: column;
+      scroll-snap-align: start; position: relative; overflow: hidden;
+      transition: border-color 0.2s;
+    }
+    /* Left border accent color set per card via data-color */
+    .bpc-card::before {
+      content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+      width: 3px; border-radius: 3px 0 0 3px;
+      background: var(--card-accent, var(--accent));
+    }
+
+    @media (max-width: 768px) { .bpc-card { flex: 0 0 280px; height: auto; min-height: 300px; } }
+    @media (max-width: 480px) { .bpc-card { flex: 0 0 85vw; } }
+
+    /* Top: icon + category */
+    .bpc-card-top {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 1rem;
+    }
+    .bpc-icon {
+      width: 38px; height: 38px; border-radius: 8px;
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .bpc-category {
+      font-family: var(--font-heading); font-size: 0.6875rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--card-accent, var(--accent));
+    }
+
+    /* Benefit headline */
+    .bpc-headline {
+      font-family: var(--font-heading); font-size: 1.0625rem; font-weight: 700;
+      line-height: 1.3; color: var(--text); margin-bottom: 0.75rem; flex: 1;
+    }
+
+    /* Proof block */
+    .bpc-proof {
+      background: rgba(255,255,255,0.04); border-radius: 8px;
+      padding: 0.875rem; margin-bottom: 0.875rem; border: 1px solid rgba(255,255,255,0.06);
+    }
+    .bpc-proof-text {
+      font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.55;
+    }
+
+    /* Bottom: proof type badge */
+    .bpc-card-bottom { display: flex; align-items: center; justify-content: space-between; }
+    .bpc-proof-badge {
+      font-family: var(--font-heading); font-size: 0.625rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      padding: 3px 9px; border-radius: 100px;
+      border: 1px solid var(--card-accent, var(--accent));
+      color: var(--card-accent, var(--accent));
+      background: rgba(255,255,255,0.03);
+    }
+    .bpc-card-num {
+      font-family: var(--font-heading); font-size: 0.75rem;
+      color: var(--text-muted); font-weight: 600;
+    }
+
+    /* ── Navigation: arrows + dots ── */
+    .bpc-nav {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-top: 1.25rem;
+    }
+    .bpc-arrows { display: flex; gap: 8px; }
+    .bpc-arrow {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: var(--surface); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: var(--text-secondary);
+      transition: all 0.18s ease;
+    }
+    .bpc-arrow:hover:not(:disabled) {
+      border-color: var(--accent-border); color: var(--accent);
+    }
+    .bpc-arrow:disabled { opacity: 0.35; cursor: default; }
+
+    .bpc-dots { display: flex; gap: 6px; align-items: center; }
+    .bpc-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--text-muted); transition: all 0.18s ease; cursor: pointer;
+    }
+    .bpc-dot.active {
+      background: var(--accent); width: 20px; border-radius: 3px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="bpc-wrap">
+
+  <div class="bpc-eyebrow">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+    Backed By Results
+  </div>
+  <h2 class="bpc-title">Why It Works</h2>
+  <p class="bpc-subtitle">Every claim backed by a real result, a proven stat, or a built-in guarantee.</p>
+
+  <!-- Scroll container -->
+  <div class="bpc-scroller-wrap">
+    <div class="bpc-scroller" id="bpcScroller"></div>
+  </div>
+
+  <!-- Navigation -->
+  <div class="bpc-nav">
+    <div class="bpc-arrows">
+      <button class="bpc-arrow" id="bpcPrev" aria-label="Previous">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+      </button>
+      <button class="bpc-arrow" id="bpcNext" aria-label="Next">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+      </button>
+    </div>
+    <div class="bpc-dots" id="bpcDots"></div>
+  </div>
+
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  /* ── Card data — 8 benefit cards ── */
+  var cards = [
+    {
+      color: '#10B981', /* green */
+      category: 'Search Visibility',
+      headline: 'Clients find you before they ever pick up the phone',
+      proof: '67% of title insurance decisions start with an online search. Without a professional site, you\'re invisible at the exact moment buyers and agents are looking.',
+      badge: 'Industry Data',
+      icon: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>'
+    },
+    {
+      color: '#3B82F6', /* blue */
+      category: 'Lead Generation',
+      headline: 'Your site works while you sleep',
+      proof: 'Our clients average 8–15 inbound contact form submissions per month — leads that arrive at 2am, on weekends, and while you\'re at closing.',
+      badge: 'Client Result',
+      icon: '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.06 12a19.79 19.79 0 0 1-3-8.59A2 2 0 0 1 3 1.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.09 9a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>'
+    },
+    {
+      color: '#8B5CF6', /* purple */
+      category: 'Google Ranking',
+      headline: 'Show up on page one for your city before competitors do',
+      proof: '34 of our clients currently rank on the first page of Google for their primary city + "title" keyword combination. The window is open — but not forever.',
+      badge: 'Client Result',
+      icon: '<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>'
+    },
+    {
+      color: '#F59E0B', /* amber */
+      category: 'Credibility',
+      headline: 'First impressions happen online, not at the closing table',
+      proof: 'A title rep with a professional site instantly outclasses the competition. Agents refer who they trust — and a polished web presence signals that you take your business seriously.',
+      badge: 'Built In',
+      icon: '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>'
+    },
+    {
+      color: '#EC4899', /* pink */
+      category: 'Revenue',
+      headline: 'One extra closing pays for 8+ months of service',
+      proof: 'At $97/month and an average title commission of $900+, your site pays for itself with a single new closing. Every additional one is pure ROI.',
+      badge: 'Guaranteed',
+      icon: '<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>'
+    },
+    {
+      color: '#10B981', /* green */
+      category: 'Referral Growth',
+      headline: 'Referrals send people to your site — give them something worth seeing',
+      proof: 'Even word-of-mouth referrals Google you before calling. 82% of referred prospects research online before making first contact. Your site closes the deal before you pick up the phone.',
+      badge: 'Industry Data',
+      icon: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>'
+    },
+    {
+      color: '#3B82F6', /* blue */
+      category: 'Automation',
+      headline: 'New leads go straight into your CRM — zero manual entry',
+      proof: 'Every contact form submission automatically creates a contact in your GoHighLevel pipeline with name, email, phone, and timestamp. Follow-up sequences trigger instantly.',
+      badge: 'Built In',
+      icon: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/>'
+    },
+    {
+      color: '#8B5CF6', /* purple */
+      category: 'Ongoing Growth',
+      headline: 'You see exactly what your site is doing every month',
+      proof: 'Monthly reports show traffic trends, keyword rankings, and lead volume. No guessing. If something\'s not working, we know — and we fix it in the next cycle.',
+      badge: 'Client Result',
+      icon: '<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/>'
+    },
+  ];
+
+  var scroller  = document.getElementById('bpcScroller');
+  var dotsEl    = document.getElementById('bpcDots');
+  var prevBtn   = document.getElementById('bpcPrev');
+  var nextBtn   = document.getElementById('bpcNext');
+  var currentIdx = 0;
+
+  /* ── Build cards ── */
+  cards.forEach(function(card, i) {
+    var el = document.createElement('div');
+    el.className = 'bpc-card';
+    el.style.setProperty('--card-accent', card.color);
+    el.innerHTML =
+      '<div class="bpc-card-top">' +
+        '<div class="bpc-icon" style="color:' + card.color + '">' +
+          '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">' + card.icon + '</svg>' +
+        '</div>' +
+        '<div class="bpc-category">' + card.category + '</div>' +
+      '</div>' +
+      '<div class="bpc-headline">' + card.headline + '</div>' +
+      '<div class="bpc-proof"><p class="bpc-proof-text">' + card.proof + '</p></div>' +
+      '<div class="bpc-card-bottom">' +
+        '<div class="bpc-proof-badge">' + card.badge + '</div>' +
+        '<div class="bpc-card-num">' + (i + 1) + ' / ' + cards.length + '</div>' +
+      '</div>';
+    scroller.appendChild(el);
+  });
+
+  /* ── Build dots ── */
+  cards.forEach(function(_, i) {
+    var dot = document.createElement('div');
+    dot.className = 'bpc-dot' + (i === 0 ? ' active' : '');
+    dot.addEventListener('click', function() { scrollTo(i); });
+    dotsEl.appendChild(dot);
+  });
+
+  function getDots() { return Array.from(dotsEl.querySelectorAll('.bpc-dot')); }
+
+  function updateDots(idx) {
+    getDots().forEach(function(d, i) {
+      d.classList.toggle('active', i === idx);
+    });
+  }
+
+  /* ── Scroll to card by index ── */
+  function scrollTo(idx) {
+    var cardEls = scroller.querySelectorAll('.bpc-card');
+    if (!cardEls[idx]) return;
+    cardEls[idx].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+    currentIdx = idx;
+    updateDots(idx);
+    prevBtn.disabled = idx === 0;
+    nextBtn.disabled = idx === cards.length - 1;
+  }
+
+  /* Arrow buttons */
+  prevBtn.addEventListener('click', function() { scrollTo(Math.max(0, currentIdx - 1)); });
+  nextBtn.addEventListener('click', function() { scrollTo(Math.min(cards.length - 1, currentIdx + 1)); });
+
+  /* Sync dots on native scroll */
+  scroller.addEventListener('scroll', function() {
+    var cardEls = Array.from(scroller.querySelectorAll('.bpc-card'));
+    var scrollLeft = scroller.scrollLeft;
+    var idx = 0;
+    cardEls.forEach(function(card, i) {
+      if (card.offsetLeft - scroller.offsetLeft <= scrollLeft + 20) idx = i;
+    });
+    if (idx !== currentIdx) {
+      currentIdx = idx;
+      updateDots(idx);
+      prevBtn.disabled = idx === 0;
+      nextBtn.disabled = idx === cards.length - 1;
+    }
+  }, { passive: true });
+
+  /* Initial state */
+  prevBtn.disabled = true;
+  nextBtn.disabled = cards.length <= 1;
+
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Before/After Slider — Component Library</title>
+
+  <!--
+  ============================================================
+  COMPONENT: Before/After Comparison Slider
+  COPY: <style> block + HTML block + <script> block into target site
+  EFFECT: Drag (mouse or touch) the center handle to reveal before vs after.
+  KEYBOARD: Left/Right arrow keys move the handle 5% at a time.
+  DEMO: Uses CSS-styled divs (no image files required).
+        Replace .ba-before-content and .ba-after-content with <img> tags for real images.
+  ============================================================
+  -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+
+    /* ── CUSTOMIZE: swap these variables ── */
+    :root {
+      --ba-bg-page:       #0D1117;
+      --ba-bg-surface:    #111827;
+      --ba-bg-elevated:   #1E293B;
+      --ba-accent:        #10B981;
+      --ba-accent-glow:   rgba(16, 185, 129, 0.4);
+      --ba-text:          #F8FAFC;
+      --ba-text-secondary:#94A3B8;
+      --ba-text-muted:    #475569;
+      --ba-border:        rgba(148, 163, 184, 0.1);
+      --ba-radius:        12px;
+      --ba-font-heading:  'Space Grotesk', system-ui, sans-serif;
+      --ba-font-body:     'Inter', system-ui, sans-serif;
+      --ba-font-mono:     ui-monospace, monospace;
+
+      /* CUSTOMIZE: initial split position (0-100) */
+      --ba-split:         50;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--ba-bg-page);
+      color: var(--ba-text);
+      font-family: var(--ba-font-body);
+      min-height: 100vh;
+      padding: 3rem 1.5rem 5rem;
+    }
+    .demo-label {
+      font-family: var(--ba-font-mono);
+      font-size: 0.75rem;
+      color: var(--ba-accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+    .demo-title {
+      font-family: var(--ba-font-heading);
+      font-size: 2rem;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+    .demo-subtitle {
+      color: var(--ba-text-secondary);
+      text-align: center;
+      font-size: 0.9375rem;
+      margin-bottom: 2.5rem;
+    }
+    .demo-hint {
+      text-align: center;
+      font-family: var(--ba-font-mono);
+      font-size: 0.75rem;
+      color: var(--ba-text-muted);
+      margin-bottom: 2.5rem;
+    }
+
+
+    /* ════════════════════════════════════════════
+       COMPONENT STYLES
+    ════════════════════════════════════════════ */
+
+    /* Outer wrapper — constrains width and provides border */
+    .ba-slider {
+      position: relative;
+      max-width: 860px;
+      margin: 0 auto;
+      border-radius: var(--ba-radius);
+      overflow: hidden;
+      border: 1px solid var(--ba-border);
+      user-select: none;   /* prevents text selection while dragging */
+      -webkit-user-select: none;
+      cursor: ew-resize;   /* indicate horizontal drag */
+      touch-action: none;  /* prevents scroll while touch-dragging */
+    }
+    /* Aspect ratio: 16:9 is good for most use cases */
+    .ba-slider::before {
+      content: '';
+      display: block;
+      padding-top: 56.25%;  /* 16:9 ratio — CUSTOMIZE to 75% for 4:3, etc. */
+    }
+
+    /* Both panels are absolutely positioned to fill the container */
+    .ba-before,
+    .ba-after {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* BEFORE panel — always full width (sits behind the after panel) */
+    .ba-before {
+      z-index: 1;
+    }
+
+    /* AFTER panel — clips to reveal only the left portion */
+    .ba-after {
+      z-index: 2;
+      /* clip-path is updated by JS to reveal the correct width */
+      clip-path: inset(0 calc(100% - var(--ba-split, 50) * 1%) 0 0);
+      transition: clip-path 0.02s linear; /* near-instant while dragging */
+    }
+
+    /* ── CSS-styled demo panels (replace with real images in production) ── */
+
+    /* BEFORE: messy/unstyled mockup */
+    .ba-before-content {
+      width: 100%;
+      height: 100%;
+      background: #1a1f2e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 0;
+      position: relative;
+      overflow: hidden;
+      font-family: var(--ba-font-body);
+    }
+    /* Simulate an old-school Times New Roman style site */
+    .ba-before-inner {
+      width: 85%;
+      max-width: 500px;
+      background: #f0ede8;
+      border: 2px solid #999;
+      padding: 1.5rem;
+      color: #222;
+    }
+    .ba-before-inner h2 {
+      font-family: 'Times New Roman', serif;
+      font-size: 1.25rem;
+      border-bottom: 2px solid #999;
+      padding-bottom: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+    .ba-before-inner p {
+      font-family: 'Times New Roman', serif;
+      font-size: 0.75rem;
+      color: #333;
+      line-height: 1.5;
+      margin-bottom: 0.75rem;
+    }
+    .ba-before-inner .ba-old-btn {
+      display: inline-block;
+      background: #c0c0c0;
+      border: 2px outset #999;
+      padding: 3px 12px;
+      font-family: Arial, sans-serif;
+      font-size: 0.75rem;
+      color: #000;
+    }
+    .ba-before-inner .ba-old-nav {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 0.75rem;
+    }
+    .ba-before-inner .ba-old-nav a {
+      font-family: Arial, sans-serif;
+      font-size: 0.7rem;
+      color: #00f;
+      text-decoration: underline;
+    }
+    .ba-before-watermark {
+      position: absolute;
+      bottom: 1rem;
+      right: 1rem;
+      font-family: var(--ba-font-mono);
+      font-size: 0.625rem;
+      color: rgba(255,255,255,0.2);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    /* AFTER: clean modern design */
+    .ba-after-content {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #0D1117 0%, #111827 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 0;
+      position: relative;
+      overflow: hidden;
+    }
+    /* Decorative bg accent for the after panel */
+    .ba-after-content::before {
+      content: '';
+      position: absolute;
+      top: -30%;
+      right: -20%;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(16, 185, 129, 0.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .ba-after-inner {
+      width: 85%;
+      max-width: 500px;
+      background: #111827;
+      border: 1px solid rgba(148, 163, 184, 0.1);
+      border-radius: 12px;
+      padding: 1.5rem;
+      position: relative;
+      z-index: 1;
+    }
+    .ba-after-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 1rem;
+    }
+    .ba-after-logo-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #10B981;
+      box-shadow: 0 0 8px rgba(16,185,129,0.6);
+    }
+    .ba-after-logo-name {
+      font-family: var(--ba-font-heading);
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: #F8FAFC;
+    }
+    .ba-after-headline {
+      font-family: var(--ba-font-heading);
+      font-size: clamp(1rem, 2.5vw, 1.375rem);
+      font-weight: 700;
+      color: #F8FAFC;
+      margin-bottom: 0.5rem;
+      line-height: 1.3;
+    }
+    .ba-after-sub {
+      font-size: 0.8125rem;
+      color: #94A3B8;
+      margin-bottom: 1rem;
+      line-height: 1.5;
+    }
+    .ba-after-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 18px;
+      background: #10B981;
+      color: #0D1117;
+      font-family: var(--ba-font-heading);
+      font-size: 0.8125rem;
+      font-weight: 700;
+      border-radius: 6px;
+    }
+    .ba-after-watermark {
+      position: absolute;
+      bottom: 1rem;
+      right: 1rem;
+      font-family: var(--ba-font-mono);
+      font-size: 0.625rem;
+      color: rgba(255,255,255,0.15);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    /* ── Labels: Before / After ── */
+    .ba-label {
+      position: absolute;
+      top: 1rem;
+      padding: 4px 12px;
+      border-radius: 100px;
+      font-family: var(--ba-font-mono);
+      font-size: 0.6875rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      z-index: 10;
+    }
+    .ba-label-before {
+      left: 1rem;
+      background: rgba(0, 0, 0, 0.6);
+      color: #94A3B8;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+    }
+    .ba-label-after {
+      right: 1rem;
+      background: rgba(16, 185, 129, 0.15);
+      color: #10B981;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    /* ── Drag handle ── */
+    .ba-handle {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      /* Left position set via JS inline style (as %) */
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transform: translateX(-50%);
+      pointer-events: none;
+    }
+    /* Vertical divider line */
+    .ba-handle-line {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: var(--ba-accent);
+      left: 50%;
+      transform: translateX(-50%);
+      box-shadow: 0 0 12px var(--ba-accent-glow);
+    }
+    /* Circular button with arrows */
+    .ba-handle-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--ba-accent);
+      box-shadow: 0 0 20px var(--ba-accent-glow), 0 4px 12px rgba(0,0,0,0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      position: relative;
+      z-index: 1;
+      flex-shrink: 0;
+    }
+    .ba-handle-btn svg { color: #0D1117; }
+
+  </style>
+</head>
+<body>
+
+  <div class="demo-label">Component Demo</div>
+  <h1 class="demo-title">Before/After Slider</h1>
+  <p class="demo-subtitle">Drag the center handle to compare before and after.</p>
+  <p class="demo-hint">Mouse drag / touch drag / keyboard arrow keys</p>
+
+  <!--
+  The slider needs these four children in this order:
+  1. .ba-before  — the panel that's always visible (old/before state)
+  2. .ba-after   — the panel that's clipped to reveal (new/after state)
+  3. .ba-label-before
+  4. .ba-label-after
+  5. .ba-handle  — the draggable center line + button
+  -->
+  <div class="ba-slider" id="ba-slider" role="slider" aria-label="Before and after comparison" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50" tabindex="0">
+
+    <!-- BEFORE panel: replace .ba-before-content with <img> for real images -->
+    <div class="ba-before" aria-label="Before: old website design">
+      <div class="ba-before-content">
+        <div class="ba-before-inner">
+          <div class="ba-old-nav">
+            <a href="#">Home</a>
+            <a href="#">About</a>
+            <a href="#">Services</a>
+            <a href="#">Contact</a>
+          </div>
+          <h2>Welcome to Our Website</h2>
+          <p>We are a company that provides services to clients. Please browse our site to learn more about what we offer. Call us today for a free consultation.</p>
+          <p>Our team of experienced professionals is dedicated to helping you achieve your goals. We have been in business since 1998.</p>
+          <button class="ba-old-btn">Click Here</button>
+        </div>
+        <div class="ba-before-watermark">Before</div>
+      </div>
+    </div>
+
+    <!-- AFTER panel: replace .ba-after-content with <img> for real images -->
+    <div class="ba-after" id="ba-after" aria-label="After: redesigned website">
+      <div class="ba-after-content">
+        <div class="ba-after-inner">
+          <div class="ba-after-logo">
+            <div class="ba-after-logo-dot"></div>
+            <div class="ba-after-logo-name">YourBrand</div>
+          </div>
+          <div class="ba-after-headline">Turn Visitors Into Clients — Automatically</div>
+          <div class="ba-after-sub">Mobile-first websites and automation systems that generate leads 24/7 without lifting a finger.</div>
+          <div class="ba-after-cta">
+            Get Started
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+          </div>
+        </div>
+        <div class="ba-after-watermark">After</div>
+      </div>
+    </div>
+
+    <!-- Labels -->
+    <div class="ba-label ba-label-before" aria-hidden="true">Before</div>
+    <div class="ba-label ba-label-after" aria-hidden="true">After</div>
+
+    <!-- Handle -->
+    <div class="ba-handle" id="ba-handle" aria-hidden="true">
+      <div class="ba-handle-line"></div>
+      <div class="ba-handle-btn">
+        <!-- Left/right chevron arrows -->
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 6 15 12 9 18"/>
+        </svg>
+      </div>
+    </div>
+
+  </div><!-- /ba-slider -->
+
+
+  <script>
+  /*
+  ── HOW THE SLIDER WORKS ──
+  Split position is stored as a percentage (0–100) in `splitPct`.
+  On every update:
+    1. Set .ba-after clip-path to reveal `splitPct`% from the left
+    2. Set .ba-handle left position to `splitPct`%
+    3. Update aria-valuenow on the slider for screen readers
+    4. Fade out the labels as they get covered (so they don't overlap the handle)
+
+  Uses requestAnimationFrame for smooth dragging.
+  Handles: mouse (mousemove), touch (touchmove), keyboard (ArrowLeft/ArrowRight).
+  */
+
+  var slider    = document.getElementById('ba-slider');
+  var afterEl   = document.getElementById('ba-after');
+  var handleEl  = document.getElementById('ba-handle');
+  var labelBefore = slider.querySelector('.ba-label-before');
+  var labelAfter  = slider.querySelector('.ba-label-after');
+
+  var splitPct  = 50;   // current split position (0–100)
+  var isDragging = false;
+  var rafPending = false;
+
+  /* ── Apply the current split position to the DOM ── */
+  function applySplit(pct) {
+    pct = Math.max(0, Math.min(100, pct)); // clamp 0..100
+    splitPct = pct;
+
+    // Update clip-path on the after panel
+    afterEl.style.clipPath = 'inset(0 ' + (100 - pct) + '% 0 0)';
+
+    // Move the handle
+    handleEl.style.left = pct + '%';
+
+    // Update ARIA value
+    slider.setAttribute('aria-valuenow', Math.round(pct));
+
+    // Fade labels as the handle approaches them
+    // Before label (left): fade when handle is within 20%
+    var beforeOpacity = Math.min(1, (pct - 5) / 15);
+    labelBefore.style.opacity = Math.max(0, Math.min(1, beforeOpacity));
+    // After label (right): fade when handle is within 20% of right edge
+    var afterOpacity = Math.min(1, (95 - pct) / 15);
+    labelAfter.style.opacity = Math.max(0, Math.min(1, afterOpacity));
+  }
+
+  /* ── Convert a clientX value to a split percentage ── */
+  function clientXToPct(clientX) {
+    var rect = slider.getBoundingClientRect();
+    return ((clientX - rect.left) / rect.width) * 100;
+  }
+
+  /* ── rAF-throttled update ── */
+  function scheduledUpdate(pct) {
+    if (rafPending) return;
+    rafPending = true;
+    requestAnimationFrame(function() {
+      applySplit(pct);
+      rafPending = false;
+    });
+  }
+
+  /* ── Mouse events ── */
+  slider.addEventListener('mousedown', function(e) {
+    isDragging = true;
+    applySplit(clientXToPct(e.clientX));
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove', function(e) {
+    if (!isDragging) return;
+    scheduledUpdate(clientXToPct(e.clientX));
+  });
+  document.addEventListener('mouseup', function() {
+    isDragging = false;
+  });
+
+  /* ── Touch events ── */
+  slider.addEventListener('touchstart', function(e) {
+    isDragging = true;
+    applySplit(clientXToPct(e.touches[0].clientX));
+  }, { passive: true });
+  document.addEventListener('touchmove', function(e) {
+    if (!isDragging) return;
+    scheduledUpdate(clientXToPct(e.touches[0].clientX));
+  }, { passive: true });
+  document.addEventListener('touchend', function() {
+    isDragging = false;
+  });
+
+  /* ── Keyboard: arrow keys move 5% at a time ── */
+  slider.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowLeft')  { applySplit(splitPct - 5); e.preventDefault(); }
+    if (e.key === 'ArrowRight') { applySplit(splitPct + 5); e.preventDefault(); }
+  });
+
+  /* ── Initialize at 50% ── */
+  applySplit(50);
+  </script>
+
+</body>
+</html>

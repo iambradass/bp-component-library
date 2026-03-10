@@ -1,0 +1,430 @@
+<!-- COMPONENT: Testimonial Featured | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Testimonial Featured — 3 Large Designs</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+      --amber:          #F59E0B;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font-body); }
+
+    /* Demo separator */
+    .demo-label {
+      font-family: var(--font-mono); font-size: 0.625rem; font-weight: 600;
+      color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em;
+      text-align: center; padding: 1rem; background: rgba(148,163,184,0.02);
+      border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+    }
+
+    /* ════════════════════════════════════════
+       DESIGN A — Full Width Quote
+    ════════════════════════════════════════ */
+    .tfa {
+      padding: 6rem 1.5rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    /* Radial gradient background */
+    .tfa::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at center, rgba(16,185,129,0.07) 0%, transparent 65%);
+      pointer-events: none;
+    }
+    .tfa-inner { max-width: 820px; margin: 0 auto; position: relative; z-index: 1; }
+
+    /* Giant quotation mark */
+    .tfa-quote-mark {
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 6rem; line-height: 1;
+      color: var(--accent);
+      margin-bottom: -1.5rem;
+      display: block;
+      opacity: 0.6;
+    }
+
+    /* The quote text — words highlighted progressively on scroll */
+    .tfa-quote {
+      font-family: var(--font-heading);
+      font-size: clamp(1.25rem, 3vw, 2rem);
+      font-weight: 600;
+      line-height: 1.55;
+      color: var(--text);
+      margin-bottom: 2.5rem;
+      position: relative;
+    }
+    /* Each word wrapped in a span — highlighted in sequence */
+    .tfa-word { transition: color 0.3s ease, background 0.3s ease; border-radius: 3px; padding: 0 2px; }
+    .tfa-word.lit { color: var(--text); background: rgba(16,185,129,0.12); }
+
+    .tfa-attribution {
+      display: flex; align-items: center; justify-content: center; gap: 14px;
+    }
+    .tfa-avatar {
+      width: 52px; height: 52px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent-dim), var(--elevated));
+      border: 2px solid var(--accent-border);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-heading); font-weight: 700; font-size: 1.125rem;
+      color: var(--accent); flex-shrink: 0;
+    }
+    .tfa-name { font-family: var(--font-heading); font-size: 1rem; font-weight: 700; color: var(--text); }
+    .tfa-role { font-size: 0.875rem; color: var(--text-muted); margin-top: 2px; }
+    .tfa-stars { display: flex; gap: 3px; margin-top: 5px; }
+    .tfa-star { color: var(--amber); font-size: 0.875rem; }
+
+    /* ════════════════════════════════════════
+       DESIGN B — Split with Stats
+    ════════════════════════════════════════ */
+    .tfb {
+      padding: 5rem 1.5rem;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .tfb-inner {
+      max-width: 960px; margin: 0 auto;
+      display: grid; grid-template-columns: 1fr 1px 340px;
+      gap: 3rem; align-items: center;
+    }
+    @media (max-width: 768px) { .tfb-inner { grid-template-columns: 1fr; } }
+
+    .tfb-divider { background: var(--border); height: 100%; min-height: 200px; }
+    @media (max-width: 768px) { .tfb-divider { display: none; } }
+
+    .tfb-quote-mark {
+      font-family: Georgia, serif; font-size: 4rem; line-height: 1;
+      color: var(--accent); opacity: 0.5; margin-bottom: -1rem; display: block;
+    }
+    .tfb-quote {
+      font-family: var(--font-heading); font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+      font-weight: 600; line-height: 1.55; color: var(--text);
+      font-style: italic; margin-bottom: 1.5rem;
+    }
+    .tfb-attribution { display: flex; align-items: center; gap: 12px; }
+    .tfb-avatar {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: var(--elevated); border: 2px solid var(--accent-border);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-heading); font-weight: 700; color: var(--accent); flex-shrink: 0;
+    }
+    .tfb-name { font-family: var(--font-heading); font-size: 0.9375rem; font-weight: 700; }
+    .tfb-role { font-size: 0.8125rem; color: var(--text-muted); margin-top: 2px; }
+
+    /* Right: stat boxes */
+    .tfb-stats {
+      display: flex; flex-direction: column; gap: 12px;
+      border-left: 3px solid var(--accent-border);
+      padding-left: 2rem;
+    }
+    @media (max-width: 768px) { .tfb-stats { border-left: none; border-top: 1px solid var(--accent-border); padding-left: 0; padding-top: 1.5rem; } }
+
+    .tfb-stat-label { font-family: var(--font-mono); font-size: 0.6875rem; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 2px; }
+    .tfb-stat-values { display: flex; align-items: center; gap: 8px; }
+    .tfb-stat-before { font-family: var(--font-heading); font-size: 1.25rem; font-weight: 700; color: var(--text-muted); }
+    .tfb-stat-arrow { color: var(--accent); font-size: 1.125rem; }
+    .tfb-stat-after { font-family: var(--font-heading); font-size: 1.5rem; font-weight: 700; color: var(--accent); }
+    .tfb-stat-context { font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; }
+
+    .tfb-stat-block { background: var(--elevated); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.25rem; }
+
+    /* ════════════════════════════════════════
+       DESIGN C — Video Testimonial Card
+    ════════════════════════════════════════ */
+    .tfc {
+      padding: 5rem 1.5rem;
+    }
+    .tfc-inner { max-width: 760px; margin: 0 auto; }
+
+    .tfc-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    /* Video thumbnail area */
+    .tfc-thumb {
+      position: relative;
+      height: 320px;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+    }
+    /* Subtle overlay pattern */
+    .tfc-thumb::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image: radial-gradient(circle, rgba(16,185,129,0.06) 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+    .tfc-thumb-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.5));
+    }
+    /* Play button */
+    .tfc-play {
+      position: relative; z-index: 1;
+      width: 72px; height: 72px; border-radius: 50%;
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 2px solid rgba(255,255,255,0.3);
+      display: flex; align-items: center; justify-content: center;
+      transition: transform 0.2s, background 0.2s;
+    }
+    .tfc-thumb:hover .tfc-play { transform: scale(1.1); background: rgba(16,185,129,0.3); border-color: var(--accent); }
+    .tfc-play svg { margin-left: 4px; } /* optical center for play triangle */
+    .tfc-play-label {
+      position: absolute; z-index: 1;
+      bottom: 1.5rem; left: 1.5rem;
+      font-family: var(--font-mono); font-size: 0.6875rem; font-weight: 600;
+      color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 0.08em;
+    }
+    /* Person info overlay in thumb */
+    .tfc-person-overlay {
+      position: absolute; z-index: 1;
+      top: 1.25rem; left: 1.5rem;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .tfc-p-avatar {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: var(--accent-dim); border: 2px solid var(--accent);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-heading); font-weight: 700; color: var(--accent); font-size: 1rem;
+    }
+    .tfc-p-name { font-family: var(--font-heading); font-size: 0.9375rem; font-weight: 700; color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,0.5); }
+    .tfc-p-role { font-size: 0.75rem; color: rgba(255,255,255,0.7); }
+
+    /* Card body */
+    .tfc-body { padding: 2rem; }
+    .tfc-headline {
+      font-family: var(--font-heading); font-size: 1.25rem; font-weight: 700;
+      color: var(--accent); margin-bottom: 1rem;
+    }
+    .tfc-quote-mark { font-family: Georgia, serif; font-size: 3rem; line-height: 0.8; color: var(--accent); opacity: 0.4; display: block; margin-bottom: 0.5rem; }
+    .tfc-quote { font-size: 0.9375rem; color: var(--text-secondary); line-height: 1.7; }
+
+    /* Quote reveal overlay (simulated play) */
+    .tfc-reveal {
+      display: none;
+      margin-top: 1rem; padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+    .tfc-reveal.is-open { display: block; animation: fadeIn 0.4s ease; }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+    .tfc-reveal-quote { font-family: var(--font-heading); font-size: 1rem; font-weight: 600; line-height: 1.55; color: var(--text); font-style: italic; }
+
+  </style>
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- DESIGN A — Full Width Quote                 -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="demo-label">Design A — Full Width Quote</div>
+  <section class="tfa">
+    <div class="tfa-inner">
+      <span class="tfa-quote-mark">&ldquo;</span>
+      <blockquote class="tfa-quote" id="tfa-quote">
+        I went from zero inbound leads to 11 per month in 90 days.
+        I used to joke that my only marketing strategy was hoping my phone would ring.
+        Now I have a system that does the work while I'm at closings.
+        This is the best investment I've made in my career as a title rep.
+      </blockquote>
+      <div class="tfa-attribution">
+        <div class="tfa-avatar">JM</div>
+        <div>
+          <div class="tfa-name">Jessica M.</div>
+          <div class="tfa-role">Title Rep — Phoenix, AZ</div>
+          <div class="tfa-stars">
+            <span class="tfa-star">★</span><span class="tfa-star">★</span>
+            <span class="tfa-star">★</span><span class="tfa-star">★</span>
+            <span class="tfa-star">★</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- DESIGN B — Split with Stats                 -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="demo-label">Design B — Split with Stats</div>
+  <section class="tfb">
+    <div class="tfb-inner">
+      <!-- Left: quote -->
+      <div>
+        <span class="tfb-quote-mark">&ldquo;</span>
+        <blockquote class="tfb-quote">
+          Within 60 days of launching my site, I was getting 2–3 inbound agent inquiries per week.
+          My closest competitor who's been in the market for 8 years still doesn't have a real website.
+          I'm showing up where they're not — and I'm closing deals because of it.
+        </blockquote>
+        <div class="tfb-attribution">
+          <div class="tfb-avatar">RT</div>
+          <div>
+            <div class="tfb-name">Rachel T.</div>
+            <div class="tfb-role">Title Rep — Dallas–Fort Worth metro</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tfb-divider"></div>
+
+      <!-- Right: before/after stats -->
+      <div class="tfb-stats">
+        <div class="tfb-stat-block">
+          <div class="tfb-stat-label">Monthly inbound leads</div>
+          <div class="tfb-stat-values">
+            <span class="tfb-stat-before">0</span>
+            <span class="tfb-stat-arrow">→</span>
+            <span class="tfb-stat-after">11</span>
+          </div>
+          <div class="tfb-stat-context">From zero to double-digits in 90 days</div>
+        </div>
+
+        <div class="tfb-stat-block">
+          <div class="tfb-stat-label">Google ranking</div>
+          <div class="tfb-stat-values">
+            <span class="tfb-stat-before">Unlisted</span>
+            <span class="tfb-stat-arrow">→</span>
+            <span class="tfb-stat-after">#1</span>
+          </div>
+          <div class="tfb-stat-context">Top result for "title rep Dallas TX"</div>
+        </div>
+
+        <div class="tfb-stat-block">
+          <div class="tfb-stat-label">Monthly site visitors</div>
+          <div class="tfb-stat-values">
+            <span class="tfb-stat-before">0</span>
+            <span class="tfb-stat-arrow">→</span>
+            <span class="tfb-stat-after">1.2K</span>
+          </div>
+          <div class="tfb-stat-context">Organic search traffic, no ad spend</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- DESIGN C — Video Testimonial Card           -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="demo-label">Design C — Video Testimonial Card</div>
+  <section class="tfc">
+    <div class="tfc-inner">
+      <div class="tfc-card">
+
+        <!-- Thumbnail area (CSS-only, simulated video) -->
+        <div class="tfc-thumb" id="tfc-thumb" title="Click to reveal quote">
+          <div class="tfc-thumb-overlay"></div>
+
+          <!-- Person info in top-left -->
+          <div class="tfc-person-overlay">
+            <div class="tfc-p-avatar">JM</div>
+            <div>
+              <div class="tfc-p-name">Jessica Martinez</div>
+              <div class="tfc-p-role">Title Rep — Phoenix, AZ</div>
+            </div>
+          </div>
+
+          <!-- Play button center -->
+          <div class="tfc-play">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="white" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          </div>
+
+          <!-- Bottom label -->
+          <div class="tfc-play-label">Click to hear from Jessica</div>
+        </div>
+
+        <!-- Body -->
+        <div class="tfc-body">
+          <div class="tfc-headline">
+            From 0 to 11 inbound leads per month — in 90 days.
+          </div>
+          <span class="tfc-quote-mark">&ldquo;</span>
+          <p class="tfc-quote">
+            I was skeptical at first. I'd tried a few marketing services before and they all promised the world and delivered nothing. This was different from week one.
+          </p>
+          <!-- Full quote reveals on play click -->
+          <div class="tfc-reveal" id="tfc-reveal">
+            <p class="tfc-reveal-quote">
+              "By the time my site had been live for 60 days, I was getting calls from agents I'd never met — people who found me on Google and liked what they saw. That's never happened to me before. Now I have a real pipeline that doesn't depend on who I happened to have coffee with."
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <script>
+    // ── Design A: progressive word highlight on scroll ──
+    function wrapWords(el) {
+      const text = el.textContent.trim();
+      const words = text.split(/\s+/);
+      el.innerHTML = words.map(w => `<span class="tfa-word">${w}</span>`).join(' ');
+    }
+
+    const quoteEl = document.getElementById('tfa-quote');
+    if (quoteEl) {
+      wrapWords(quoteEl);
+      const wordSpans = quoteEl.querySelectorAll('.tfa-word');
+      let lit = 0;
+
+      const io = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting) return;
+          // Light up words in sequence
+          function lightNext() {
+            if (lit >= wordSpans.length) return;
+            wordSpans[lit].classList.add('lit');
+            lit++;
+            if (lit < wordSpans.length) setTimeout(lightNext, 60);
+          }
+          lightNext();
+          io.unobserve(entry.target);
+        });
+      }, { threshold: 0.3 });
+
+      io.observe(quoteEl);
+    }
+
+    // ── Design C: simulated play — reveals full quote ──
+    const thumb = document.getElementById('tfc-thumb');
+    const reveal = document.getElementById('tfc-reveal');
+    if (thumb && reveal) {
+      thumb.addEventListener('click', () => {
+        reveal.classList.toggle('is-open');
+        // Dim the thumbnail to simulate "played"
+        thumb.style.opacity = reveal.classList.contains('is-open') ? '0.6' : '1';
+      });
+    }
+  </script>
+
+</body>
+</html>

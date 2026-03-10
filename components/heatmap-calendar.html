@@ -1,0 +1,469 @@
+<!-- COMPONENT: Heatmap Calendar | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Heatmap Calendar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ── Customize ── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --cell:           12px;
+      --gap:            3px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 14px;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 40px 24px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      width: 100%;
+      max-width: 1000px;
+    }
+
+    /* ── Header ── */
+    .hm-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .hm-title {
+      font-family: var(--font-heading);
+      font-size: 1.125rem;
+      font-weight: 600;
+    }
+    .hm-controls {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .pill-group {
+      display: flex;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .pill-group button {
+      padding: 5px 12px;
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-family: var(--font-body);
+      font-size: 0.8125rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .pill-group button.active { background: var(--accent); color: #000; font-weight: 600; }
+    .pill-group button:hover:not(.active) { color: var(--text); background: rgba(255,255,255,0.05); }
+
+    /* ── Grid container ── */
+    .hm-grid-wrap {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    /* Day labels column */
+    .day-labels {
+      display: flex;
+      flex-direction: column;
+      gap: var(--gap);
+      padding-top: 22px; /* align with grid (month labels height) */
+    }
+    .day-label {
+      height: var(--cell);
+      font-size: 9px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      line-height: 1;
+    }
+
+    /* Main grid (weeks columns) */
+    .hm-grid {
+      flex: 1;
+      min-width: 0;
+    }
+    .month-labels {
+      display: flex;
+      margin-bottom: 6px;
+      font-size: 10px;
+      color: var(--text-muted);
+      position: relative;
+      height: 16px;
+    }
+    .month-label {
+      position: absolute;
+      white-space: nowrap;
+    }
+    .weeks-row {
+      display: flex;
+      gap: var(--gap);
+    }
+    .week-col {
+      display: flex;
+      flex-direction: column;
+      gap: var(--gap);
+    }
+    .hm-cell {
+      width: var(--cell);
+      height: var(--cell);
+      border-radius: 2px;
+      cursor: pointer;
+      transition: transform 0.1s, filter 0.1s;
+      position: relative;
+    }
+    .hm-cell:hover { transform: scale(1.4); filter: brightness(1.3); z-index: 2; }
+
+    /* Intensity levels */
+    .hm-cell.l0 { background: var(--elevated); }
+    .hm-cell.l1 { background: rgba(16,185,129,0.25); }
+    .hm-cell.l2 { background: rgba(16,185,129,0.45); }
+    .hm-cell.l3 { background: rgba(16,185,129,0.7); }
+    .hm-cell.l4 { background: #10B981; }
+    .hm-cell.empty { background: transparent; cursor: default; }
+
+    /* ── Tooltip ── */
+    .hm-tooltip {
+      position: fixed;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 0.8125rem;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.1s;
+      z-index: 100;
+      white-space: nowrap;
+    }
+    .hm-tooltip.visible { opacity: 1; }
+    .hm-tooltip strong { display: block; color: var(--text); margin-bottom: 2px; }
+    .hm-tooltip span { color: var(--accent); }
+
+    /* ── Stats bar ── */
+    .stats-bar {
+      display: flex;
+      gap: 32px;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+    .stat-item { display: flex; flex-direction: column; gap: 2px; }
+    .stat-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    .stat-val { font-family: var(--font-heading); font-size: 1.25rem; font-weight: 700; }
+    .stat-val .accent { color: var(--accent); }
+
+    /* ── Legend ── */
+    .hm-legend {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 12px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      justify-content: flex-end;
+    }
+    .legend-swatch {
+      width: 12px; height: 12px;
+      border-radius: 2px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <!-- Header -->
+  <div class="hm-header">
+    <h2 class="hm-title" id="hmTitle">Activity</h2>
+    <div class="hm-controls">
+      <div class="pill-group" id="yearTabs">
+        <button data-year="2026" class="active">2026</button>
+        <button data-year="2025">2025</button>
+        <button data-year="2024">2024</button>
+      </div>
+      <div class="pill-group" id="metricTabs">
+        <button data-metric="commits" class="active">Commits</button>
+        <button data-metric="hours">Hours logged</button>
+        <button data-metric="tasks">Tasks</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Heatmap grid -->
+  <div class="hm-grid-wrap">
+    <div class="day-labels" id="dayLabels">
+      <!-- Mon, Wed, Fri labels inserted by JS -->
+    </div>
+    <div class="hm-grid">
+      <div class="month-labels" id="monthLabels"></div>
+      <div class="weeks-row" id="weeksRow"></div>
+    </div>
+  </div>
+
+  <!-- Legend -->
+  <div class="hm-legend">
+    Less
+    <div class="legend-swatch" style="background:var(--elevated)"></div>
+    <div class="legend-swatch l1" style="background:rgba(16,185,129,0.25)"></div>
+    <div class="legend-swatch l2" style="background:rgba(16,185,129,0.45)"></div>
+    <div class="legend-swatch l3" style="background:rgba(16,185,129,0.7)"></div>
+    <div class="legend-swatch l4" style="background:#10B981"></div>
+    More
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-bar">
+    <div class="stat-item">
+      <div class="stat-label">Total this year</div>
+      <div class="stat-val" id="statTotal">—</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-label">Current streak</div>
+      <div class="stat-val" id="statCurrent">—</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-label">Longest streak</div>
+      <div class="stat-val" id="statLongest">—</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-label">Most active day</div>
+      <div class="stat-val" id="statBest">—</div>
+    </div>
+  </div>
+</div>
+
+<!-- Tooltip -->
+<div class="hm-tooltip" id="hmTooltip"></div>
+
+<script>
+  const CELL = 12, GAP = 3;
+  const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  const metrics = {
+    commits: { label: 'Commits', unit: 'commits', max: 20, seed: 1 },
+    hours:   { label: 'Hours Logged', unit: 'hrs', max: 12, seed: 2 },
+    tasks:   { label: 'Tasks Completed', unit: 'tasks', max: 15, seed: 3 },
+  };
+
+  let currentYear = 2026;
+  let currentMetric = 'commits';
+  let yearData = {};
+
+  // Seeded RNG for reproducible data per year
+  function seededRng(seed) {
+    let s = seed;
+    return () => { s = (s * 16807 + 0) % 2147483647; return s / 2147483647; };
+  }
+
+  function genYearData(year, metric) {
+    const rng = seededRng(year + metrics[metric].seed * 1000);
+    const start = new Date(year, 0, 1);
+    const end = new Date(year, 11, 31);
+    const data = {};
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate()+1)) {
+      // Skip some days to create realistic patterns
+      const key = d.toISOString().slice(0,10);
+      const dow = d.getDay(); // Sun=0
+      const isWeekday = dow > 0 && dow < 6;
+      let val = 0;
+      if (Math.random() > (isWeekday ? 0.25 : 0.6)) {
+        val = Math.floor(rng() * metrics[metric].max);
+        if (rng() > 0.85) val *= 2; // occasional spikes
+      }
+      // Future dates are empty (no data)
+      const today = new Date('2026-03-07');
+      if (d > today && year === 2026) val = null;
+      data[key] = val;
+    }
+    return data;
+  }
+
+  function intensityClass(val, max) {
+    if (val === null) return 'empty';
+    if (val === 0) return 'l0';
+    if (val < max * 0.25) return 'l1';
+    if (val < max * 0.5)  return 'l2';
+    if (val < max * 0.75) return 'l3';
+    return 'l4';
+  }
+
+  function getWeeks(year) {
+    // Build 53-week grid starting on Sunday of the first week containing Jan 1
+    const jan1 = new Date(year, 0, 1);
+    const startOffset = jan1.getDay(); // Sun=0
+    const gridStart = new Date(jan1);
+    gridStart.setDate(gridStart.getDate() - startOffset);
+
+    const weeks = [];
+    let d = new Date(gridStart);
+    for (let w = 0; w < 53; w++) {
+      const week = [];
+      for (let day = 0; day < 7; day++) {
+        week.push(new Date(d));
+        d.setDate(d.getDate()+1);
+      }
+      weeks.push(week);
+    }
+    return weeks;
+  }
+
+  function render() {
+    const metric = metrics[currentMetric];
+    const data = yearData[`${currentYear}-${currentMetric}`] ||
+      (yearData[`${currentYear}-${currentMetric}`] = genYearData(currentYear, currentMetric));
+
+    document.getElementById('hmTitle').textContent = metric.label;
+
+    const weeks = getWeeks(currentYear);
+    const cellW = CELL + GAP;
+
+    // Day labels
+    const dayLabels = document.getElementById('dayLabels');
+    dayLabels.innerHTML = '';
+    ['','Mon','','Wed','','Fri',''].forEach((label, i) => {
+      const el = document.createElement('div');
+      el.className = 'day-label';
+      el.textContent = label;
+      dayLabels.appendChild(el);
+    });
+
+    // Month labels
+    const monthLabels = document.getElementById('monthLabels');
+    monthLabels.innerHTML = '';
+    let lastMonth = -1;
+    weeks.forEach((week, wi) => {
+      const mo = week[0].getMonth();
+      if (mo !== lastMonth) {
+        // Find first day in this year for this month
+        const span = document.createElement('span');
+        span.className = 'month-label';
+        span.style.left = (wi * cellW) + 'px';
+        span.textContent = MONTHS[mo];
+        monthLabels.appendChild(span);
+        lastMonth = mo;
+      }
+    });
+
+    // Weeks grid
+    const weeksRow = document.getElementById('weeksRow');
+    weeksRow.innerHTML = '';
+    weeks.forEach((week, wi) => {
+      const col = document.createElement('div');
+      col.className = 'week-col';
+      week.forEach(date => {
+        const key = date.toISOString().slice(0,10);
+        const val = data[key];
+        const isThisYear = date.getFullYear() === currentYear;
+        const cell = document.createElement('div');
+        cell.className = 'hm-cell ' + (isThisYear ? intensityClass(val, metric.max) : 'empty');
+        if (isThisYear && val !== null) {
+          const dateStr = date.toLocaleDateString('en-US', {month:'long',day:'numeric',year:'numeric'});
+          cell.addEventListener('mouseenter', e => {
+            const tip = document.getElementById('hmTooltip');
+            tip.innerHTML = `<strong>${dateStr}</strong><span>${val} ${metric.unit}</span>`;
+            tip.classList.add('visible');
+          });
+          cell.addEventListener('mousemove', e => {
+            const tip = document.getElementById('hmTooltip');
+            tip.style.left = (e.clientX + 12) + 'px';
+            tip.style.top  = (e.clientY + 12) + 'px';
+          });
+          cell.addEventListener('mouseleave', () => {
+            document.getElementById('hmTooltip').classList.remove('visible');
+          });
+        }
+        col.appendChild(cell);
+      });
+      weeksRow.appendChild(col);
+    });
+
+    // Compute stats
+    const vals = Object.values(data).filter(v => v !== null && typeof v === 'number');
+    const total = vals.reduce((a,b) => a+b, 0);
+
+    // Streak calculation
+    const today = new Date('2026-03-07');
+    let streak = 0, maxStreak = 0, cur = 0;
+    const keys = Object.keys(data).filter(k => data[k] !== null).sort();
+    // Current streak: count backwards from today
+    let checkDate = new Date(today);
+    for (let i=0; i<365; i++) {
+      const key = checkDate.toISOString().slice(0,10);
+      if (data[key] > 0) { streak++; checkDate.setDate(checkDate.getDate()-1); }
+      else break;
+    }
+    // Longest streak
+    keys.forEach(k => {
+      if (data[k] > 0) { cur++; maxStreak = Math.max(maxStreak, cur); }
+      else cur = 0;
+    });
+    const bestDay = keys.reduce((best, k) => data[k] > (data[best]||0) ? k : best, keys[0]);
+
+    document.getElementById('statTotal').textContent = total.toLocaleString();
+    document.getElementById('statCurrent').innerHTML = `<span class="accent">${streak}</span> days`;
+    document.getElementById('statLongest').innerHTML = `<span class="accent">${maxStreak}</span> days`;
+    document.getElementById('statBest').textContent = bestDay ? new Date(bestDay+'T12:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '—';
+  }
+
+  // Year tabs
+  document.getElementById('yearTabs').addEventListener('click', e => {
+    const btn = e.target.closest('button[data-year]');
+    if (!btn) return;
+    document.querySelectorAll('#yearTabs button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentYear = parseInt(btn.dataset.year);
+    render();
+  });
+
+  // Metric tabs
+  document.getElementById('metricTabs').addEventListener('click', e => {
+    const btn = e.target.closest('button[data-metric]');
+    if (!btn) return;
+    document.querySelectorAll('#metricTabs button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentMetric = btn.dataset.metric;
+    render();
+  });
+
+  render();
+</script>
+</body>
+</html>

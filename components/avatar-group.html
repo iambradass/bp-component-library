@@ -1,0 +1,664 @@
+<!-- COMPONENT: Avatar Stack & User Presence | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Avatar Group</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ── Customize ── */
+    :root {
+      --bg:            #0D1117;
+      --surface:       #111827;
+      --elevated:      #1E293B;
+      --accent:        #10B981;
+      --accent-dim:    rgba(16,185,129,0.15);
+      --accent-border: rgba(16,185,129,0.3);
+      --border:        rgba(148,163,184,0.1);
+      --text:          #F8FAFC;
+      --text-secondary:#94A3B8;
+      --text-muted:    #475569;
+      --radius:        12px;
+      --font-heading:  'Space Grotesk', sans-serif;
+      --font-body:     'Inter', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      padding: 2.5rem 1rem 4rem;
+    }
+
+    .page-wrap {
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-family: var(--font-heading);
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .page-sub {
+      font-size: 0.925rem;
+      color: var(--text-secondary);
+      margin-bottom: 2.5rem;
+    }
+
+    /* Section titles */
+    .section-label {
+      font-family: var(--font-heading);
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.75rem;
+    }
+
+    .demo-block {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.75rem;
+      margin-bottom: 1.25rem;
+    }
+
+    /* ── Avatar base ── */
+    /* Color is derived from name hash — see JS */
+    .av {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 2px solid var(--surface);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-heading);
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #fff;
+      flex-shrink: 0;
+      position: relative;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    /* ── 1. Avatar Stack ── */
+    .av-stack {
+      display: flex;
+      align-items: center;
+    }
+
+    /* Overlapping negative margin stack */
+    .av-stack .av {
+      margin-left: -10px;
+      transition: transform 0.15s, z-index 0s;
+    }
+
+    .av-stack .av:first-child { margin-left: 0; }
+    .av-stack .av:hover { transform: translateY(-4px) scale(1.1); z-index: 10; }
+
+    /* Overflow badge */
+    .av-overflow {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--elevated);
+      border: 2px solid var(--surface);
+      margin-left: -10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    /* Tooltip on hover */
+    .av-tooltip {
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.25rem 0.6rem;
+      font-size: 0.72rem;
+      font-weight: 500;
+      color: var(--text);
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+
+    .av:hover .av-tooltip { opacity: 1; }
+
+    /* ── 2. Presence status dots ── */
+    .presence-row {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      align-items: flex-end;
+    }
+
+    .presence-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .presence-wrap {
+      position: relative;
+      display: inline-block;
+    }
+
+    .status-dot {
+      position: absolute;
+      bottom: 1px;
+      right: 1px;
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      border: 2px solid var(--surface);
+    }
+
+    .status-dot.online  { background: #10B981; }
+    .status-dot.away    { background: #FBBF24; }
+    .status-dot.busy    { background: #EF4444; }
+    .status-dot.offline { background: #475569; }
+
+    .presence-label {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    /* Presence tooltip */
+    .presence-wrap .av-tooltip { bottom: calc(100% + 8px); }
+    .presence-wrap:hover .av-tooltip { opacity: 1; }
+
+    /* ── 3. "Seen by" context usage ── */
+    .seen-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .seen-text {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+
+    .seen-time {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    /* ── 4. Add member input ── */
+    .member-chips {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.75rem;
+    }
+
+    .chip {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 0.25rem 0.6rem 0.25rem 0.3rem;
+    }
+
+    .chip .av { width: 24px; height: 24px; font-size: 0.6rem; border: none; }
+
+    .chip-name {
+      font-size: 0.78rem;
+      font-weight: 500;
+    }
+
+    .chip-remove {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.7rem;
+      padding: 0;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+    }
+    .chip-remove:hover { color: #EF4444; }
+
+    .add-member-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: var(--elevated);
+      border: 1px dashed var(--border);
+      border-radius: 999px;
+      padding: 0.4rem 0.8rem;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .add-member-btn:hover { border-color: var(--accent-border); color: var(--accent); }
+
+    /* Add member dropdown */
+    .add-dropdown {
+      position: relative;
+      display: inline-block;
+    }
+
+    .add-dropdown-panel {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      z-index: 20;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0.5rem;
+      min-width: 220px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+      display: none;
+    }
+
+    .add-dropdown-panel.open { display: block; }
+
+    .add-search {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.45rem 0.6rem;
+      color: var(--text);
+      font-size: 0.8rem;
+      font-family: var(--font-body);
+      outline: none;
+      margin-bottom: 0.5rem;
+    }
+    .add-search:focus { border-color: var(--accent-border); }
+
+    .add-person-item {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.45rem 0.5rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.82rem;
+      transition: background 0.12s;
+    }
+
+    .add-person-item:hover { background: var(--surface); }
+    .add-person-item.added { opacity: 0.4; pointer-events: none; }
+
+    .add-person-item .av { width: 28px; height: 28px; font-size: 0.62rem; border: none; }
+
+    /* ── 5. Team grid ── */
+    .team-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 1rem;
+    }
+
+    .team-card {
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 0.5rem;
+      transition: border-color 0.15s;
+    }
+
+    .team-card:hover { border-color: var(--accent-border); }
+
+    .team-card .av {
+      width: 52px;
+      height: 52px;
+      font-size: 1.1rem;
+      border: 3px solid var(--surface);
+    }
+
+    .team-card .presence-wrap { margin-bottom: 0.25rem; }
+    .team-card .presence-wrap .av { width: 52px; height: 52px; font-size: 1.1rem; border: 3px solid var(--surface); }
+    .team-card .status-dot { width: 13px; height: 13px; bottom: 2px; right: 2px; }
+
+    .team-name {
+      font-family: var(--font-heading);
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .team-role {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .dept-tag {
+      display: inline-block;
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-border);
+      border-radius: 999px;
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: var(--accent);
+      padding: 0.1rem 0.55rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .team-links {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.25rem;
+    }
+
+    .team-links a {
+      color: var(--text-muted);
+      transition: color 0.15s;
+    }
+    .team-links a:hover { color: var(--accent); }
+  </style>
+</head>
+<body>
+
+  <div class="page-wrap">
+    <h1>Avatar Group & Presence</h1>
+    <p class="page-sub">Five avatar patterns: stack, online presence, context usage, add member, and team grid. All initial-based with color-hashed backgrounds.</p>
+
+    <!-- ── 1. Avatar Stack ── -->
+    <div class="section-label">1. Avatar Stack with Overflow</div>
+    <div class="demo-block">
+      <div class="av-stack" id="avStack"></div>
+    </div>
+
+    <!-- ── 2. Presence status ── -->
+    <div class="section-label">2. Online Presence Indicators</div>
+    <div class="demo-block">
+      <div class="presence-row" id="presenceRow"></div>
+    </div>
+
+    <!-- ── 3. "Seen by" context ── -->
+    <div class="section-label">3. Seen By Context</div>
+    <div class="demo-block">
+      <div class="seen-row">
+        <div class="av-stack" id="seenStack" style="transform:scale(0.85);transform-origin:left center"></div>
+        <div>
+          <div class="seen-text">Seen by <strong>7 people</strong></div>
+          <div class="seen-time">Last viewed 3 minutes ago</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 4. Add member ── -->
+    <div class="section-label">4. Add Member Input</div>
+    <div class="demo-block">
+      <div class="member-chips" id="memberChips"></div>
+      <div class="add-dropdown" id="addDropdown">
+        <button class="add-member-btn" id="addMemberBtn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add person
+        </button>
+        <div class="add-dropdown-panel" id="addPanel">
+          <input class="add-search" type="text" placeholder="Search people..." id="addSearch">
+          <div id="addPersonList"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 5. Team grid ── -->
+    <div class="section-label">5. Team Grid</div>
+    <div class="demo-block">
+      <div class="team-grid" id="teamGrid"></div>
+    </div>
+  </div>
+
+  <script>
+    // ── People data ──
+    const PEOPLE = [
+      { name: 'Avery Chen',      role: 'Lead Designer',     dept: 'Design',    status: 'online'  },
+      { name: 'Marcus Webb',     role: 'Senior Engineer',   dept: 'Eng',       status: 'online'  },
+      { name: 'Sasha Okafor',    role: 'Product Manager',   dept: 'Product',   status: 'away'    },
+      { name: 'Jordan Park',     role: 'Data Analyst',      dept: 'Data',      status: 'busy'    },
+      { name: 'Riley Torres',    role: 'Frontend Dev',      dept: 'Eng',       status: 'online'  },
+      { name: 'Quinn Nakamura',  role: 'UX Researcher',     dept: 'Design',    status: 'offline' },
+      { name: 'Dana Ellis',      role: 'DevOps Engineer',   dept: 'Eng',       status: 'online'  },
+      { name: 'Cameron Brooks',  role: 'Content Strategist',dept: 'Marketing', status: 'away'    },
+      { name: 'Alex Morgan',     role: 'QA Engineer',       dept: 'Eng',       status: 'offline' },
+      { name: 'Taylor Kim',      role: 'Growth Marketer',   dept: 'Marketing', status: 'online'  },
+      { name: 'Nat Flores',      role: 'Backend Dev',       dept: 'Eng',       status: 'busy'    },
+      { name: 'Harley Simmons',  role: 'Brand Designer',    dept: 'Design',    status: 'online'  },
+    ];
+
+    // ── Avatar color hash — deterministic per name ──
+    function nameToColor(name) {
+      let h = 0;
+      for (let i = 0; i < name.length; i++) {
+        h = (h * 31 + name.charCodeAt(i)) & 0xFFFFFF;
+      }
+      const hue = h % 360;
+      return `hsl(${hue}, 55%, 42%)`;
+    }
+
+    // Initials from name
+    function initials(name) {
+      const parts = name.trim().split(' ');
+      return (parts[0][0] + (parts[1]?.[0] || '')).toUpperCase();
+    }
+
+    // Build a raw avatar element
+    function makeAv(person, size = 40) {
+      const el = document.createElement('div');
+      el.className = 'av';
+      el.style.width    = size + 'px';
+      el.style.height   = size + 'px';
+      el.style.fontSize = (size * 0.34) + 'px';
+      el.style.background = nameToColor(person.name);
+      el.textContent = initials(person.name);
+      el.title = person.name;
+      return el;
+    }
+
+    // ── 1. Avatar Stack ──
+    const stackContainer = document.getElementById('avStack');
+    const STACK_VISIBLE  = 5;
+    const STACK_TOTAL    = 17;
+
+    PEOPLE.slice(0, STACK_VISIBLE).forEach(p => {
+      const av = makeAv(p);
+      const tip = document.createElement('span');
+      tip.className = 'av-tooltip';
+      tip.textContent = p.name;
+      av.appendChild(tip);
+      stackContainer.appendChild(av);
+    });
+
+    const overflow = document.createElement('div');
+    overflow.className = 'av-overflow';
+    overflow.textContent = '+' + (STACK_TOTAL - STACK_VISIBLE);
+    stackContainer.appendChild(overflow);
+
+    // ── 2. Presence indicators ──
+    const STATUSES = ['online', 'away', 'busy', 'offline'];
+    const STATUS_LABELS = { online: 'Online', away: 'Away', busy: 'Busy', offline: 'Offline' };
+
+    PEOPLE.slice(0, 4).forEach((p, i) => {
+      const item = document.createElement('div');
+      item.className = 'presence-item';
+
+      const wrap = document.createElement('div');
+      wrap.className = 'presence-wrap';
+
+      const av = makeAv(p);
+      const tip = document.createElement('span');
+      tip.className = 'av-tooltip';
+      tip.textContent = `${p.name} — ${STATUS_LABELS[STATUSES[i]]}`;
+      av.appendChild(tip);
+
+      const dot = document.createElement('span');
+      dot.className = `status-dot ${STATUSES[i]}`;
+
+      wrap.appendChild(av);
+      wrap.appendChild(dot);
+
+      const label = document.createElement('div');
+      label.className = 'presence-label';
+      label.textContent = STATUS_LABELS[STATUSES[i]];
+
+      item.appendChild(wrap);
+      item.appendChild(label);
+      document.getElementById('presenceRow').appendChild(item);
+    });
+
+    // ── 3. Seen by stack ──
+    const seenStack = document.getElementById('seenStack');
+    PEOPLE.slice(0, 5).forEach(p => {
+      const av = makeAv(p, 36);
+      av.style.marginLeft = '-8px';
+      if (seenStack.children.length === 0) av.style.marginLeft = '0';
+      const tip = document.createElement('span');
+      tip.className = 'av-tooltip';
+      tip.textContent = p.name;
+      av.appendChild(tip);
+      seenStack.appendChild(av);
+    });
+    const seenOverflow = document.createElement('div');
+    seenOverflow.className = 'av-overflow';
+    seenOverflow.style.cssText = 'width:36px;height:36px;font-size:0.68rem;margin-left:-8px';
+    seenOverflow.textContent = '+2';
+    seenStack.appendChild(seenOverflow);
+
+    // ── 4. Add member ──
+    let addedMembers = new Set([PEOPLE[0].name, PEOPLE[1].name]);
+
+    function renderChips() {
+      const chips = document.getElementById('memberChips');
+      chips.innerHTML = '';
+      addedMembers.forEach(name => {
+        const person = PEOPLE.find(p => p.name === name);
+        if (!person) return;
+        const chip = document.createElement('div');
+        chip.className = 'chip';
+        const av = makeAv(person, 24);
+        av.style.border = 'none';
+        const chipName = document.createElement('span');
+        chipName.className = 'chip-name';
+        chipName.textContent = person.name.split(' ')[0];
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'chip-remove';
+        removeBtn.innerHTML = '✕';
+        removeBtn.addEventListener('click', () => {
+          addedMembers.delete(name);
+          renderChips();
+          renderAddList();
+        });
+        chip.appendChild(av);
+        chip.appendChild(chipName);
+        chip.appendChild(removeBtn);
+        chips.appendChild(chip);
+      });
+    }
+
+    function renderAddList(query = '') {
+      const list = document.getElementById('addPersonList');
+      list.innerHTML = '';
+      PEOPLE.filter(p => !query || p.name.toLowerCase().includes(query.toLowerCase()))
+        .forEach(p => {
+          const item = document.createElement('div');
+          item.className = 'add-person-item' + (addedMembers.has(p.name) ? ' added' : '');
+          const av = makeAv(p, 28);
+          av.style.border = 'none';
+          const nameEl = document.createElement('span');
+          nameEl.textContent = p.name;
+          item.appendChild(av);
+          item.appendChild(nameEl);
+          if (!addedMembers.has(p.name)) {
+            item.addEventListener('click', () => {
+              addedMembers.add(p.name);
+              renderChips();
+              renderAddList(document.getElementById('addSearch').value);
+            });
+          }
+          list.appendChild(item);
+        });
+    }
+
+    const addPanel  = document.getElementById('addPanel');
+    const addBtn    = document.getElementById('addMemberBtn');
+    const addSearch = document.getElementById('addSearch');
+
+    addBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      addPanel.classList.toggle('open');
+      if (addPanel.classList.contains('open')) addSearch.focus();
+    });
+
+    addSearch.addEventListener('input', () => renderAddList(addSearch.value));
+    document.addEventListener('click', () => addPanel.classList.remove('open'));
+    addPanel.addEventListener('click', e => e.stopPropagation());
+
+    renderChips();
+    renderAddList();
+
+    // ── 5. Team grid ──
+    const grid = document.getElementById('teamGrid');
+    PEOPLE.forEach(p => {
+      const card = document.createElement('div');
+      card.className = 'team-card';
+
+      const presenceWrap = document.createElement('div');
+      presenceWrap.className = 'presence-wrap';
+
+      const av = makeAv(p, 52);
+      av.style.fontSize = '1.1rem';
+      av.style.border   = '3px solid var(--surface)';
+
+      const dot = document.createElement('span');
+      dot.className = `status-dot ${p.status}`;
+      dot.style.cssText = 'width:13px;height:13px;bottom:2px;right:2px';
+
+      const tip = document.createElement('span');
+      tip.className = 'av-tooltip';
+      tip.textContent = STATUS_LABELS[p.status];
+      presenceWrap.appendChild(av);
+      presenceWrap.appendChild(dot);
+      presenceWrap.appendChild(tip);
+
+      card.innerHTML = `
+        <div class="team-name">${p.name}</div>
+        <div class="team-role">${p.role}</div>
+        <span class="dept-tag">${p.dept}</span>
+        <div class="team-links">
+          <a href="#" title="GitHub"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg></a>
+          <a href="#" title="Twitter"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"/></svg></a>
+        </div>
+      `;
+
+      card.insertBefore(presenceWrap, card.firstChild);
+      grid.appendChild(card);
+    });
+  </script>
+</body>
+</html>

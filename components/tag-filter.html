@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tag Filter Grid — Component Library</title>
+
+  <!--
+  ============================================================
+  COMPONENT: Tag Filter Grid
+  COPY: <style> block + HTML block + <script> block into target site
+  FEATURES:
+    - Click tags to filter card grid in real time
+    - "All" pill resets filter; other pills toggle on/off
+    - Multi-tag selection: card shows if it matches ANY active tag
+    - Non-matching cards: opacity 0.15 + scale(0.96) (layout stays stable)
+    - Live "Showing X of 9" count display
+    - 3 col desktop / 2 col tablet / 1 col mobile
+    - 9 demo project cards with 1–2 tags each
+    - Color-coded top accent bar per primary tag
+  ============================================================
+  -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+
+    /* ── CUSTOMIZE: swap these variables ── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --border:         rgba(148, 163, 184, 0.1);
+      --border-accent:  rgba(16, 185, 129, 0.3);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+
+      /* Tag color palette — one per tag name, used for accent bars */
+      --tag-web:     #10B981;
+      --tag-seo:     #3B82F6;
+      --tag-brand:   #8B5CF6;
+      --tag-re:      #F59E0B;
+      --tag-ecom:    #EC4899;
+      --tag-local:   #F97316;
+      --tag-redesign:#06B6D4;
+      --tag-landing: #84CC16;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      padding: 3rem 1.5rem 5rem;
+    }
+
+    .demo-label {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+    .demo-title {
+      font-family: var(--font-heading);
+      font-size: 2rem;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+    .demo-subtitle {
+      color: var(--text-secondary);
+      text-align: center;
+      font-size: 0.9375rem;
+      margin-bottom: 3rem;
+    }
+
+
+    /* ════════════════════════════════════════════
+       FILTER BAR
+    ════════════════════════════════════════════ */
+
+    .tf-wrapper {
+      max-width: 1060px;
+      margin: 0 auto;
+    }
+
+    /* Row: filter pills left, count right */
+    .tf-filter-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+
+    .tf-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    /* Individual filter pill */
+    .tf-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 7px 15px;
+      border-radius: 100px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-secondary);
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s, color 0.2s;
+      user-select: none;
+      min-height: 36px;
+    }
+    .tf-pill:hover {
+      border-color: rgba(16, 185, 129, 0.25);
+      color: var(--text);
+    }
+    /* Active pill */
+    .tf-pill.active {
+      background: rgba(16, 185, 129, 0.1);
+      border-color: var(--border-accent);
+      color: var(--accent);
+    }
+    /* "All" pill has slightly different active style */
+    .tf-pill[data-tag="all"].active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    /* Count display */
+    .tf-count {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      white-space: nowrap;
+    }
+    .tf-count-num {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+
+    /* ════════════════════════════════════════════
+       PROJECT CARD GRID
+    ════════════════════════════════════════════ */
+
+    .tf-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    @media (max-width: 768px) {
+      .tf-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 480px) {
+      .tf-grid { grid-template-columns: 1fr; }
+    }
+
+
+    /* ── Project card ── */
+    .tf-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: opacity 0.3s ease, transform 0.3s ease,
+                  border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    /* Hidden/filtered state — dims card but keeps layout stable */
+    .tf-card.filtered {
+      opacity: 0.12;
+      transform: scale(0.96);
+      pointer-events: none;
+    }
+
+    .tf-card:hover:not(.filtered) {
+      border-color: var(--border-accent);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      transform: translateY(-2px);
+    }
+
+    /* Colored accent bar at top of card — color driven by data-color attr */
+    .tf-card-accent {
+      height: 4px;
+      background: var(--accent); /* overridden inline per card */
+    }
+
+    .tf-card-body {
+      padding: 20px;
+    }
+
+    .tf-card-title {
+      font-family: var(--font-heading);
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .tf-card-desc {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+
+    /* Tag badges at bottom of card */
+    .tf-card-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .tf-tag-badge {
+      font-family: var(--font-mono);
+      font-size: 0.5625rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 3px 9px;
+      border-radius: 100px;
+      border: 1px solid rgba(148, 163, 184, 0.15);
+      color: var(--text-muted);
+      background: rgba(148, 163, 184, 0.04);
+      white-space: nowrap;
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="demo-label">Component Demo</div>
+  <h1 class="demo-title">Tag Filter Grid</h1>
+  <p class="demo-subtitle">Click a tag to filter. Click multiple tags for multi-select. Cards fade without removing from layout.</p>
+
+
+  <!-- ════════════════════════════════════════════
+       TAG FILTER GRID
+  ════════════════════════════════════════════ -->
+  <div class="tf-wrapper">
+
+    <!-- Filter bar -->
+    <div class="tf-filter-bar">
+      <div class="tf-pills" id="tf-pills">
+        <!-- Pill list built by JS from unique tags — or hardcoded below -->
+        <button class="tf-pill active" data-tag="all">All</button>
+        <button class="tf-pill" data-tag="Web Design">Web Design</button>
+        <button class="tf-pill" data-tag="SEO">SEO</button>
+        <button class="tf-pill" data-tag="Branding">Branding</button>
+        <button class="tf-pill" data-tag="Real Estate">Real Estate</button>
+        <button class="tf-pill" data-tag="E-commerce">E-commerce</button>
+        <button class="tf-pill" data-tag="Local Business">Local Business</button>
+        <button class="tf-pill" data-tag="Redesign">Redesign</button>
+        <button class="tf-pill" data-tag="Landing Page">Landing Page</button>
+      </div>
+
+      <div class="tf-count" id="tf-count">
+        Showing <span class="tf-count-num" id="tf-count-num">9</span> of 9
+      </div>
+    </div>
+
+    <!-- Card grid -->
+    <div class="tf-grid" id="tf-grid">
+
+      <!-- Card 1 -->
+      <div class="tf-card" data-tags="Web Design,Redesign">
+        <div class="tf-card-accent" style="background: var(--tag-web)"></div>
+        <div class="tf-card-body">
+          <div class="tf-card-title">Meridian Roofing Co.</div>
+          <p class="tf-card-desc">Full site redesign with lead capture funnel and GHL webhook integration. 3× increase in form submissions.</p>
+          <div class="tf-card-tags">
+            <span class="tf-tag-badge">Web Design</span>
+            <span class="tf-tag-badge">Redesign</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="tf-card" data-tags="SEO,Local Business">
+        <div class="tf-card-accent" style="background: var(--tag-seo)"></div>
+        <div class="tf-card-body">
+          <div class="tf-card-title">Apex Plumbing Services</div>
+          <p class="tf-card-desc">Local SEO buildout from scratch. Ranked page 1 for 14 high-intent keywords within 90 days.</p>
+          <div class="tf-card-tags">
+            <span class="tf-tag-badge">SEO</span>
+            <span class="tf-tag-badge">Local Business</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="tf-card" data-tags="Branding,Web Design">
+        <div class="tf-card-accent" style="background: var(--tag-brand)"></div>
+        <div class="tf-card-body">
+          <div class="tf-card-title">Northgate Financial</div>
+          <p class="tf-card-desc">Full brand identity + site build for a boutique wealth management firm. Clean, trust-first design system.</p>
+          <div class="tf-card-tags">
+            <span class="tf-tag-badge">Branding</span>
+            <span class="tf-tag-badge">Web Design</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 4 -->
+      <div class="tf-card" data-tags="Real Estate,Landing Page">
+        <div class="tf-card-accent" style="background: var(--tag-re)"></div>
+        <div class="tf-card-body">
+          <div class="tf-card-title">Summit Realty Group</div>
+          <p class="tf-card-desc">High-converting landing page for seller leads. A/B tested two variants; winner achieved 22% opt-in rate.</p>
+          <div class="tf-card-tags">
+            <span class="tf-tag-badge">Real Estate</span>
+            <span class="tf-tag-badge">Landing Page</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 5 -->
+      <div class="tf-card" data-tags="E-commerce,Web Design">
+        <div class="tf-card-accent" style="background: var(--tag-ecom)"></div>
+        <div class="tf-card-body">
+          <div class="tf-card-title">Ember Supply Co.</div>
+          <p class="tf-card-desc">Shopify redesign with custom product-page template. Bounce rate dropped 34%, avg order value up 18%.</p>
+          <div class="tf-card-tags">
+            <span class="tf-tag-badge">E-commerce</span>
+            <span class="tf-tag-badge">Web Design</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 6 -->
+      <div class="tf-card" data-tags="Local Business,SEO">
+        <div class="tf-card-accent" style="background: var(--tag-local)"></div>
+        <div class="tf-card-body">
+          <div class="tf-card-title">Harvest House Bakery</div>
+          <p class="tf-card-desc">Google Business optimization + local SEO. Now ranks #1 for "bakery near me" in a market of 280k.</p>
+          <div class="tf-card-tags">
+            <span class="tf-tag-badge">Local Business</span>
+            <span class="tf-tag-badge">SEO</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 7 -->
+      <div class="tf-card" data-tags="Redesign,Branding">
+        <div class="tf-card-accent" style="background: var(--tag-redesign)"></div>
+        <div class="tf-card-body">
+          <div class="tf-card-title">Ironclad Legal</div>
+          <p class="tf-card-desc">Brand refresh and full site overhaul for a personal injury law firm. Lead volume up 2× in 60 days post-launch.</p>
+          <div class="tf-card-tags">
+            <span class="tf-tag-badge">Redesign</span>
+            <span class="tf-tag-badge">Branding</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 8 -->
+      <div class="tf-card" data-tags="Landing Page,Real Estate">
+        <div class="tf-card-accent" style="background: var(--tag-landing)"></div>
+        <div class="tf-card-body">
+          <div class="tf-card-title">Clearview Home Buyers</div>
+          <p class="tf-card-desc">Motivated seller funnel with multi-step form, property qualifier, and direct GHL pipeline integration.</p>
+          <div class="tf-card-tags">
+            <span class="tf-tag-badge">Landing Page</span>
+            <span class="tf-tag-badge">Real Estate</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 9 -->
+      <div class="tf-card" data-tags="E-commerce,SEO">
+        <div class="tf-card-accent" style="background: var(--tag-ecom)"></div>
+        <div class="tf-card-body">
+          <div class="tf-card-title">Crestline Outdoor Gear</div>
+          <p class="tf-card-desc">SEO overhaul for an e-commerce store with 400+ products. Organic traffic increased 210% in 6 months.</p>
+          <div class="tf-card-tags">
+            <span class="tf-tag-badge">E-commerce</span>
+            <span class="tf-tag-badge">SEO</span>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /tf-grid -->
+  </div><!-- /tf-wrapper -->
+
+
+  <script>
+  /*
+  ════════════════════════════════════════
+  TAG FILTER GRID
+  ════════════════════════════════════════
+  */
+
+  var pills      = document.querySelectorAll('.tf-pill');
+  var cards      = document.querySelectorAll('.tf-card');
+  var countEl    = document.getElementById('tf-count-num');
+
+  /* Track which tags are currently active */
+  var activeTags = new Set(); /* empty = "all" mode */
+  var totalCards = cards.length;
+
+  function applyFilter() {
+    var visible = 0;
+
+    cards.forEach(function(card) {
+      var cardTags = card.getAttribute('data-tags').split(',').map(function(t) { return t.trim(); });
+
+      /* Show card if no tags active ("all") or if card has any active tag */
+      var show = activeTags.size === 0 || cardTags.some(function(t) { return activeTags.has(t); });
+
+      card.classList.toggle('filtered', !show);
+      if (show) visible++;
+    });
+
+    countEl.textContent = visible;
+  }
+
+  pills.forEach(function(pill) {
+    pill.addEventListener('click', function() {
+      var tag = pill.getAttribute('data-tag');
+
+      if (tag === 'all') {
+        /* "All" clears all active tags */
+        activeTags.clear();
+        /* Update pill styles */
+        pills.forEach(function(p) { p.classList.remove('active'); });
+        pill.classList.add('active');
+      } else {
+        /* Toggle the clicked tag */
+        if (activeTags.has(tag)) {
+          activeTags.delete(tag);
+          pill.classList.remove('active');
+        } else {
+          activeTags.add(tag);
+          pill.classList.add('active');
+        }
+
+        /* If nothing selected, revert to "All" */
+        if (activeTags.size === 0) {
+          document.querySelector('.tf-pill[data-tag="all"]').classList.add('active');
+        } else {
+          document.querySelector('.tf-pill[data-tag="all"]').classList.remove('active');
+        }
+      }
+
+      applyFilter();
+    });
+  });
+
+  /* Init */
+  applyFilter();
+  </script>
+
+</body>
+</html>

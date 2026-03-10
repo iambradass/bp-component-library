@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3D Flip Cards — Component Library</title>
+
+  <!--
+  ============================================================
+  COMPONENT: 3D Flip Cards
+  COPY: <style> block + HTML block + <script> block into target site
+  EFFECT: Cards flip 180deg on hover (desktop) or click (mobile/touch).
+  TECHNIQUE: CSS transform-style: preserve-3d + rotateY(180deg) + backface-visibility: hidden
+  ============================================================
+  -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+
+    /* ── CUSTOMIZE: swap these variables ── */
+    :root {
+      --fc-bg-page:       #0D1117;
+      --fc-bg-surface:    #111827;
+      --fc-bg-elevated:   #1E293B;
+      --fc-accent:        #10B981;
+      --fc-accent-glow:   rgba(16, 185, 129, 0.15);
+      --fc-accent-border: rgba(16, 185, 129, 0.3);
+      --fc-text:          #F8FAFC;
+      --fc-text-secondary:#94A3B8;
+      --fc-text-muted:    #475569;
+      --fc-border:        rgba(148, 163, 184, 0.1);
+      --fc-radius:        12px;
+      --fc-flip-duration: 0.5s;   /* CUSTOMIZE: flip speed */
+      --fc-font-heading:  'Space Grotesk', system-ui, sans-serif;
+      --fc-font-body:     'Inter', system-ui, sans-serif;
+      --fc-font-mono:     ui-monospace, monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--fc-bg-page);
+      color: var(--fc-text);
+      font-family: var(--fc-font-body);
+      min-height: 100vh;
+      padding: 3rem 1.5rem 5rem;
+    }
+    .demo-label {
+      font-family: var(--fc-font-mono);
+      font-size: 0.75rem;
+      color: var(--fc-accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+    .demo-title {
+      font-family: var(--fc-font-heading);
+      font-size: 2rem;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+    .demo-subtitle {
+      color: var(--fc-text-secondary);
+      text-align: center;
+      font-size: 0.9375rem;
+      margin-bottom: 3rem;
+    }
+    .demo-hint {
+      text-align: center;
+      font-family: var(--fc-font-mono);
+      font-size: 0.75rem;
+      color: var(--fc-text-muted);
+      margin-bottom: 2.5rem;
+    }
+
+
+    /* ════════════════════════════════════════════
+       COMPONENT STYLES
+    ════════════════════════════════════════════ */
+
+    /* Grid: 3 col desktop, 1 col mobile */
+    .fc-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+      max-width: 1050px;
+      margin: 0 auto;
+    }
+    @media (max-width: 860px) { .fc-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 560px) { .fc-grid { grid-template-columns: 1fr; } }
+
+    /*
+    FLIP CARD ANATOMY:
+    .fc-wrap         — outer container, sets perspective + fixed height
+    .fc-inner        — the element that physically rotates 180deg
+    .fc-front        — front face (visible by default)
+    .fc-back         — back face (hidden by default via backface-visibility)
+    */
+
+    .fc-wrap {
+      perspective: 1000px;       /* depth of 3D space */
+      height: 340px;
+      cursor: pointer;
+
+      /* Entrance animation — stagger applied via JS */
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    .fc-wrap.fc-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .fc-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transform-style: preserve-3d;  /* children exist in 3D space */
+      transition: transform var(--fc-flip-duration) cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Flipped state — triggered by hover (desktop) or .fc-flipped class (mobile) */
+    @media (hover: hover) {
+      .fc-wrap:hover .fc-inner { transform: rotateY(180deg); }
+    }
+    .fc-wrap.fc-flipped .fc-inner { transform: rotateY(180deg); }
+
+    /* Both faces share these base styles */
+    .fc-front,
+    .fc-back {
+      position: absolute;
+      inset: 0;
+      border-radius: var(--fc-radius);
+      backface-visibility: hidden;   /* hides the face when it's rotated away */
+      -webkit-backface-visibility: hidden;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Front Face ── */
+    .fc-front {
+      background: var(--fc-bg-surface);
+      border: 1px solid var(--fc-border);
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 1rem;
+    }
+    .fc-front-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 16px;
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid var(--fc-accent-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--fc-accent);
+      margin-bottom: 0.25rem;
+    }
+    .fc-front-title {
+      font-family: var(--fc-font-heading);
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--fc-text);
+    }
+    .fc-front-teaser {
+      font-size: 0.875rem;
+      color: var(--fc-text-secondary);
+      line-height: 1.6;
+    }
+    .fc-front-hint {
+      font-family: var(--fc-font-mono);
+      font-size: 0.6875rem;
+      color: var(--fc-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-top: auto;
+    }
+
+    /* ── Back Face ── must be pre-rotated 180deg so it appears correct when flipped */
+    .fc-back {
+      background: var(--fc-bg-elevated);
+      border: 1px solid var(--fc-accent-border);
+      transform: rotateY(180deg);    /* pre-rotated — faces away until flipped */
+      gap: 0;
+    }
+
+    /* Accent header bar at top of back face */
+    .fc-back-header {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.05));
+      border-bottom: 1px solid var(--fc-accent-border);
+      margin: -2rem -2rem 1.5rem;
+      padding: 1.25rem 2rem;
+      border-radius: var(--fc-radius) var(--fc-radius) 0 0;
+    }
+    .fc-back-title {
+      font-family: var(--fc-font-heading);
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--fc-accent);
+    }
+
+    /* Bullet point list on back face */
+    .fc-back-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.625rem;
+      flex: 1;
+    }
+    .fc-back-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.625rem;
+      font-size: 0.875rem;
+      color: var(--fc-text-secondary);
+      line-height: 1.5;
+    }
+    .fc-back-list li::before {
+      content: '';
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--fc-accent);
+      flex-shrink: 0;
+      margin-top: 0.45em;
+    }
+
+    /* CTA button on back face */
+    .fc-back-cta {
+      display: block;
+      text-align: center;
+      padding: 0.75rem 1.5rem;
+      background: var(--fc-accent);
+      color: #0D1117;
+      font-family: var(--fc-font-heading);
+      font-size: 0.875rem;
+      font-weight: 700;
+      border-radius: 8px;
+      text-decoration: none;
+      margin-top: 1.25rem;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .fc-back-cta:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    /* Reduced motion — no flip animation */
+    @media (prefers-reduced-motion: reduce) {
+      .fc-inner { transition-duration: 0.01ms !important; }
+      .fc-wrap  { transition-duration: 0.01ms !important; }
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="demo-label">Component Demo</div>
+  <h1 class="demo-title">3D Flip Cards</h1>
+  <p class="demo-subtitle">Reveal detailed information on the back of each card.</p>
+  <p class="demo-hint">Hover to flip on desktop &mdash; tap to flip on mobile</p>
+
+  <div class="fc-grid">
+
+    <!-- Card 1 -->
+    <div class="fc-wrap" aria-label="Web Development — click to flip">
+      <div class="fc-inner">
+        <!-- FRONT -->
+        <div class="fc-front">
+          <div class="fc-front-icon">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          </div>
+          <div class="fc-front-title">Web Development</div>
+          <p class="fc-front-teaser">Custom-coded, mobile-first websites that load fast and convert visitors into leads.</p>
+          <span class="fc-front-hint">Flip for details</span>
+        </div>
+        <!-- BACK -->
+        <div class="fc-back">
+          <div class="fc-back-header">
+            <div class="fc-back-title">Web Development</div>
+          </div>
+          <ul class="fc-back-list">
+            <li>Mobile-first, hand-coded HTML/CSS/JS</li>
+            <li>Core Web Vitals optimized (LCP &lt; 2.5s)</li>
+            <li>Semantic markup + ARIA accessibility</li>
+            <li>Deployed to Hostinger or Vercel</li>
+          </ul>
+          <a href="#" class="fc-back-cta">Start a Project</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 2 -->
+    <div class="fc-wrap" aria-label="Funnel Design — click to flip">
+      <div class="fc-inner">
+        <!-- FRONT -->
+        <div class="fc-front">
+          <div class="fc-front-icon">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+          </div>
+          <div class="fc-front-title">Funnel Design</div>
+          <p class="fc-front-teaser">High-converting sales funnels built in GoHighLevel — from opt-in page to thank-you.</p>
+          <span class="fc-front-hint">Flip for details</span>
+        </div>
+        <!-- BACK -->
+        <div class="fc-back">
+          <div class="fc-back-header">
+            <div class="fc-back-title">Funnel Design</div>
+          </div>
+          <ul class="fc-back-list">
+            <li>Multi-step opt-in &rarr; upsell sequences</li>
+            <li>GHL native forms + webhook integrations</li>
+            <li>A/B test variants ready to launch</li>
+            <li>Average 3.2% conversion rate achieved</li>
+          </ul>
+          <a href="#" class="fc-back-cta">See Examples</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 3 -->
+    <div class="fc-wrap" aria-label="Automation — click to flip">
+      <div class="fc-inner">
+        <!-- FRONT -->
+        <div class="fc-front">
+          <div class="fc-front-icon">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4"/><path d="m16.2 7.8 2.9-2.9"/><path d="M18 12h4"/><path d="m16.2 16.2 2.9 2.9"/><path d="M12 18v4"/><path d="m4.9 19.1 2.9-2.9"/><path d="M2 12h4"/><path d="m4.9 4.9 2.9 2.9"/></svg>
+          </div>
+          <div class="fc-front-title">Automation</div>
+          <p class="fc-front-teaser">GHL workflows that follow up, nurture, and close leads while you sleep.</p>
+          <span class="fc-front-hint">Flip for details</span>
+        </div>
+        <!-- BACK -->
+        <div class="fc-back">
+          <div class="fc-back-header">
+            <div class="fc-back-title">Automation</div>
+          </div>
+          <ul class="fc-back-list">
+            <li>Instant lead notification + webhook triggers</li>
+            <li>5-touch SMS + email nurture sequences</li>
+            <li>Appointment booking automation</li>
+            <li>Pipeline stage updates on action</li>
+          </ul>
+          <a href="#" class="fc-back-cta">Learn More</a>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /fc-grid -->
+
+
+  <script>
+  /*
+  ── HOW IT WORKS ──
+  1. IntersectionObserver triggers staggered entrance animations on page load
+  2. On desktop (hover: hover media query in CSS handles the hover flip)
+  3. On touch devices, we add a click listener that toggles .fc-flipped class
+  4. Click on an already-flipped card flips it back
+  */
+
+  var cards = Array.from(document.querySelectorAll('.fc-wrap'));
+
+  // ── Staggered entrance animation ──
+  var entranceObserver = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        var el = entry.target;
+        var idx = cards.indexOf(el);
+        // Stagger: each card delays 120ms more than the previous
+        setTimeout(function() {
+          el.classList.add('fc-visible');
+        }, idx * 120);
+        entranceObserver.unobserve(el);
+      }
+    });
+  }, { threshold: 0.15 });
+
+  cards.forEach(function(card) {
+    entranceObserver.observe(card);
+  });
+
+  // ── Click-to-flip (handles touch devices) ──
+  // CSS hover rule handles desktop hover flip — this JS click handles mobile tap
+  cards.forEach(function(card) {
+    card.addEventListener('click', function() {
+      card.classList.toggle('fc-flipped');
+    });
+  });
+  </script>
+
+</body>
+</html>

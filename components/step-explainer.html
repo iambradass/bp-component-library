@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Step Explainer</title>
+  <!-- COMPONENT: Step Explainer | COPY: style + html + script -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── CUSTOMIZE ── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --glow:           rgba(16,185,129,0.15);
+      --glow-strong:    rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --border-accent:  rgba(16,185,129,0.3);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+
+      /* Auto-advance timer duration */
+      --timer-dur: 6s;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      padding: 2rem 1.5rem 4rem;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+    .page-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.75rem;
+    }
+    .page-title {
+      font-family: var(--font-heading);
+      font-size: clamp(1.75rem, 4vw, 2.5rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+    }
+    .page-desc {
+      color: var(--text-secondary);
+      font-size: 0.9375rem;
+      max-width: 560px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    .explainer-wrap {
+      max-width: 900px;
+      margin: 0 auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    /* ── Desktop: two-column layout ── */
+    .explainer-layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+    }
+    @media (max-width: 700px) {
+      .explainer-layout { grid-template-columns: 1fr; }
+    }
+
+    /* ── Left: Step list ── */
+    .step-list {
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+    }
+    @media (max-width: 700px) {
+      .step-list { border-right: none; border-bottom: 1px solid var(--border); }
+    }
+
+    .step-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.875rem;
+      padding: 1rem 1.25rem;
+      cursor: pointer;
+      border-left: 3px solid transparent;
+      transition: background 0.2s ease, border-color 0.2s ease;
+      position: relative;
+    }
+    .step-item:not(:last-child) {
+      border-bottom: 1px solid var(--border);
+    }
+    .step-item:hover {
+      background: rgba(148,163,184,0.04);
+    }
+    .step-item.active {
+      background: rgba(16,185,129,0.05);
+      border-left-color: var(--accent);
+    }
+    .step-item.completed .step-num {
+      background: rgba(16,185,129,0.2);
+      border-color: var(--border-accent);
+      color: var(--accent);
+    }
+
+    .step-num {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: var(--elevated);
+      border: 1.5px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-heading);
+      font-size: 0.8125rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      flex-shrink: 0;
+      transition: background 0.2s, border-color 0.2s, color 0.2s;
+    }
+    .step-item.active .step-num {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .step-text { flex: 1; min-width: 0; }
+    .step-name {
+      font-family: var(--font-heading);
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      transition: color 0.2s;
+    }
+    .step-item.active .step-name { color: var(--text); }
+    .step-tagline {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 1px;
+      line-height: 1.4;
+    }
+
+    /* Progress bar under each active step */
+    .step-progress-bar {
+      position: absolute;
+      bottom: 0;
+      left: 3px;   /* account for accent border */
+      right: 0;
+      height: 2px;
+      background: var(--elevated);
+      overflow: hidden;
+    }
+    .step-progress-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--accent);
+    }
+    .step-item.active .step-progress-fill {
+      animation: progressFill var(--timer-dur) linear forwards;
+    }
+    @keyframes progressFill {
+      from { width: 0%; }
+      to   { width: 100%; }
+    }
+
+    /* Pause icon on active step when timer is paused */
+    .step-item.paused .step-progress-fill {
+      animation-play-state: paused;
+    }
+
+    /* ── Right: Detail panel ── */
+    .detail-panel {
+      padding: 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Content transitions in on step change */
+    .detail-content {
+      opacity: 0;
+      transform: translateX(12px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    .detail-content.visible {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    .detail-step-badge {
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.75rem;
+    }
+
+    .detail-icon-wrap {
+      width: 52px;
+      height: 52px;
+      border-radius: 12px;
+      background: var(--glow);
+      border: 1px solid var(--border-accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .detail-title {
+      font-family: var(--font-heading);
+      font-size: 1.3125rem;
+      font-weight: 700;
+      letter-spacing: -0.015em;
+      margin-bottom: 0.875rem;
+    }
+
+    .detail-body {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      line-height: 1.7;
+      margin-bottom: 1rem;
+    }
+
+    .detail-bullets {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-bottom: 1.25rem;
+    }
+    .detail-bullets li {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+    .detail-bullets li::before {
+      content: '→';
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    /* Mini visual mockup inside detail panel */
+    .detail-visual {
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .detail-visual-label {
+      font-family: var(--font-mono);
+      font-size: 0.5625rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 4px;
+    }
+    .detail-visual-bar {
+      height: 8px;
+      border-radius: 4px;
+      background: var(--border);
+    }
+    .detail-visual-bar.accent { background: var(--accent); opacity: 0.6; }
+
+    /* Auto-advance controls row */
+    .controls-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.875rem 1.25rem;
+      border-top: 1px solid var(--border);
+      background: rgba(255,255,255,0.01);
+    }
+    .controls-hint {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+    .controls-btns {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .ctrl-btn {
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-secondary);
+      font-family: var(--font-heading);
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 5px 12px;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .ctrl-btn:hover { border-color: var(--border-accent); color: var(--text); }
+    .ctrl-btn.primary {
+      background: var(--glow);
+      border-color: var(--border-accent);
+      color: var(--accent);
+    }
+
+    /* ── Mobile accordion (replaces split layout) ── */
+    @media (max-width: 700px) {
+      .detail-panel { display: none !important; }
+      .step-item { padding: 0; flex-direction: column; border-left: 3px solid transparent; }
+      .step-item-header {
+        display: flex;
+        align-items: center;
+        gap: 0.875rem;
+        padding: 0.875rem 1rem;
+        width: 100%;
+      }
+      .step-item.active { border-left-color: var(--accent); }
+      .mob-detail {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.35s ease;
+        padding: 0 1rem;
+        border-top: 0px solid var(--border);
+      }
+      .step-item.active .mob-detail {
+        max-height: 500px;
+        padding: 1rem 1rem 1.25rem;
+        border-top-width: 1px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="page-header">
+    <div class="page-eyebrow">Step Explainer</div>
+    <h1 class="page-title">Interactive Step Explainer</h1>
+    <p class="page-desc">Click any step to expand its detail panel. Auto-advances every 6 seconds — pauses when you hover. Mobile becomes a collapsible accordion.</p>
+  </header>
+
+  <div class="explainer-wrap">
+    <div class="explainer-layout">
+
+      <!-- Left: step list -->
+      <nav class="step-list" role="tablist" aria-label="Project steps">
+
+        <div class="step-item active" data-step="0" role="tab" aria-selected="true" aria-controls="detail-0" tabindex="0">
+          <!-- Mobile header row (also serves as the desktop click target label) -->
+          <div class="step-item-header">
+            <div class="step-num">1</div>
+            <div class="step-text">
+              <div class="step-name">Discovery</div>
+              <div class="step-tagline">Understanding your goals</div>
+            </div>
+          </div>
+          <!-- Mobile-only inline detail -->
+          <div class="mob-detail">
+            <p style="font-size:0.875rem;color:var(--text-secondary);line-height:1.6">We start with a deep-dive call to map your goals, audience, and competitive landscape. No assumptions — we listen first.</p>
+          </div>
+          <div class="step-progress-bar"><div class="step-progress-fill"></div></div>
+        </div>
+
+        <div class="step-item" data-step="1" role="tab" aria-selected="false" aria-controls="detail-1" tabindex="0">
+          <div class="step-item-header">
+            <div class="step-num">2</div>
+            <div class="step-text">
+              <div class="step-name">Strategy & Wireframes</div>
+              <div class="step-tagline">Structure before style</div>
+            </div>
+          </div>
+          <div class="mob-detail">
+            <p style="font-size:0.875rem;color:var(--text-secondary);line-height:1.6">Site map, content plan, and low-fidelity wireframes. We lock the structure before a single color is chosen.</p>
+          </div>
+          <div class="step-progress-bar"><div class="step-progress-fill"></div></div>
+        </div>
+
+        <div class="step-item" data-step="2" role="tab" aria-selected="false" aria-controls="detail-2" tabindex="0">
+          <div class="step-item-header">
+            <div class="step-num">3</div>
+            <div class="step-text">
+              <div class="step-name">Design</div>
+              <div class="step-tagline">Visual identity applied</div>
+            </div>
+          </div>
+          <div class="mob-detail">
+            <p style="font-size:0.875rem;color:var(--text-secondary);line-height:1.6">High-fidelity mockups in Figma. Desktop and mobile designs delivered together. One round of revisions included.</p>
+          </div>
+          <div class="step-progress-bar"><div class="step-progress-fill"></div></div>
+        </div>
+
+        <div class="step-item" data-step="3" role="tab" aria-selected="false" aria-controls="detail-3" tabindex="0">
+          <div class="step-item-header">
+            <div class="step-num">4</div>
+            <div class="step-text">
+              <div class="step-name">Development & QA</div>
+              <div class="step-tagline">Built to perform</div>
+            </div>
+          </div>
+          <div class="mob-detail">
+            <p style="font-size:0.875rem;color:var(--text-secondary);line-height:1.6">Clean semantic code, sub-2-second load time, 90+ PageSpeed score. Tested across 12 devices before you see it.</p>
+          </div>
+          <div class="step-progress-bar"><div class="step-progress-fill"></div></div>
+        </div>
+
+        <div class="step-item" data-step="4" role="tab" aria-selected="false" aria-controls="detail-4" tabindex="0">
+          <div class="step-item-header">
+            <div class="step-num">5</div>
+            <div class="step-text">
+              <div class="step-name">Launch & Handoff</div>
+              <div class="step-tagline">Live and growing</div>
+            </div>
+          </div>
+          <div class="mob-detail">
+            <p style="font-size:0.875rem;color:var(--text-secondary);line-height:1.6">Deploy to your hosting, submit to Google Search Console, set up Analytics, and hand you the keys with a walkthrough video.</p>
+          </div>
+          <div class="step-progress-bar"><div class="step-progress-fill"></div></div>
+        </div>
+
+      </nav><!-- /step-list -->
+
+      <!-- Right: detail panel -->
+      <div class="detail-panel" role="tabpanel" id="detail-active">
+        <div class="detail-content visible" id="detail-content">
+          <!-- Filled by JS -->
+        </div>
+      </div>
+
+    </div><!-- /explainer-layout -->
+
+    <div class="controls-row">
+      <span class="controls-hint" id="controls-hint">Auto-advances · Pauses on hover</span>
+      <div class="controls-btns">
+        <button class="ctrl-btn" id="btn-prev" aria-label="Previous step">← Prev</button>
+        <button class="ctrl-btn primary" id="btn-pause" aria-label="Pause auto-advance">⏸ Pause</button>
+        <button class="ctrl-btn" id="btn-next" aria-label="Next step">Next →</button>
+      </div>
+    </div>
+
+  </div><!-- /explainer-wrap -->
+
+
+  <script>
+  /* ──────────────────────────────────────────
+     STEP EXPLAINER — Script
+     - Click step → switch detail panel
+     - Auto-advance timer (6s)
+     - Pause on hover or manual click
+     - Mobile uses accordion (CSS handles it)
+  ────────────────────────────────────────── */
+
+  /* Step data — customize content here */
+  var steps = [
+    {
+      n: 1, icon: '🔍', name: 'Discovery',
+      body: 'Every project starts by listening. We run a structured discovery session covering your business goals, target audience, competitors, and what success actually looks like for you.',
+      bullets: [
+        '90-minute strategy call (recorded for reference)',
+        'Competitor audit — what\'s working in your market',
+        'Content inventory if redesigning an existing site',
+        'Deliverable: Project Brief Document you approve'
+      ],
+      visual: 'discovery'
+    },
+    {
+      n: 2, icon: '🗺️', name: 'Strategy & Wireframes',
+      body: 'We map the site architecture and content hierarchy before touching design. This is where we answer: what goes on each page, in what order, and why.',
+      bullets: [
+        'Site map: every page defined and justified',
+        'Low-fidelity wireframes for key pages',
+        'Content brief for every section (what to write)',
+        'SEO keyword mapping built into the structure'
+      ],
+      visual: 'wireframe'
+    },
+    {
+      n: 3, icon: '🎨', name: 'Design',
+      body: 'High-fidelity Figma mockups applying your brand identity. Desktop and mobile designs delivered simultaneously — not as an afterthought.',
+      bullets: [
+        'Full visual design for homepage + 3 inner pages',
+        'Mobile designs included (not just desktop)',
+        'Component library: buttons, forms, cards',
+        'One round of revisions before development'
+      ],
+      visual: 'design'
+    },
+    {
+      n: 4, icon: '⚙️', name: 'Development & QA',
+      body: 'Clean, semantic HTML/CSS/JS built for speed and search engines. Every page tested on real devices — not just browser previews.',
+      bullets: [
+        'Sub-2-second load time (Core Web Vitals pass)',
+        '90+ Google PageSpeed score, guaranteed',
+        'Tested on iOS Safari, Android Chrome, and 10 others',
+        'Forms wired, lead tracking configured, SSL verified'
+      ],
+      visual: 'dev'
+    },
+    {
+      n: 5, icon: '🚀', name: 'Launch & Handoff',
+      body: 'We push the site live, get it indexed by Google, and hand you everything you need to manage it yourself. No dependency on us to make basic updates.',
+      bullets: [
+        'Deployed to your hosting with CDN configured',
+        'Google Search Console + Analytics fully set up',
+        'Screen-recorded walkthrough of the CMS',
+        '30-day post-launch support included'
+      ],
+      visual: 'launch'
+    }
+  ];
+
+  var TIMER_MS = 6000;
+  var currentStep = 0;
+  var paused = false;
+  var timer = null;
+  var hovered = false;
+
+  var detailContent = document.getElementById('detail-content');
+  var stepItems = document.querySelectorAll('.step-item');
+  var btnPause = document.getElementById('btn-pause');
+  var btnPrev  = document.getElementById('btn-prev');
+  var btnNext  = document.getElementById('btn-next');
+  var hintEl   = document.getElementById('controls-hint');
+
+  /* Build a visual bar mockup based on step type */
+  function buildVisual(type) {
+    var bars = {
+      discovery:  [['accent',70], ['',50], ['',85], ['',30]],
+      wireframe:  [['',100], ['accent',60], ['',80], ['',40]],
+      design:     [['accent',90], ['accent',75], ['',60], ['',50]],
+      dev:        [['accent',95], ['accent',90], ['accent',88], ['',60]],
+      launch:     [['accent',100], ['accent',98], ['accent',96], ['accent',92]]
+    };
+    var rows = bars[type] || bars.discovery;
+    return '<div class="detail-visual">'
+      + '<div class="detail-visual-label">' + type.charAt(0).toUpperCase() + type.slice(1) + ' stage</div>'
+      + rows.map(function(r) {
+          return '<div class="detail-visual-bar ' + r[0] + '" style="width:' + r[1] + '%"></div>';
+        }).join('')
+      + '</div>';
+  }
+
+  /* Render step content into the panel */
+  function renderStep(i) {
+    var s = steps[i];
+    detailContent.classList.remove('visible');
+
+    setTimeout(function() {
+      detailContent.innerHTML =
+        '<div class="detail-step-badge">Step ' + s.n + ' of ' + steps.length + '</div>'
+        + '<div class="detail-icon-wrap">' + s.icon + '</div>'
+        + '<div class="detail-title">' + s.name + '</div>'
+        + '<p class="detail-body">' + s.body + '</p>'
+        + '<ul class="detail-bullets">'
+        + s.bullets.map(function(b) { return '<li>' + b + '</li>'; }).join('')
+        + '</ul>'
+        + buildVisual(s.visual);
+      detailContent.classList.add('visible');
+    }, 150);
+  }
+
+  /* Activate a step */
+  function goTo(i) {
+    var prev = currentStep;
+    currentStep = (i + steps.length) % steps.length;
+
+    /* Update step list UI */
+    stepItems.forEach(function(item, idx) {
+      item.classList.remove('active');
+      item.setAttribute('aria-selected', 'false');
+      if (idx < currentStep) item.classList.add('completed');
+      else item.classList.remove('completed');
+    });
+    stepItems[currentStep].classList.add('active');
+    stepItems[currentStep].setAttribute('aria-selected', 'true');
+
+    renderStep(currentStep);
+    resetTimer();
+  }
+
+  /* Timer */
+  function resetTimer() {
+    clearTimeout(timer);
+    if (!paused && !hovered) {
+      timer = setTimeout(function() {
+        goTo(currentStep + 1);
+      }, TIMER_MS);
+    }
+  }
+
+  function togglePause() {
+    paused = !paused;
+    btnPause.textContent = paused ? '▶ Resume' : '⏸ Pause';
+    hintEl.textContent   = paused ? 'Auto-advance paused' : 'Auto-advances · Pauses on hover';
+    stepItems.forEach(function(item) {
+      item.classList.toggle('paused', paused);
+    });
+    if (!paused) resetTimer();
+    else clearTimeout(timer);
+  }
+
+  /* Step clicks */
+  stepItems.forEach(function(item, i) {
+    item.addEventListener('click', function() { goTo(i); });
+    item.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goTo(i); }
+    });
+  });
+
+  /* Button controls */
+  btnPrev.addEventListener('click',  function() { goTo(currentStep - 1); });
+  btnNext.addEventListener('click',  function() { goTo(currentStep + 1); });
+  btnPause.addEventListener('click', togglePause);
+
+  /* Pause on hover */
+  document.querySelector('.explainer-wrap').addEventListener('mouseenter', function() {
+    hovered = true;
+    clearTimeout(timer);
+  });
+  document.querySelector('.explainer-wrap').addEventListener('mouseleave', function() {
+    hovered = false;
+    resetTimer();
+  });
+
+  /* Initial render */
+  renderStep(0);
+  resetTimer();
+  </script>
+
+</body>
+</html>

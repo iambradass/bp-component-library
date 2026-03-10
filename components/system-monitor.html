@@ -1,0 +1,454 @@
+<!-- COMPONENT: System Monitor | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>System Monitor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --red:            #EF4444;
+      --amber:          #F59E0B;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 13px;
+      padding: 24px;
+      min-height: 100vh;
+    }
+    .monitor { max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+
+    /* ── Header ── */
+    .mon-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .mon-title { font-family: var(--font-heading); font-size: 1.125rem; font-weight: 600; }
+    .mon-meta  { display:flex; gap:20px; align-items:center; flex-wrap:wrap; }
+    .uptime-label { font-size:0.75rem; color:var(--text-muted); }
+    .uptime-val   { font-family:var(--font-mono); font-size:0.875rem; color:var(--accent); }
+
+    .pause-btn {
+      padding: 6px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-secondary);
+      font-family: var(--font-body);
+      font-size: 0.8125rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .pause-btn:hover { border-color: var(--accent-border); color: var(--accent); }
+    .pause-btn.paused { border-color: var(--amber); color: var(--amber); }
+
+    /* ── Ring gauges row ── */
+    .gauges-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+    @media (max-width: 600px) { .gauges-row { grid-template-columns: repeat(2, 1fr); } }
+
+    .gauge-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    .gauge-label { font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-muted); }
+    .gauge-wrap { position: relative; width: 100px; height: 100px; }
+    svg.gauge-svg { display: block; }
+    .gauge-center {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .gauge-pct  { font-family: var(--font-heading); font-size: 1.375rem; font-weight: 700; line-height: 1; }
+    .gauge-unit { font-size: 0.6875rem; color: var(--text-muted); }
+
+    /* ── CPU History Chart ── */
+    .chart-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+    }
+    .chart-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .chart-card-title { font-family: var(--font-heading); font-size: .875rem; font-weight: 600; }
+    .chart-card-sub   { font-size: .75rem; color: var(--text-muted); }
+    canvas#cpuHistory { display: block; width: 100%; }
+
+    /* ── Process table ── */
+    .proc-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .proc-card-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      font-family: var(--font-heading);
+      font-size: .875rem;
+      font-weight: 600;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      padding: 8px 14px;
+      font-size: .6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--text-muted);
+      text-align: left;
+      white-space: nowrap;
+    }
+    td {
+      padding: 9px 14px;
+      border-top: 1px solid var(--border);
+      font-family: var(--font-mono);
+      font-size: .8125rem;
+      white-space: nowrap;
+    }
+    tr.proc-high td { background: rgba(239,68,68,0.06); }
+    tr.proc-warn td { background: rgba(245,158,11,0.06); }
+    tr:hover td { background: var(--elevated) !important; }
+
+    .cpu-bar { display:flex; align-items:center; gap:7px; }
+    .cpu-bar-bg { width:60px; height:5px; background:var(--elevated); border-radius:3px; overflow:hidden; }
+    .cpu-bar-fill { height:100%; border-radius:3px; }
+
+    .proc-status { display:inline-flex; align-items:center; gap:5px; }
+    .proc-status-dot { width:7px;height:7px;border-radius:50%; }
+  </style>
+</head>
+<body>
+<div class="monitor">
+
+  <!-- Header -->
+  <div class="mon-header">
+    <div>
+      <h2 class="mon-title">System Monitor</h2>
+      <div style="font-size:.75rem;color:var(--text-muted);margin-top:2px">prod-server-01 · 145.223.104.252</div>
+    </div>
+    <div class="mon-meta">
+      <div>
+        <div class="uptime-label">Uptime</div>
+        <div class="uptime-val" id="uptimeVal">00:00:00</div>
+      </div>
+      <button class="pause-btn" id="pauseBtn">⏸ Pause</button>
+    </div>
+  </div>
+
+  <!-- 4 Ring Gauges -->
+  <div class="gauges-row" id="gaugesRow">
+    <div class="gauge-card" data-gauge="cpu">
+      <div class="gauge-label">CPU</div>
+      <div class="gauge-wrap">
+        <svg class="gauge-svg" width="100" height="100" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="38" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="10"/>
+          <circle id="gauge-arc-cpu" cx="50" cy="50" r="38" fill="none" stroke="#10B981" stroke-width="10"
+            stroke-linecap="round" stroke-dasharray="239" stroke-dashoffset="239"
+            transform="rotate(-90 50 50)" style="transition:stroke-dashoffset .5s,stroke .5s"/>
+        </svg>
+        <div class="gauge-center"><div class="gauge-pct" id="gauge-val-cpu">0%</div><div class="gauge-unit">CPU</div></div>
+      </div>
+    </div>
+    <div class="gauge-card" data-gauge="mem">
+      <div class="gauge-label">Memory</div>
+      <div class="gauge-wrap">
+        <svg class="gauge-svg" width="100" height="100" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="38" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="10"/>
+          <circle id="gauge-arc-mem" cx="50" cy="50" r="38" fill="none" stroke="#3B82F6" stroke-width="10"
+            stroke-linecap="round" stroke-dasharray="239" stroke-dashoffset="239"
+            transform="rotate(-90 50 50)" style="transition:stroke-dashoffset .5s,stroke .5s"/>
+        </svg>
+        <div class="gauge-center"><div class="gauge-pct" id="gauge-val-mem">0%</div><div class="gauge-unit">RAM</div></div>
+      </div>
+    </div>
+    <div class="gauge-card" data-gauge="disk">
+      <div class="gauge-label">Disk</div>
+      <div class="gauge-wrap">
+        <svg class="gauge-svg" width="100" height="100" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="38" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="10"/>
+          <circle id="gauge-arc-disk" cx="50" cy="50" r="38" fill="none" stroke="#8B5CF6" stroke-width="10"
+            stroke-linecap="round" stroke-dasharray="239" stroke-dashoffset="239"
+            transform="rotate(-90 50 50)" style="transition:stroke-dashoffset .5s,stroke .5s"/>
+        </svg>
+        <div class="gauge-center"><div class="gauge-pct" id="gauge-val-disk">0%</div><div class="gauge-unit">Disk</div></div>
+      </div>
+    </div>
+    <div class="gauge-card" data-gauge="net">
+      <div class="gauge-label">Network</div>
+      <div class="gauge-wrap">
+        <svg class="gauge-svg" width="100" height="100" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="38" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="10"/>
+          <circle id="gauge-arc-net" cx="50" cy="50" r="38" fill="none" stroke="#F59E0B" stroke-width="10"
+            stroke-linecap="round" stroke-dasharray="239" stroke-dashoffset="239"
+            transform="rotate(-90 50 50)" style="transition:stroke-dashoffset .5s,stroke .5s"/>
+        </svg>
+        <div class="gauge-center"><div class="gauge-pct" id="gauge-val-net">0%</div><div class="gauge-unit">Net</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CPU History Line Chart -->
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <div class="chart-card-title">CPU History</div>
+      <div class="chart-card-sub">Last 60 seconds</div>
+    </div>
+    <canvas id="cpuHistory" height="140"></canvas>
+  </div>
+
+  <!-- Process Table -->
+  <div class="proc-card">
+    <div class="proc-card-header">Processes</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Process</th>
+          <th>PID</th>
+          <th>CPU %</th>
+          <th>Memory</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="procTbody"></tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+  // ── State ─────────────────────────────────────────────────────────
+  const CIRC = 2 * Math.PI * 38; // ≈ 239
+
+  let paused = false;
+  let tick   = 0;
+  let uptimeSeconds = 0;
+
+  // Simulated system values using sine waves + noise
+  function wave(t, freq, phase, min, max, noiseAmp) {
+    const base = (Math.sin(t * freq + phase) + 1) / 2; // 0–1
+    const noise = (Math.random() - 0.5) * noiseAmp;
+    return Math.min(max, Math.max(min, min + (max-min)*base + noise));
+  }
+
+  // CPU: oscillates 15–85%, spikes occasionally
+  function cpuVal(t) {
+    let v = wave(t, 0.05, 0, 15, 75, 8);
+    if (Math.random() < 0.05) v = Math.min(95, v + 20);
+    return v;
+  }
+  function memVal(t)  { return wave(t, 0.02, 1.2, 48, 78, 3); }
+  function diskVal()  { return 62 + Math.random()*0.5; }  // stable-ish
+  function netVal(t)  { return wave(t, 0.08, 2.5, 5, 80, 12); }
+
+  // CPU history buffer (60 points)
+  const cpuHistory = Array(60).fill(0);
+
+  // Gauges
+  const gauges = {
+    cpu:  {arc: document.getElementById('gauge-arc-cpu'),  val: document.getElementById('gauge-val-cpu'),  colors:['#10B981','#F59E0B','#EF4444'], thresholds:[70,85]},
+    mem:  {arc: document.getElementById('gauge-arc-mem'),  val: document.getElementById('gauge-val-mem'),  colors:['#3B82F6','#F59E0B','#EF4444'], thresholds:[75,90]},
+    disk: {arc: document.getElementById('gauge-arc-disk'), val: document.getElementById('gauge-val-disk'), colors:['#8B5CF6','#F59E0B','#EF4444'], thresholds:[80,90]},
+    net:  {arc: document.getElementById('gauge-arc-net'),  val: document.getElementById('gauge-val-net'),  colors:['#F59E0B','#EF4444','#EF4444'], thresholds:[60,80]},
+  };
+
+  function updateGauge(key, pct) {
+    const g = gauges[key];
+    const offset = CIRC * (1 - pct/100);
+    g.arc.setAttribute('stroke-dashoffset', offset);
+    const col = pct >= g.thresholds[1] ? g.colors[2] : pct >= g.thresholds[0] ? g.colors[1] : g.colors[0];
+    g.arc.setAttribute('stroke', col);
+    g.val.textContent = Math.round(pct) + '%';
+    g.val.style.color = col;
+  }
+
+  // ── Processes ─────────────────────────────────────────────────────
+  const procs = [
+    { name:'nginx',     pid:1234, baseCpu:0.8,  baseMem:'42 MB' },
+    { name:'node',      pid:5782, baseCpu:18,   baseMem:'312 MB' },
+    { name:'postgres',  pid:5799, baseCpu:8,    baseMem:'880 MB' },
+    { name:'redis',     pid:6021, baseCpu:1.2,  baseMem:'128 MB' },
+    { name:'python',    pid:7340, baseCpu:4.5,  baseMem:'220 MB' },
+    { name:'rsyslogd',  pid:823,  baseCpu:0.2,  baseMem:'18 MB' },
+    { name:'cron',      pid:1100, baseCpu:0.1,  baseMem:'8 MB' },
+    { name:'sshd',      pid:988,  baseCpu:0.3,  baseMem:'12 MB' },
+  ];
+
+  let procStates = procs.map(p => ({ ...p, cpu:p.baseCpu, status:'Running' }));
+
+  function updateProcs() {
+    procStates.forEach(p => {
+      p.cpu = Math.max(0, p.baseCpu + (Math.random()-0.4)*p.baseCpu*0.8);
+      p.status = p.cpu > 35 ? 'Busy' : 'Running';
+    });
+    procStates.sort((a,b) => b.cpu - a.cpu);
+  }
+
+  function renderProcs() {
+    const tbody = document.getElementById('procTbody');
+    tbody.innerHTML = procStates.map(p => {
+      const isHigh = p.cpu > 30, isWarn = p.cpu > 15;
+      const cpuCol  = isHigh ? '#EF4444' : isWarn ? '#F59E0B' : '#10B981';
+      const statusCol = isHigh ? '#EF4444' : isWarn ? '#F59E0B' : '#10B981';
+      return `<tr class="${isHigh?'proc-high':isWarn?'proc-warn':''}">
+        <td style="color:var(--text);font-weight:500">${p.name}</td>
+        <td style="color:var(--text-muted)">${p.pid}</td>
+        <td>
+          <div class="cpu-bar">
+            <div class="cpu-bar-bg"><div class="cpu-bar-fill" style="width:${Math.min(100,p.cpu*2)}%;background:${cpuCol}"></div></div>
+            <span style="color:${cpuCol};min-width:38px">${p.cpu.toFixed(1)}%</span>
+          </div>
+        </td>
+        <td style="color:var(--text-secondary)">${p.baseMem}</td>
+        <td>
+          <div class="proc-status">
+            <div class="proc-status-dot" style="background:${statusCol}"></div>
+            <span style="color:${statusCol}">${p.status}</span>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  // ── CPU History Chart ─────────────────────────────────────────────
+  function renderCpuHistory() {
+    const canvas = document.getElementById('cpuHistory');
+    const W = canvas.parentElement.clientWidth;
+    const H = 140;
+    canvas.width = W;
+    canvas.height = H;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0,0,W,H);
+    const pad = {l:36,r:10,t:8,b:24};
+    const cw = W - pad.l - pad.r;
+    const ch = H - pad.t - pad.b;
+
+    // Grid
+    ctx.strokeStyle = 'rgba(148,163,184,0.07)';
+    ctx.lineWidth = 1;
+    [0,25,50,75,100].forEach(pct => {
+      const y = pad.t + ch - (pct/100)*ch;
+      ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(pad.l+cw,y); ctx.stroke();
+      ctx.fillStyle = '#475569'; ctx.font = '9px Inter,sans-serif'; ctx.textAlign='right';
+      ctx.fillText(pct+'%', pad.l-4, y+4);
+    });
+
+    // Time axis
+    ctx.fillStyle = '#475569'; ctx.font='9px Inter,sans-serif'; ctx.textAlign='center';
+    ctx.fillText('60s ago', pad.l, H-6);
+    ctx.fillText('now',     pad.l+cw, H-6);
+
+    // Line
+    const pts = cpuHistory.map((v,i) => ({
+      x: pad.l + (i/(cpuHistory.length-1)) * cw,
+      y: pad.t + ch - (v/100)*ch
+    }));
+    ctx.beginPath();
+    pts.forEach((p,i) => i===0 ? ctx.moveTo(p.x,p.y) : ctx.lineTo(p.x,p.y));
+    ctx.strokeStyle = '#10B981';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Fill
+    const grad = ctx.createLinearGradient(0,pad.t,0,pad.t+ch);
+    grad.addColorStop(0,'rgba(16,185,129,0.25)');
+    grad.addColorStop(1,'rgba(16,185,129,0)');
+    ctx.lineTo(pts[pts.length-1].x, pad.t+ch);
+    ctx.lineTo(pts[0].x, pad.t+ch);
+    ctx.closePath();
+    ctx.fillStyle = grad;
+    ctx.fill();
+  }
+
+  // ── Uptime ────────────────────────────────────────────────────────
+  function formatUptime(s) {
+    const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
+    return [h,m,sec].map(v=>String(v).padStart(2,'0')).join(':');
+  }
+
+  // ── Main tick ────────────────────────────────────────────────────
+  function doTick() {
+    if (paused) return;
+    tick++;
+    uptimeSeconds++;
+    document.getElementById('uptimeVal').textContent = formatUptime(uptimeSeconds);
+
+    const cpu  = cpuVal(tick);
+    const mem  = memVal(tick);
+    const disk = diskVal();
+    const net  = netVal(tick);
+
+    updateGauge('cpu',  cpu);
+    updateGauge('mem',  mem);
+    updateGauge('disk', disk);
+    updateGauge('net',  net);
+
+    cpuHistory.push(cpu);
+    cpuHistory.shift();
+    renderCpuHistory();
+
+    if (tick % 2 === 0) {
+      updateProcs();
+      renderProcs();
+    }
+  }
+
+  // ── Pause button ─────────────────────────────────────────────────
+  document.getElementById('pauseBtn').addEventListener('click', function() {
+    paused = !paused;
+    this.textContent = paused ? '▶ Resume' : '⏸ Pause';
+    this.classList.toggle('paused', paused);
+  });
+
+  // ── Init ─────────────────────────────────────────────────────────
+  // Pre-fill some uptime and history
+  uptimeSeconds = 14400; // 4 hours
+  for (let i=0; i<60; i++) { cpuHistory[i] = cpuVal(i); }
+  updateProcs(); renderProcs();
+  renderCpuHistory();
+
+  setInterval(doTick, 1000);
+  window.addEventListener('resize', renderCpuHistory);
+</script>
+</body>
+</html>

@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Logo Marquee — Component Library</title>
+
+  <!--
+  ============================================================
+  COMPONENT: Logo Marquee Strip
+  COPY: <style> block + HTML block (no JS needed)
+  FEATURES:
+    - Pure CSS infinite scroll — no JS scroll logic
+    - Two rows scrolling in opposite directions
+    - Original + duplicate set ensures seamless loop
+    - Hover pauses animation
+    - Left/right fade masks via CSS mask-image
+    - Logos simulated as styled text pills (swap for <img> tags)
+  ============================================================
+  -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+
+    /* ── CUSTOMIZE: swap these variables ── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --accent:         #10B981;
+      --border:         rgba(148, 163, 184, 0.1);
+      --border-accent:  rgba(16, 185, 129, 0.25);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+
+      /* Marquee speeds — increase number = slower scroll */
+      --speed-row1: 32s;
+      --speed-row2: 28s;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      padding: 3rem 0 5rem;
+    }
+
+    .demo-label {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+    .demo-title {
+      font-family: var(--font-heading);
+      font-size: 2rem;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 0.5rem;
+      padding: 0 1.5rem;
+    }
+    .demo-subtitle {
+      color: var(--text-secondary);
+      text-align: center;
+      font-size: 0.9375rem;
+      margin-bottom: 3rem;
+      padding: 0 1.5rem;
+    }
+
+
+    /* ════════════════════════════════════════════
+       MARQUEE SECTION WRAPPER
+    ════════════════════════════════════════════ */
+
+    .marquee-section {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+
+    /* Section header */
+    .marquee-heading {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    .marquee-heading-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .marquee-heading h2 {
+      font-family: var(--font-heading);
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .marquee-heading p {
+      font-size: 0.9375rem;
+      color: var(--text-secondary);
+    }
+
+
+    /* ════════════════════════════════════════════
+       MARQUEE TRACK WRAPPER
+       Overflow hidden + fade masks on both edges
+    ════════════════════════════════════════════ */
+
+    .marquee-wrapper {
+      /* Full bleed — no horizontal padding so masks reach screen edges */
+      width: 100%;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+
+      /*
+      FADE MASKS: creates transparent edges so logos fade in/out naturally.
+      mask-image applies a gradient that goes transparent→black→black→transparent.
+      Combined with overflow:hidden, logos smoothly appear and disappear.
+      */
+      -webkit-mask-image: linear-gradient(
+        to right,
+        transparent 0%,
+        black 8%,
+        black 92%,
+        transparent 100%
+      );
+      mask-image: linear-gradient(
+        to right,
+        transparent 0%,
+        black 8%,
+        black 92%,
+        transparent 100%
+      );
+    }
+
+
+    /* ── The scrolling track ── */
+    .marquee-track {
+      display: flex;
+      gap: 12px;
+      width: max-content; /* expands to fit all items in one row */
+    }
+
+    /*
+    SEAMLESS LOOP TRICK:
+    The track contains logos TWICE (original + clone).
+    When we animate translateX(-50%), we move exactly one full set width.
+    At that point the clone lines up with where the original started,
+    so the loop is invisible.
+    */
+
+    /* Row 1: scroll left */
+    .marquee-row-1 {
+      animation: marquee-left var(--speed-row1) linear infinite;
+    }
+
+    /* Row 2: scroll right (reverse direction) */
+    .marquee-row-2 {
+      animation: marquee-right var(--speed-row2) linear infinite;
+    }
+
+    /* Pause on hover over the wrapper */
+    .marquee-wrapper:hover .marquee-track {
+      animation-play-state: paused;
+    }
+
+    @keyframes marquee-left {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-50%); }
+    }
+
+    @keyframes marquee-right {
+      from { transform: translateX(-50%); }
+      to   { transform: translateX(0); }
+    }
+
+
+    /* ── Logo pill ── */
+    /*
+    To use real logos: replace .logo-pill with an <img> tag.
+    Keep the gap and track structure the same.
+    */
+    .logo-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 9999px;
+      padding: 10px 22px;
+      font-family: var(--font-mono);
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      user-select: none;
+      transition: border-color 0.2s ease, color 0.2s ease;
+      cursor: default;
+    }
+    .logo-pill:hover {
+      border-color: var(--border-accent);
+      color: var(--text);
+    }
+
+    /* Small colored dot — brand color accent inside pill */
+    .logo-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* Reduce motion: disable animation for users who prefer it */
+    @media (prefers-reduced-motion: reduce) {
+      .marquee-track { animation: none; }
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="demo-label">Component Demo</div>
+  <h1 class="demo-title">Logo Marquee Strip</h1>
+  <p class="demo-subtitle">Pure CSS — no JS. Two rows scroll in opposite directions. Hover to pause.</p>
+
+
+  <!-- ════════════════════════════════════════════
+       MARQUEE SECTION
+  ════════════════════════════════════════════ -->
+  <section class="marquee-section">
+    <div class="marquee-heading">
+      <p class="marquee-heading-eyebrow">Social proof</p>
+      <h2>Trusted by teams at</h2>
+      <p>Companies that know what good looks like.</p>
+    </div>
+  </section>
+
+  <!-- Marquee lives OUTSIDE the padded section so it goes full-width -->
+  <div class="marquee-wrapper" aria-hidden="true">
+
+    <!--
+    ROW 1 — scrolls LEFT
+    Each logo appears TWICE (original set + clone set) for seamless looping.
+    When adding/removing logos, duplicate the full set in both .marquee-row-1 groups.
+    -->
+    <div class="marquee-track marquee-row-1">
+      <!-- Original set -->
+      <div class="logo-pill"><span class="logo-dot" style="background:#6772E5"></span>Stripe</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#000"></span>Vercel</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#5E6AD2"></span>Linear</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#F24E1E"></span>Figma</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#000"></span>Notion</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#06B6D4"></span>Tailwind</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#24292F"></span>GitHub</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#96BF48"></span>Shopify</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#4353FF"></span>Webflow</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#0055FF"></span>Framer</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#FF4B1F"></span>Loom</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#4A154B"></span>Slack</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#FF4A00"></span>Zapier</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#18BFFF"></span>Airtable</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#3ECF8E"></span>Supabase</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#F6821F"></span>Cloudflare</div>
+      <!-- Clone set — identical, for seamless loop -->
+      <div class="logo-pill"><span class="logo-dot" style="background:#6772E5"></span>Stripe</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#000"></span>Vercel</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#5E6AD2"></span>Linear</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#F24E1E"></span>Figma</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#000"></span>Notion</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#06B6D4"></span>Tailwind</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#24292F"></span>GitHub</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#96BF48"></span>Shopify</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#4353FF"></span>Webflow</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#0055FF"></span>Framer</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#FF4B1F"></span>Loom</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#4A154B"></span>Slack</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#FF4A00"></span>Zapier</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#18BFFF"></span>Airtable</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#3ECF8E"></span>Supabase</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#F6821F"></span>Cloudflare</div>
+    </div>
+
+    <!--
+    ROW 2 — scrolls RIGHT (different brand set, starts at -50% via animation)
+    Reverse direction gives the "depth" feel.
+    -->
+    <div class="marquee-track marquee-row-2">
+      <!-- Original set -->
+      <div class="logo-pill"><span class="logo-dot" style="background:#FF3366"></span>Lottie</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#1D9BF0"></span>Twitter / X</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#0A66C2"></span>LinkedIn</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#E44D26"></span>HTML5</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#38BDF8"></span>Render</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#FF7700"></span>Cloudinary</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#F05032"></span>Git</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#764ABC"></span>Redux</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#CC6699"></span>Sass</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#20232A"></span>React</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#68A063"></span>Node.js</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#FF4088"></span>Gatsby</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#000"></span>Next.js</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#007ACC"></span>VS Code</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#430098"></span>Heroku</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#2496ED"></span>Docker</div>
+      <!-- Clone set -->
+      <div class="logo-pill"><span class="logo-dot" style="background:#FF3366"></span>Lottie</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#1D9BF0"></span>Twitter / X</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#0A66C2"></span>LinkedIn</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#E44D26"></span>HTML5</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#38BDF8"></span>Render</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#FF7700"></span>Cloudinary</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#F05032"></span>Git</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#764ABC"></span>Redux</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#CC6699"></span>Sass</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#20232A"></span>React</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#68A063"></span>Node.js</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#FF4088"></span>Gatsby</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#000"></span>Next.js</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#007ACC"></span>VS Code</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#430098"></span>Heroku</div>
+      <div class="logo-pill"><span class="logo-dot" style="background:#2496ED"></span>Docker</div>
+    </div>
+
+  </div><!-- /marquee-wrapper -->
+
+  <!-- No JS needed for the marquee — pure CSS animation -->
+
+</body>
+</html>

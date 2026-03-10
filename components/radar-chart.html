@@ -1,0 +1,450 @@
+<!-- COMPONENT: Radar / Spider Chart | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Radar Chart</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --ds0: #10B981;
+      --ds1: #3B82F6;
+      --ds2: #F59E0B;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 13px;
+      padding: 24px;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      width: 100%;
+      max-width: 800px;
+    }
+
+    /* ── Header ── */
+    .radar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .radar-title { font-family: var(--font-heading); font-size: 1.125rem; font-weight: 600; }
+    .preset-select {
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 0.8125rem;
+      padding: 7px 12px;
+      cursor: pointer;
+      outline: none;
+    }
+    .preset-select option { background: var(--elevated); }
+
+    /* ── Main layout ── */
+    .radar-body {
+      display: flex;
+      gap: 28px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+
+    /* ── SVG chart ── */
+    .radar-svg-wrap {
+      flex: 1;
+      min-width: 280px;
+      position: relative;
+    }
+    svg#radarSvg { display: block; width: 100%; height: auto; overflow: visible; }
+
+    /* ── Sidebar ── */
+    .radar-sidebar {
+      width: 200px;
+      flex-shrink: 0;
+    }
+
+    /* Legend */
+    .legend-title {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.15s;
+      margin-bottom: 4px;
+      user-select: none;
+    }
+    .legend-item:hover { background: var(--elevated); }
+    .legend-item.dimmed { opacity: 0.4; }
+    .legend-swatch {
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .legend-label { font-size: 0.8125rem; color: var(--text-secondary); }
+
+    /* Axis detail panel */
+    .axis-panel {
+      margin-top: 20px;
+      background: var(--elevated);
+      border-radius: 8px;
+      padding: 12px;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .axis-panel.visible { opacity: 1; }
+    .axis-panel-name {
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 0.875rem;
+      margin-bottom: 8px;
+    }
+    .axis-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 5px 0;
+    }
+    .axis-row-label { font-size: 0.75rem; color: var(--text-muted); }
+    .axis-row-val { font-size: 0.75rem; font-weight: 600; }
+
+    /* ── Tooltip ── */
+    .radar-tooltip {
+      position: fixed;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 0.8125rem;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.1s;
+      z-index: 100;
+    }
+    .radar-tooltip.visible { opacity: 1; }
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="radar-header">
+    <h2 class="radar-title" id="radarTitle">Agency Skills Assessment</h2>
+    <select class="preset-select" id="presetSelect">
+      <option value="0">Skills Assessment</option>
+      <option value="1">Project Quality</option>
+      <option value="2">SEO Audit</option>
+    </select>
+  </div>
+
+  <div class="radar-body">
+    <!-- SVG Chart -->
+    <div class="radar-svg-wrap">
+      <svg id="radarSvg" viewBox="0 0 400 400"></svg>
+    </div>
+
+    <!-- Sidebar: legend + axis detail -->
+    <div class="radar-sidebar">
+      <div class="legend-title">Datasets</div>
+      <div id="legendItems"></div>
+
+      <div class="axis-panel" id="axisPanel">
+        <div class="axis-panel-name" id="axisPanelName">—</div>
+        <div id="axisPanelRows"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="radar-tooltip" id="radarTooltip"></div>
+
+<script>
+  // ── Presets ───────────────────────────────────────────────────────
+  const presets = [
+    {
+      title: 'Agency Skills Assessment',
+      axes: ['Speed','Design','SEO','Accessibility','Security','Performance','UX','Innovation'],
+      datasets: [
+        { label: 'Your Agency',       values: [88,92,74,70,81,85,90,87], color: '#10B981' },
+        { label: 'Industry Average',  values: [72,68,65,60,70,68,71,62], color: '#3B82F6' },
+        { label: 'Competitor',        values: [79,85,80,55,65,78,82,70], color: '#F59E0B' },
+      ]
+    },
+    {
+      title: 'Project Quality',
+      axes: ['Code Quality','Documentation','Test Coverage','Maintainability','Scalability','Reliability','Deployment','Monitoring'],
+      datasets: [
+        { label: 'Current Project',   values: [85,62,78,80,74,90,85,60], color: '#10B981' },
+        { label: 'Previous Project',  values: [70,55,50,65,60,75,68,45], color: '#3B82F6' },
+        { label: 'Target',            values: [95,90,90,90,85,95,90,85], color: '#F59E0B' },
+      ]
+    },
+    {
+      title: 'SEO Audit',
+      axes: ['Page Speed','Backlinks','Content','Mobile','Schema','Core Web Vitals','Indexability','E-E-A-T'],
+      datasets: [
+        { label: 'Your Site',         values: [72,48,85,90,60,68,95,77], color: '#10B981' },
+        { label: 'Competitor A',      values: [88,82,78,82,75,84,92,80], color: '#3B82F6' },
+        { label: 'Competitor B',      values: [65,90,70,75,50,72,88,65], color: '#F59E0B' },
+      ]
+    },
+  ];
+
+  const CX = 200, CY = 200, RADIUS = 140, LEVELS = 5;
+  let preset = presets[0];
+  let hidden = [false, false, false];
+  let svgPolygons = [];
+
+  function polarToXY(angle, r) {
+    return { x: CX + r * Math.sin(angle), y: CY - r * Math.cos(angle) };
+  }
+
+  function pointsStr(angles, values) {
+    return angles.map((a, i) => {
+      const r = (values[i] / 100) * RADIUS;
+      const {x,y} = polarToXY(a, r);
+      return `${x},${y}`;
+    }).join(' ');
+  }
+
+  function render() {
+    const svg = document.getElementById('radarSvg');
+    const N = preset.axes.length;
+    const angles = Array.from({length:N}, (_,i) => (2*Math.PI*i)/N);
+    svg.innerHTML = '';
+
+    // ── Grid circles ──
+    for (let l=1; l<=LEVELS; l++) {
+      const r = (l/LEVELS) * RADIUS;
+      const points = angles.map(a => {
+        const {x,y} = polarToXY(a,r);
+        return `${x},${y}`;
+      }).join(' ');
+      const poly = document.createElementNS('http://www.w3.org/2000/svg','polygon');
+      poly.setAttribute('points', points);
+      poly.setAttribute('fill', 'none');
+      poly.setAttribute('stroke', 'rgba(148,163,184,0.12)');
+      poly.setAttribute('stroke-width', '1');
+      svg.appendChild(poly);
+      // Level label (rightmost spoke)
+      const labelPt = polarToXY(0, r);
+      const txt = document.createElementNS('http://www.w3.org/2000/svg','text');
+      txt.setAttribute('x', labelPt.x + 4);
+      txt.setAttribute('y', labelPt.y + 3);
+      txt.setAttribute('font-size','9');
+      txt.setAttribute('fill','#475569');
+      txt.textContent = (l/LEVELS*100).toFixed(0);
+      svg.appendChild(txt);
+    }
+
+    // ── Spokes ──
+    angles.forEach((a, i) => {
+      const {x,y} = polarToXY(a, RADIUS);
+      const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+      line.setAttribute('x1', CX); line.setAttribute('y1', CY);
+      line.setAttribute('x2', x);  line.setAttribute('y2', y);
+      line.setAttribute('stroke','rgba(148,163,184,0.15)');
+      line.setAttribute('stroke-width','1');
+      svg.appendChild(line);
+
+      // Axis label
+      const LR = RADIUS + 22;
+      const lp = polarToXY(a, LR);
+      const txt = document.createElementNS('http://www.w3.org/2000/svg','text');
+      txt.setAttribute('x', lp.x);
+      txt.setAttribute('y', lp.y);
+      txt.setAttribute('text-anchor', Math.abs(lp.x-CX)<10 ? 'middle' : lp.x < CX ? 'end' : 'start');
+      txt.setAttribute('dominant-baseline','middle');
+      txt.setAttribute('font-size','11');
+      txt.setAttribute('font-family','Space Grotesk, sans-serif');
+      txt.setAttribute('fill','#94A3B8');
+      txt.setAttribute('cursor','pointer');
+      txt.textContent = preset.axes[i];
+
+      // Hover to show axis detail
+      txt.addEventListener('mouseenter', (ev) => {
+        showAxisDetail(i, ev);
+        txt.setAttribute('fill', '#F8FAFC');
+      });
+      txt.addEventListener('mousemove', (ev) => {
+        const tip = document.getElementById('radarTooltip');
+        tip.style.left = (ev.clientX+12)+'px';
+        tip.style.top  = (ev.clientY+12)+'px';
+      });
+      txt.addEventListener('mouseleave', () => {
+        hideTooltip();
+        txt.setAttribute('fill','#94A3B8');
+      });
+      svg.appendChild(txt);
+    });
+
+    // ── Dataset polygons ──
+    svgPolygons = [];
+    preset.datasets.forEach((ds, di) => {
+      if (hidden[di]) return;
+      const pts = pointsStr(angles, ds.values);
+      // Fill
+      const fill = document.createElementNS('http://www.w3.org/2000/svg','polygon');
+      fill.setAttribute('points', pts);
+      fill.setAttribute('fill', ds.color);
+      fill.setAttribute('fill-opacity','0.12');
+      fill.setAttribute('stroke', ds.color);
+      fill.setAttribute('stroke-width','2');
+      fill.setAttribute('stroke-linejoin','round');
+
+      // Animate via stroke-dasharray (draw-in effect)
+      const perim = estimatePerimeter(angles, ds.values);
+      fill.setAttribute('stroke-dasharray', perim);
+      fill.setAttribute('stroke-dashoffset', perim);
+      // Trigger animation
+      setTimeout(() => {
+        fill.style.transition = `stroke-dashoffset 0.6s cubic-bezier(0.4,0,0.2,1) ${di*0.15}s, fill-opacity 0.4s ${di*0.15}s`;
+        fill.setAttribute('stroke-dashoffset','0');
+        fill.setAttribute('fill-opacity','0.18');
+      }, 20);
+
+      svg.appendChild(fill);
+      svgPolygons.push({ el:fill, di, ds });
+
+      // Vertex dots with hover
+      angles.forEach((a, ai) => {
+        const r = (ds.values[ai]/100)*RADIUS;
+        const {x,y} = polarToXY(a, r);
+        const circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
+        circle.setAttribute('cx', x); circle.setAttribute('cy', y); circle.setAttribute('r','4');
+        circle.setAttribute('fill', ds.color);
+        circle.setAttribute('stroke', '#0D1117'); circle.setAttribute('stroke-width','2');
+        circle.setAttribute('cursor','pointer');
+        circle.addEventListener('mouseenter', ev => showVertexTip(ai, ds.color, ev));
+        circle.addEventListener('mousemove', ev => {
+          const tip = document.getElementById('radarTooltip');
+          tip.style.left=(ev.clientX+12)+'px'; tip.style.top=(ev.clientY+12)+'px';
+        });
+        circle.addEventListener('mouseleave', hideTooltip);
+        svg.appendChild(circle);
+      });
+    });
+
+    renderLegend();
+  }
+
+  function estimatePerimeter(angles, values) {
+    let p = 0;
+    for (let i=0; i<angles.length; i++) {
+      const a1=angles[i], a2=angles[(i+1)%angles.length];
+      const r1=(values[i]/100)*RADIUS, r2=(values[(i+1)%values.length]/100)*RADIUS;
+      const p1=polarToXY(a1,r1), p2=polarToXY(a2,r2);
+      p += Math.hypot(p2.x-p1.x, p2.y-p1.y);
+    }
+    return p + 10;
+  }
+
+  function renderLegend() {
+    const el = document.getElementById('legendItems');
+    el.innerHTML = preset.datasets.map((ds, i) => `
+      <div class="legend-item ${hidden[i]?'dimmed':''}" data-di="${i}">
+        <div class="legend-swatch" style="background:${ds.color}"></div>
+        <div class="legend-label">${ds.label}</div>
+      </div>`).join('');
+    el.querySelectorAll('.legend-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const di = parseInt(item.dataset.di);
+        hidden[di] = !hidden[di];
+        render();
+      });
+    });
+  }
+
+  // ── Axis detail panel ────────────────────────────────────────────
+  function showAxisDetail(axisIdx, ev) {
+    const panel = document.getElementById('axisPanel');
+    document.getElementById('axisPanelName').textContent = preset.axes[axisIdx];
+    const rows = preset.datasets.filter((_,i)=>!hidden[i]).map(ds =>
+      `<div class="axis-row">
+        <span class="axis-row-label" style="color:${ds.color}">${ds.label}</span>
+        <span class="axis-row-val">${ds.values[axisIdx]}</span>
+      </div>`).join('');
+    document.getElementById('axisPanelRows').innerHTML = rows;
+    panel.classList.add('visible');
+
+    // Also show tooltip
+    const tip = document.getElementById('radarTooltip');
+    tip.innerHTML = `<strong>${preset.axes[axisIdx]}</strong>`;
+    tip.classList.add('visible');
+    tip.style.left=(ev.clientX+12)+'px';
+    tip.style.top=(ev.clientY+12)+'px';
+  }
+
+  function showVertexTip(axisIdx, col, ev) {
+    const vals = preset.datasets.filter((_,i)=>!hidden[i]).map(ds =>
+      `<span style="color:${ds.color}">◆ ${ds.label}: <strong>${ds.values[axisIdx]}</strong></span>`).join('<br>');
+    const tip = document.getElementById('radarTooltip');
+    tip.innerHTML = `<strong>${preset.axes[axisIdx]}</strong><br>${vals}`;
+    tip.classList.add('visible');
+    tip.style.left=(ev.clientX+12)+'px';
+    tip.style.top=(ev.clientY+12)+'px';
+
+    document.getElementById('axisPanelName').textContent = preset.axes[axisIdx];
+    const rows = preset.datasets.filter((_,i)=>!hidden[i]).map(ds =>
+      `<div class="axis-row">
+        <span class="axis-row-label" style="color:${ds.color}">${ds.label}</span>
+        <span class="axis-row-val">${ds.values[axisIdx]}</span>
+      </div>`).join('');
+    document.getElementById('axisPanelRows').innerHTML = rows;
+    document.getElementById('axisPanel').classList.add('visible');
+  }
+
+  function hideTooltip() {
+    document.getElementById('radarTooltip').classList.remove('visible');
+  }
+
+  // ── Preset select ────────────────────────────────────────────────
+  document.getElementById('presetSelect').addEventListener('change', e => {
+    preset = presets[parseInt(e.target.value)];
+    hidden = [false,false,false];
+    document.getElementById('radarTitle').textContent = preset.title;
+    document.getElementById('axisPanel').classList.remove('visible');
+    render();
+  });
+
+  render();
+</script>
+</body>
+</html>

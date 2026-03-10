@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Callout System</title>
+  <!-- COMPONENT: Callout System | COPY: style + html + script -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── CUSTOMIZE ── */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --glow:           rgba(16,185,129,0.15);
+      --glow-strong:    rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --border-accent:  rgba(16,185,129,0.3);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      padding: 2rem 1.5rem 4rem;
+      line-height: 1.7;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+    .page-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.75rem;
+    }
+    .page-title {
+      font-family: var(--font-heading);
+      font-size: clamp(1.75rem, 4vw, 2.5rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+    }
+    .page-desc {
+      color: var(--text-secondary);
+      font-size: 0.9375rem;
+      max-width: 560px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    .content-wrap {
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    .section {
+      margin-bottom: 3rem;
+    }
+    .section-label {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* Body text for context */
+    .body-text {
+      color: var(--text-secondary);
+      font-size: 0.9375rem;
+      line-height: 1.75;
+      margin-bottom: 1.25rem;
+    }
+
+    /* ─────────────────────────────────────
+       CALLOUT BOXES
+    ───────────────────────────────────── */
+    .callout {
+      display: flex;
+      gap: 0.875rem;
+      border-radius: var(--radius);
+      padding: 1rem 1.125rem;
+      margin-bottom: 1rem;
+      border-left: 3px solid;
+    }
+    .callout-icon {
+      font-size: 1.125rem;
+      flex-shrink: 0;
+      margin-top: 0.05em;
+    }
+    .callout-body { flex: 1; min-width: 0; }
+    .callout-title {
+      font-family: var(--font-heading);
+      font-size: 0.9rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+    .callout-text {
+      font-size: 0.875rem;
+      line-height: 1.6;
+    }
+
+    /* Info */
+    .callout-info {
+      background: rgba(59,130,246,0.08);
+      border-color: rgba(59,130,246,0.4);
+    }
+    .callout-info .callout-title { color: #93C5FD; }
+    .callout-info .callout-text  { color: #BFDBFE; }
+
+    /* Tip */
+    .callout-tip {
+      background: rgba(16,185,129,0.07);
+      border-color: rgba(16,185,129,0.4);
+    }
+    .callout-tip .callout-title { color: var(--accent); }
+    .callout-tip .callout-text  { color: #A7F3D0; }
+
+    /* Warning */
+    .callout-warning {
+      background: rgba(251,191,36,0.07);
+      border-color: rgba(251,191,36,0.4);
+    }
+    .callout-warning .callout-title { color: #FCD34D; }
+    .callout-warning .callout-text  { color: #FDE68A; }
+
+    /* Danger */
+    .callout-danger {
+      background: rgba(239,68,68,0.07);
+      border-color: rgba(239,68,68,0.4);
+    }
+    .callout-danger .callout-title { color: #FCA5A5; }
+    .callout-danger .callout-text  { color: #FECACA; }
+
+    /* Example */
+    .callout-example {
+      background: rgba(139,92,246,0.07);
+      border-color: rgba(139,92,246,0.4);
+    }
+    .callout-example .callout-title { color: #C4B5FD; }
+    .callout-example .callout-text  { color: #DDD6FE; }
+    .callout-example .callout-icon {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      background: rgba(139,92,246,0.2);
+      border-radius: 4px;
+      padding: 2px 6px;
+      color: #C4B5FD;
+      margin-top: 0.1em;
+    }
+
+    /* Pull quote */
+    .pull-quote {
+      border-left: 3px solid var(--accent);
+      padding: 0.75rem 1.5rem;
+      margin: 1.5rem 0;
+      position: relative;
+    }
+    .pull-quote::before {
+      content: '"';
+      position: absolute;
+      top: -0.5rem;
+      left: 0.75rem;
+      font-family: Georgia, serif;
+      font-size: 4rem;
+      color: var(--glow-strong);
+      line-height: 1;
+      pointer-events: none;
+    }
+    .pull-quote-text {
+      font-family: var(--font-heading);
+      font-size: clamp(1.0625rem, 2.5vw, 1.25rem);
+      font-style: italic;
+      color: var(--text);
+      line-height: 1.5;
+      margin-bottom: 0.5rem;
+    }
+    .pull-quote-attr {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    /* ─────────────────────────────────────
+       INLINE DEFINITIONS (hover tooltip)
+    ───────────────────────────────────── */
+    [data-define] {
+      border-bottom: 1px dotted var(--accent);
+      cursor: help;
+      color: var(--text);
+      position: relative;
+    }
+    [data-define]:focus { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+
+    .def-tooltip {
+      position: fixed;
+      background: var(--elevated);
+      border: 1px solid var(--border-accent);
+      border-radius: 10px;
+      padding: 0.875rem 1rem;
+      max-width: 280px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+      z-index: 200;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(4px);
+      transition: opacity 0.18s ease, transform 0.18s ease;
+    }
+    .def-tooltip.visible { opacity: 1; transform: translateY(0); }
+    .def-tooltip-term {
+      font-family: var(--font-heading);
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 0.3rem;
+    }
+    .def-tooltip-body {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+    .def-tooltip-link {
+      display: block;
+      margin-top: 0.5rem;
+      font-size: 0.75rem;
+      color: var(--accent);
+      text-decoration: none;
+    }
+    .def-tooltip-link:hover { text-decoration: underline; }
+
+    /* ─────────────────────────────────────
+       SIDEBAR ANNOTATION LAYOUT
+    ───────────────────────────────────── */
+    .annotated-body {
+      display: grid;
+      grid-template-columns: 1fr 200px;
+      gap: 2rem;
+      align-items: start;
+    }
+    @media (max-width: 620px) {
+      .annotated-body { grid-template-columns: 1fr; }
+      .sidebar-notes { display: none; }
+    }
+    .main-text {
+      color: var(--text-secondary);
+      font-size: 0.9375rem;
+      line-height: 1.75;
+    }
+    .main-text p + p { margin-top: 1rem; }
+    .sidebar-notes {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .sidebar-note {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 2px solid var(--accent);
+      border-radius: 8px;
+      padding: 0.625rem 0.75rem;
+    }
+    .sidebar-note-label {
+      font-family: var(--font-mono);
+      font-size: 0.5625rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.25rem;
+    }
+    .sidebar-note-text {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* ─────────────────────────────────────
+       HIGHLIGHT + COMMENT PATTERN
+    ───────────────────────────────────── */
+    .highlighted-text {
+      background: rgba(251,191,36,0.12);
+      border-bottom: 1px solid rgba(251,191,36,0.4);
+      cursor: pointer;
+      border-radius: 2px;
+      transition: background 0.2s;
+    }
+    .highlighted-text:hover { background: rgba(251,191,36,0.2); }
+    .comment-trigger {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      background: rgba(251,191,36,0.2);
+      border: 1px solid rgba(251,191,36,0.4);
+      border-radius: 50%;
+      text-align: center;
+      line-height: 16px;
+      font-size: 0.65rem;
+      cursor: pointer;
+      vertical-align: middle;
+      margin-left: 3px;
+      color: #FCD34D;
+      transition: background 0.2s;
+    }
+    .comment-trigger:hover { background: rgba(251,191,36,0.4); }
+    .comment-block {
+      display: none;
+      margin-top: 0.75rem;
+      background: rgba(251,191,36,0.06);
+      border: 1px solid rgba(251,191,36,0.2);
+      border-radius: 8px;
+      padding: 0.875rem;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+    .comment-block.open { display: block; }
+    .comment-author {
+      font-family: var(--font-mono);
+      font-size: 0.5625rem;
+      color: rgba(251,191,36,0.6);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.375rem;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="page-header">
+    <div class="page-eyebrow">Callout System</div>
+    <h1 class="page-title">Callout & Annotation System</h1>
+    <p class="page-desc">Six callout types, inline hover definitions, sidebar annotations, and highlight+comment patterns. Makes long-form content scannable and comprehensible.</p>
+  </header>
+
+  <div class="content-wrap">
+
+    <!-- Six Callout Types -->
+    <section class="section">
+      <div class="section-label">Part A — Six Callout Types</div>
+
+      <div class="callout callout-info">
+        <div class="callout-icon">ℹ️</div>
+        <div class="callout-body">
+          <div class="callout-title">What This Means in Plain English</div>
+          <div class="callout-text">Core Web Vitals are Google's three metrics for measuring real-world user experience: loading speed (LCP), interactivity (FID), and visual stability (CLS). They directly affect your search rankings since 2021.</div>
+        </div>
+      </div>
+
+      <div class="callout callout-tip">
+        <div class="callout-icon">💡</div>
+        <div class="callout-body">
+          <div class="callout-title">Pro Tip</div>
+          <div class="callout-text">Use a CDN for all images and static assets. This alone typically reduces LCP by 40–60% because files are served from a server geographically close to the user — not from your origin server in one location.</div>
+        </div>
+      </div>
+
+      <div class="callout callout-warning">
+        <div class="callout-icon">⚠️</div>
+        <div class="callout-body">
+          <div class="callout-title">Watch Out For This</div>
+          <div class="callout-text">Never install a caching plugin before confirming your hosting provider doesn't already have server-level caching. Double caching causes stale content issues — your updates won't appear for visitors for hours.</div>
+        </div>
+      </div>
+
+      <div class="callout callout-danger">
+        <div class="callout-icon">🚫</div>
+        <div class="callout-body">
+          <div class="callout-title">This Will Break Things</div>
+          <div class="callout-text">Do not minify HTML with some aggressive tools — they strip whitespace that CSS <code>white-space: pre</code> depends on, and can break inline SVGs by removing the space between closing tags. Always test after minification.</div>
+        </div>
+      </div>
+
+      <div class="callout callout-example">
+        <div class="callout-icon">{}</div>
+        <div class="callout-body">
+          <div class="callout-title">Real-World Example</div>
+          <div class="callout-text">A roofing company in Dallas added schema markup to their service pages. Within 6 weeks they began appearing in the Google "FAQ" featured snippet for "how long does a roof replacement take" — which drove 340 additional organic visits per month with zero ad spend.</div>
+        </div>
+      </div>
+
+      <blockquote class="pull-quote">
+        <div class="pull-quote-text">A slow website isn't just a technical problem — it's a revenue problem. Every 1 second of delay reduces conversions by an average of 7%.</div>
+        <div class="pull-quote-attr">Google / Deloitte Research, 2023</div>
+      </blockquote>
+    </section>
+
+    <!-- Inline Definitions -->
+    <section class="section">
+      <div class="section-label">Part B — Inline Hover Definitions</div>
+      <p class="body-text">
+        When optimizing your site's
+        <span data-define="Core Web Vitals" data-def="Google's three key user experience metrics: Largest Contentful Paint (loading speed), First Input Delay (interactivity), and Cumulative Layout Shift (visual stability). All three affect your organic search rankings." data-link="#">Core Web Vitals</span>,
+        start with your
+        <span data-define="LCP" data-def="Largest Contentful Paint — measures how long it takes for the largest visible element (usually a hero image or heading) to fully load. Google's target is under 2.5 seconds." data-link="#">LCP</span>
+        score before tackling
+        <span data-define="CLS" data-def="Cumulative Layout Shift — measures how much your page visually jumps during loading. Ads that load late, images without dimensions, and late-loading fonts are common causes." data-link="#">CLS</span>.
+        A high
+        <span data-define="Bounce Rate" data-def="The percentage of visitors who land on your page and leave without clicking anything else. A bounce rate over 70% often signals a mismatch between what Google promised and what the page delivers." data-link="#">bounce rate</span>
+        usually indicates your
+        <span data-define="Above the Fold" data-def="The portion of a webpage visible without scrolling. Content above the fold must load fast, clearly state what you offer, and include a visible CTA — it's the most valuable real estate on your page." data-link="#">above-the-fold</span>
+        content isn't immediately compelling.
+        Always measure
+        <span data-define="TTFB" data-def="Time to First Byte — how long the browser waits before receiving the first byte from your server. Under 200ms is excellent. Over 800ms indicates a server or hosting problem." data-link="#">TTFB</span>
+        to diagnose whether slowness is a server or a front-end issue.
+      </p>
+    </section>
+
+    <!-- Sidebar Annotation -->
+    <section class="section">
+      <div class="section-label">Part C — Sidebar Annotation Layout</div>
+      <div class="annotated-body">
+        <div class="main-text">
+          <p>Search engine optimization has fundamentally changed since 2022. Google's Helpful Content Update made it clear: content written for algorithms rather than humans will be actively demoted in rankings.</p>
+          <p>The shift means that word count, keyword density, and backlink counts alone no longer predict rankings. What predicts rankings now is whether real people find your page genuinely useful for their specific query.</p>
+          <p>Practically, this means writing content that goes deeper than the top 3 results — not copying their structure, but identifying the questions they left unanswered. Original research, first-person experience, and specific examples all signal expertise to both users and Google.</p>
+        </div>
+        <div class="sidebar-notes">
+          <div class="sidebar-note">
+            <div class="sidebar-note-label">Note</div>
+            <div class="sidebar-note-text">HCU launched Aug 2022. Sites hit by it lost 30–70% of traffic overnight.</div>
+          </div>
+          <div class="sidebar-note">
+            <div class="sidebar-note-label">Data</div>
+            <div class="sidebar-note-text">First-person "I tested this" content outperforms generic guides in 68% of finance queries.</div>
+          </div>
+          <div class="sidebar-note">
+            <div class="sidebar-note-label">Action</div>
+            <div class="sidebar-note-text">Audit pages under 500 words first — they're most at risk for thin content penalties.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Highlight + Comment -->
+    <section class="section">
+      <div class="section-label">Part D — Highlight + Comment</div>
+      <p class="body-text">
+        The most important ranking factor for local businesses in 2024 is Google Business Profile optimization.
+        <span class="highlighted-text">A complete GBP with weekly posts, regular photo updates, and responses to all reviews
+        <span class="comment-trigger" data-comment="comment-1" title="See comment">💬</span></span>
+        consistently outperforms well-optimized websites with no GBP presence in local pack results.
+      </p>
+      <div class="comment-block" id="comment-1">
+        <div class="comment-author">Bradley · Internal Note</div>
+        Confirmed this on 3 client accounts. One roofer with a basic WordPress site but fully optimized GBP ranking #1 in the local pack over a competitor with a $15k custom site and strong domain authority — purely because their GBP was updated weekly.
+      </div>
+      <p class="body-text" style="margin-top:1rem">
+        <span class="highlighted-text">Schema markup for local business, FAQs, and service pages
+        <span class="comment-trigger" data-comment="comment-2" title="See comment">💬</span></span>
+        is still underused by most small business websites, making it one of the highest-ROI technical SEO investments available in 2024.
+      </p>
+      <div class="comment-block" id="comment-2">
+        <div class="comment-author">SEO Team · Research Note</div>
+        FAQ schema in particular drives rich result snippets that take up 3× more SERP real estate than a standard blue link. Even when you're ranking #3, a rich result at #3 often gets more clicks than a plain result at #1.
+      </div>
+    </section>
+
+  </div><!-- /content-wrap -->
+
+  <!-- Tooltip -->
+  <div class="def-tooltip" id="def-tooltip" role="tooltip" aria-live="polite">
+    <div class="def-tooltip-term" id="def-term"></div>
+    <div class="def-tooltip-body" id="def-body"></div>
+  </div>
+
+
+  <script>
+  /* ──────────────────────────────────────────
+     CALLOUT SYSTEM — Script
+     1. Inline definition hover tooltips
+     2. Highlight + comment toggle
+  ────────────────────────────────────────── */
+
+  /* 1 — Inline Definitions */
+  var defTooltip = document.getElementById('def-tooltip');
+  var defTerm    = document.getElementById('def-term');
+  var defBody    = document.getElementById('def-body');
+
+  document.querySelectorAll('[data-define]').forEach(function(el) {
+    /* Make keyboard focusable */
+    if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '0');
+    el.setAttribute('role', 'button');
+    el.setAttribute('aria-label', 'Definition: ' + el.dataset.define);
+
+    function showTooltip(x, y) {
+      defTerm.textContent = el.dataset.define;
+      defBody.textContent = el.dataset.def;
+      defTooltip.classList.add('visible');
+      positionDef(x, y);
+    }
+    function hideTooltip() { defTooltip.classList.remove('visible'); }
+
+    el.addEventListener('mouseenter', function(e) { showTooltip(e.clientX, e.clientY); });
+    el.addEventListener('mousemove',  function(e) { positionDef(e.clientX, e.clientY); });
+    el.addEventListener('mouseleave', hideTooltip);
+    el.addEventListener('focus',      function(e) {
+      var r = el.getBoundingClientRect();
+      showTooltip(r.left, r.bottom + 4);
+    });
+    el.addEventListener('blur', hideTooltip);
+  });
+
+  function positionDef(x, y) {
+    var tw = 290, th = 120;
+    var px = x + 16, py = y + 16;
+    if (px + tw > window.innerWidth - 16)  px = x - tw - 8;
+    if (py + th > window.innerHeight - 16) py = y - th - 8;
+    defTooltip.style.left = px + 'px';
+    defTooltip.style.top  = py + 'px';
+  }
+
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('[data-define]')) defTooltip.classList.remove('visible');
+  });
+
+  /* 2 — Highlight + Comment toggle */
+  document.querySelectorAll('.comment-trigger').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var id = btn.dataset.comment;
+      var block = document.getElementById(id);
+      if (block) block.classList.toggle('open');
+    });
+  });
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,625 @@
+<!-- COMPONENT: Gantt Chart | COPY: style + html + script -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gantt Chart</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --accent-dim:     rgba(16,185,129,0.15);
+      --accent-border:  rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --red:            #EF4444;
+      --amber:          #F59E0B;
+      --blue:           #3B82F6;
+      --purple:         #8B5CF6;
+      --row-h:          38px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 13px;
+      padding: 24px;
+      min-height: 100vh;
+    }
+
+    .gantt-wrap { max-width: 1100px; margin: 0 auto; }
+
+    /* ── Header ── */
+    .gantt-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .gantt-title { font-family: var(--font-heading); font-size: 1.125rem; font-weight: 600; }
+    .view-tabs {
+      display: flex;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .view-tabs button {
+      padding: 6px 16px;
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-family: var(--font-body);
+      font-size: 0.8125rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .view-tabs button.active { background: var(--accent); color: #000; font-weight: 600; }
+    .view-tabs button:hover:not(.active) { color: var(--text); background: var(--elevated); }
+
+    /* ── Main layout ── */
+    .gantt-main {
+      display: flex;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    /* ── Left: Task list ── */
+    .gantt-list {
+      width: 260px;
+      flex-shrink: 0;
+      border-right: 1px solid var(--border);
+    }
+    .gantt-list-header {
+      padding: 10px 14px;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      height: 44px;
+      display: flex;
+      align-items: center;
+    }
+    .group-header {
+      padding: 6px 14px;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--text-muted);
+      background: rgba(255,255,255,0.02);
+      border-bottom: 1px solid var(--border);
+      height: var(--row-h);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .group-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .task-row-list {
+      padding: 0 14px;
+      height: var(--row-h);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+    .task-row-list:hover, .task-row-list.selected { background: var(--elevated); }
+    .task-avatar {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      font-weight: 700;
+      flex-shrink: 0;
+      color: #fff;
+    }
+    .task-name {
+      flex: 1;
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .task-row-list.selected .task-name { color: var(--text); }
+    .task-pct {
+      font-size: 0.6875rem;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    /* ── Right: Timeline ── */
+    .gantt-timeline {
+      flex: 1;
+      overflow-x: auto;
+      position: relative;
+    }
+    .gantt-canvas-wrap {
+      position: relative;
+    }
+    canvas#ganttCanvas {
+      display: block;
+    }
+
+    /* Hover tooltip */
+    .gantt-tooltip {
+      position: fixed;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 0.8125rem;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.1s;
+      z-index: 100;
+      max-width: 240px;
+    }
+    .gantt-tooltip.visible { opacity: 1; }
+    .gantt-tooltip-name { font-weight: 600; color: var(--text); margin-bottom: 4px; }
+    .gantt-tooltip-row { color: var(--text-secondary); margin: 2px 0; }
+    .gantt-tooltip-bar {
+      margin-top: 6px;
+      height: 4px;
+      background: var(--elevated);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .gantt-tooltip-fill { height: 100%; border-radius: 2px; }
+
+    /* ── Detail panel ── */
+    .detail-panel {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      width: 280px;
+      background: var(--elevated);
+      border: 1px solid var(--accent-border);
+      border-radius: var(--radius);
+      padding: 16px;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.2s;
+      pointer-events: none;
+    }
+    .detail-panel.visible { opacity: 1; transform: translateY(0); pointer-events: all; }
+    .detail-panel-close {
+      position: absolute;
+      top: 10px; right: 12px;
+      background: none; border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 16px;
+    }
+    .detail-title { font-family: var(--font-heading); font-weight: 600; margin-bottom: 12px; padding-right: 20px; }
+    .detail-row { display: flex; justify-content: space-between; margin: 6px 0; font-size: 0.8125rem; }
+    .detail-label { color: var(--text-muted); }
+    .detail-val { color: var(--text-secondary); }
+    .detail-prog-bg { height: 6px; background: var(--surface); border-radius: 3px; margin-top: 10px; overflow: hidden; }
+    .detail-prog-fill { height: 100%; border-radius: 3px; transition: width 0.4s; }
+  </style>
+</head>
+<body>
+<div class="gantt-wrap">
+
+  <div class="gantt-header">
+    <h2 class="gantt-title">Project Timeline — Q1 2026</h2>
+    <div class="view-tabs" id="viewTabs">
+      <button data-view="week" class="active">Week</button>
+      <button data-view="month">Month</button>
+    </div>
+  </div>
+
+  <div class="gantt-main">
+    <!-- Task list -->
+    <div class="gantt-list" id="taskList"></div>
+    <!-- Timeline canvas -->
+    <div class="gantt-timeline">
+      <div class="gantt-canvas-wrap">
+        <canvas id="ganttCanvas"></canvas>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Tooltip -->
+<div class="gantt-tooltip" id="ganttTooltip"></div>
+
+<!-- Detail panel -->
+<div class="detail-panel" id="detailPanel">
+  <button class="detail-panel-close" id="detailClose">✕</button>
+  <div class="detail-title" id="detailTitle">Task Name</div>
+  <div class="detail-row"><span class="detail-label">Assignee</span><span class="detail-val" id="detailAssignee"></span></div>
+  <div class="detail-row"><span class="detail-label">Start</span><span class="detail-val" id="detailStart"></span></div>
+  <div class="detail-row"><span class="detail-label">End</span><span class="detail-val" id="detailEnd"></span></div>
+  <div class="detail-row"><span class="detail-label">Progress</span><span class="detail-val" id="detailPct"></span></div>
+  <div class="detail-row"><span class="detail-label">Group</span><span class="detail-val" id="detailGroup"></span></div>
+  <div class="detail-prog-bg"><div class="detail-prog-fill" id="detailProgFill"></div></div>
+</div>
+
+<script>
+  // ── Data ─────────────────────────────────────────────────────────
+  const PROJECT_START = new Date('2026-01-05');
+  const PROJECT_END   = new Date('2026-03-27');
+  const TODAY         = new Date('2026-03-07');
+
+  const groups = [
+    { name: 'Planning', color: '#3B82F6' },
+    { name: 'Development', color: '#10B981' },
+    { name: 'Launch', color: '#8B5CF6' },
+  ];
+
+  const avatarColors = ['#EF4444','#F59E0B','#10B981','#3B82F6','#8B5CF6','#EC4899'];
+
+  const tasks = [
+    // Planning
+    { name:'Requirements Gathering', group:0, assignee:'AL', start:'2026-01-05', end:'2026-01-16', pct:100, deps:[] },
+    { name:'Architecture Design',    group:0, assignee:'MK', start:'2026-01-12', end:'2026-01-23', pct:100, deps:[0] },
+    { name:'UI/UX Wireframes',       group:0, assignee:'SR', start:'2026-01-19', end:'2026-02-06', pct:100, deps:[0] },
+    { name:'Tech Stack Decision',    group:0, assignee:'AL', start:'2026-01-19', end:'2026-01-23', pct:100, deps:[1] },
+    // Development
+    { name:'Backend API',            group:1, assignee:'MK', start:'2026-01-26', end:'2026-02-20', pct:100, deps:[1] },
+    { name:'Frontend Build',         group:1, assignee:'SR', start:'2026-02-09', end:'2026-03-06', pct:85,  deps:[2,4] },
+    { name:'Database Schema',        group:1, assignee:'JP', start:'2026-01-26', end:'2026-02-06', pct:100, deps:[3] },
+    { name:'Auth System',            group:1, assignee:'AL', start:'2026-02-02', end:'2026-02-13', pct:100, deps:[6] },
+    { name:'Integration Testing',    group:1, assignee:'TW', start:'2026-02-23', end:'2026-03-13', pct:60,  deps:[4,5] },
+    // Launch
+    { name:'Beta Testing',           group:2, assignee:'JP', start:'2026-03-02', end:'2026-03-13', pct:45,  deps:[8] },
+    { name:'Performance Audit',      group:2, assignee:'TW', start:'2026-03-09', end:'2026-03-16', pct:20,  deps:[5] },
+    { name:'Go Live',                group:2, assignee:'AL', start:'2026-03-23', end:'2026-03-27', pct:0,   deps:[9,10] },
+  ];
+
+  const milestones = [
+    { label:'Alpha',    date:'2026-02-13' },
+    { label:'Beta',     date:'2026-03-02' },
+    { label:'Launch',   date:'2026-03-23' },
+  ];
+
+  // ── Helpers ──────────────────────────────────────────────────────
+  function daysSince(d) { return Math.round((new Date(d) - PROJECT_START) / 86400000); }
+  function fmtDate(d) { return new Date(d+'T12:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}); }
+  const totalDays = Math.round((PROJECT_END - PROJECT_START) / 86400000) + 1;
+
+  let viewMode = 'week'; // 'week' | 'month'
+  let selectedTask = null;
+
+  // ── Render task list ─────────────────────────────────────────────
+  function renderList() {
+    const list = document.getElementById('taskList');
+    let html = `<div class="gantt-list-header">Tasks</div>`;
+    let taskIdx = 0;
+    groups.forEach((g, gi) => {
+      const gTasks = tasks.filter(t => t.group === gi);
+      html += `<div class="group-header"><div class="group-dot" style="background:${g.color}"></div>${g.name}</div>`;
+      gTasks.forEach(t => {
+        const idx = tasks.indexOf(t);
+        const sel = idx === selectedTask;
+        html += `<div class="task-row-list${sel?' selected':''}" data-idx="${idx}">
+          <div class="task-avatar" style="background:${avatarColors[idx % avatarColors.length]}">${t.assignee}</div>
+          <div class="task-name">${t.name}</div>
+          <div class="task-pct">${t.pct}%</div>
+        </div>`;
+      });
+    });
+    list.innerHTML = html;
+    list.querySelectorAll('.task-row-list').forEach(el => {
+      el.addEventListener('click', () => {
+        const idx = parseInt(el.dataset.idx);
+        selectedTask = idx === selectedTask ? null : idx;
+        renderList();
+        renderCanvas();
+        if (selectedTask !== null) showDetail(selectedTask);
+        else document.getElementById('detailPanel').classList.remove('visible');
+      });
+    });
+  }
+
+  // ── Render canvas ────────────────────────────────────────────────
+  function renderCanvas() {
+    const timeline = document.querySelector('.gantt-timeline');
+    const wrap = document.querySelector('.gantt-canvas-wrap');
+    const canvas = document.getElementById('ganttCanvas');
+
+    const COL_W = viewMode === 'week' ? 28 : 16;
+    const ROW_H = 38;
+    const HEADER_H = 44;
+    const GROUP_H = ROW_H;
+    const totalRows = tasks.length + groups.length; // tasks + group headers
+    const totalH = HEADER_H + totalRows * ROW_H;
+    const totalW = totalDays * COL_W;
+
+    canvas.width = totalW;
+    canvas.height = totalH;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, totalW, totalH);
+    ctx.font = '10px Inter, sans-serif';
+
+    // Background stripes for weekend days
+    if (viewMode === 'week') {
+      for (let d=0; d<totalDays; d++) {
+        const dd = new Date(PROJECT_START);
+        dd.setDate(dd.getDate() + d);
+        if (dd.getDay() === 0 || dd.getDay() === 6) {
+          ctx.fillStyle = 'rgba(255,255,255,0.018)';
+          ctx.fillRect(d*COL_W, 0, COL_W, totalH);
+        }
+      }
+    }
+
+    // Grid vertical lines + date labels
+    const stepDays = viewMode === 'week' ? 7 : 14;
+    for (let d=0; d<=totalDays; d+=stepDays) {
+      const x = d * COL_W;
+      const dd = new Date(PROJECT_START);
+      dd.setDate(dd.getDate() + d);
+      // vertical grid line
+      ctx.strokeStyle = 'rgba(148,163,184,0.07)';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(x, HEADER_H); ctx.lineTo(x, totalH); ctx.stroke();
+      // date label
+      const label = dd.toLocaleDateString('en-US', {month:'short', day:'numeric'});
+      ctx.fillStyle = '#475569';
+      ctx.textAlign = 'left';
+      ctx.fillText(label, x+3, HEADER_H-6);
+    }
+
+    // Month labels
+    let lastMo = -1;
+    for (let d=0; d<totalDays; d++) {
+      const dd = new Date(PROJECT_START);
+      dd.setDate(dd.getDate() + d);
+      if (dd.getMonth() !== lastMo) {
+        ctx.fillStyle = '#94A3B8';
+        ctx.font = 'bold 11px Space Grotesk, sans-serif';
+        ctx.fillText(dd.toLocaleDateString('en-US',{month:'long'}), d*COL_W+4, 16);
+        ctx.font = '10px Inter, sans-serif';
+        lastMo = dd.getMonth();
+      }
+    }
+
+    // Rows
+    let rowY = HEADER_H;
+    let taskBarMap = []; // {task, y, barX, barW}
+
+    groups.forEach((g, gi) => {
+      // Group header row
+      ctx.fillStyle = 'rgba(255,255,255,0.018)';
+      ctx.fillRect(0, rowY, totalW, GROUP_H);
+      rowY += GROUP_H;
+
+      tasks.filter(t => t.group === gi).forEach(t => {
+        const idx = tasks.indexOf(t);
+        const startDay = daysSince(t.start);
+        const endDay   = daysSince(t.end) + 1;
+        const barX = startDay * COL_W;
+        const barW = (endDay - startDay) * COL_W;
+        const barY = rowY + 7;
+        const barH = ROW_H - 14;
+
+        // Row highlight
+        if (idx === selectedTask) {
+          ctx.fillStyle = 'rgba(16,185,129,0.06)';
+          ctx.fillRect(0, rowY, totalW, ROW_H);
+        }
+
+        // Horizontal row line
+        ctx.strokeStyle = 'rgba(148,163,184,0.07)';
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(0, rowY+ROW_H); ctx.lineTo(totalW, rowY+ROW_H); ctx.stroke();
+
+        // Task bar (rounded rect)
+        const col = groups[t.group].color;
+        ctx.fillStyle = col + '55';
+        roundRect(ctx, barX+1, barY, barW-2, barH, 4);
+        ctx.fill();
+
+        // Progress fill
+        const progW = (barW-2) * (t.pct/100);
+        ctx.fillStyle = col;
+        roundRect(ctx, barX+1, barY, progW, barH, 4);
+        ctx.fill();
+
+        // Task label inside bar (if wide enough)
+        if (barW > 60) {
+          ctx.fillStyle = '#fff';
+          ctx.font = '9px Inter, sans-serif';
+          ctx.textAlign = 'left';
+          ctx.fillText(t.name.length > 18 ? t.name.slice(0,18)+'…' : t.name, barX+6, barY+barH/2+4);
+        }
+
+        taskBarMap.push({ task:t, idx, y:rowY, barX, barW, barH, barY });
+        rowY += ROW_H;
+      });
+    });
+
+    // Dependency arrows
+    ctx.strokeStyle = 'rgba(148,163,184,0.3)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3,3]);
+    tasks.forEach(t => {
+      t.deps.forEach(depIdx => {
+        const from = taskBarMap.find(m => m.idx === depIdx);
+        const to   = taskBarMap.find(m => m.idx === tasks.indexOf(t));
+        if (!from || !to) return;
+        const x1 = from.barX + from.barW;
+        const y1 = from.barY + from.barH/2;
+        const x2 = to.barX;
+        const y2 = to.barY + to.barH/2;
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.bezierCurveTo(x1+20, y1, x2-20, y2, x2, y2);
+        ctx.stroke();
+      });
+    });
+    ctx.setLineDash([]);
+
+    // Milestones (diamonds)
+    milestones.forEach(m => {
+      const d = daysSince(m.date);
+      const x = d * COL_W;
+      ctx.fillStyle = '#F59E0B';
+      ctx.beginPath();
+      ctx.moveTo(x, HEADER_H + 10);
+      ctx.lineTo(x+7, HEADER_H + 17);
+      ctx.lineTo(x, HEADER_H + 24);
+      ctx.lineTo(x-7, HEADER_H + 17);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#F59E0B';
+      ctx.font = '9px Inter, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(m.label, x, HEADER_H + 34);
+    });
+
+    // Today line
+    const todayX = Math.round((TODAY - PROJECT_START) / 86400000) * COL_W;
+    ctx.strokeStyle = '#EF4444';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([5,4]);
+    ctx.beginPath();
+    ctx.moveTo(todayX, HEADER_H);
+    ctx.lineTo(todayX, totalH);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#EF4444';
+    ctx.font = 'bold 9px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Today', todayX, HEADER_H - 2);
+
+    // Store hit areas for hover
+    canvas._taskBarMap = taskBarMap;
+    canvas._COL_W = COL_W;
+    canvas._HEADER_H = HEADER_H;
+    canvas._GROUP_H = GROUP_H;
+  }
+
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x+r, y);
+    ctx.lineTo(x+w-r, y);
+    ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+    ctx.lineTo(x+w, y+h-r);
+    ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+    ctx.lineTo(x+r, y+h);
+    ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+    ctx.lineTo(x, y+r);
+    ctx.quadraticCurveTo(x, y, x+r, y);
+    ctx.closePath();
+  }
+
+  // ── Hover ────────────────────────────────────────────────────────
+  document.getElementById('ganttCanvas').addEventListener('mousemove', function(e) {
+    const rect = this.getBoundingClientRect();
+    const mx = e.clientX - rect.left + this.parentElement.parentElement.scrollLeft;
+    const my = e.clientY - rect.top;
+    const tip = document.getElementById('ganttTooltip');
+
+    let found = null;
+    (this._taskBarMap || []).forEach(m => {
+      if (mx >= m.barX && mx <= m.barX+m.barW && my >= m.y && my <= m.y+38) found = m;
+    });
+    if (found) {
+      const t = found.task;
+      const col = groups[t.group].color;
+      tip.innerHTML = `
+        <div class="gantt-tooltip-name">${t.name}</div>
+        <div class="gantt-tooltip-row">Assignee: ${t.assignee}</div>
+        <div class="gantt-tooltip-row">${fmtDate(t.start)} → ${fmtDate(t.end)}</div>
+        <div class="gantt-tooltip-row">Progress: ${t.pct}%</div>
+        <div class="gantt-tooltip-bar"><div class="gantt-tooltip-fill" style="width:${t.pct}%;background:${col}"></div></div>`;
+      tip.classList.add('visible');
+      tip.style.left = (e.clientX+14)+'px';
+      tip.style.top  = (e.clientY+14)+'px';
+      this.style.cursor = 'pointer';
+    } else {
+      tip.classList.remove('visible');
+      this.style.cursor = 'default';
+    }
+  });
+  document.getElementById('ganttCanvas').addEventListener('mouseleave', () => {
+    document.getElementById('ganttTooltip').classList.remove('visible');
+  });
+
+  // Click to select
+  document.getElementById('ganttCanvas').addEventListener('click', function(e) {
+    const rect = this.getBoundingClientRect();
+    const mx = e.clientX - rect.left + this.parentElement.parentElement.scrollLeft;
+    const my = e.clientY - rect.top;
+    let found = null;
+    (this._taskBarMap || []).forEach(m => {
+      if (mx >= m.barX && mx <= m.barX+m.barW && my >= m.y && my <= m.y+38) found = m;
+    });
+    if (found) {
+      selectedTask = found.idx === selectedTask ? null : found.idx;
+      renderList();
+      renderCanvas();
+      if (selectedTask !== null) showDetail(selectedTask);
+      else document.getElementById('detailPanel').classList.remove('visible');
+    }
+  });
+
+  // ── Detail panel ─────────────────────────────────────────────────
+  function showDetail(idx) {
+    const t = tasks[idx];
+    const col = groups[t.group].color;
+    document.getElementById('detailTitle').textContent = t.name;
+    document.getElementById('detailAssignee').textContent = t.assignee;
+    document.getElementById('detailStart').textContent = fmtDate(t.start);
+    document.getElementById('detailEnd').textContent = fmtDate(t.end);
+    document.getElementById('detailPct').textContent = t.pct + '%';
+    document.getElementById('detailGroup').textContent = groups[t.group].name;
+    document.getElementById('detailProgFill').style.width = t.pct + '%';
+    document.getElementById('detailProgFill').style.background = col;
+    document.getElementById('detailPanel').classList.add('visible');
+  }
+
+  document.getElementById('detailClose').addEventListener('click', () => {
+    selectedTask = null;
+    document.getElementById('detailPanel').classList.remove('visible');
+    renderList();
+    renderCanvas();
+  });
+
+  // ── View toggle ──────────────────────────────────────────────────
+  document.getElementById('viewTabs').addEventListener('click', e => {
+    const btn = e.target.closest('button[data-view]');
+    if (!btn) return;
+    document.querySelectorAll('#viewTabs button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    viewMode = btn.dataset.view;
+    renderCanvas();
+  });
+
+  // ── Init ─────────────────────────────────────────────────────────
+  renderList();
+  renderCanvas();
+</script>
+</body>
+</html>

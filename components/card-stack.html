@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3D Card Stack — Component Library</title>
+
+  <!--
+  /* COMPONENT: 3D Card Stack | COPY: style + html + script */
+  Two modes on one page:
+  Mode A — Fan on hover: cards spread apart on mouseover
+  Mode B — Click through: "Next" button cycles top card off with a throw animation
+  Both use spring-feel cubic-bezier transitions.
+  -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+
+    /* ============================================================
+       CUSTOMIZE — adjust these to match your project
+       ============================================================ */
+    :root {
+      --bg:             #0D1117;
+      --surface:        #111827;
+      --elevated:       #1E293B;
+      --accent:         #10B981;
+      --glow:           rgba(16,185,129,0.15);
+      --glow-strong:    rgba(16,185,129,0.3);
+      --border:         rgba(148,163,184,0.1);
+      --border-accent:  rgba(16,185,129,0.3);
+      --text:           #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted:     #475569;
+      --radius:         12px;
+      --font-heading:   'Space Grotesk', sans-serif;
+      --font-body:      'Inter', sans-serif;
+      --font-mono:      ui-monospace, 'Cascadia Code', monospace;
+
+      /* Card dimensions — adjust to taste */
+      --card-w: 300px;
+      --card-h: 180px;
+    }
+    /* ============================================================ */
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Page layout ── */
+    .cs-page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 5rem 1.5rem;
+    }
+
+    .cs-page-header {
+      text-align: center;
+      margin-bottom: 5rem;
+    }
+    .cs-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 5px 14px;
+      background: rgba(16,185,129,0.08);
+      border: 1px solid var(--border-accent);
+      border-radius: 100px;
+      margin-bottom: 1.25rem;
+    }
+    .cs-page-title {
+      font-family: var(--font-heading);
+      font-size: clamp(1.75rem, 4vw, 2.5rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+    }
+    .cs-page-sub {
+      color: var(--text-secondary);
+      font-size: 0.9375rem;
+      line-height: 1.6;
+    }
+
+
+    /* ── Section wrapper shared by both modes ── */
+    .cs-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3rem;
+      margin-bottom: 6rem;
+    }
+
+    .cs-section-label {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      text-align: center;
+    }
+
+    /* ── The card component — used in both modes ── */
+    .cs-card {
+      width: var(--card-w);
+      height: var(--card-h);
+      border-radius: 16px;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      box-shadow:
+        0 2px 8px rgba(0,0,0,0.3),
+        0 0 0 1px rgba(255,255,255,0.03);
+      padding: 1.375rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    .cs-card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+    }
+    .cs-card-tag {
+      font-family: var(--font-mono);
+      font-size: 0.5625rem;
+      font-weight: 600;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 3px 8px;
+      background: rgba(16,185,129,0.08);
+      border: 1px solid rgba(16,185,129,0.2);
+      border-radius: 100px;
+    }
+    .cs-card-num {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--text-muted);
+    }
+    .cs-card-title {
+      font-family: var(--font-heading);
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .cs-card-desc {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      margin-top: 4px;
+    }
+    .cs-card-stat {
+      font-family: var(--font-heading);
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+
+    /* ═══════════════════════════════════
+       MODE A — FAN ON HOVER
+       ═══════════════════════════════════ */
+
+    /* Container — fixed size matching the card; cards are absolutely positioned inside */
+    .cs-fan-container {
+      position: relative;
+      width: var(--card-w);
+      height: var(--card-h);
+      cursor: pointer;
+    }
+
+    /* At rest: cards stack with slight offset + rotation to show depth */
+    .cs-fan-container .cs-card:nth-child(1) {
+      z-index: 4;
+      transform: translateY(0) rotate(0deg);
+      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .cs-fan-container .cs-card:nth-child(2) {
+      z-index: 3;
+      transform: translateY(6px) rotate(-2.5deg);
+      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.03s;
+    }
+    .cs-fan-container .cs-card:nth-child(3) {
+      z-index: 2;
+      transform: translateY(12px) rotate(-5deg);
+      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.06s;
+    }
+    .cs-fan-container .cs-card:nth-child(4) {
+      z-index: 1;
+      transform: translateY(18px) rotate(-7.5deg);
+      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.09s;
+    }
+
+    /* Fan out on hover — cards spread with increasing translateX and rotateZ */
+    .cs-fan-container:hover .cs-card:nth-child(1) {
+      transform: translateX(0) translateY(-20px) rotate(0deg);
+    }
+    .cs-fan-container:hover .cs-card:nth-child(2) {
+      transform: translateX(-90px) translateY(15px) rotate(-12deg);
+    }
+    .cs-fan-container:hover .cs-card:nth-child(3) {
+      transform: translateX(90px) translateY(15px) rotate(12deg);
+    }
+    .cs-fan-container:hover .cs-card:nth-child(4) {
+      transform: translateX(-170px) translateY(50px) rotate(-20deg);
+    }
+
+    /* Each fanned card brightens slightly */
+    .cs-fan-container:hover .cs-card {
+      border-color: var(--border-accent);
+    }
+
+    /* Fan hint text */
+    .cs-fan-hint {
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      text-align: center;
+      margin-top: 5rem; /* clearance below the stack */
+    }
+    @media (hover: none) {
+      .cs-fan-hint { display: none; } /* touch devices don't have hover */
+    }
+
+
+    /* ═══════════════════════════════════
+       MODE B — CLICK THROUGH / NEXT
+       ═══════════════════════════════════ */
+
+    .cs-flip-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .cs-flip-container {
+      position: relative;
+      width: var(--card-w);
+      height: var(--card-h);
+    }
+
+    /* Cards stack — z-index is managed by JS */
+    .cs-flip-container .cs-card {
+      transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1),
+                  opacity  0.3s ease;
+    }
+
+    /* Default stacked offsets for Mode B */
+    .cs-flip-container .cs-card:nth-child(1) { transform: translateY(0);   z-index: 4; }
+    .cs-flip-container .cs-card:nth-child(2) { transform: translateY(6px);  z-index: 3; }
+    .cs-flip-container .cs-card:nth-child(3) { transform: translateY(12px); z-index: 2; }
+    .cs-flip-container .cs-card:nth-child(4) { transform: translateY(18px); z-index: 1; }
+
+    /* The "throwing off" animation class — added by JS to the top card */
+    .cs-card--throw {
+      transform: translateY(-130%) rotate(8deg) !important;
+      opacity: 0 !important;
+      transition:
+        transform 0.4s cubic-bezier(0.4, 0, 0.6, 1),
+        opacity   0.4s ease !important;
+      pointer-events: none;
+    }
+
+    /* Next button */
+    .cs-next-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0.625rem 1.5rem;
+      min-height: 44px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: var(--font-heading);
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .cs-next-btn:hover {
+      background: var(--elevated);
+      border-color: var(--border-accent);
+    }
+
+    /* Card counter below the stack */
+    .cs-counter {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--text-muted);
+    }
+
+
+    /* ── Responsive: stack modes side by side on desktop ── */
+    .cs-modes {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+      align-items: start;
+    }
+    @media (max-width: 720px) {
+      .cs-modes { grid-template-columns: 1fr; gap: 6rem; }
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="cs-page">
+
+    <!-- Page header -->
+    <div class="cs-page-header">
+      <div class="cs-eyebrow">3D Card Stack</div>
+      <h1 class="cs-page-title">Two modes, one pattern</h1>
+      <p class="cs-page-sub">Hover to fan (Mode A) &mdash; click Next to cycle (Mode B)</p>
+    </div>
+
+    <div class="cs-modes">
+
+      <!-- ═══════════════════════ MODE A ═══════════════════════ -->
+      <div class="cs-section">
+        <div class="cs-section-label">Mode A &mdash; Hover to Fan</div>
+
+        <!-- Fan container — hover triggers CSS fan -->
+        <div class="cs-fan-container" aria-label="Project cards — hover to reveal">
+
+          <div class="cs-card">
+            <div class="cs-card-top">
+              <span class="cs-card-tag">Branding</span>
+              <span class="cs-card-num">01</span>
+            </div>
+            <div>
+              <div class="cs-card-title">Meridian Finance</div>
+              <div class="cs-card-desc">Full rebrand + website overhaul</div>
+            </div>
+            <div class="cs-card-stat">+340% leads</div>
+          </div>
+
+          <div class="cs-card">
+            <div class="cs-card-top">
+              <span class="cs-card-tag">E-Commerce</span>
+              <span class="cs-card-num">02</span>
+            </div>
+            <div>
+              <div class="cs-card-title">Coastal Supply Co.</div>
+              <div class="cs-card-desc">Shopify custom theme + integrations</div>
+            </div>
+            <div class="cs-card-stat">$1.2M revenue</div>
+          </div>
+
+          <div class="cs-card">
+            <div class="cs-card-top">
+              <span class="cs-card-tag">SaaS</span>
+              <span class="cs-card-num">03</span>
+            </div>
+            <div>
+              <div class="cs-card-title">Orbit Analytics</div>
+              <div class="cs-card-desc">Landing page + onboarding flow</div>
+            </div>
+            <div class="cs-card-stat">18% conv. rate</div>
+          </div>
+
+          <div class="cs-card">
+            <div class="cs-card-top">
+              <span class="cs-card-tag">Real Estate</span>
+              <span class="cs-card-num">04</span>
+            </div>
+            <div>
+              <div class="cs-card-title">Harmon Realty Group</div>
+              <div class="cs-card-desc">Agent sites + CRM automation</div>
+            </div>
+            <div class="cs-card-stat">82 leads / mo</div>
+          </div>
+
+        </div><!-- /cs-fan-container -->
+
+        <p class="cs-fan-hint">Hover the stack to fan out cards</p>
+      </div>
+
+
+      <!-- ═══════════════════════ MODE B ═══════════════════════ -->
+      <div class="cs-section">
+        <div class="cs-section-label">Mode B &mdash; Click to Cycle</div>
+
+        <div class="cs-flip-wrapper">
+
+          <div class="cs-flip-container" id="cs-flip-container">
+
+            <div class="cs-card" data-card="0">
+              <div class="cs-card-top">
+                <span class="cs-card-tag">Branding</span>
+                <span class="cs-card-num">01</span>
+              </div>
+              <div>
+                <div class="cs-card-title">Meridian Finance</div>
+                <div class="cs-card-desc">Full rebrand + website overhaul</div>
+              </div>
+              <div class="cs-card-stat">+340% leads</div>
+            </div>
+
+            <div class="cs-card" data-card="1">
+              <div class="cs-card-top">
+                <span class="cs-card-tag">E-Commerce</span>
+                <span class="cs-card-num">02</span>
+              </div>
+              <div>
+                <div class="cs-card-title">Coastal Supply Co.</div>
+                <div class="cs-card-desc">Shopify custom theme + integrations</div>
+              </div>
+              <div class="cs-card-stat">$1.2M revenue</div>
+            </div>
+
+            <div class="cs-card" data-card="2">
+              <div class="cs-card-top">
+                <span class="cs-card-tag">SaaS</span>
+                <span class="cs-card-num">03</span>
+              </div>
+              <div>
+                <div class="cs-card-title">Orbit Analytics</div>
+                <div class="cs-card-desc">Landing page + onboarding flow</div>
+              </div>
+              <div class="cs-card-stat">18% conv. rate</div>
+            </div>
+
+            <div class="cs-card" data-card="3">
+              <div class="cs-card-top">
+                <span class="cs-card-tag">Real Estate</span>
+                <span class="cs-card-num">04</span>
+              </div>
+              <div>
+                <div class="cs-card-title">Harmon Realty Group</div>
+                <div class="cs-card-desc">Agent sites + CRM automation</div>
+              </div>
+              <div class="cs-card-stat">82 leads / mo</div>
+            </div>
+
+          </div><!-- /cs-flip-container -->
+
+          <button class="cs-next-btn" id="cs-next-btn" aria-label="Next card">
+            Next
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+          </button>
+
+          <div class="cs-counter" id="cs-counter">1 / 4</div>
+
+        </div>
+      </div>
+
+    </div><!-- /cs-modes -->
+
+  </div><!-- /cs-page -->
+
+
+  <script>
+  /* ── Mode B: Click-to-cycle card stack ──
+
+     State: an array of card elements in order [top, ..., bottom].
+     On "Next": top card gets .cs-card--throw, then after the animation:
+       - The card is moved to the bottom of the DOM (and array)
+       - Throw class removed
+       - All z-index and offset transforms reapplied
+  */
+
+  const container = document.getElementById('cs-flip-container');
+  const nextBtn   = document.getElementById('cs-next-btn');
+  const counter   = document.getElementById('cs-counter');
+
+  // Live array tracking card order (index 0 = top / highest z-index)
+  let cardOrder = Array.from(container.querySelectorAll('.cs-card'));
+  const TOTAL = cardOrder.length;
+  let isAnimating = false;
+
+  /* Apply correct z-index and stacked offset transforms based on current order */
+  function applyStackStyles() {
+    cardOrder.forEach((card, i) => {
+      card.style.zIndex = TOTAL - i;
+      // Stagger: each card 6px lower than the one above
+      if (!card.classList.contains('cs-card--throw')) {
+        card.style.transform = `translateY(${i * 6}px)`;
+      }
+    });
+
+    // Update counter showing top card position
+    const topIndex = parseInt(cardOrder[0].dataset.card);
+    counter.textContent = `${topIndex + 1} / ${TOTAL}`;
+  }
+
+  nextBtn.addEventListener('click', () => {
+    if (isAnimating) return;
+    isAnimating = true;
+
+    const topCard = cardOrder[0];
+
+    // Throw top card off
+    topCard.classList.add('cs-card--throw');
+
+    // After animation completes (400ms), cycle it to the bottom
+    setTimeout(() => {
+      topCard.classList.remove('cs-card--throw');
+      topCard.style.transform = '';
+
+      // Move to bottom of DOM and update order array
+      container.appendChild(topCard);
+      cardOrder.push(cardOrder.shift());
+
+      applyStackStyles();
+      isAnimating = false;
+    }, 420);
+  });
+
+  // Initial state
+  applyStackStyles();
+  </script>
+
+</body>
+</html>
